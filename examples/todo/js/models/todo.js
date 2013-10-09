@@ -1,6 +1,7 @@
 function Todo(data) {
 	this.description = 'Do nothing';
-	this.done = false;
+	this.priority    = 0;
+    this.done = false;
 	
 	for (var i in data) {
 		if (data.hasOwnProperty(i)) {

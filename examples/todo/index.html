@@ -19,14 +19,16 @@
 				<input id="toggle-all" type="checkbox" data-on="change:controller.toggleAll()">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-					<li data-repeat="controller.filteredTodos" data-controller="todo" data-class="editing:controller.editing == model|completed:model.done">
+					<li data-repeat="controller.filteredTodos" data-controller="todo" data-class="editing:controller.editing|completed:model.done">
 						<div class="view">
 							<input class="toggle" type="checkbox" data-onchange="controller.toggleDone(model)" data-attr="checked:model.done">
 							<label data-ondblclick="controller.editTodo(model)" data-bind="model.description">Create a TodoMVC template</label>
-							<button class="destroy" data-on="click:controller.removeTodo(model)"></button>
+              <label data-ondblclick="controller.editTodo(model)" data-bind="model.priority">1</label>
+              <button class="destroy" data-on="click:controller.removeTodo(model)"></button>
 						</div>
-						<input class="edit" data-value="description" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
-					</li>
+						<input class="edit description" data-value="description" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
+					  <input class="edit priority" data-value="priority" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
+          </li>
 				</ul>
 			</section>
 			<!-- This footer should hidden by default and shown when there are todos -->

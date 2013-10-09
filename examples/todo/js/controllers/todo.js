@@ -18,11 +18,17 @@ chip.controller('todo', {
 	},
 	
 	saveTodo: function() {
-		var description = this.element.find('.edit').val().trim();
-		if (description) {
+		var description = this.element.find('.description').val().trim();
+		var priority    = this.element.find('.priority').val().trim();
+
+        if (description) {
 			this.todo.description = description;
 			this.todo.save();
 		}
+        if (priority) {
+            this.todo.priority    = priority;
+            this.todo.save();
+        }
 		this.editing = false;
 		syncView();
 	},
