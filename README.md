@@ -42,3 +42,51 @@ to the corresponding expression.
 3. Presenting State. For example, HTML classes can be added to or removed from an element based on the state of an
 object.
 
+## An Example
+
+Let's say we wanted to extend the Todo MVC example and add a bit more functionality. Oh, I don't know - maybe a
+priority indicator? Here is how we would accomplish that:
+
+1. Declare the additional property in the model:
+
+```javascript
+function Todo(data) {
+  this.description = 'Do nothing';
+  this.done = false;
+  this.priority = 0;
+
+  for (var i in data) {
+    if (data.hasOwnProperty(i)) {
+      this[i] = data[i];
+    }
+  }
+}
+```
+The declaration of this property informs the application that a ToDo has a priority that defaults to 0.
+
+2. Include the additional property in the controller's actions.
+
+```javascript
+  saveTodo: function() {
+    var description = this.element.find('.edit').val().trim();
+    var priority    = this.element.find('.edit-priority') val().trim(); // We're making a preliminary assumption about our markup here.
+    if (description) {
+      this.todo.description = description;
+      this.todo.save();
+    }
+    if (priority) {
+      this.todo.priority = priority;
+      this.todo.save();
+    }
+    this.editing = false;
+    syncView();
+  },
+```
+It's becoming easier to see here how the controller acts as a channel to pass the actions that occurred in the view
+through to persisting the data to the model.
+
+3. Include the additional property in the HTML.
+
+```html
+
+```
