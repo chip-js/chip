@@ -1546,6 +1546,162 @@ Path.core.route.prototype = {
     }
 };
 
+var modifyCopyArray, modifySourceArray, restoreSourceArray,
+  __slice = [].slice;
+
+Array.prototype.refresh = function() {};
+
+Array.prototype.removeBy = function(filter) {
+  var i, removed, value;
+  removed = [];
+  i = this.length;
+  while (i--) {
+    value = this[i];
+    if (filter(value, i, this) === false) {
+      removed.unshift(this.splice(i, 1));
+    }
+  }
+  return removed;
+};
+
+Array.prototype.liveCopy = function() {
+  var copy, source;
+  source = this;
+  copy = source.slice();
+  modifySourceArray(source);
+  modifyCopyArray(copy);
+  source._liveCopies.push(copy);
+  copy.refresh = function() {
+    source.refresh();
+    return this;
+  };
+  copy._source = source;
+  return copy;
+};
+
+Array.prototype.closeCopies = function() {
+  return restoreSourceArray(this);
+};
+
+modifySourceArray = function(source) {
+  if (source._liveCopies) {
+    return;
+  }
+  source._liveCopies = [];
+  source.refresh = function() {
+    var _this = this;
+    this._liveCopies.forEach(function(copy) {
+      var tmp;
+      tmp = _this;
+      if (copy._filter) {
+        tmp = _this.filter(copy._filter);
+      }
+      if (copy._sort && !copy._filter) {
+        tmp = _this.slice();
+      }
+      if (copy._sort) {
+        tmp.sort(copy._sort);
+      }
+      tmp.forEach(function(item, index) {
+        return copy[index] = item;
+      });
+      return copy.length = tmp.length;
+    });
+    return this;
+  };
+  source.push = function() {
+    var items;
+    items = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    Array.prototype.push.apply(this, items);
+    return this.refresh();
+  };
+  source.unshift = function() {
+    var items;
+    items = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    Array.prototype.push.apply(this, items);
+    return this.refresh();
+  };
+  source.pop = function() {
+    var item;
+    item = Array.prototype.pop.call(this);
+    this.refresh();
+    return item;
+  };
+  source.shift = function() {
+    var item;
+    item = Array.prototype.shift.call(this);
+    this.refresh();
+    return item;
+  };
+  return source.splice = function() {
+    var count, index, items, removed, _ref;
+    index = arguments[0], count = arguments[1], items = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
+    removed = (_ref = Array.prototype.splice).call.apply(_ref, [this, index, count].concat(__slice.call(items)));
+    this.refresh();
+    return removed;
+  };
+};
+
+restoreSourceArray = function(source) {
+  if (!source._liveCopies) {
+    return;
+  }
+  source._liveCopies.forEach(function(copy) {
+    delete copy._source;
+    return delete copy.refresh;
+  });
+  delete source._liveCopies;
+  delete source.push;
+  delete source.unshift;
+  delete source.pop;
+  delete source.shift;
+  return delete source.splice;
+};
+
+modifyCopyArray = function(copy) {
+  copy.applyFilter = function(filter) {
+    this._filter = filter;
+    return this.refresh();
+  };
+  copy.removeFilter = function() {
+    if (!this._filter) {
+      return;
+    }
+    delete this._filter;
+    return this.refresh();
+  };
+  copy.applySort = function(sort) {
+    this._sort = sort;
+    return this.refresh();
+  };
+  copy.removeSort = function() {
+    if (!this._sort) {
+      return;
+    }
+    delete this._sort;
+    return this.refresh();
+  };
+  return copy.close = function() {
+    var copies, index, source;
+    source = copy._source;
+    if (!source) {
+      return;
+    }
+    delete copy._source;
+    delete copy.refresh;
+    copies = source._liveCopies;
+    index = copies.indexOf(copy);
+    if (index === -1) {
+      return;
+    }
+    copies.splice(index, 1);
+    if (copies.length === 0) {
+      restoreArray(source);
+    }
+    return this;
+  };
+};
+
 (function($) {
   var bindExpression, bindTo, bindToArray, createFunc, evaluate, events, exprCache, getPaths, keyCodes, onRemove, optionArgs;
   window.syncView = Platform.performMicrotaskCheckpoint;
@@ -1605,29 +1761,36 @@ Path.core.route.prototype = {
       arrayObserver = null;
       elements = $();
       return bindExpression(options, function(value) {
+        var createElement;
         elements.remove();
         elements = $();
         if (arrayObserver) {
           arrayObserver.close();
           arrayObserver = null;
         }
+        createElement = function(model) {
+          var controller, element;
+          element = template.clone();
+          if (controllerName) {
+            controller = chip.getController(controllerName, {
+              parent: options.controller,
+              element: element,
+              model: model
+            });
+          } else {
+            controller = options.controller;
+          }
+          element.bindTo(controller, model);
+          if (controllerName) {
+            if (typeof controller.setup === "function") {
+              controller.setup();
+            }
+          }
+          return element.get(0);
+        };
         if (Array.isArray(value)) {
           value.forEach(function(item) {
-            var controller, element;
-            element = template.clone();
-            if (controllerName) {
-              controller = chip.getController(controllerName, {
-                parent: options.controller,
-                element: element,
-                model: item
-              });
-            } else {
-              controller = options.controller;
-            }
-            elements.push(element.bindTo(controller, item).get(0));
-            if (controllerName) {
-              return typeof controller.setup === "function" ? controller.setup() : void 0;
-            }
+            return elements.push(createElement(item));
           });
           options.element.after(elements);
           return arrayObserver = bindToArray(options.element, value, function(splices) {
@@ -1638,7 +1801,7 @@ Path.core.route.prototype = {
               addIndex = splice.index;
               while (addIndex < splice.index + splice.addedCount) {
                 item = value[addIndex];
-                newElements.push(template.clone().bindTo(options.controller, item).get(0));
+                newElements.push(createElement(item));
                 addIndex++;
               }
               removedElements = elements.splice.apply(elements, args.concat(newElements));

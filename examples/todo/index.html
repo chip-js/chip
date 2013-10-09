@@ -15,11 +15,11 @@
 				<input id="new-todo" placeholder="What needs to be done?" autofocus data-onenter="controller.createTodo()">
 			</header>
 			<!-- This section should be hidden by default and shown when there are todos -->
-			<section id="main" data-if="controller.todos.length">
+			<section id="main" data-if="controller.sourceTodos.length">
 				<input id="toggle-all" type="checkbox" data-on="change:controller.toggleAll()">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-					<li data-repeat="controller.filteredTodos" data-controller="todo" data-class="editing:controller.editing == model|completed:model.done">
+					<li data-repeat="controller.todos" data-controller="todo" data-class="editing:controller.editing == model|completed:model.done">
 						<div class="view">
 							<input class="toggle" type="checkbox" data-onchange="controller.toggleDone(model)" data-attr="checked:model.done">
 							<label data-ondblclick="controller.editTodo(model)" data-bind="model.description">Create a TodoMVC template</label>
@@ -30,9 +30,9 @@
 				</ul>
 			</section>
 			<!-- This footer should hidden by default and shown when there are todos -->
-			<footer id="footer" data-if="controller.todos.length">
+			<footer id="footer" data-if="controller.sourceTodos.length">
 				<!-- This should be `0 items left` by default -->
-				<span id="todo-count"><strong data-bind="controller.todos.length - controller.done">1</strong> item left</span>
+				<span id="todo-count"><strong data-bind="controller.undone.length">1</strong> item left</span>
 				<!-- Remove this if you don't implement routing -->
 				<ul id="filters">
 					<li>
@@ -46,7 +46,7 @@
 					</li>
 				</ul>
 				<!-- Hidden if no completed items are left ↓ -->
-				<button id="clear-completed" data-onclick="controller.clearCompleted()">Clear completed (<span data-bind="controller.done">0</span>)</button>
+				<button id="clear-completed" data-if="controller.done.length" data-onclick="controller.clearCompleted()">Clear completed (<span data-bind="controller.done.length">0</span>)</button>
 			</footer>
 		</section>
 		<footer id="info">

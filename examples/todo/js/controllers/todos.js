@@ -1,16 +1,25 @@
 chip.controller('todos', {
-	todos: [],
-	filteredTodos: [],
-	editing: false,
-	done: 0,
+//	sourceTodos: [],
+//	todos: [],
+//	done: [],
+//	undone: [],
+//	editing: false,
 	
 	setup: function() {
 		var _self = this;
 		Todo.load(function(err, todos) {
-			_self.todos = _self.filteredTodos = todos;
-			_self.updateDone();
+			_self.sourceTodos = todos;
+			_self.todos = _self.sourceTodos.liveCopy();
+			_self.done = _self.sourceTodos.liveCopy().applyFilter(_self.getDoneFilter(true));
+			_self.undone = _self.sourceTodos.liveCopy().applyFilter(_self.getDoneFilter(false));
 			syncView();
 		})
+	},
+	
+	getDoneFilter: function(done) {
+		return function(todo) {
+			return todo.done == done;
+		}
 	},
 	
 	createTodo: function() {
@@ -26,40 +35,32 @@ chip.controller('todos', {
 		this.todos.forEach(function(todo) {
 			todo.done = done;
 		});
-		this.updateDone();
+		this.todos.refresh();
 		Todo.store();
 		syncView();
-	},
-	
-	updateDone: function() {
-		this.done = this.todos.filter(function(todo) {
-			return todo.done;
-		}).length;
 	},
 	
 	unfilter: function() {
 		$('#filters a.selected').removeClass('selected');
 		$('#filters a').eq(0).addClass('selected');
-		this.filteredTodos = this.todos;
+		this.todos.removeFilter();
 		syncView();
 	},
 	
 	filter: function(done) {
 		$('#filters a.selected').removeClass('selected');
 		$('#filters a').eq(done ? 2 : 1).addClass('selected');
-		this.filteredTodos = this.todos.filter(function(todo) {
-			return todo.done == done;
-		});
+		this.todos.applyFilter(this.getDoneFilter(done));
 		syncView();
 	},
 	
 	clearCompleted: function() {
-		Todo.todos = this.todos = this.todos.filter(function(todo) {
+		this.sourceTodos.removeBy(function(todo) {
 			return !todo.done;
 		});
+		this.todos.refresh();
 		Todo.store();
-		this.updateDone();
-		this.unfilter();
+		syncView();
 	}
 	
 });

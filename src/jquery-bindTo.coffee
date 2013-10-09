@@ -77,18 +77,22 @@
 					arrayObserver.close()
 					arrayObserver = null
 				
+				createElement = (model) ->
+					element = template.clone()
+					if controllerName
+						controller = chip.getController(controllerName, parent: options.controller, element: element, model: model)
+					else
+						controller = options.controller
+					
+					element.bindTo(controller, model)
+					controller.setup?() if controllerName
+					element.get(0)
+				
+				
 				# if the value isn't null and is an array
 				if Array.isArray value
 					value.forEach (item) ->
-						element = template.clone()
-						if controllerName
-							controller = chip.getController(controllerName, parent: options.controller, element: element, model: item)
-						else
-							controller = options.controller
-						
-						elements.push element.bindTo(controller, item).get(0)
-						if controllerName
-							controller.setup?()
+						elements.push createElement(item)
 					options.element.after(elements)
 					
 					arrayObserver = bindToArray options.element, value, (splices) ->
@@ -101,7 +105,7 @@
 							addIndex = splice.index
 							while (addIndex < splice.index + splice.addedCount)
 								item = value[addIndex]
-								newElements.push template.clone().bindTo(options.controller, item).get(0)
+								newElements.push createElement(item)
 								addIndex++
 							
 							removedElements = elements.splice.apply(elements, args.concat(newElements))
