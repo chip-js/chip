@@ -21,8 +21,12 @@ as well as bubbling up state for parts of the view interested in data about the 
 
 ## Chip Models
 
-Chip's models are responsbile for loading and storing the data from the remote data store (in this context remote means
+Chip doesn't come with models! Our view is that POJO's (Plain 'ol Javascript Objects) are sufficient for carrying out the 
+responsibility of managing state and loading and storing the data from the remote data store (in this context remote means
 'separate from the application' and can include servers in a far away land or the local storage in the browser).
+
+With that said, we see a few cases where some level of abstraction is likely going to help an application. For instance, if
+the API you are working with has a set of patterns that are consistent, you may opt to abstract that into a higher level model.
 
 ## Chip Routes
 
@@ -88,5 +92,14 @@ through to persisting the data to the model.
 3. Include the additional property in the HTML.
 
 ```html
-
+<input class="edit" data-value="description" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
+<input class="edit-priority" data-value="priority" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
 ```
+Adding an input here is a good start and we can see that the `saveTodo` expression here should handle this new input well. Functionally speaking,
+this should complete our feature addition, though the actual display and styling begs for a bit more work.
+
+## Things I Overlooked
+
+1. We used the `edit` class in the controller lookup. I wonder if we should have some kind of a style reference to separate display, state, and properties?
+2. I overlooked the collection controller for creating a new todo - my bad. :)
+3. I didn't originally intend to add this, but I think it would make sense to re-sort the todos based on the priority. Maybe something to bake into the example yet.
