@@ -2,6 +2,7 @@ chip.controller('todo', {
 	element: null,
 	todo: null,
 	editing: false,
+	description: '',
 	
 	setup: function() {
 		this.todo = this.model;
@@ -9,6 +10,7 @@ chip.controller('todo', {
 	
 	editTodo: function() {
 		this.editing = true;
+		this.description = this.todo.description;
 		syncView();
 		this.element.find('.edit').focus()
 	},
@@ -19,9 +21,10 @@ chip.controller('todo', {
 	},
 	
 	saveTodo: function() {
-		var description = this.element.find('.edit').val().trim();
-		if (description) {
-			this.todo.description = description;
+		this.description = this.description.trim()
+		
+		if (this.description) {
+			this.todo.description = this.description;
 			this.todo.save();
 		}
 		this.editing = false;

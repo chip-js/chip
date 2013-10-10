@@ -23,6 +23,7 @@ chip.controller('todos', {
 		$('#new-todo').val('');
 		if (!description) return;
 		var todo = new Todo({ description: description });
+		this.todos.unshift(todo);
 		todo.save(syncView);
 	},
 	
@@ -50,9 +51,11 @@ chip.controller('todos', {
 	},
 	
 	clearCompleted: function() {
-		this.todos.removeBy(function(todo) {
-			return !todo.done;
-		});
+		for (var i = 0; i < this.todos.length; i++) {
+			if (this.todos[i].done) {
+				this.todos.splice(i--, 1);
+			}
+		}
 		Todo.store();
 		syncView();
 	}
