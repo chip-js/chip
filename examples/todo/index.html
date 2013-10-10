@@ -19,20 +19,20 @@
 				<input id="toggle-all" type="checkbox" data-on="change:controller.toggleAll()">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-					<li data-repeat="controller.todos" data-controller="todo" data-class="editing:controller.editing == model|completed:model.done">
+					<li data-repeat="controller.todos" data-controller="todo" data-class="editing:controller.editing|completed:model.done">
 						<div class="view">
-							<input class="toggle" type="checkbox" data-onchange="controller.toggleDone(model)" data-attr="checked:model.done">
+							<input class="toggle" type="checkbox" data-onchange="controller.toggleDone(model)" data-checked="model.done">
 							<label data-ondblclick="controller.editTodo(model)" data-bind="model.description">Create a TodoMVC template</label>
 							<button class="destroy" data-on="click:controller.removeTodo(model)"></button>
 						</div>
-						<input class="edit" data-value="description" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
+						<input class="edit" data-value="model.description" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
 					</li>
 				</ul>
 			</section>
 			<!-- This footer should hidden by default and shown when there are todos -->
 			<footer id="footer" data-if="controller.sourceTodos.length">
 				<!-- This should be `0 items left` by default -->
-				<span id="todo-count"><strong data-bind="controller.undone.length">1</strong> item left</span>
+				<span id="todo-count"><strong data-bind="controller.undone.length">1</strong> <span data-bind="controller.undone.length == 1 ? 'item':'items'">item</span> left</span>
 				<!-- Remove this if you don't implement routing -->
 				<ul id="filters">
 					<li>

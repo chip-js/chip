@@ -1,6 +1,6 @@
 chip.controller('todos', {
 //	sourceTodos: [],
-//	todos: [],
+	todos: [],
 //	done: [],
 //	undone: [],
 //	editing: false,
@@ -23,8 +23,8 @@ chip.controller('todos', {
 	},
 	
 	createTodo: function() {
-		var description = $('#new-todo').val().trim()
-		$('#new-todo').val('')
+		var description = $('#new-todo').val().trim();
+		$('#new-todo').val('');
 		if (!description) return;
 		var todo = new Todo({ description: description });
 		todo.save(syncView);

@@ -1546,6 +1546,294 @@ Path.core.route.prototype = {
     }
 };
 
+(function(global) {
+  var EDIT_ADD, EDIT_DELETE, EDIT_LEAVE, EDIT_UPDATE, calcEditDistances, calcSplices, copyObject, copyValue, diffObjects, newChange, newSplice, observers, sharedPrefix, sharedSuffix, spliceOperationsFromEditDistances;
+  observers = [];
+  global.observers = observers;
+  setTimeout(function() {
+    observers.calcSplices = calcSplices;
+    return observers.diffObjects = diffObjects;
+  });
+  observers.add = function(expr, triggerNow, callback) {
+    var observer, value;
+    if (typeof triggerNow === 'function') {
+      callback = triggerNow;
+      triggerNow = false;
+    }
+    value = expr();
+    observer = {
+      expr: expr,
+      callback: callback,
+      oldValue: copyValue(value),
+      close: function() {
+        return observers.remove(observer);
+      }
+    };
+    observers.push(observer);
+    if (triggerNow) {
+      callback(value);
+    }
+    return observer;
+  };
+  observers.remove = function(observer) {
+    var index;
+    index = observers.indexOf(observer);
+    if (index) {
+      return observers.splice(index, 1);
+    }
+  };
+  observers.sync = function() {
+    return observers.forEach(function(observer) {
+      var changeRecords, splices, value;
+      value = observer.expr();
+      if (value === observer.oldValue) {
+        return;
+      }
+      if (Array.isArray(value) && Array.isArray(observer.oldValue)) {
+        splices = calcSplices(value, observer.oldValue);
+        if (splices.length) {
+          observer.callback(value, splices);
+        }
+      } else if (value && observer.oldValue && typeof value === 'object' && typeof observer.oldValue === 'object') {
+        changeRecords = diffObjects(value, observer.oldValue);
+        if (changeRecords.length) {
+          observer.callback(value, changeRecords);
+        }
+      } else if (value !== observer.oldValue) {
+        observer.callback(value);
+      } else {
+        return;
+      }
+      observer.oldValue = copyValue(value);
+    });
+  };
+  copyValue = function(value) {
+    if (Array.isArray(value)) {
+      return value.slice();
+    } else if (value && typeof value === 'object') {
+      return copyObject(value);
+    } else {
+      return value;
+    }
+  };
+  diffObjects = function(object, oldObject) {
+    var changeRecords, newValue, oldValue, prop;
+    changeRecords = [];
+    for (prop in oldObject) {
+      oldValue = oldObject[prop];
+      newValue = object[prop];
+      if (newValue !== void 0 && newValue === oldValue) {
+        continue;
+      }
+      if (!(prop in object)) {
+        changeRecords.push(newChange(object, 'deleted', prop, oldValue));
+        continue;
+      }
+      if (newValue !== oldValue) {
+        changeRecords.push(newChange(object, 'updated', prop, oldValue));
+      }
+    }
+    for (prop in object) {
+      newValue = object[prop];
+      if (prop in oldObject) {
+        continue;
+      }
+      changeRecords.push(newChange(object, 'new', prop));
+    }
+    if (Array.isArray(object) && object.length !== oldObject.length) {
+      changeRecords.push(newChange(object, 'updated', 'length', oldObject.length));
+    }
+    return changeRecords;
+  };
+  newChange = function(object, type, name, oldValue) {
+    return {
+      object: object,
+      type: type,
+      name: name,
+      oldValue: oldValue
+    };
+  };
+  copyObject = function(object) {
+    var copy, key, value;
+    copy = Array.isArray(object) ? [] : {};
+    for (key in copy) {
+      value = copy[key];
+      copy[key] = value;
+    }
+    if (Array.isArray(object)) {
+      copy.length = object.length;
+    }
+    return copy;
+  };
+  EDIT_LEAVE = 0;
+  EDIT_UPDATE = 1;
+  EDIT_ADD = 2;
+  EDIT_DELETE = 3;
+  calcSplices = function(current, old) {
+    var currentEnd, currentStart, distances, index, minLength, oldEnd, oldIndex, oldStart, op, ops, ops2, prefixCount, splice, splices, suffixCount, _i, _len;
+    currentStart = 0;
+    currentEnd = current.length;
+    oldStart = 0;
+    oldEnd = old.length;
+    minLength = Math.min(currentEnd, oldEnd);
+    prefixCount = sharedPrefix(current, old, minLength);
+    suffixCount = sharedSuffix(current, old, minLength - prefixCount);
+    currentStart += prefixCount;
+    oldStart += prefixCount;
+    currentEnd -= suffixCount;
+    oldEnd -= suffixCount;
+    if (currentEnd - currentStart === 0 && oldEnd - oldStart === 0) {
+      return [];
+    }
+    if (currentStart === currentEnd) {
+      return [newSplice(currentStart, old.slice(oldStart, oldEnd), 0)];
+    }
+    if (oldStart === oldEnd) {
+      return [newSplice(currentStart, [], currentEnd - currentStart)];
+    }
+    distances = calcEditDistances(current, currentStart, currentEnd, old, oldStart, oldEnd);
+    ops = spliceOperationsFromEditDistances(distances);
+    ops2 = spliceOperationsFromEditDistances2(distances);
+    splice = void 0;
+    splices = [];
+    index = currentStart;
+    oldIndex = oldStart;
+    for (_i = 0, _len = ops.length; _i < _len; _i++) {
+      op = ops[_i];
+      if (op === EDIT_LEAVE) {
+        if (splice) {
+          splices.push(splice);
+          splice = void 0;
+        }
+        index++;
+        oldIndex++;
+      } else if (op === EDIT_UPDATE) {
+        if (!splice) {
+          splice = newSplice(index, [], 0);
+        }
+        splice.addedCount++;
+        index++;
+        splice.removed.push(old[oldIndex]);
+        oldIndex++;
+      } else if (op === EDIT_ADD) {
+        if (!splice) {
+          splice = newSplice(index, [], 0);
+        }
+        splice.addedCount++;
+        index++;
+      } else if (op === EDIT_DELETE) {
+        if (!splice) {
+          splice = newSplice(index, [], 0);
+        }
+        splice.removed.push(old[oldIndex]);
+        oldIndex++;
+      }
+    }
+    if (splice) {
+      splices.push(splice);
+    }
+    return splices;
+  };
+  sharedPrefix = function(current, old, searchLength) {
+    var i, _i;
+    for (i = _i = 0; 0 <= searchLength ? _i < searchLength : _i > searchLength; i = 0 <= searchLength ? ++_i : --_i) {
+      if (current[i] !== old[i]) {
+        return i;
+      }
+    }
+    return length;
+  };
+  sharedSuffix = function(current, old, searchLength) {
+    var count, index1, index2;
+    index1 = current.length;
+    index2 = old.length;
+    count = 0;
+    while (count < searchLength && current[--index1] === old[--index2]) {
+      count++;
+    }
+    return count;
+  };
+  newSplice = function(index, removed, addedCount) {
+    return {
+      index: index,
+      removed: removed,
+      addedCount: addedCount
+    };
+  };
+  spliceOperationsFromEditDistances = function(distances) {
+    var current, edits, i, j, min, north, northWest, west;
+    i = distances.length - 1;
+    j = distances[0].length - 1;
+    current = distances[i][j];
+    edits = [];
+    while (i > 0 || j > 0) {
+      if (i === 0) {
+        edits.push(EDIT_ADD);
+        j--;
+        continue;
+      }
+      if (j === 0) {
+        edits.push(EDIT_DELETE);
+        i--;
+        continue;
+      }
+      northWest = distances[i - 1][j - 1];
+      west = distances[i - 1][j];
+      north = distances[i][j - 1];
+      if (west < north) {
+        min = west < northWest ? west : northWest;
+      } else {
+        min = north < northWest ? north : northWest;
+      }
+      if (min === northWest) {
+        if (northWest === current) {
+          edits.push(EDIT_LEAVE);
+        } else {
+          edits.push(EDIT_UPDATE);
+          current = northWest;
+        }
+        i--;
+        j--;
+      } else if (min === west) {
+        edits.push(EDIT_DELETE);
+        i--;
+        current = west;
+      } else {
+        edits.push(EDIT_ADD);
+        j--;
+        current = north;
+      }
+    }
+    edits.reverse();
+    return edits;
+  };
+  return calcEditDistances = function(current, currentStart, currentEnd, old, oldStart, oldEnd) {
+    var columnCount, distances, i, j, north, rowCount, west, _i, _j, _k, _l;
+    rowCount = oldEnd - oldStart + 1;
+    columnCount = currentEnd - currentStart + 1;
+    distances = new Array(rowCount);
+    for (i = _i = 0; 0 <= rowCount ? _i < rowCount : _i > rowCount; i = 0 <= rowCount ? ++_i : --_i) {
+      distances[i] = new Array(columnCount);
+      distances[i][0] = i;
+    }
+    for (j = _j = 0; 0 <= columnCount ? _j < columnCount : _j > columnCount; j = 0 <= columnCount ? ++_j : --_j) {
+      distances[0][j] = j;
+    }
+    for (i = _k = 1; 1 <= rowCount ? _k < rowCount : _k > rowCount; i = 1 <= rowCount ? ++_k : --_k) {
+      for (j = _l = 1; 1 <= columnCount ? _l < columnCount : _l > columnCount; j = 1 <= columnCount ? ++_l : --_l) {
+        if (current[currentStart + j - 1] === old[oldStart + i - 1]) {
+          distances[i][j] = distances[i - 1][j - 1];
+        } else {
+          north = distances[i - 1][j] + 1;
+          west = distances[i][j - 1] + 1;
+          distances[i][j] = north < west ? north : west;
+        }
+      }
+    }
+    return distances;
+  };
+})(this);
+
 var modifyCopyArray, modifySourceArray, restoreSourceArray,
   __slice = [].slice;
 
@@ -1703,8 +1991,8 @@ modifyCopyArray = function(copy) {
 };
 
 (function($) {
-  var bindExpression, bindTo, bindToArray, createFunc, evaluate, events, exprCache, getPaths, keyCodes, onRemove, optionArgs;
-  window.syncView = Platform.performMicrotaskCheckpoint;
+  var attribs, bindExpression, bindTo, createBoundExpr, evaluate, events, exprCache, getterFunction, keyCodes, onRemove, optionArgs, toggles;
+  window.syncView = observers.sync;
   bindTo = $.fn.bindTo = function(controller, model) {
     var bindings, block, blocksSelector, element, handleBinding, selector, splits;
     element = this;
@@ -1753,65 +2041,60 @@ modifyCopyArray = function(copy) {
   };
   bindTo.blockHandlers = {
     repeat: function(options) {
-      var arrayObserver, controllerName, elements, template;
+      var controllerName, createElement, elements, template;
       controllerName = options.element.attr('data-controller');
       options.element.removeAttr('data-controller');
       template = options.element;
       options.element = $('<script type="text/repeat-placeholder"><!--data-repeat="' + options.expr + '"--></script>').replaceAll(template);
-      arrayObserver = null;
       elements = $();
-      return bindExpression(options, function(value) {
-        var createElement;
-        elements.remove();
-        elements = $();
-        if (arrayObserver) {
-          arrayObserver.close();
-          arrayObserver = null;
-        }
-        createElement = function(model) {
-          var controller, element;
-          element = template.clone();
-          if (controllerName) {
-            controller = chip.getController(controllerName, {
-              parent: options.controller,
-              element: element,
-              model: model
-            });
-          } else {
-            controller = options.controller;
-          }
-          element.bindTo(controller, model);
-          if (controllerName) {
-            if (typeof controller.setup === "function") {
-              controller.setup();
-            }
-          }
-          return element.get(0);
-        };
-        if (Array.isArray(value)) {
-          value.forEach(function(item) {
-            return elements.push(createElement(item));
+      createElement = function(model) {
+        var controller, element;
+        element = template.clone();
+        if (controllerName) {
+          controller = chip.getController(controllerName, {
+            parent: options.controller,
+            element: element,
+            model: model
           });
-          options.element.after(elements);
-          return arrayObserver = bindToArray(options.element, value, function(splices) {
-            return splices.forEach(function(splice) {
-              var addIndex, args, item, newElements, removedElements;
-              args = [splice.index, splice.removed.length];
-              newElements = [];
-              addIndex = splice.index;
-              while (addIndex < splice.index + splice.addedCount) {
-                item = value[addIndex];
-                newElements.push(createElement(item));
-                addIndex++;
-              }
-              removedElements = elements.splice.apply(elements, args.concat(newElements));
-              $(removedElements).remove();
-              if (splice.index === 0) {
-                return options.element.after(newElements);
-              } else {
-                return elements.eq(splice.index - 1).after(newElements);
-              }
+        } else {
+          controller = options.controller;
+        }
+        element.bindTo(controller, model);
+        if (controllerName) {
+          if (typeof controller.setup === "function") {
+            controller.setup();
+          }
+        }
+        return element.get(0);
+      };
+      return bindExpression(options, function(value, splices) {
+        if (!splices) {
+          elements.remove();
+          elements = $();
+          if (Array.isArray(value)) {
+            value.forEach(function(item) {
+              return elements.push(createElement(item));
             });
+            return options.element.after(elements);
+          }
+        } else {
+          return splices.forEach(function(splice) {
+            var addIndex, args, item, newElements, removedElements;
+            args = [splice.index, splice.removed.length];
+            newElements = [];
+            addIndex = splice.index;
+            while (addIndex < splice.index + splice.addedCount) {
+              item = value[addIndex];
+              newElements.push(createElement(item));
+              addIndex++;
+            }
+            removedElements = elements.splice.apply(elements, args.concat(newElements));
+            $(removedElements).remove();
+            if (splice.index === 0) {
+              return options.element.after(newElements);
+            } else {
+              return elements.eq(splice.index - 1).after(newElements);
+            }
           });
         }
       });
@@ -1840,13 +2123,6 @@ modifyCopyArray = function(copy) {
     'bind-html': function(options) {
       return bindExpression(options, function(value) {
         return options.element.html(value != null ? value : '');
-      });
-    },
-    attr: function(options) {
-      var attr;
-      attr = options.args()[0];
-      return bindExpression(options, function(value) {
-        return options.element.attr(attr, value);
       });
     },
     active: function(options) {
@@ -1888,8 +2164,17 @@ modifyCopyArray = function(copy) {
       });
     },
     value: function(options) {
-      return bindExpression(options, function(value) {
+      var expr, setter;
+      bindExpression(options, function(value) {
         return options.element.val(value);
+      });
+      expr = options.expr;
+      options.expr += ' = value';
+      setter = createBoundExpr(options);
+      options.expr = expr;
+      return options.element.on('keyup', function() {
+        console.log(options.element.val());
+        return setter(options.element.val());
       });
     },
     on: function(options) {
@@ -1906,6 +2191,8 @@ modifyCopyArray = function(copy) {
     enter: 13,
     esc: 27
   };
+  toggles = ['checked', 'disabled'];
+  attribs = ['href', 'src'];
   events.forEach(function(eventName) {
     return bindTo.handlers['on' + eventName] = function(options) {
       return options.element.on(eventName, function(event) {
@@ -1926,6 +2213,24 @@ modifyCopyArray = function(copy) {
       });
     };
   });
+  toggles.forEach(function(attr) {
+    return bindTo.handlers[attr] = function(options) {
+      return bindExpression(options, function(value) {
+        return options.element.prop(attr, value);
+      });
+    };
+  });
+  attribs.forEach(function(attr) {
+    return bindTo.handlers[attr] = function(options) {
+      return bindExpression(options, function(value) {
+        if (value != null) {
+          return options.element.attr(attr, value);
+        } else {
+          return options.element.removeAttr(attr);
+        }
+      });
+    };
+  });
   Path.onchange = function() {
     return $(document).trigger('urlchange');
   };
@@ -1934,23 +2239,6 @@ modifyCopyArray = function(copy) {
     args = this.expr.split(/\s*:\s*/);
     this.expr = args.pop();
     return args;
-  };
-  getPaths = function(expr) {
-    var matches, paths;
-    paths = [];
-    matches = expr.match(/[\w\$][\w\$\d-\.]*\(?/g);
-    if (!matches) {
-      return paths;
-    }
-    Array.prototype.forEach.call(matches, function(path) {
-      if (path.slice(-1) === '(') {
-        path = path.split('.').slice(0, -1).join('.');
-      }
-      if (path && path !== 'this' && path !== 'controller' && path !== 'model' && path !== 'element') {
-        return paths.push(path);
-      }
-    });
-    return paths;
   };
   onRemove = function(element, cb) {
     return element.on('removeObserver', cb);
@@ -1961,64 +2249,45 @@ modifyCopyArray = function(copy) {
     }
   };
   bindExpression = function(options, callback) {
-    var observers, wrapper;
-    wrapper = function() {
+    var observer, wrapper;
+    wrapper = function(value, changes) {
       options.element.trigger('boundUpdate');
-      return callback(evaluate(options));
+      return callback(value, changes);
     };
-    observers = [];
-    observers.close = function() {
-      return this.forEach(function(observer) {
-        return observer.close();
-      });
-    };
-    getPaths(options.expr).forEach(function(path) {
-      var parts, root;
-      parts = path.split('.');
-      root = parts.shift();
-      path = parts.join('.');
-      if (root === 'controller' && options.controller) {
-        return observers.push(new PathObserver(options.controller, path, wrapper));
-      } else if (root === 'model' && options.model) {
-        return observers.push(new PathObserver(options.model, path, wrapper));
-      } else if (root === 'element' && options.element) {
-        return observers.push(new PathObserver(options.element, path, wrapper));
-      }
-    });
+    observer = observers.add(createBoundExpr(options), true, wrapper);
     onRemove(options.element, function() {
-      return observers.close();
-    });
-    wrapper();
-    return observers;
-  };
-  bindToArray = function(element, array, callback) {
-    var observer;
-    observer = new ArrayObserver(array, callback);
-    onRemove(element, function() {
       return observer.close();
     });
     return observer;
   };
   exprCache = {};
-  createFunc = function(expr) {
-    if (expr.indexOf('(') === -1) {
-      return expr = "try{return " + expr + "}catch(e){}";
-    } else {
-      return expr = "return " + expr;
+  getterFunction = function(expr) {
+    var e, func, functionBody;
+    func = exprCache[expr];
+    if (func) {
+      return func;
     }
+    try {
+      if (expr.indexOf('(') === -1) {
+        functionBody = "try{return " + expr + "}catch(e){}";
+      } else {
+        functionBody = "return " + expr;
+      }
+      func = exprCache[expr] = Function('controller', 'model', 'element', 'value', functionBody);
+    } catch (_error) {
+      e = _error;
+      throw 'Error evaluating code for binding: "' + expr + '" with error: ' + e.message;
+    }
+    return func;
+  };
+  createBoundExpr = function(options) {
+    var func;
+    func = getterFunction(options.expr);
+    return func.bind(options.model || options.controller, options.controller, options.model, options.element);
   };
   return evaluate = function(options) {
-    var e, func, funcBody;
-    func = exprCache[options.expr];
-    if (!func) {
-      try {
-        funcBody = createFunc(options.expr);
-        func = exprCache[options.expr] = Function('controller', 'model', 'element', funcBody);
-      } catch (_error) {
-        e = _error;
-        throw 'Error evaluating code for binding: "' + options.expr + '" with error: ' + e.message;
-      }
-    }
+    var func;
+    func = getterFunction(options.expr);
     return func.call(options.model || options.controller, options.controller, options.model, options.element);
   };
 })(jQuery);

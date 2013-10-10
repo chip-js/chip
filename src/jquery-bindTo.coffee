@@ -1,5 +1,5 @@
 (($) ->
-	window.syncView = Platform.performMicrotaskCheckpoint
+	window.syncView = observers.sync
 	
 	# given an object, bind all bindable attributes to the data (e.g. <span data-bind="name">any text</span> will replace
 	# the contents of the span with the value of model.name. Whenever model.name is updated, the elements will update
@@ -65,55 +65,54 @@
 			
 			template = options.element
 			options.element = $('<script type="text/repeat-placeholder"><!--data-repeat="' + options.expr + '"--></script>').replaceAll(template)
-			arrayObserver = null
 			elements = $()
+					
+			createElement = (model) ->
+				element = template.clone()
+				if controllerName
+					controller = chip.getController(controllerName, parent: options.controller, element: element, model: model)
+				else
+					controller = options.controller
+				
+				element.bindTo(controller, model)
+				controller.setup?() if controllerName
+				element.get(0)
+			
 			
 			# refresh the matching of an array completely
-			bindExpression options, (value) ->
-				# remove existing elements
-				elements.remove()
-				elements = $()
-				if arrayObserver
-					arrayObserver.close()
-					arrayObserver = null
-				
-				createElement = (model) ->
-					element = template.clone()
-					if controllerName
-						controller = chip.getController(controllerName, parent: options.controller, element: element, model: model)
-					else
-						controller = options.controller
+			bindExpression options, (value, splices) ->
+				if not splices
+					# remove existing elements
+					elements.remove()
+					elements = $()
 					
-					element.bindTo(controller, model)
-					controller.setup?() if controllerName
-					element.get(0)
-				
-				
-				# if the value isn't null and is an array
-				if Array.isArray value
-					value.forEach (item) ->
-						elements.push createElement(item)
-					options.element.after(elements)
 					
-					arrayObserver = bindToArray options.element, value, (splices) ->
-						splices.forEach (splice) ->
-							# create splice argument array
-							args = [splice.index, splice.removed.length]
-							
-							# create elements for new items
-							newElements = []
-							addIndex = splice.index
-							while (addIndex < splice.index + splice.addedCount)
-								item = value[addIndex]
-								newElements.push createElement(item)
-								addIndex++
-							
-							removedElements = elements.splice.apply(elements, args.concat(newElements))
-							$(removedElements).remove()
-							if splice.index is 0
-								options.element.after(newElements)
-							else
-								elements.eq(splice.index - 1).after(newElements)
+					# if the value isn't null and is an array
+					if Array.isArray value
+						value.forEach (item) ->
+							elements.push createElement(item)
+						options.element.after(elements)
+				
+				else
+					
+					splices.forEach (splice) ->
+						# create splice argument array
+						args = [splice.index, splice.removed.length]
+						
+						# create elements for new items
+						newElements = []
+						addIndex = splice.index
+						while (addIndex < splice.index + splice.addedCount)
+							item = value[addIndex]
+							newElements.push createElement(item)
+							addIndex++
+						
+						removedElements = elements.splice.apply(elements, args.concat(newElements))
+						$(removedElements).remove()
+						if splice.index is 0
+							options.element.after(newElements)
+						else
+							elements.eq(splice.index - 1).after(newElements)
 		
 		# replace the HTML in the element with the page from the given expression and bind to the model in the second argument if any 
 		partial: (options) ->
@@ -137,12 +136,6 @@
 		
 		'bind-html': (options) ->
 			bindExpression options, (value) -> options.element.html(if value? then value else '')
-		
-		
-		attr: (options) ->
-			[attr] = options.args()
-			bindExpression options, (value) ->
-				options.element.attr(attr, value)
 		
 		
 		active: (options) ->
@@ -179,6 +172,14 @@
 		value: (options) ->
 			bindExpression options, (value) ->
 				options.element.val(value)
+			
+			expr = options.expr
+			options.expr += ' = value'
+			setter = createBoundExpr(options)
+			options.expr = expr
+			options.element.on 'keyup', ->
+				console.log options.element.val()
+				setter options.element.val()
 		
 		
 		on: (options) ->
@@ -190,6 +191,8 @@
 	
 	events = [ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur' ]
 	keyCodes = { enter: 13, esc: 27 }
+	toggles = [ 'checked', 'disabled' ]
+	attribs = [ 'href', 'src' ]
 	
 	events.forEach (eventName) ->
 		bindTo.handlers['on' + eventName] = (options) ->
@@ -207,6 +210,22 @@
 					evaluate(options)
 	
 	
+	toggles.forEach (attr) ->
+		bindTo.handlers[attr] = (options) ->
+			bindExpression options, (value) ->
+				options.element.prop(attr, value)
+	
+	
+	attribs.forEach (attr) ->
+		bindTo.handlers[attr] = (options) ->
+			bindExpression options, (value) ->
+				if value?
+					options.element.attr(attr, value)
+				else
+					options.element.removeAttr(attr)
+	
+	
+	
 	Path.onchange = ->
 		$(document).trigger('urlchange')
 	
@@ -216,21 +235,6 @@
 		args = this.expr.split /\s*:\s*/
 		this.expr = args.pop()
 		args
-	
-	
-	# find all the paths referenced in an expression
-	getPaths = (expr) ->
-		paths = []
-		# get all the variables, including the first parenthesis after it if there is one to know if the last is a function
-		matches = expr.match(/[\w\$][\w\$\d-\.]*\(?/g)
-		return paths unless matches
-		Array.prototype.forEach.call matches, (path) ->
-			# remove the function since these are always on the prototype and don't change, even though the object might
-			if path.slice(-1) is '('
-				path = path.split('.').slice(0, -1).join('.')
-			if path and path isnt 'this' and path isnt 'controller' and path isnt 'model' and path isnt 'element'
-				paths.push path
-		paths
 	
 	
 	# closes an observer when an element is officially "removed" from the DOM by jQuery
@@ -249,56 +253,41 @@
 	# binds a callback to a path, allowing for the "this" keyword, triggering the callback immediately, and removing the
 	# binding automatically for garbage collection when the DOM node is removed
 	bindExpression = (options, callback) ->
-#		expr = normalizeExpression expr
-		wrapper = ->
+		wrapper = (value, changes) ->
 			options.element.trigger('boundUpdate')
-			callback evaluate options
+			callback value, changes
 		
-		observers = []
-		observers.close = ->
-			@forEach (observer) -> observer.close()
-		
-		getPaths(options.expr).forEach (path) ->
-			parts = path.split('.')
-			root = parts.shift()
-			path = parts.join('.')
-			if root is 'controller' and options.controller
-				observers.push new PathObserver(options.controller, path, wrapper)
-			else if root is 'model' and options.model
-				observers.push new PathObserver(options.model, path, wrapper)
-			else if root is 'element' and options.element
-				observers.push new PathObserver(options.element, path, wrapper)
-		
-		onRemove options.element, -> observers.close()
-		wrapper()
-		
-		return observers
+		observer = observers.add createBoundExpr(options), true, wrapper
+		onRemove options.element, -> observer.close()
+		return observer
 	
-	
-	# binds a callback to an Array, removing the binding automatically for garbage collection when the DOM node is removed
-	bindToArray = (element, array, callback) ->
-		observer = new ArrayObserver(array, callback)
-		onRemove element, -> observer.close()
-		observer
 	
 	
 	exprCache = {}
-	createFunc = (expr) ->
-		# allow non-functions to be undefined with try/catch, but we don't want to catch errors in functions
-		if expr.indexOf('(') is -1
-			expr = "try{return #{expr}}catch(e){}"
-		else
-			expr = "return #{expr}"
+	getterFunction = (expr) ->
+		func = exprCache[expr]
+		return func if func
+		try
+			if expr.indexOf('(') is -1
+				functionBody = "try{return #{expr}}catch(e){}"
+			else
+				functionBody = "return #{expr}"
+			func = exprCache[expr] = Function('controller', 'model', 'element', 'value', functionBody)
+		catch e
+			throw 'Error evaluating code for binding: "' + expr + '" with error: ' + e.message
+		func
+	
+	
+	
+	# evaluate an expression
+	createBoundExpr = (options) ->
+		func = getterFunction(options.expr)
+		func.bind(options.model or options.controller, options.controller, options.model, options.element)
+	
 	
 	# evaluate an expression
 	evaluate = (options) ->
-		func = exprCache[options.expr]
-		unless func
-			try
-				funcBody = createFunc(options.expr)
-				func = exprCache[options.expr] = Function('controller', 'model', 'element', funcBody)
-			catch e
-				throw 'Error evaluating code for binding: "' + options.expr + '" with error: ' + e.message
+		func = getterFunction(options.expr)
 		
 		# allow "this" to be the model first, or controller second
 		func.call(options.model or options.controller, options.controller, options.model, options.element)

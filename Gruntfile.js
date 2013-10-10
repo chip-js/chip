@@ -11,13 +11,14 @@ module.exports = function(grunt) {
 				files: {
 					'build/jquery-bindTo.js': 'src/jquery-bindTo.coffee',
 					'build/chip.js': 'src/chip.coffee',
-					'build/filters.js': 'src/filters.coffee'
+					'build/filters.js': 'src/filters.coffee',
+					'build/observers.js': 'src/observers.coffee'
 				}
 			}
 		},
 		concat: {
 			dist: {
-				src: ['lib/observe.js', 'lib/path.js', 'build/filters.js', 'build/jquery-bindTo.js', 'build/chip.js'],
+				src: ['lib/observe.js', 'lib/path.js', 'build/observers.js', 'build/filters.js', 'build/jquery-bindTo.js', 'build/chip.js'],
 				dest: 'dist/<%= pkg.name %>.js'
 			}
 		},

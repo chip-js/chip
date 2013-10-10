@@ -10,6 +10,7 @@ chip.controller('todo', {
 	editTodo: function() {
 		this.editing = true;
 		syncView();
+		this.element.find('.edit').focus()
 	},
 	
 	cancelEditing: function() {
