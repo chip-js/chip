@@ -31,13 +31,12 @@ chip.controller('todo', {
 	toggleDone: function() {
 		this.todo.done = !this.todo.done;
 		this.todo.save();
-		this.parent.todos.refresh();
 		syncView();
 	},
 	
 	removeTodo: function() {
-		var index = this.parent.sourceTodos.indexOf(this.todo);
-		this.parent.sourceTodos.splice(index, 1);
+		var index = Todo.todos.indexOf(this.todo);
+		Todo.todos.splice(index, 1);
 		Todo.store();
 		syncView();
 	}

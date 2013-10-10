@@ -5,9 +5,13 @@
 	# the contents of the span with the value of model.name. Whenever model.name is updated, the elements will update
 	# accordingly. Note: For browsers who do not support Object.observe yet please call "syncView()" after changes to the model
 	# to update the html
-	bindTo = $.fn.bindTo = (controller, model) ->
+	bindTo = $.fn.bindTo = (data) ->
 		element = this
-		splits = /[^|]\|[^|]/g
+		unless data
+			data = this: {}
+		
+		unless data.hasOwnProperty 'this'
+			data = this: data
 		
 		# handles the all the binding attributes on one element of one type (block vs non-block, e.g. data-repeat) 
 		handleBinding = (element, handlers) ->
@@ -20,20 +24,7 @@
 					expr = attr.value
 					# remove the attribute so we know binding has been processed
 					element.removeAttr(attr.name)
-					expressions = []
-					index = 0
-					while splits.exec(expr)
-						expressions.push expr.slice(index, splits.lastIndex - 2)
-						index = splits.lastIndex - 1
-					expressions.push expr.slice(index)
-					
-					expressions.forEach (expr) ->
-						binding
-							element: element
-							expr: expr
-							controller: controller
-							model: model
-							args: optionArgs # method to get arguments
+					binding element, expr, data
 			return
 		
 		
@@ -58,29 +49,33 @@
 	
 	bindTo.blockHandlers =
 		# repeat the html element for each item in the array given in the expression
-		repeat: (options) ->
+		repeat: (element, expr, data) ->
 			# template, expr, model, controller
-			controllerName = options.element.attr('data-controller')
-			options.element.removeAttr('data-controller')
+			[ itemName, expr ] = expr.split /\s+in\s+/
+			controllerName = element.attr('data-controller')
+			element.removeAttr('data-controller')
+			parent = data.this or data
 			
-			template = options.element
-			options.element = $('<script type="text/repeat-placeholder"><!--data-repeat="' + options.expr + '"--></script>').replaceAll(template)
+			template = element
+			element = $('<script type="text/repeat-placeholder"><!--data-repeat="' + expr + '"--></script>').replaceAll(template)
 			elements = $()
 					
 			createElement = (model) ->
-				element = template.clone()
+				newElement = template.clone()
 				if controllerName
-					controller = chip.getController(controllerName, parent: options.controller, element: element, model: model)
+					controller = chip.getController(controllerName, parent: parent, element: newElement, model: model)
 				else
 					controller = options.controller
 				
-				element.bindTo(controller, model)
+				itemData = { this: controller }
+				itemData[itemName] = model
+				newElement.bindTo itemData
 				controller.setup?() if controllerName
-				element.get(0)
+				newElement.get(0)
 			
 			
 			# refresh the matching of an array completely
-			bindExpression options, (value, splices) ->
+			bindExpression element, expr, data, (value, splices) ->
 				if not splices
 					# remove existing elements
 					elements.remove()
@@ -91,7 +86,7 @@
 					if Array.isArray value
 						value.forEach (item) ->
 							elements.push createElement(item)
-						options.element.after(elements)
+						element.after(elements)
 				
 				else
 					
@@ -110,83 +105,82 @@
 						removedElements = elements.splice.apply(elements, args.concat(newElements))
 						$(removedElements).remove()
 						if splice.index is 0
-							options.element.after(newElements)
+							element.after(newElements)
 						else
 							elements.eq(splice.index - 1).after(newElements)
 		
 		# replace the HTML in the element with the page from the given expression and bind to the model in the second argument if any 
-		partial: (options) ->
-			bindExpression options, (value) ->
-				options.element.html(value)
+		partial: (element, expr, data) ->
+			bindExpression element, expr, data, (value) ->
+				element.html(value)
 			
 	
 	
 	bindTo.handlers =
-		if: (options) ->
-			bindExpression options, (value) ->
+		if: (element, expr, data) ->
+			bindExpression element, expr, data, (value) ->
 				if value
-					options.element.show()
+					element.show()
 				else
-					options.element.hide()
+					element.hide()
 		
 		
-		bind: (options) ->
-			bindExpression options, (value) -> options.element.text(if value? then value else '')
+		bind: (element, expr, data) ->
+			bindExpression element, expr, data, (value) ->
+				element.text(if value? then value else '')
 		
 		
-		'bind-html': (options) ->
-			bindExpression options, (value) -> options.element.html(if value? then value else '')
+		'bind-html': (element, expr, data) ->
+			bindExpression element, expr, data, (value) ->
+				element.html(if value? then value else '')
 		
 		
-		active: (options) ->
-			if options.expr
-				bindExpression options, (value) ->
+		active: (element, expr, data) ->
+			if expr
+				bindExpression element, expr, data, (value) ->
 					if value
-						options.element.addClass('active')
+						element.addClass('active')
 					else
-						options.element.removeClass('active')
+						element.removeClass('active')
 			else
 				# look at the href of this or a child element and set the active class depending on the current URL
 				refresh = ->
 					if link.length and link.get(0).href is location.href
-						options.element.addClass('active')
+						element.addClass('active')
 					else
-						options.element.removeClass('active')
+						element.removeClass('active')
 				
-				link = options.element.filter('[href],[data-attr^="href:"]').add(options.element.children('[href],[data-attr^="href:"]')).first()
+				link = element.filter('[href],[data-attr^="href:"]').add(element.children('[href],[data-attr^="href:"]')).first()
 				link.on 'boundUpdate', refresh
 				$(document).on 'urlchange', refresh
-				onRemove options.element, -> $(document).off 'urlchange', refresh
+				onRemove element, -> $(document).off 'urlchange', refresh
 				refresh()
 		
 		
-		class: (options) ->
-			[className] = options.args()
-			bindExpression options, (value) ->
-				if value
-					options.element.addClass(className)
-				else
-					options.element.removeClass(className)
+		class: (element, expr, data) ->
+			bindExpression element, expr, data, (value) ->
+				if Array.isArray(value)
+					value = value.join(' ')
+				
+				if typeof value is 'string'
+					element.attr('class', value)
+				else if value and typeof value is 'object'
+					for className, toggle of value
+						if toggle
+							element.addClass(className)
+						else
+							element.removeClass(className)
 		
 		
-		value: (options) ->
-			bindExpression options, (value) ->
-				options.element.val(value)
+		value: (element, expr, data) ->
+			bindExpression element, expr, data, (value) ->
+				element.val(value)
 			
-			expr = options.expr
-			options.expr += ' = value'
-			setter = createBoundExpr(options)
-			options.expr = expr
-			options.element.on 'keyup', ->
-				console.log options.element.val()
-				setter options.element.val()
-		
-		
-		on: (options) ->
-			[eventName] = options.args()
-			options.element.on eventName, (event) ->
-				event.preventDefault()
-				evaluate(options)
+			setter = createBoundExpr(expr + ' = value', data, ['value'])
+			setter element.val()
+			element.on 'keyup', ->
+				setter element.val()
+				syncView()
 	
 	
 	events = [ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur' ]
@@ -195,46 +189,40 @@
 	attribs = [ 'href', 'src' ]
 	
 	events.forEach (eventName) ->
-		bindTo.handlers['on' + eventName] = (options) ->
-			options.element.on eventName, (event) ->
+		bindTo.handlers['on' + eventName] = (element, expr, data) ->
+			element.on eventName, (event) ->
 				event.preventDefault()
-				evaluate(options)
+				evaluate(expr, data)
 	
 	
 	Object.keys(keyCodes).forEach (name) ->
 		keyCode = keyCodes[name]
-		bindTo.handlers['on' + name] = (options) ->
-			options.element.on 'keydown', (event) ->
+		bindTo.handlers['on' + name] = (element, expr, data) ->
+			element.on 'keydown', (event) ->
 				if event.keyCode is keyCode
 					event.preventDefault()
-					evaluate(options)
+					# TODO create cached bound function?
+					evaluate(expr, data)
 	
 	
 	toggles.forEach (attr) ->
-		bindTo.handlers[attr] = (options) ->
-			bindExpression options, (value) ->
-				options.element.prop(attr, value)
+		bindTo.handlers[attr] = (element, expr, data) ->
+			bindExpression element, expr, data, (value) ->
+				element.prop(attr, value)
 	
 	
 	attribs.forEach (attr) ->
-		bindTo.handlers[attr] = (options) ->
-			bindExpression options, (value) ->
+		bindTo.handlers[attr] = (element, expr, data) ->
+			bindExpression element, expr, data, (value) ->
 				if value?
-					options.element.attr(attr, value)
+					element.attr(attr, value)
 				else
-					options.element.removeAttr(attr)
+					element.removeAttr(attr)
 	
 	
 	
 	Path.onchange = ->
 		$(document).trigger('urlchange')
-	
-	
-	# method to put on options to get the arguments out of an expression (the items before colons) 
-	optionArgs = ->
-		args = this.expr.split /\s*:\s*/
-		this.expr = args.pop()
-		args
 	
 	
 	# closes an observer when an element is officially "removed" from the DOM by jQuery
@@ -250,21 +238,61 @@
 			event.handler()
 	
 	
+	varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi
+	
+	# add "this." to the beginning of each variable
+	normalizeExpression = (expr, argNames) ->
+		argNames = argNames.concat ['this', 'window', 'true', 'false']
+		rewritten = ''
+		index = 0
+		while (match = varExpr.exec(expr))
+			if match
+				match = match[0]
+				# add the non-match characters to our rewritten expr
+				rewritten += expr.slice(index, varExpr.lastIndex - match.length)
+				
+				if match is "'" or match is '"'
+					# skip the string
+					index = expr.indexOf(match, varExpr.lastIndex) + 1
+					rewritten += expr.slice(varExpr.lastIndex - 1, index)
+					varExpr.lastIndex = index
+				else if expr[varExpr.lastIndex - match.length - 1] is '.' # handle cases like func().chain()
+					rewritten += match
+					index = varExpr.lastIndex
+				else
+					if match.slice(-1) isnt ':' and argNames.indexOf(match.split('.').shift()) is -1
+						rewritten += 'this.'
+					rewritten += match
+					index = varExpr.lastIndex
+		rewritten += expr.slice(index)
+		rewritten
+		
+	
+	
+	
+	
 	# binds a callback to a path, allowing for the "this" keyword, triggering the callback immediately, and removing the
 	# binding automatically for garbage collection when the DOM node is removed
-	bindExpression = (options, callback) ->
+	bindExpression = (element, expr, data, callback) ->
 		wrapper = (value, changes) ->
-			options.element.trigger('boundUpdate')
+			element.trigger('boundUpdate')
 			callback value, changes
 		
-		observer = observers.add createBoundExpr(options), true, wrapper
-		onRemove options.element, -> observer.close()
+		observer = observers.add createBoundExpr(expr, data), true, wrapper
+		onRemove element, -> observer.close()
 		return observer
 	
 	
+	notThis = (name) -> name isnt 'this'
+	getDataArgNames = (data) -> Object.keys(data).filter(notThis).sort() 
+	getDataArgs = (data) -> Object.keys(data).filter(notThis).sort().map (key) -> data[key]
+	
 	
 	exprCache = {}
-	getterFunction = (expr) ->
+	createFunction = (expr, data, extras) ->
+		argNames = getDataArgNames data
+		argNames = argNames.concat(extras) if extras
+		expr = normalizeExpression expr, argNames
 		func = exprCache[expr]
 		return func if func
 		try
@@ -272,24 +300,25 @@
 				functionBody = "try{return #{expr}}catch(e){}"
 			else
 				functionBody = "return #{expr}"
-			func = exprCache[expr] = Function('controller', 'model', 'element', 'value', functionBody)
+			func = exprCache[expr] = Function(argNames..., functionBody)
 		catch e
 			throw 'Error evaluating code for binding: "' + expr + '" with error: ' + e.message
 		func
 	
 	
+	# evaluate an expression
+	createBoundExpr = (expr, data, extras) ->
+		func = createFunction(expr, data, extras)
+		args = getDataArgs(data)
+		func.bind(data.this, args...)
+	
 	
 	# evaluate an expression
-	createBoundExpr = (options) ->
-		func = getterFunction(options.expr)
-		func.bind(options.model or options.controller, options.controller, options.model, options.element)
-	
-	
-	# evaluate an expression
-	evaluate = (options) ->
-		func = getterFunction(options.expr)
+	evaluate = (expr, data) ->
+		func = createFunction(expr, data)
+		args = getDataArgs(data)
 		
 		# allow "this" to be the model first, or controller second
-		func.call(options.model or options.controller, options.controller, options.model, options.element)
+		func.apply(data.this, args)
 
 )(jQuery)

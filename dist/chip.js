@@ -1586,9 +1586,6 @@ Path.core.route.prototype = {
     return observers.forEach(function(observer) {
       var changeRecords, splices, value;
       value = observer.expr();
-      if (value === observer.oldValue) {
-        return;
-      }
       if (Array.isArray(value) && Array.isArray(observer.oldValue)) {
         splices = calcSplices(value, observer.oldValue);
         if (splices.length) {
@@ -1670,7 +1667,7 @@ Path.core.route.prototype = {
   EDIT_ADD = 2;
   EDIT_DELETE = 3;
   calcSplices = function(current, old) {
-    var currentEnd, currentStart, distances, index, minLength, oldEnd, oldIndex, oldStart, op, ops, ops2, prefixCount, splice, splices, suffixCount, _i, _len;
+    var currentEnd, currentStart, distances, index, minLength, oldEnd, oldIndex, oldStart, op, ops, prefixCount, splice, splices, suffixCount, _i, _len;
     currentStart = 0;
     currentEnd = current.length;
     oldStart = 0;
@@ -1693,7 +1690,6 @@ Path.core.route.prototype = {
     }
     distances = calcEditDistances(current, currentStart, currentEnd, old, oldStart, oldEnd);
     ops = spliceOperationsFromEditDistances(distances);
-    ops2 = spliceOperationsFromEditDistances2(distances);
     splice = void 0;
     splices = [];
     index = currentStart;
@@ -1990,15 +1986,26 @@ modifyCopyArray = function(copy) {
   };
 };
 
+var __slice = [].slice;
+
 (function($) {
-  var attribs, bindExpression, bindTo, createBoundExpr, evaluate, events, exprCache, getterFunction, keyCodes, onRemove, optionArgs, toggles;
+  var attribs, bindExpression, bindTo, createBoundExpr, createFunction, evaluate, events, exprCache, getDataArgNames, getDataArgs, keyCodes, normalizeExpression, notThis, onRemove, toggles, varExpr;
   window.syncView = observers.sync;
-  bindTo = $.fn.bindTo = function(controller, model) {
-    var bindings, block, blocksSelector, element, handleBinding, selector, splits;
+  bindTo = $.fn.bindTo = function(data) {
+    var bindings, block, blocksSelector, element, handleBinding, selector;
     element = this;
-    splits = /[^|]\|[^|]/g;
+    if (!data) {
+      data = {
+        "this": {}
+      };
+    }
+    if (!data.hasOwnProperty('this')) {
+      data = {
+        "this": data
+      };
+    }
     handleBinding = function(element, handlers) {
-      var attr, attributes, binding, expr, expressions, index, _i, _len;
+      var attr, attributes, binding, expr, _i, _len;
       attributes = Array.prototype.slice.call(element.get(0).attributes);
       for (_i = 0, _len = attributes.length; _i < _len; _i++) {
         attr = attributes[_i];
@@ -2009,22 +2016,7 @@ modifyCopyArray = function(copy) {
         if (binding) {
           expr = attr.value;
           element.removeAttr(attr.name);
-          expressions = [];
-          index = 0;
-          while (splits.exec(expr)) {
-            expressions.push(expr.slice(index, splits.lastIndex - 2));
-            index = splits.lastIndex - 1;
-          }
-          expressions.push(expr.slice(index));
-          expressions.forEach(function(expr) {
-            return binding({
-              element: element,
-              expr: expr,
-              controller: controller,
-              model: model,
-              args: optionArgs
-            });
-          });
+          binding(element, expr, data);
         }
       }
     };
@@ -2040,34 +2032,40 @@ modifyCopyArray = function(copy) {
     return element;
   };
   bindTo.blockHandlers = {
-    repeat: function(options) {
-      var controllerName, createElement, elements, template;
-      controllerName = options.element.attr('data-controller');
-      options.element.removeAttr('data-controller');
-      template = options.element;
-      options.element = $('<script type="text/repeat-placeholder"><!--data-repeat="' + options.expr + '"--></script>').replaceAll(template);
+    repeat: function(element, expr, data) {
+      var controllerName, createElement, elements, itemName, parent, template, _ref;
+      _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
+      controllerName = element.attr('data-controller');
+      element.removeAttr('data-controller');
+      parent = data["this"] || data;
+      template = element;
+      element = $('<script type="text/repeat-placeholder"><!--data-repeat="' + expr + '"--></script>').replaceAll(template);
       elements = $();
       createElement = function(model) {
-        var controller, element;
-        element = template.clone();
+        var controller, itemData, newElement;
+        newElement = template.clone();
         if (controllerName) {
           controller = chip.getController(controllerName, {
-            parent: options.controller,
-            element: element,
+            parent: parent,
+            element: newElement,
             model: model
           });
         } else {
           controller = options.controller;
         }
-        element.bindTo(controller, model);
+        itemData = {
+          "this": controller
+        };
+        itemData[itemName] = model;
+        newElement.bindTo(itemData);
         if (controllerName) {
           if (typeof controller.setup === "function") {
             controller.setup();
           }
         }
-        return element.get(0);
+        return newElement.get(0);
       };
-      return bindExpression(options, function(value, splices) {
+      return bindExpression(element, expr, data, function(value, splices) {
         if (!splices) {
           elements.remove();
           elements = $();
@@ -2075,7 +2073,7 @@ modifyCopyArray = function(copy) {
             value.forEach(function(item) {
               return elements.push(createElement(item));
             });
-            return options.element.after(elements);
+            return element.after(elements);
           }
         } else {
           return splices.forEach(function(splice) {
@@ -2091,7 +2089,7 @@ modifyCopyArray = function(copy) {
             removedElements = elements.splice.apply(elements, args.concat(newElements));
             $(removedElements).remove();
             if (splice.index === 0) {
-              return options.element.after(newElements);
+              return element.after(newElements);
             } else {
               return elements.eq(splice.index - 1).after(newElements);
             }
@@ -2099,90 +2097,91 @@ modifyCopyArray = function(copy) {
         }
       });
     },
-    partial: function(options) {
-      return bindExpression(options, function(value) {
-        return options.element.html(value);
+    partial: function(element, expr, data) {
+      return bindExpression(element, expr, data, function(value) {
+        return element.html(value);
       });
     }
   };
   bindTo.handlers = {
-    "if": function(options) {
-      return bindExpression(options, function(value) {
+    "if": function(element, expr, data) {
+      return bindExpression(element, expr, data, function(value) {
         if (value) {
-          return options.element.show();
+          return element.show();
         } else {
-          return options.element.hide();
+          return element.hide();
         }
       });
     },
-    bind: function(options) {
-      return bindExpression(options, function(value) {
-        return options.element.text(value != null ? value : '');
+    bind: function(element, expr, data) {
+      return bindExpression(element, expr, data, function(value) {
+        return element.text(value != null ? value : '');
       });
     },
-    'bind-html': function(options) {
-      return bindExpression(options, function(value) {
-        return options.element.html(value != null ? value : '');
+    'bind-html': function(element, expr, data) {
+      return bindExpression(element, expr, data, function(value) {
+        return element.html(value != null ? value : '');
       });
     },
-    active: function(options) {
+    active: function(element, expr, data) {
       var link, refresh;
-      if (options.expr) {
-        return bindExpression(options, function(value) {
+      if (expr) {
+        return bindExpression(element, expr, data, function(value) {
           if (value) {
-            return options.element.addClass('active');
+            return element.addClass('active');
           } else {
-            return options.element.removeClass('active');
+            return element.removeClass('active');
           }
         });
       } else {
         refresh = function() {
           if (link.length && link.get(0).href === location.href) {
-            return options.element.addClass('active');
+            return element.addClass('active');
           } else {
-            return options.element.removeClass('active');
+            return element.removeClass('active');
           }
         };
-        link = options.element.filter('[href],[data-attr^="href:"]').add(options.element.children('[href],[data-attr^="href:"]')).first();
+        link = element.filter('[href],[data-attr^="href:"]').add(element.children('[href],[data-attr^="href:"]')).first();
         link.on('boundUpdate', refresh);
         $(document).on('urlchange', refresh);
-        onRemove(options.element, function() {
+        onRemove(element, function() {
           return $(document).off('urlchange', refresh);
         });
         return refresh();
       }
     },
-    "class": function(options) {
-      var className;
-      className = options.args()[0];
-      return bindExpression(options, function(value) {
-        if (value) {
-          return options.element.addClass(className);
-        } else {
-          return options.element.removeClass(className);
+    "class": function(element, expr, data) {
+      return bindExpression(element, expr, data, function(value) {
+        var className, toggle, _results;
+        if (Array.isArray(value)) {
+          value = value.join(' ');
+        }
+        if (typeof value === 'string') {
+          return element.attr('class', value);
+        } else if (value && typeof value === 'object') {
+          _results = [];
+          for (className in value) {
+            toggle = value[className];
+            if (toggle) {
+              _results.push(element.addClass(className));
+            } else {
+              _results.push(element.removeClass(className));
+            }
+          }
+          return _results;
         }
       });
     },
-    value: function(options) {
-      var expr, setter;
-      bindExpression(options, function(value) {
-        return options.element.val(value);
+    value: function(element, expr, data) {
+      var setter;
+      bindExpression(element, expr, data, function(value) {
+        return element.val(value);
       });
-      expr = options.expr;
-      options.expr += ' = value';
-      setter = createBoundExpr(options);
-      options.expr = expr;
-      return options.element.on('keyup', function() {
-        console.log(options.element.val());
-        return setter(options.element.val());
-      });
-    },
-    on: function(options) {
-      var eventName;
-      eventName = options.args()[0];
-      return options.element.on(eventName, function(event) {
-        event.preventDefault();
-        return evaluate(options);
+      setter = createBoundExpr(expr + ' = value', data, ['value']);
+      setter(element.val());
+      return element.on('keyup', function() {
+        setter(element.val());
+        return syncView();
       });
     }
   };
@@ -2194,51 +2193,45 @@ modifyCopyArray = function(copy) {
   toggles = ['checked', 'disabled'];
   attribs = ['href', 'src'];
   events.forEach(function(eventName) {
-    return bindTo.handlers['on' + eventName] = function(options) {
-      return options.element.on(eventName, function(event) {
+    return bindTo.handlers['on' + eventName] = function(element, expr, data) {
+      return element.on(eventName, function(event) {
         event.preventDefault();
-        return evaluate(options);
+        return evaluate(expr, data);
       });
     };
   });
   Object.keys(keyCodes).forEach(function(name) {
     var keyCode;
     keyCode = keyCodes[name];
-    return bindTo.handlers['on' + name] = function(options) {
-      return options.element.on('keydown', function(event) {
+    return bindTo.handlers['on' + name] = function(element, expr, data) {
+      return element.on('keydown', function(event) {
         if (event.keyCode === keyCode) {
           event.preventDefault();
-          return evaluate(options);
+          return evaluate(expr, data);
         }
       });
     };
   });
   toggles.forEach(function(attr) {
-    return bindTo.handlers[attr] = function(options) {
-      return bindExpression(options, function(value) {
-        return options.element.prop(attr, value);
+    return bindTo.handlers[attr] = function(element, expr, data) {
+      return bindExpression(element, expr, data, function(value) {
+        return element.prop(attr, value);
       });
     };
   });
   attribs.forEach(function(attr) {
-    return bindTo.handlers[attr] = function(options) {
-      return bindExpression(options, function(value) {
+    return bindTo.handlers[attr] = function(element, expr, data) {
+      return bindExpression(element, expr, data, function(value) {
         if (value != null) {
-          return options.element.attr(attr, value);
+          return element.attr(attr, value);
         } else {
-          return options.element.removeAttr(attr);
+          return element.removeAttr(attr);
         }
       });
     };
   });
   Path.onchange = function() {
     return $(document).trigger('urlchange');
-  };
-  optionArgs = function() {
-    var args;
-    args = this.expr.split(/\s*:\s*/);
-    this.expr = args.pop();
-    return args;
   };
   onRemove = function(element, cb) {
     return element.on('removeObserver', cb);
@@ -2248,21 +2241,66 @@ modifyCopyArray = function(copy) {
       return event.handler();
     }
   };
-  bindExpression = function(options, callback) {
+  varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi;
+  normalizeExpression = function(expr, argNames) {
+    var index, match, rewritten;
+    argNames = argNames.concat(['this', 'window', 'true', 'false']);
+    rewritten = '';
+    index = 0;
+    while ((match = varExpr.exec(expr))) {
+      if (match) {
+        match = match[0];
+        rewritten += expr.slice(index, varExpr.lastIndex - match.length);
+        if (match === "'" || match === '"') {
+          index = expr.indexOf(match, varExpr.lastIndex) + 1;
+          rewritten += expr.slice(varExpr.lastIndex - 1, index);
+          varExpr.lastIndex = index;
+        } else if (expr[varExpr.lastIndex - match.length - 1] === '.') {
+          rewritten += match;
+          index = varExpr.lastIndex;
+        } else {
+          if (match.slice(-1) !== ':' && argNames.indexOf(match.split('.').shift()) === -1) {
+            rewritten += 'this.';
+          }
+          rewritten += match;
+          index = varExpr.lastIndex;
+        }
+      }
+    }
+    rewritten += expr.slice(index);
+    return rewritten;
+  };
+  bindExpression = function(element, expr, data, callback) {
     var observer, wrapper;
     wrapper = function(value, changes) {
-      options.element.trigger('boundUpdate');
+      element.trigger('boundUpdate');
       return callback(value, changes);
     };
-    observer = observers.add(createBoundExpr(options), true, wrapper);
-    onRemove(options.element, function() {
+    observer = observers.add(createBoundExpr(expr, data), true, wrapper);
+    onRemove(element, function() {
       return observer.close();
     });
     return observer;
   };
+  notThis = function(name) {
+    return name !== 'this';
+  };
+  getDataArgNames = function(data) {
+    return Object.keys(data).filter(notThis).sort();
+  };
+  getDataArgs = function(data) {
+    return Object.keys(data).filter(notThis).sort().map(function(key) {
+      return data[key];
+    });
+  };
   exprCache = {};
-  getterFunction = function(expr) {
-    var e, func, functionBody;
+  createFunction = function(expr, data, extras) {
+    var argNames, e, func, functionBody;
+    argNames = getDataArgNames(data);
+    if (extras) {
+      argNames = argNames.concat(extras);
+    }
+    expr = normalizeExpression(expr, argNames);
     func = exprCache[expr];
     if (func) {
       return func;
@@ -2273,22 +2311,24 @@ modifyCopyArray = function(copy) {
       } else {
         functionBody = "return " + expr;
       }
-      func = exprCache[expr] = Function('controller', 'model', 'element', 'value', functionBody);
+      func = exprCache[expr] = Function.apply(null, __slice.call(argNames).concat([functionBody]));
     } catch (_error) {
       e = _error;
       throw 'Error evaluating code for binding: "' + expr + '" with error: ' + e.message;
     }
     return func;
   };
-  createBoundExpr = function(options) {
-    var func;
-    func = getterFunction(options.expr);
-    return func.bind(options.model || options.controller, options.controller, options.model, options.element);
+  createBoundExpr = function(expr, data, extras) {
+    var args, func;
+    func = createFunction(expr, data, extras);
+    args = getDataArgs(data);
+    return func.bind.apply(func, [data["this"]].concat(__slice.call(args)));
   };
-  return evaluate = function(options) {
-    var func;
-    func = getterFunction(options.expr);
-    return func.call(options.model || options.controller, options.controller, options.model, options.element);
+  return evaluate = function(expr, data) {
+    var args, func;
+    func = createFunction(expr, data);
+    args = getDataArgs(data);
+    return func.apply(data["this"], args);
   };
 })(jQuery);
 

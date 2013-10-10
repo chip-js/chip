@@ -33,7 +33,6 @@
 	observers.sync = ->
 		observers.forEach (observer) ->
 			value = observer.expr()
-			return if value is observer.oldValue
 			if Array.isArray(value) and Array.isArray(observer.oldValue)
 				splices = calcSplices value, observer.oldValue
 				observer.callback(value, splices) if splices.length
@@ -150,7 +149,6 @@
 		# a mixture of adds and removes
 		distances = calcEditDistances(current, currentStart, currentEnd, old, oldStart, oldEnd)
 		ops = spliceOperationsFromEditDistances distances
-		ops2 = spliceOperationsFromEditDistances2 distances
 		
 		splice = undefined
 		splices = []
