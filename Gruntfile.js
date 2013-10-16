@@ -1,41 +1,68 @@
 module.exports = function(grunt) {
 
+	var srcFiles = [
+		'src/chip.coffee',
+		'src/observer.coffee',
+		'src/controller.coffee',
+		'src/binding.coffee',
+		'src/bindings.coffee',
+		'src/equality.coffee'
+	];
+	
+	var libFiles = [
+		'lib/path.js'
+	];
+	
+	
 	// Project configuration.
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 		coffee: {
 			compile: {
-				options: {
-					bare: true
-				},
 				files: {
-					'build/jquery-bindTo.js': 'src/jquery-bindTo.coffee',
-					'build/chip.js': 'src/chip.coffee',
-					'build/observers.js': 'src/observers.coffee'
+					'build/chip.js': 'build/chip.coffee'
 				}
 			}
 		},
 		concat: {
+			src: {
+				src: srcFiles,
+				dest: 'build/chip.coffee'
+			},
 			dist: {
-				src: ['lib/path.js', 'build/observers.js', 'build/jquery-bindTo.js', 'build/chip.js'],
-				dest: 'dist/<%= pkg.name %>.js'
+				src: libFiles.concat('build/chip.js'),
+				dest: 'dist/chip.js'
 			}
 		},
 		uglify: {
-			options: {
-				banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
-			},
 			build: {
-				src: 'dist/<%= pkg.name %>.js',
-				dest: 'dist/<%= pkg.name %>.min.js'
+				src: 'dist/chip.js',
+				dest: 'dist/chip.min.js'
 			}
 		},
 		clean: [ 'build' ],
-		watch: {
-			scripts: {
-				files: [ 'src/**/*.coffee', 'lib/**/*.js' ],
-				tasks: [ 'coffee', 'concat', 'uglify', 'clean' ],
+		docco: {
+			src: {
+				src: srcFiles,
 				options: {
+					output: 'docs'
+				}
+			}
+		},
+		watch: {
+			dist: {
+				files: [ 'src/*.coffee', 'lib/*.js' ],
+				tasks: [ 'dist' ],
+				options: {
+					atBegin: true,
+					spawn: false
+				}
+			},
+			docs: {
+				files: [ 'src/*.coffee' ],
+				tasks: [ 'docs' ],
+				options: {
+					atBegin: true,
 					spawn: false
 				}
 			}
@@ -46,9 +73,12 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-clean');
+	grunt.loadNpmTasks('grunt-docco2');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 
 	// Default task(s).
-	grunt.registerTask('default', [ 'coffee', 'concat', 'uglify', 'clean' ]);
+	grunt.registerTask('default', [ 'dist' ]);
+	grunt.registerTask('dist', [ 'concat:src', 'coffee', 'concat:dist', 'uglify', 'clean' ]);
+	grunt.registerTask('docs', [ 'docco', 'clean' ]);
 
 };

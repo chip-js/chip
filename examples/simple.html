@@ -4,8 +4,7 @@
 	<script src="../dist/chip.js"></script>
 	<script>
 		$(function() {
-			var app = {}
-			$('#main').bindTo(app)
+			window.controller = Controller.create($('#main'))
 		})
 	</script>
 </head>
@@ -16,7 +15,7 @@
 <div id="main">
 	<label>Name:</label>
 	<input type="text" data-value="name" placeholder="Enter a name here" autofocus>
-	<button data-onclick="window.alert(name)">Say it!</button>
+	<button data-click="window.alert(name)">Say it!</button>
 	<h2 data-if="name">Welcome <span data-bind="name"></span>!</h2>
 </div>
 </body>

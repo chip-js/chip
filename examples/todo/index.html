@@ -7,46 +7,52 @@
 		<link rel="stylesheet" href="bower_components/todomvc-common/base.css">
 		<!-- CSS overrides - remove if you don't need it -->
 		<link rel="stylesheet" href="css/app.css">
+		<script src="js/jquery.js"></script>
+		<script src="../../dist/chip.js"></script>
+		<script src="js/models/todo.js"></script>
+		<script src="js/controllers/todos.js"></script>
+		<script src="js/controllers/todo.js"></script>
+		<script src="js/app.js"></script>
 	</head>
 	<body>
 		<section id="todoapp">
 			<header id="header">
 				<h1>todos</h1>
-				<input id="new-todo" placeholder="What needs to be done?" autofocus data-onenter="createTodo()">
+				<input id="new-todo" placeholder="What needs to be done?" autofocus data-value="newDescription" data-enter="createTodo()">
 			</header>
 			<!-- This section should be hidden by default and shown when there are todos -->
 			<section id="main" data-if="todos.length">
-				<input id="toggle-all" type="checkbox" data-onchange="toggleAll()">
+				<input id="toggle-all" type="checkbox" data-checked="todos.every(filters.done)" data-change="toggleAll()">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-					<li data-repeat="todo in todos.filter(currentFilter)" data-controller="todo" data-class="{editing:editing,completed:todo.done}">
+					<li data-repeat="todo in todos.filter(filters[filterName])" data-controller="todo" data-class="{editing:editing,completed:todo.done}">
 						<div class="view">
-							<input class="toggle" type="checkbox" data-onchange="toggleDone(todo)" data-checked="todo.done">
-							<label data-ondblclick="editTodo(todo)" data-bind="todo.description">Create a TodoMVC template</label>
-							<button class="destroy" data-onclick="removeTodo(todo)"></button>
+							<input class="toggle" type="checkbox" data-change="toggleDone(todo)" data-checked="todo.done">
+							<label data-dblclick="editTodo(todo)" data-bind="todo.description">Create a TodoMVC template</label>
+							<button class="destroy" data-click="removeTodo(todo)"></button>
 						</div>
-						<input class="edit" data-value="description" data-onesc="cancelEditing()" data-onblur="cancelEditing()" data-onenter="saveTodo()">
+						<input class="edit" data-value="editDescription" data-esc="cancelEditing()" data-blur="cancelEditing()" data-enter="saveTodo()">
 					</li>
 				</ul>
 			</section>
 			<!-- This footer should hidden by default and shown when there are todos -->
 			<footer id="footer" data-if="todos.length">
 				<!-- This should be `0 items left` by default -->
-				<span id="todo-count"><strong data-bind="todos.filter(undone).length">1</strong> <span data-bind="todos.filter(undone).length == 1 ? 'item':'items'">item</span> left</span>
+				<span id="todo-count"><strong data-bind="todos.filter(filters.undone).length">1</strong> <span data-bind="todos.filter(filters.undone).length == 1 ? 'item':'items'">item</span> left</span>
 				<!-- Remove this if you don't implement routing -->
 				<ul id="filters">
 					<li>
-						<a class="selected" href="#/" data-onclick="unfilter()">All</a>
+						<a class="selected" href="#/" data-class="{selected:filterName == 'none'}" data-click="setFilter('none')">All</a>
 					</li>
 					<li>
-						<a href="#/active" data-onclick="filter(false)">Active</a>
+						<a href="#/active" data-class="{selected:filterName == 'undone'}" data-click="setFilter('undone')">Active</a>
 					</li>
 					<li>
-						<a href="#/completed" data-onclick="filter(true)">Completed</a>
+						<a href="#/completed" data-class="{selected:filterName == 'done'}" data-click="setFilter('done')">Completed</a>
 					</li>
 				</ul>
 				<!-- Hidden if no completed items are left ↓ -->
-				<button id="clear-completed" data-if="todos.filter(done).length" data-onclick="clearCompleted()">Clear completed (<span data-bind="todos.filter(done).length">0</span>)</button>
+				<button id="clear-completed" data-if="todos.filter(filters.done).length" data-click="clearCompleted()">Clear completed (<span data-bind="todos.filter(filters.done).length">0</span>)</button>
 			</footer>
 		</section>
 		<footer id="info">
@@ -58,12 +64,6 @@
 			<p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
 		</footer>
 		<!-- Scripts here. Don't remove this ↓ -->
-		<!--<script src="bower_components/todomvc-common/base.js"></script>-->
-		<script src="http://code.jquery.com/jquery-latest.js"></script>
-		<script src="../../dist/chip.js"></script>
-		<script src="js/models/todo.js"></script>
-		<script src="js/controllers/todos.js"></script>
-		<script src="js/controllers/todo.js"></script>
-		<script src="js/app.js"></script>
+		<script src="bower_components/todomvc-common/base.js"></script>
 	</body>
 </html>

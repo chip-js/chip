@@ -1,77 +1,29 @@
-((global)->
+# # Chip Equality
+# > Based on work from Google's observe-js polyfill: https://github.com/Polymer/observe-js
+(->
+	# A namespace to store the functions on
+	equality = {}
 	
-	observers = []
-	global.observers = observers
-	
-	
-	setTimeout ->
-		observers.calcSplices = calcSplices
-		observers.diffObjects = diffObjects
-	
-	
-	observers.add = (expr, triggerNow, callback) ->
-		if typeof triggerNow is 'function'
-			callback = triggerNow
-			triggerNow = false
-		
-		value = expr()
-		observer =
-			expr: expr
-			callback: callback
-			oldValue: copyValue value
-			close: -> observers.remove observer
-		observers.push observer
-		callback(value) if triggerNow
-		observer
-	
-	
-	observers.remove = (observer) ->
-		index = observers.indexOf(observer)
-		observers.splice(index, 1) if index
-	
-	
-	observers.sync = ->
-		observers.forEach (observer) ->
-			value = observer.expr()
-			if Array.isArray(value) and Array.isArray(observer.oldValue)
-				splices = calcSplices value, observer.oldValue
-				observer.callback(value, splices) if splices.length
-			else if value and observer.oldValue and typeof value is 'object' and typeof observer.oldValue is 'object'
-				changeRecords = diffObjects value, observer.oldValue
-				observer.callback(value, changeRecords) if changeRecords.length
-			else if value isnt observer.oldValue
-				observer.callback(value)
-			else
-				return
-			observer.oldValue = copyValue value
-			return
-	
-		
-		
-	
-	copyValue = (value) ->
-		if Array.isArray(value)
-			value.slice()
-		else if value and typeof value is 'object'
-			copyObject(value)
-		else
-			value
-		
-	
-	
-	
-
-	diffObjects = (object, oldObject) ->
+	# Diffs two objects returning an array of change records. The change record looks like:
+	# ```javascript
+	# {
+	#   object: object,
+	#   type: 'deleted|updated|new',
+	#   name: 'propertyName',
+	#   oldValue: oldValue
+	# }
+	# ```
+	equality.object = (object, oldObject) ->
 		changeRecords = []
 	
-		# go through old object and look for things that are gone from object or changed in object
+		# Goes through the old object (should be a clone) and look for things that are now gone or changed
 		for prop, oldValue of oldObject
 			newValue = object[prop]
 			
-			# if value is undefined in both, it could have been added or removed still
+			# Allow for the case of obj.prop = undefined (which is a new property, even if it is undefined)
 			continue if newValue isnt undefined and newValue is oldValue
 	        
-			# if value is gone in object, it was removed
+			# If the property is gone it was removed
 			unless `(prop in object)`
 				changeRecords.push newChange object, 'deleted', prop, oldValue
 				continue
@@ -79,35 +31,24 @@
 			if newValue isnt oldValue
 				changeRecords.push newChange object, 'updated', prop, oldValue
 		
-		# go through old object and look for things that are gone from object or changed in object
+		# Goes through the old object and looks for things that are new
 		for prop, newValue of object
 			continue if `prop in oldObject`
 			
 			changeRecords.push newChange object, 'new', prop
-			
+		
 		if Array.isArray(object) and object.length isnt oldObject.length
 			changeRecords.push newChange object, 'updated', 'length', oldObject.length
 		
 		changeRecords
 	
 	
-	
+	# Creates a change record for the object changes
 	newChange = (object, type, name, oldValue) ->
 		object: object
 		type: type
 		name: name
 		oldValue: oldValue
-	
-	
-
-	copyObject = (object) ->
-		copy = if Array.isArray(object) then [] else {}
-		for key, value of copy
-			copy[key] = value
-		if Array.isArray(object)
-			copy.length = object.length
-		return copy
-	
 	
 	
 	
@@ -119,16 +60,23 @@
 	EDIT_DELETE = 3
 	
 	
-	# find all array differences in terms of splice objects {}
-	calcSplices = (current, old) ->
+	# Diffs two arrays returning an array of splices. A splice object looks like:
+	# ```javascript
+	# {
+	#   index: 3,
+	#   removed: [item, item],
+	#   addedCount: 0
+	# }
+	# ```
+	equality.array = (value, oldValue) ->
 		currentStart = 0
-		currentEnd = current.length
+		currentEnd = value.length
 		oldStart = 0
-		oldEnd = old.length
+		oldEnd = oldValue.length
 		
 		minLength = Math.min(currentEnd, oldEnd)
-		prefixCount = sharedPrefix(current, old, minLength)
-		suffixCount = sharedSuffix(current, old, minLength - prefixCount)
+		prefixCount = sharedPrefix(value, oldValue, minLength)
+		suffixCount = sharedSuffix(value, oldValue, minLength - prefixCount)
 		
 		currentStart += prefixCount
 		oldStart += prefixCount
@@ -140,14 +88,14 @@
 		
 		# if nothing was added, only removed from one spot
 		if currentStart is currentEnd
-			return [ newSplice(currentStart, old.slice(oldStart, oldEnd), 0) ]
+			return [ newSplice(currentStart, oldValue.slice(oldStart, oldEnd), 0) ]
 		
 		# if nothing was removed, only added to one spot
 		if oldStart is oldEnd
 			return [ newSplice(currentStart, [], currentEnd - currentStart) ]
 		
 		# a mixture of adds and removes
-		distances = calcEditDistances(current, currentStart, currentEnd, old, oldStart, oldEnd)
+		distances = calcEditDistances(value, currentStart, currentEnd, oldValue, oldStart, oldEnd)
 		ops = spliceOperationsFromEditDistances distances
 		
 		splice = undefined
@@ -169,7 +117,7 @@
 				splice.addedCount++
 				index++
 				
-				splice.removed.push old[oldIndex]
+				splice.removed.push oldValue[oldIndex]
 				oldIndex++
 			else if op is EDIT_ADD
 				splice = newSplice(index, [], 0) unless splice
@@ -179,7 +127,7 @@
 			else if op is EDIT_DELETE
 				splice = newSplice(index, [], 0) unless splice
 				
-				splice.removed.push old[oldIndex]
+				splice.removed.push oldValue[oldIndex]
 				oldIndex++
 		
 		splices.push(splice) if splice
@@ -279,5 +227,15 @@
 					distances[i][j] = if north < west then north else west
 		
 		distances
-
-)(this)
+	
+	
+	
+	
+	# Set up for AMD.
+	this.equality = equality
+	if typeof define is 'function' && define.amd
+		define 'chip/equality', -> equality
+	else if typeof exports is 'object' and typeof module is 'object'
+		chip.equality = equality
+	
+).call(this)

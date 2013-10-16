@@ -1,63 +1,64 @@
-chip.controller('todos', {
-	todos: [],
-	done: function(todo) {
-		return todo.done;
-	},
-	undone: function(todo) {
-		return !todo.done;
-	},
-	currentFilter: function(todo) {
-		return true;
-	},
+Controller.define('todos', function(controller) {
 	
-	setup: function() {
-		var _self = this;
-		Todo.load(function(err, todos) {
-			_self.todos = todos;
-			syncView();
-		})
-	},
+	controller.todos = [];
+	controller.newDescription = '';
+	controller.allDone = false;
+	controller.filterName = 'none';
+	controller.filters = {
+		none: function() {
+			return true;
+		},
+		done: function(todo) {
+			return todo.done;
+		},
+		undone: function(todo) {
+			return !todo.done;
+		}
+	};
 	
-	createTodo: function() {
-		var description = $('#new-todo').val().trim();
-		$('#new-todo').val('');
-		if (!description) return;
+	Todo.load(function(err, todos) {
+		controller.todos = todos;
+		controller.syncView();
+	});
+	
+	controller.createTodo = function() {
+		var description = controller.newDescription.trim();
+		controller.newDescription = '';
+		if (!description) {
+			controller.syncView();
+			return;
+		}
+		
 		var todo = new Todo({ description: description });
-		this.todos.unshift(todo);
-		todo.save(syncView);
-	},
+		controller.todos.unshift(todo);
+		todo.save(controller.syncView);
+	};
 	
-	toggleAll: function() {
-		var done = $('#toggle-all').prop('checked');
-		this.todos.forEach(function(todo) {
-			todo.done = done;
+	controller.toggleAll = function() {
+		// if any are not done, toggle them all to done, otherwise toggle them all to undone
+		var allDone = controller.todos.some(function(todo) {
+			return !todo.done;
+		});
+		controller.todos.forEach(function(todo) {
+			todo.done = allDone;
 		});
 		Todo.store();
-		syncView();
-	},
+		controller.syncView();
+	};
 	
-	unfilter: function() {
-		$('#filters a.selected').removeClass('selected');
-		$('#filters a').eq(0).addClass('selected');
-		delete this.currentFilter
-		syncView();
-	},
+	controller.setFilter = function(name) {
+		controller.filterName = name;
+		controller.syncView();
+	};
 	
-	filter: function(done) {
-		$('#filters a.selected').removeClass('selected');
-		$('#filters a').eq(done ? 2 : 1).addClass('selected');
-		this.currentFilter = done ? this.done : this.undone
-		syncView();
-	},
-	
-	clearCompleted: function() {
-		for (var i = 0; i < this.todos.length; i++) {
-			if (this.todos[i].done) {
-				this.todos.splice(i--, 1);
+	controller.clearCompleted = function() {
+		for (var i = 0; i < controller.todos.length; i++) {
+			if (controller.todos[i].done) {
+				controller.todos.splice(i--, 1);
 			}
 		}
 		Todo.store();
-		syncView();
-	}
+		controller.syncView();
+	};
 	
 });

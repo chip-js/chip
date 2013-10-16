@@ -1,47 +1,42 @@
-chip.controller('todo', {
-	element: null,
-	todo: null,
-	editing: false,
-	description: '',
+Controller.define('todo', function(controller) {
 	
-	setup: function() {
-		this.todo = this.model;
-	},
+	controller.editing = false;
+	controller.editDescription = '';
 	
-	editTodo: function() {
-		this.editing = true;
-		this.description = this.todo.description;
-		syncView();
-		this.element.find('.edit').focus()
-	},
+	controller.editTodo = function() {
+		controller.editing = true;
+		controller.editDescription = controller.todo.description;
+		controller.syncView();
+		controller.element.find('.edit').focus();
+	};
 	
-	cancelEditing: function() {
-		this.editing = false;
-		syncView();
-	},
+	controller.cancelEditing = function() {
+		controller.editing = false;
+		controller.syncView();
+	};
 	
-	saveTodo: function() {
-		this.description = this.description.trim()
+	controller.saveTodo = function() {
+		controller.editDescription = controller.editDescription.trim()
 		
-		if (this.description) {
-			this.todo.description = this.description;
-			this.todo.save();
+		if (controller.editDescription) {
+			controller.todo.description = controller.editDescription;
+			controller.todo.save();
 		}
-		this.editing = false;
-		syncView();
-	},
+		controller.editing = false;
+		controller.syncView();
+	};
 	
-	toggleDone: function() {
-		this.todo.done = !this.todo.done;
-		this.todo.save();
-		syncView();
-	},
+	controller.toggleDone = function() {
+		controller.todo.done = !controller.todo.done;
+		controller.todo.save();
+		controller.syncView();
+	};
 	
-	removeTodo: function() {
-		var index = Todo.todos.indexOf(this.todo);
+	controller.removeTodo = function() {
+		var index = Todo.todos.indexOf(controller.todo);
 		Todo.todos.splice(index, 1);
 		Todo.store();
-		syncView();
-	}
+		controller.syncView();
+	};
 	
 });

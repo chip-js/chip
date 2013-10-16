@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Chip</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h1">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h1>Chip</h1>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <blockquote>
+<p>Chip.js 1.1.0</p>
+<p>(c) 2013 Jacob Wright, TeamSnap
+Chip may be freely distributed under the MIT license.
+For all details and documentation:
+<a href="https://github.com/teamsnap/chip/">https://github.com/teamsnap/chip/</a></p>
+</blockquote>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2>Contents</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <ul>
+<li><a href="chip.html">chip</a> contains the namespace, templating, and routing functions for chip</li>
+<li><a href="observer.html">Observer</a> provides a system to globally reevaluate bound expressions and dispatch updates</li>
+<li><a href="controller.html">Controller</a> is used in the binding to attach data and run actions</li>
+<li><a href="binding.html">Binding</a> is the base of the binding system</li>
+<li><a href="bindings.html">Default binding handlers</a> registers the default binding handlers chip provides</li>
+<li><a href="equality.html">equality</a> is a utility for comparing the equality of objects and arrays</li>
+</ul>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <h2>Initial setup</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>The global namespace. Everything is added onto <code>chip</code></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip = {}
+<span class="keyword">this</span>.chip = chip</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Set up for AMD</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">if</span> <span class="keyword">typeof</span> define <span class="keyword">is</span> <span class="string">'function'</span> &amp;&amp; define.amd
+	define <span class="string">'chip'</span>, chip
+<span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> exports <span class="keyword">is</span> <span class="string">'object'</span> <span class="keyword">and</span> <span class="keyword">typeof</span> module <span class="keyword">is</span> <span class="string">'object'</span>
+	module.exports = chip</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <h2>Templates</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Store the templates here by name. They should be strings of HTML markup.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.templates = {}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Get a template by name. This method may be overriden to get a jQuery element the way your app needs by setting
+<code>chip.getTemplate = function...</code> where the function returns a jQuery element</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">getTemplate</span></span> = (name) -&gt;
+	<span class="keyword">unless</span> chip.templates.hasOwnProperty name
+		<span class="keyword">throw</span> <span class="string">'Template "'</span> + name + <span class="string">'" does not exist'</span>
+	$ chip.templates[name]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <h2>Routing</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>Create a route to be run when the given URL <code>path</code> is hit in the browser URL. The route <code>name</code> is used to load the
+template and controller by the same name. This template will be placed in the first element on page with a
+<code>data-route</code> attribute.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">route</span></span> = (path, name, subroutes) -&gt;
+	<span class="keyword">if</span> <span class="keyword">typeof</span> name <span class="keyword">is</span> <span class="string">'function'</span>
+		subroutes = name
+	
+	<span class="keyword">if</span> <span class="keyword">typeof</span> name <span class="keyword">isnt</span> <span class="string">'string'</span>
+		name = path.replace(<span class="regexp">/^\//, '').replace(/\/\w/</span>, (match) -&gt; match.slice(<span class="number">1</span>).toUpperCase())
+	
+	chip.route.parents = [] <span class="keyword">unless</span> chip.route.parents
+	parents = chip.route.parents.slice() <span class="comment"># unmutable copy</span>
+	path = parents.join(<span class="string">''</span>) + path <span class="keyword">if</span> parents.length <span class="comment"># sub-route support</span>
+	
+	Path.map(path).to -&gt; chip.runRoute(name, parents)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p><code>subroutes</code> should be a function like <code>(route) -&gt;</code> which allows routes to be defined
+relative to the route above it. When these routes are matched, the template and controller with that name will be
+loaded into the first element with the <code>data-route</code> attribute within the outer one.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="keyword">if</span> subroutes
+		chip.route.parents.push path
+		subroutes chip.route
+		chip.route.parents.pop()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p><strong>Example:</strong></p>
+<pre><code class="lang-javascript">chip.route(<span class="string">'/'</span>, <span class="string">'home'</span>)
+chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</span>, <span class="keyword">function</span>(route) {
+  route(<span class="string">'/:id'</span>, <span class="string">'todo'</span>)
+})</code></pre>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>Run a route which was defined by <code>chip.route</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">runRoute</span></span> = (name, parents) -&gt;
+	selector = [<span class="string">'[data-route]'</span>]
+	selector.push <span class="string">'[data-route]'</span> <span class="keyword">for</span> path <span class="keyword">in</span> parents</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p><strong>Example:</strong> a 3rd level subroute selector would be</p>
+<pre><code class="lang-javascript">$(<span class="string">'[data-route] [data-route] [data-route]'</span>)</code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	selector = selector.join(<span class="string">' '</span>)
+	container = $(selector)
+	
+	controller = container.data(<span class="string">'controller'</span>)
+	controller?.teardown?()
+	
+	template = chip.getTemplate(name)
+	container.data(<span class="string">'controller'</span>, controller).html(template)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>TODO allow for a root controllers above this</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	controller = Controller.create container, name
+	controller.syncView()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>Set up the listeners for path changes. Chip uses the Path.js library for routing.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">listen</span></span> = -&gt;
+	Path.history.listen()
+	<span class="keyword">if</span> Path.history.supported</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>Set listeners on links to catch their clicks and use pushState instead</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		$(<span class="string">'body'</span>).<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
+			event.preventDefault()
+			Path.history.pushState {}, <span class="string">""</span>, $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

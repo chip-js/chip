@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Chip Binding</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h1">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h1>Chip Binding</h1>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>A Binding instance is created for each binding attribute in the DOM. Mostly the Binding class is used as a static
+place to register new bind handlers.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Binding</span></span>
+	constructor: (<span class="property">@name</span>, <span class="property">@expr</span>) -&gt;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>The attribute prefix for all binding attributes. This is the default and may be changed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@prefix</span>: <span class="string">'data-'</span>
+	<span class="property">@blockHandlers</span>: {}
+	<span class="property">@handlers</span>: {}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Adds a binding handler that will be run for each attribute whose name matches <code>@prefix + name</code>. The <code>handler</code> is
+a function that receives three arguments: the jQuery element the attribute was on, the value of the attribute
+(usually an expression), and the controller for this area of the page.</p>
+<p><strong>Example:</strong> This binding handler adds pirateized text to an element.</p>
+<pre><code class="lang-javascript">Binding.addHandler(<span class="string">'pirate'</span>, <span class="keyword">function</span>(element, expr, controller) {
+  controller.watch(expr, <span class="keyword">function</span>(value) {
+    value = (value+<span class="string">''</span> || <span class="string">''</span>)
+      .replace(<span class="regexp">/\Bing\b/g</span>, <span class="string">"in'"</span>)
+      .replace(<span class="regexp">/\bto\b/g</span>, <span class="string">"t'"</span>)
+      .replace(<span class="regexp">/\byou\b/</span>, <span class="string">'ye'</span>)
+      + <span class="string">' arrrr!'</span>
+    element.text(value)
+  }
+}</code></pre>
+<pre><code class="lang-html">&lt;p data-pirate=&quot;post.body&quot;&gt;This text will be replaced.&lt;/p&gt;</code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@addHandler</span>: (name, handler) -&gt;
+		<span class="property">@handlers</span>[name] = handler</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Adds a handler which is expected to create a new controller for its children. When the bindings are processed
+these are handled first, allowing them to recurse into their HTML with new controllers. They can do that by
+using <code>element.bindTo(newChildController)</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@addBlockHandler</span>: (name, handler) -&gt;
+		<span class="property">@blockHandlers</span>[name] = handler</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Shortcut, adds a handler that executes the expression when the named event is dispatched.</p>
+<p><strong>Example:</strong> Handles the click event.</p>
+<pre><code class="lang-javascript">Binding.addEventHandler(<span class="string">'click'</span>)</code></pre>
+<pre><code class="lang-html">&lt;button data-click=&quot;window.alert(&#39;hello!&#39;)&quot;&gt;Say Hello&lt;/button&gt;</code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@addEventHandler</span>: (eventName) -&gt;
+		<span class="property">@addHandler</span> eventName, (element, expr, controller) -&gt;
+			element.<span class="literal">on</span> eventName, (event) -&gt;
+				event.preventDefault()
+				controller.eval expr</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Shortcut, adds a handler that responds when the given key is pressed, e.g. <code>Binding.addEventHandler(&#39;esc&#39;, 27)</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@addKeyEventHandler</span>: (name, keyCode) -&gt;
+		<span class="property">@addHandler</span> name, (element, expr, controller) -&gt;
+			element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
+				<span class="keyword">if</span> event.keyCode <span class="keyword">is</span> keyCode
+					event.preventDefault()
+					controller.eval expr</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>Shortcut, adds a handler to set the named attribute to the value of the expression.</p>
+<p><strong>Example</strong></p>
+<pre><code class="lang-javascript">Binding.addAttributeHandler(<span class="string">'href'</span>)</code></pre>
+<p>allows</p>
+<pre><code class="lang-html">&lt;a data-href=&quot;&#39;/profile/&#39; + person.id&quot;&gt;My Profile&lt;/a&gt;</code></pre>
+<p>which would result in</p>
+<pre><code class="lang-html">&lt;a href=&quot;/profile/368&quot;&gt;My Profile&lt;/a&gt;</code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@addAttributeHandler</span>: (name) -&gt;
+		<span class="property">@addHandler</span> name, (element, expr, controller) -&gt;
+			controller.watch expr, (value) -&gt;
+				<span class="keyword">if</span> value?
+					element.attr name, value
+				<span class="keyword">else</span>
+					element.removeAttr name</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
+e.g. <code>Binding.addAttributeToggleHandler(&#39;checked&#39;)</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@addAttributeToggleHandler</span>: (name) -&gt;
+		<span class="property">@addHandler</span> name, (element, expr, controller) -&gt;
+			controller.watch expr, (value) -&gt;
+				element.prop name, value <span class="keyword">or</span> <span class="literal">false</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Processes the bindings for the given jQuery element and all of its children.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@process</span>: (element, controller) -&gt;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>Create a new controller if none is provided.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		controller = Controller.create(element) <span class="keyword">unless</span> controller
+		prefixExp = <span class="keyword">new</span> RegExp <span class="string">'^'</span> + Binding.prefix</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>Processes an individual element, handling all of the binding attributes (of one type) at once.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		<span class="function"><span class="title">processElement</span></span> = (element) -&gt;
+			node = element.get(<span class="number">0</span>)
+			handler = <span class="literal">null</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>Converts to an array to keep the set from adjusting when attributes are deleted, and filters out
+non-binding attributes.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>			attribs = Array::slice.call(node.attributes).filter (attr) -&gt;
+				prefixExp.test(attr.name) <span class="keyword">and</span> handlers[attr.name.replace(prefixExp, <span class="string">''</span>)]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>Go through each binding attribute from first to last.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>			<span class="keyword">while</span> attribs.length
+				attr = attribs.shift()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>Don&#39;t re-process if it has been removed. Could happen if one handler uses another and removes it.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>				<span class="keyword">continue</span> <span class="keyword">unless</span> node.hasAttribute attr.name
+				handler = handlers[attr.name.replace(prefixExp, <span class="string">''</span>)]
+				expr = attr.value</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>Remove the binding handlers so they only get processed once. This simplifies our code, but it also
+makes the DOM cleaner.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>				node.removeAttribute(attr.name)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>Calls the handler function allowing the handler to set up the binding.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>				handler element, expr, controller</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>Processes block handlers first in order for recursion to allow the correct controller to be used.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		handlers = <span class="property">@blockHandlers</span>
+		selector = <span class="string">'['</span> + <span class="property">@prefix</span> + Object.keys(handlers).join(<span class="string">'],['</span> + <span class="property">@prefix</span>) + <span class="string">']'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>Handle them one at a time since they may be descendants of each other.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		<span class="keyword">while</span> (block = element.find(selector)).length
+			processElement block.first()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>Processes the rest of the handlers</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		handlers = <span class="property">@handlers</span>
+		selector = <span class="string">'['</span> + <span class="property">@prefix</span> + Object.keys(handlers).join(<span class="string">'],['</span> + <span class="property">@prefix</span>) + <span class="string">']'</span>
+		boundElements = element.filter(selector).add(element.find(selector))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>Handle these in one go. No need to recheck since recursion shouldn&#39;t be happening.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		boundElements.each -&gt; processElement jQuery <span class="keyword">this</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>Sets up the binding handlers for this jQuery element and all of its descendants</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>jQuery.fn.<span class="function"><span class="title">bindTo</span></span> = (controller) -&gt;
+	Binding.process(<span class="keyword">this</span>, controller)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <p>Set up for AMD.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">this</span>.Binding = Binding
+<span class="keyword">if</span> <span class="keyword">typeof</span> define <span class="keyword">is</span> <span class="string">'function'</span> &amp;&amp; define.amd
+	define <span class="string">'chip/binding'</span>, -&gt; Binding
+<span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> exports <span class="keyword">is</span> <span class="string">'object'</span> <span class="keyword">and</span> <span class="keyword">typeof</span> module <span class="keyword">is</span> <span class="string">'object'</span>
+	chip.Binding = Binding</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
