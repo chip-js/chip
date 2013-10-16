@@ -34,6 +34,20 @@ else if typeof exports is 'object' and typeof module is 'object'
 # Store the templates here by name. They should be strings of HTML markup.
 chip.templates = {}
 
+# Set up templates by looking for them in the HTML page, then initialize page
+$ ->
+	$('script[type="text/html"]').each ->
+		$this = $(this)
+		name = $this.attr('name') or $this.attr('id')
+		if name
+			chip.templates[name] = $this.html()
+			$this.remove()
+	
+	while (element = $('[data-controller]')).length
+		name = element.attr 'data-controller'
+		element.removeAttr 'data-controller'
+		Controller.create element, name
+
 # Get a template by name. This method may be overriden to get a jQuery element the way your app needs by setting
 # `chip.getTemplate = function...` where the function returns a jQuery element
 chip.getTemplate = (name) ->

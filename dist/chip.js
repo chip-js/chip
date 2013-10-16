@@ -215,6 +215,26 @@ Path.core.route.prototype = {
 
   chip.templates = {};
 
+  $(function() {
+    var element, name, _results;
+    $('script[type="text/html"]').each(function() {
+      var $this, name;
+      $this = $(this);
+      name = $this.attr('name') || $this.attr('id');
+      if (name) {
+        chip.templates[name] = $this.html();
+        return $this.remove();
+      }
+    });
+    _results = [];
+    while ((element = $('[data-controller]')).length) {
+      name = element.attr('data-controller');
+      element.removeAttr('data-controller');
+      _results.push(Controller.create(element, name));
+    }
+    return _results;
+  });
+
   chip.getTemplate = function(name) {
     if (!chip.templates.hasOwnProperty(name)) {
       throw 'Template "' + name + '" does not exist';
