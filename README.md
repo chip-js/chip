@@ -1,36 +1,72 @@
-chip
+Chip
 ====
 
-Chip.js is a lightweight framework that manages the state and behavior of data in the browser. It's claim to fame
-is a simple and unpolluted API with few - and mature - dependencies.
+Chip.js is a lightweight JavaScript framework that provides data binding to HTML like Angular.js and Ember.js. See the
+full [annotated source](https://rawgithub.com/teamsnap/chip/master/docs/src/chip.html).
 
-## How To Use Chip
+## Getting Started
 
-Chip's magic starts by binding a controller representing a JavaScript object to the page. This Controller
-object maps directly to a Chip Model which is a representation of the actual domain data.  The models in Chip
-represent the singular objects in the domain, leaving it to a second controller object to build and manage the 
-collections. The functionality provided by these controllers and models manifests itself in the HTML by attaching
-to a set of pre-defined (or custom) DOM attributes that dictate how the results of that expression will affect the DOM.
+Check out our [Getting Started with Chip](https://github.com/teamsnap/chip/wiki) guide.
 
+## Introduction to Chip
 
-## Chip Controllers
+Chip stands on the shoulders of giants, without being a giant itself. Chip's philosophy is to remain small and simple
+while providing what we've come to love with Angular and Ember. Chip provides routing, controllers, and view/HTML
+data-binding. You can create your own model layer using jQuery.ajax. You can bring in your own HTML functionality with
+jQuery plugins. In this way, Chip not only remains small, but understandable. The API is not complex. The documentation
+can be read and understood in a day or two. The ramp-up time is very short. And your productivity and enjoyment is
+increased because of simpler and smaller APIs that do just as much as the big guys.
 
-Chip's controllers manage the state of the models and are where the heart of the functionality of a Chip object
-is stored. The Chip controllers are responsbile for informing the view of updates for both an individual model's state
-as well as bubbling up state for parts of the view interested in data about the collection.
+## The pieces
 
-## Chip Models
+A Chip application is made up of your model (provided by yourself), controllers, and the HTML. Other than that it only
+provides routing.
 
-Chip doesn't come with models! Our view is that POJO's (Plain 'ol Javascript Objects) are sufficient for carrying out the 
-responsibility of managing state and loading and storing the data from the remote data store (in this context remote means
-'separate from the application' and can include servers in a far away land or the local storage in the browser).
+### Model
 
-With that said, we see a few cases where some level of abstraction is likely going to help an application. For instance, if
-the API you are working with has a set of patterns that are consistent, you may opt to abstract that into a higher level model.
+Your model can be whatever you want. It should have ways of loading and saving data since the controllers will need to
+do that. You can have each controller load the data when it initializes. Or you can keep the data in memory within your
+model layer and just give controllers what they ask for. The important thing is to have a single source of truth. You
+don't want the same object existing twice in your application so when one gets updated, the other doesn't. This can be
+very confusing to the user and lead to bugs and problems.
 
-## Chip Routes
+The model should be like an API that your application uses to get its data and should contain the business logic.
 
-Chip's routing system maps URL's to controllers and, by default, sets up the controller in the default state.
+### Controller
+
+Your controllers asks the model to load new data. They store that data on themselves for the view to access. And they
+provide functions for the view to call when a user interacts with the page. There is a top-level application controller,
+a controller for each URL route a user goes to, a controller for each item in a repeated list, and you can set a
+controller to manage any portion of your HTML document.
+
+Controllers are linked in a parent-child relationship using the JavaScript prototype chain, with the main application
+controller being at the top. This means that if `user` is set on the application controller, it will be available
+(read-only) on every controller below it (which is all of them). If a descendant controller sets `user` it will have the
+new value for itself and its child controllers, but the application controller will still have the original value and
+all other controllers will still see it. This is the case with functions as well as objects. This is a very useful
+feature, but it can be frustrating if you don't understand how it works. By the way, if you want a child controller to
+set a value on the parent controller you'll have to provide a function on the parent that sets it and the child can call
+that function.
+
+### View/HTML
+
+The view is just your HTML. The HTML document and your HTML templates contain no non-HTML markup. To fill your HTML
+with data provided by your controller you use HTML attributes, prefixed with "data-". Each of these attributes creates
+a "binding" from the controller to the HTML. Chip registers "binding handlers" to handle the different types of binding
+you may wish to use. There is a binding handler for displaying text, showing/hiding an element, or repeating an element
+for each item in an array. Chip comes with a bunch of
+[binding handlers](https://rawgithub.com/teamsnap/chip/master/docs/src/bindings.html), but you can create your own
+easily using jQuery. Take a look at the provided binding handlers and check out the
+[Binding documentation](https://rawgithub.com/teamsnap/chip/master/docs/src/binding.html) to see how easy it is.
+
+### Routing
+
+Routing is how you specify what HTML to show when the URL changes. You define routes with a URL and a name, and the
+template and controller with the given name will be displayed within the element on your page that has the `data-route`
+attribute.
+
+And that's all there is to Chip. It provides basic structure and helps with the boilerplate of keeping the view in sync
+with the data.
 
 ## Chip in the HTML
 
@@ -38,12 +74,12 @@ Chip's API in the HTML document is really where the rubber meets the road for a 
 application is made available to the user by attaching functionality to attribute tags in the HTML document. At a high level
 these attributes can be used for a few things:
 
-1. Presenting data. For example, attaching a controller method (`controller.filteredTodos`) to a `data-repeat` attribute will present that HTML
-element for each instance returned from that controller method. Individual data can also be inserted into the dom using
-the `data-bind` attribute and passing in computed data.
-2. Embedding Action. Attaching an expression to the `data-onchange` attribute will bind that element (and it's data)
-to the corresponding expression. 
-3. Presenting State. For example, HTML classes can be added to or removed from an element based on the state of an
+1. **Presenting data**. For example, referencing an array on a controller (`controller.todos`) to a
+`data-repeat="todo in todos"` attribute will present that HTML element for each todo in the array. Individual data can
+also be inserted into the DOM using the `data-bind` attribute as with `data-bind="todo.description"`.
+2. **Embedding Action**. Setting an expression to the `data-change` attribute will trigger the expression when the
+element's change event fires.
+3. **Presenting State**. For example, HTML classes can be added to or removed from an element based on the state of an
 object.
 
 ## An Example
@@ -92,8 +128,8 @@ through to persisting the data to the model.
 3. Include the additional property in the HTML.
 
 ```html
-<input class="edit" data-value="description" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
-<input class="edit-priority" data-value="priority" data-onesc="controller.cancelEditing()" data-onblur="controller.cancelEditing()" data-onenter="controller.saveTodo(model, element)">
+<input class="edit" data-value="description" data-esc="controller.cancelEditing()" data-blur="controller.cancelEditing()" data-enter="controller.saveTodo(model, element)">
+<input class="edit-priority" data-value="priority" data-esc="controller.cancelEditing()" data-blur="controller.cancelEditing()" data-enter="controller.saveTodo(model, element)">
 ```
 Adding an input here is a good start and we can see that the `saveTodo` expression here should handle this new input well. Functionally speaking,
 this should complete our feature addition, though the actual display and styling begs for a bit more work.
