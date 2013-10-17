@@ -1,6 +1,6 @@
 <html>
 <head>
-	<script src="http://code.jquery.com/jquery-latest.js"></script>
+	<script src="js/jquery.js"></script>
 	<script src="../dist/chip.js"></script>
 </head>
 <body>
@@ -11,7 +11,7 @@
 	<label>Name:</label>
 	<input type="text" data-value="name" placeholder="Enter a name here" autofocus>
 	<button data-click="window.alert(name)">Say it!</button>
-	<h2 data-if="name">Welcome <span data-text="name"></span>!</h2>
+	<h2 data-if="name">Welcome <span data-bind="name"></span>!</h2>
 </div>
 </body>
 </html>

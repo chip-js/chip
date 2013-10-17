@@ -6,7 +6,16 @@ full [annotated source](https://rawgithub.com/teamsnap/chip/master/docs/src/chip
 
 ## Getting Started
 
-Check out our [Getting Started with Chip](https://github.com/teamsnap/chip/wiki) guide.
+Check out our [Getting Started](https://github.com/teamsnap/chip/wiki) guide.
+
+### Examples
+
+There are a couple of [example apps](https://github.com/teamsnap/chip/tree/master/examples) using Chip you can check
+out.
+
+See them in action:
+* [Simple example](https://rawgithub.com/teamsnap/chip/master/examples/simple.html)
+* [Todo example](https://rawgithub.com/teamsnap/chip/master/examples/todo/index.html).
 
 ## Introduction to Chip
 
