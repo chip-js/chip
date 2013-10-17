@@ -28,7 +28,7 @@
 					<li data-repeat="todo in todos.filter(filters[filterName])" data-controller="todo" data-class="{editing:editing,completed:todo.done}">
 						<div class="view">
 							<input class="toggle" type="checkbox" data-change="toggleDone(todo)" data-checked="todo.done">
-							<label data-dblclick="editTodo(todo)" data-bind="todo.description">Create a TodoMVC template</label>
+							<label data-dblclick="editTodo(todo)" data-text="todo.description">Create a TodoMVC template</label>
 							<button class="destroy" data-click="removeTodo(todo)"></button>
 						</div>
 						<input class="edit" data-value="editDescription" data-esc="cancelEditing()" data-blur="cancelEditing()" data-enter="saveTodo()">
@@ -38,7 +38,7 @@
 			<!-- This footer should hidden by default and shown when there are todos -->
 			<footer id="footer" data-if="todos.length">
 				<!-- This should be `0 items left` by default -->
-				<span id="todo-count"><strong data-bind="todos.filter(filters.undone).length">1</strong> <span data-bind="todos.filter(filters.undone).length == 1 ? 'item':'items'">item</span> left</span>
+				<span id="todo-count"><strong data-text="todos.filter(filters.undone).length">1</strong> <span data-text="todos.filter(filters.undone).length == 1 ? 'item':'items'">item</span> left</span>
 				<!-- Remove this if you don't implement routing -->
 				<ul id="filters">
 					<li>
@@ -52,7 +52,7 @@
 					</li>
 				</ul>
 				<!-- Hidden if no completed items are left ↓ -->
-				<button id="clear-completed" data-if="todos.filter(filters.done).length" data-click="clearCompleted()">Clear completed (<span data-bind="todos.filter(filters.done).length">0</span>)</button>
+				<button id="clear-completed" data-if="todos.filter(filters.done).length" data-click="clearCompleted()">Clear completed (<span data-text="todos.filter(filters.done).length">0</span>)</button>
 			</footer>
 		</section>
 		<footer id="info">

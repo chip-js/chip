@@ -76,7 +76,7 @@ these attributes can be used for a few things:
 
 1. **Presenting data**. For example, referencing an array on a controller (`controller.todos`) to a
 `data-repeat="todo in todos"` attribute will present that HTML element for each todo in the array. Individual data can
-also be inserted into the DOM using the `data-bind` attribute as with `data-bind="todo.description"`.
+also be inserted into the DOM using the `data-text` attribute as with `data-text="todo.description"`.
 2. **Embedding Action**. Setting an expression to the `data-change` attribute will trigger the expression when the
 element's change event fires.
 3. **Presenting State**. For example, HTML classes can be added to or removed from an element based on the state of an

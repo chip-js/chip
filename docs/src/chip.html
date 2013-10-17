@@ -173,7 +173,7 @@ For all details and documentation:
 			chip.templates[name] = $<span class="keyword">this</span>.html()
 			$<span class="keyword">this</span>.remove()
 	
-	<span class="keyword">while</span> (element = $(<span class="string">'[data-controller]'</span>)).length
+	<span class="keyword">while</span> (element = $(<span class="string">'[data-controller]:first'</span>)).length
 		name = element.attr <span class="string">'data-controller'</span>
 		element.removeAttr <span class="string">'data-controller'</span>
 		Controller.create element, name</pre></div></div>

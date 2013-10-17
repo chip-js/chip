@@ -4,15 +4,15 @@
 # Adds a handler to show or hide the element if the value is truthy or falsey.
 #
 # **Example:**
-# ```html
+# ```xml
 # <ul class="header-links">
-#   <li if="user"><a href="/account">My Account</a></li>
-#   <li if="user"><a href="/logout">Sign Out</a></li>
-#   <li if="!user"><a href="/login">Sign In</a></li>
+#   <li data-if="user"><a href="/account">My Account</a></li>
+#   <li data-if="user"><a href="/logout">Sign Out</a></li>
+#   <li data-if="!user"><a href="/login">Sign In</a></li>
 # </ul>
 # ```
 # *Result if `user` is null:*
-# ```html
+# ```xml
 # <ul class="header-links">
 #   <li style="display:none"><a href="/account">My Account</a></li>
 #   <li style="display:none"><a href="/logout">Sign Out</a></li>
@@ -27,21 +27,21 @@ Binding.addHandler 'if', (element, expr, controller) ->
 			element.hide()
 
 
-# ## data-bind
+# ## data-text
 # Adds a handler to display text inside an element.
 #
 # **Example:**
-# ```html
-# <h1 data-bind="post.title">Title</h1>
+# ```xml
+# <h1 data-text="post.title">Title</h1>
 # <div class="info">
 #   Written by
-#   <span data-bind="post.author.name">author</span>
+#   <span data-text="post.author.name">author</span>
 #   on
-#   <span data-bind="post.date.toLocaleDateString()">date</span>.
+#   <span data-text="post.date.toLocaleDateString()">date</span>.
 # </div>
 # ```
 # *Result:*
-# ```html
+# ```xml
 # <h1>Little Red</h1>
 # <div class="info">
 #   Written by
@@ -50,7 +50,7 @@ Binding.addHandler 'if', (element, expr, controller) ->
 #   <span>10/16/2013</span>.
 # </div>
 # ```
-Binding.addHandler 'bind', (element, expr, controller) ->
+Binding.addHandler 'text', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		element.text(if value? then value else '')
 
@@ -59,12 +59,12 @@ Binding.addHandler 'bind', (element, expr, controller) ->
 # Adds a handler to display unescaped HTML inside an element. Be sure it's trusted!
 #
 # **Example:**
-# ```html
-# <h1 data-bind="post.title">Title</h1>
+# ```xml
+# <h1 data-text="post.title">Title</h1>
 # <div data-html="post.body"></div>
 # ```
 # *Result:*
-# ```html
+# ```xml
 # <h1>Little Red</h1>
 # <div>
 #   <p>Little Red Riding Hood is a story about a little girl.</p>
@@ -86,13 +86,13 @@ Binding.addHandler 'bind-html', (element, expr, controller) ->
 # the class list depending on whether the value of the property is truthy or falsey.
 # 
 # **Example:**
-# ```html
+# ```xml
 # <div data-class="theClasses">
 #   <button class="btn primary" data-class="{highlight:ready}"></button>
 # </div>
 # ```
 # *Result if `theClases` equals "red blue" and `ready` is `true`:*
-# ```html
+# ```xml
 # <div class="red blue">
 #   <button class="btn primary highlight"></button>
 # </div>
@@ -117,7 +117,7 @@ Binding.addHandler 'class', (element, expr, controller) ->
 # provided it adds the "active" class if the element or it's first anchor child's href matches the URL in the browser.
 #
 # **Example:**
-# ```html
+# ```xml
 # <button class="btn btn-primary" data-active="formValid">Submit</button>
 # 
 # <ul class="header-links">
@@ -127,7 +127,7 @@ Binding.addHandler 'class', (element, expr, controller) ->
 # </ul>
 # ```
 # *Result if `formValid` is `true` and the browser is at "http://www.example.com/account":*
-# ```html
+# ```xml
 # <button class="btn btn-primary active">Submit</button>
 # 
 # <ul class="header-links">
@@ -150,7 +150,10 @@ Binding.addHandler 'active', (element, expr, controller) ->
 			else
 				element.removeClass('active')
 		
-		link = element.filter('a[href],a[data-attr^="href:"]').add(element.find('a[href],a[data-attr^="href:"]')).first()
+		link = element
+			.filter('a[href],a[data-attr^="href:"]')
+			.add(element.find('a[href],a[data-attr^="href:"]'))
+			.first()
 		if link.attr('data-href')
 			link.on 'hrefChanged', refresh
 		$(document).on 'urlChange', refresh
@@ -166,7 +169,7 @@ Path.onchange = ->
 # the form element, providing two way binding.
 #
 # **Example:**
-# ```html
+# ```xml
 # <label>First Name</label>
 # <input type="text" name="firstName" data-value="user.firstName">
 #
@@ -174,7 +177,7 @@ Path.onchange = ->
 # <input type="text" name="lastName" data-value="user.lastName">
 # ```
 # *Result:*
-# ```html
+# ```xml
 # <label>First Name</label>
 # <input type="text" name="firstName" value="Jacob">
 #
@@ -210,14 +213,14 @@ Binding.addHandler 'value', (element, expr, controller) ->
 # * data-blur
 #
 # **Example:**
-# ```html
+# ```xml
 # <form data-submit="saveUser()">
 #   <input name="firstName" value="Jacob">
 #   <button>Save</button>
 # </form>
 # ```
 # *Result (events don't affect the HTML):*
-# ```html
+# ```xml
 # <form>
 #   <input name="firstName" value="Jacob">
 #   <button>Save</button>
@@ -236,11 +239,11 @@ Binding.addHandler 'value', (element, expr, controller) ->
 # * data-esc
 #
 # **Example:**
-# ```html
+# ```xml
 # <input data-enter="window.alert(element.val())">
 # ```
 # *Result:*
-# ```html
+# ```xml
 # <input>
 # ```
 keyCodes = { enter: 13, esc: 27 }
@@ -256,11 +259,11 @@ for own name, keyCode of keyCodes
 # * data-src
 #
 # **Example:**
-# ```html
+# ```xml
 # <img data-src="user.avatarUrl">
 # ```
 # *Result:*
-# ```html
+# ```xml
 # <img src="http://cdn.example.com/avatars/jacwright-small.png">
 # ```
 attribs = [ 'href', 'src' ]
@@ -276,13 +279,13 @@ for name in attribs
 # * data-disabled
 #
 # **Example:**
-# ```html
+# ```xml
 # <label>Is Administrator</label>
 # <input type="checkbox" data-checked="user.isAdmin">
 # <button data-disabled="isProcessing">Submit</button>
 # ```
 # *Result if `isProcessing` is `true` and `user.isAdmin` is false:*
-# ```html
+# ```xml
 # <label>Is Administrator</label>
 # <input type="checkbox">
 # <button disabled>Submit</button>
@@ -298,14 +301,14 @@ for name in attribs
 # by inside the element. `arrayName` is any expression, e.g. `post in user.getPosts()`.
 #
 # **Example:**
-# ```html
+# ```xml
 # <div data-repeat="post in posts" data-class="{featured:post.isFeatured}">
-#   <h1 data-bind="post.title">Title</h1>
+#   <h1 data-text="post.title">Title</h1>
 #   <div data-html="post.body"></div>
 # </div>
 # ```
 # *Result if there are 2 posts and the first one is featured:*
-# ```html
+# ```xml
 # <div class="featured">
 #   <h1>Little Red</h1>
 #   <div>
@@ -333,7 +336,7 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 	element.removeAttr('data-controller')
 	
 	template = element # use a placeholder for the element and the element as a template
-	element = $('<script type="text/repeat-placeholder"><!--data-repeat="' + expr + '"--></script>').replaceAll(template)
+	element = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template)
 	elements = $()
 	extend = {}
 			
@@ -381,16 +384,16 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 # attributes which appear after `data-partial` will have the new value available if using the special format.
 #
 # **Example:**
-# ```html
+# ```xml
 # <!--<div data-partial="userInfo"></div>-->
 # <div data-partial="getUser() as user with userInfo" data-class="{administrator:user.isAdmin}"></div>
 # 
 # <script name="userInfo" type="text/html">
-#   <span data-bind="user.name"></span>
+#   <span data-text="user.name"></span>
 # </script>
 # ```
 # *Result:*
-# ```html
+# ```xml
 # <!--<div data-partial="userInfo"></div>-->
 # <div class="administrator">
 #   <span>Jacob</span>
@@ -418,12 +421,12 @@ Binding.addBlockHandler 'partial', (element, expr, controller) ->
 # as a form) or provide functionality provided by that controller to the element.
 #
 # **Example:**
-# ```html
+# ```xml
 # <form data-controller="userForm" data-submit="saveUser()">
 # </form>
 # ```
 # *Result if `formValid` is `true` and the browser is at "http://www.example.com/account":*
-# ```html
+# ```xml
 # <form>
 # </form>
 # ```

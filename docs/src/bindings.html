@@ -37,17 +37,17 @@
               <h2>data-if</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;ul class=&quot;header-links&quot;&gt;
-  &lt;li if=&quot;user&quot;&gt;&lt;a href=&quot;/account&quot;&gt;My Account&lt;/a&gt;&lt;/li&gt;
-  &lt;li if=&quot;user&quot;&gt;&lt;a href=&quot;/logout&quot;&gt;Sign Out&lt;/a&gt;&lt;/li&gt;
-  &lt;li if=&quot;!user&quot;&gt;&lt;a href=&quot;/login&quot;&gt;Sign In&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"!user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
 <p><em>Result if <code>user</code> is null:</em></p>
-<pre><code class="lang-html">&lt;ul class=&quot;header-links&quot;&gt;
-  &lt;li style=&quot;display:none&quot;&gt;&lt;a href=&quot;/account&quot;&gt;My Account&lt;/a&gt;&lt;/li&gt;
-  &lt;li style=&quot;display:none&quot;&gt;&lt;a href=&quot;/logout&quot;&gt;Sign Out&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;/login&quot;&gt;Sign In&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">style</span>=<span class="value">"display:none"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">style</span>=<span class="value">"display:none"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
 
             </div>
             
@@ -67,28 +67,28 @@
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <h2>data-bind</h2>
+              <h2>data-text</h2>
 <p>Adds a handler to display text inside an element.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;h1 data-bind=&quot;post.title&quot;&gt;Title&lt;/h1&gt;
-&lt;div class=&quot;info&quot;&gt;
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span> <span class="attribute">data-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"info"</span>&gt;</span>
   Written by
-  &lt;span data-bind=&quot;post.author.name&quot;&gt;author&lt;/span&gt;
+  <span class="tag">&lt;<span class="title">span</span> <span class="attribute">data-text</span>=<span class="value">"post.author.name"</span>&gt;</span>author<span class="tag">&lt;/<span class="title">span</span>&gt;</span>
   on
-  &lt;span data-bind=&quot;post.date.toLocaleDateString()&quot;&gt;date&lt;/span&gt;.
-&lt;/div&gt;</code></pre>
+  <span class="tag">&lt;<span class="title">span</span> <span class="attribute">data-text</span>=<span class="value">"post.date.toLocaleDateString()"</span>&gt;</span>date<span class="tag">&lt;/<span class="title">span</span>&gt;</span>.
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
-<pre><code class="lang-html">&lt;h1&gt;Little Red&lt;/h1&gt;
-&lt;div class=&quot;info&quot;&gt;
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span>&gt;</span>Little Red<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"info"</span>&gt;</span>
   Written by
-  &lt;span&gt;Jacob Wright&lt;/span&gt;
+  <span class="tag">&lt;<span class="title">span</span>&gt;</span>Jacob Wright<span class="tag">&lt;/<span class="title">span</span>&gt;</span>
   on
-  &lt;span&gt;10/16/2013&lt;/span&gt;.
-&lt;/div&gt;</code></pre>
+  <span class="tag">&lt;<span class="title">span</span>&gt;</span>10/16/2013<span class="tag">&lt;/<span class="title">span</span>&gt;</span>.
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'bind'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'text'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		element.text(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
             
@@ -104,17 +104,17 @@
               <h2>data-html</h2>
 <p>Adds a handler to display unescaped HTML inside an element. Be sure it&#39;s trusted!</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;h1 data-bind=&quot;post.title&quot;&gt;Title&lt;/h1&gt;
-&lt;div data-html=&quot;post.body&quot;&gt;&lt;/div&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span> <span class="attribute">data-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-html</span>=<span class="value">"post.body"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
-<pre><code class="lang-html">&lt;h1&gt;Little Red&lt;/h1&gt;
-&lt;div&gt;
-  &lt;p&gt;Little Red Riding Hood is a story about a little girl.&lt;/p&gt;
-  &lt;p&gt;
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span>&gt;</span>Little Red<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+<span class="tag">&lt;<span class="title">div</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">p</span>&gt;</span>Little Red Riding Hood is a story about a little girl.<span class="tag">&lt;/<span class="title">p</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">p</span>&gt;</span>
     More info can be found on
-    &lt;a href=&quot;http://en.wikipedia.org/wiki/Little_Red_Riding_Hood&quot;&gt;Wikipedia&lt;/a&gt;
-  &lt;/p&gt;
-&lt;/div&gt;</code></pre>
+    <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"http://en.wikipedia.org/wiki/Little_Red_Riding_Hood"</span>&gt;</span>Wikipedia<span class="tag">&lt;/<span class="title">a</span>&gt;</span>
+  <span class="tag">&lt;/<span class="title">p</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 
             </div>
             
@@ -137,13 +137,13 @@ class attribute. If the value is an array of strings, those will be set as the e
 overwrite any existing classes. If the value is an object, each property of that object will be toggled on or off in
 the class list depending on whether the value of the property is truthy or falsey.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;div data-class=&quot;theClasses&quot;&gt;
-  &lt;button class=&quot;btn primary&quot; data-class=&quot;{highlight:ready}&quot;&gt;&lt;/button&gt;
-&lt;/div&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-class</span>=<span class="value">"theClasses"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn primary"</span> <span class="attribute">data-class</span>=<span class="value">"{highlight:ready}"</span>&gt;</span><span class="tag">&lt;/<span class="title">button</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result if <code>theClases</code> equals “red blue” and <code>ready</code> is <code>true</code>:</em></p>
-<pre><code class="lang-html">&lt;div class=&quot;red blue&quot;&gt;
-  &lt;button class=&quot;btn primary highlight&quot;&gt;&lt;/button&gt;
-&lt;/div&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"red blue"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn primary highlight"</span>&gt;</span><span class="tag">&lt;/<span class="title">button</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 
             </div>
             
@@ -174,21 +174,21 @@ the class list depending on whether the value of the property is truthy or false
 <p>Adds a handler to add the class “active” to an element if the expression is truthy, or if no expression is
 provided it adds the “active” class if the element or it‘s first anchor child’s href matches the URL in the browser.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;button class=&quot;btn btn-primary&quot; data-active=&quot;formValid&quot;&gt;Submit&lt;/button&gt;
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn btn-primary"</span> <span class="attribute">data-active</span>=<span class="value">"formValid"</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span>
 
-&lt;ul class=&quot;header-links&quot;&gt;
-  &lt;li data-active&gt;&lt;a href=&quot;/posts&quot;&gt;My Blog&lt;/a&gt;&lt;/li&gt;
-  &lt;li data-active&gt;&lt;a href=&quot;/account&quot;&gt;My Account&lt;/a&gt;&lt;/li&gt;
-  &lt;li data-active&gt;&lt;a href=&quot;/profile&quot;&gt;Profile&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
+<span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/posts"</span>&gt;</span>My Blog<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/profile"</span>&gt;</span>Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
 <p><em>Result if <code>formValid</code> is <code>true</code> and the browser is at &quot;<a href="http://www.example.com/account">http://www.example.com/account</a>&quot;:</em></p>
-<pre><code class="lang-html">&lt;button class=&quot;btn btn-primary active&quot;&gt;Submit&lt;/button&gt;
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn btn-primary active"</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span>
 
-&lt;ul class=&quot;header-links&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;/posts&quot;&gt;My Blog&lt;/a&gt;&lt;/li&gt;
-  &lt;li class=&quot;active&quot;&gt;&lt;a href=&quot;/account&quot;&gt;My Account&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;/profile&quot;&gt;Profile&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
+<span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/posts"</span>&gt;</span>My Blog<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">class</span>=<span class="value">"active"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/profile"</span>&gt;</span>Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
 
             </div>
             
@@ -206,7 +206,10 @@ provided it adds the “active” class if the element or it‘s first anchor ch
 			<span class="keyword">else</span>
 				element.removeClass(<span class="string">'active'</span>)
 		
-		link = element.filter(<span class="string">'a[href],a[data-attr^="href:"]'</span>).add(element.find(<span class="string">'a[href],a[data-attr^="href:"]'</span>)).first()
+		link = element
+			.filter(<span class="string">'a[href],a[data-attr^="href:"]'</span>)
+			.add(element.find(<span class="string">'a[href],a[data-attr^="href:"]'</span>))
+			.first()
 		<span class="keyword">if</span> link.attr(<span class="string">'data-href'</span>)
 			link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
 		$(document).<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
@@ -229,17 +232,17 @@ Path.<span class="function"><span class="title">onchange</span></span> = -&gt;
 <p>Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
 the form element, providing two way binding.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;label&gt;First Name&lt;/label&gt;
-&lt;input type=&quot;text&quot; name=&quot;firstName&quot; data-value=&quot;user.firstName&quot;&gt;
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">label</span>&gt;</span>First Name<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"firstName"</span> <span class="attribute">data-value</span>=<span class="value">"user.firstName"</span>&gt;</span>
 
-&lt;label&gt;Last Name&lt;/label&gt;
-&lt;input type=&quot;text&quot; name=&quot;lastName&quot; data-value=&quot;user.lastName&quot;&gt;</code></pre>
+<span class="tag">&lt;<span class="title">label</span>&gt;</span>Last Name<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"lastName"</span> <span class="attribute">data-value</span>=<span class="value">"user.lastName"</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
-<pre><code class="lang-html">&lt;label&gt;First Name&lt;/label&gt;
-&lt;input type=&quot;text&quot; name=&quot;firstName&quot; value=&quot;Jacob&quot;&gt;
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">label</span>&gt;</span>First Name<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"firstName"</span> <span class="attribute">value</span>=<span class="value">"Jacob"</span>&gt;</span>
 
-&lt;label&gt;Last Name&lt;/label&gt;
-&lt;input type=&quot;text&quot; name=&quot;lastName&quot; value=&quot;Wright&quot;&gt;</code></pre>
+<span class="tag">&lt;<span class="title">label</span>&gt;</span>Last Name<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"lastName"</span> <span class="attribute">value</span>=<span class="value">"Wright"</span>&gt;</span></code></pre>
 <p>And when the user changes the text in the first input to “Jac”, <code>user.firstName</code> will be updated immediately with the
 value of <code>&#39;Jac&#39;</code>.</p>
 
@@ -279,15 +282,15 @@ value of <code>&#39;Jac&#39;</code>.</p>
 <li>data-blur</li>
 </ul>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;form data-submit=&quot;saveUser()&quot;&gt;
-  &lt;input name=&quot;firstName&quot; value=&quot;Jacob&quot;&gt;
-  &lt;button&gt;Save&lt;/button&gt;
-&lt;/form&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span> <span class="attribute">data-submit</span>=<span class="value">"saveUser()"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">input</span> <span class="attribute">name</span>=<span class="value">"firstName"</span> <span class="attribute">value</span>=<span class="value">"Jacob"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">button</span>&gt;</span>Save<span class="tag">&lt;/<span class="title">button</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">form</span>&gt;</span></code></pre>
 <p><em>Result (events don&#39;t affect the HTML):</em></p>
-<pre><code class="lang-html">&lt;form&gt;
-  &lt;input name=&quot;firstName&quot; value=&quot;Jacob&quot;&gt;
-  &lt;button&gt;Save&lt;/button&gt;
-&lt;/form&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">input</span> <span class="attribute">name</span>=<span class="value">"firstName"</span> <span class="attribute">value</span>=<span class="value">"Jacob"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">button</span>&gt;</span>Save<span class="tag">&lt;/<span class="title">button</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">form</span>&gt;</span></code></pre>
 
             </div>
             
@@ -312,9 +315,9 @@ value of <code>&#39;Jac&#39;</code>.</p>
 <li>data-esc</li>
 </ul>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;input data-enter=&quot;window.alert(element.val())&quot;&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span> <span class="attribute">data-enter</span>=<span class="value">"window.alert(element.val())"</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
-<pre><code class="lang-html">&lt;input&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span>&gt;</span></code></pre>
 
             </div>
             
@@ -339,9 +342,9 @@ value of <code>&#39;Jac&#39;</code>.</p>
 <li>data-src</li>
 </ul>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;img data-src=&quot;user.avatarUrl&quot;&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">img</span> <span class="attribute">data-src</span>=<span class="value">"user.avatarUrl"</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
-<pre><code class="lang-html">&lt;img src=&quot;http://cdn.example.com/avatars/jacwright-small.png&quot;&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">img</span> <span class="attribute">src</span>=<span class="value">"http://cdn.example.com/avatars/jacwright-small.png"</span>&gt;</span></code></pre>
 
             </div>
             
@@ -366,13 +369,13 @@ value of <code>&#39;Jac&#39;</code>.</p>
 <li>data-disabled</li>
 </ul>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;label&gt;Is Administrator&lt;/label&gt;
-&lt;input type=&quot;checkbox&quot; data-checked=&quot;user.isAdmin&quot;&gt;
-&lt;button data-disabled=&quot;isProcessing&quot;&gt;Submit&lt;/button&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">label</span>&gt;</span>Is Administrator<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"checkbox"</span> <span class="attribute">data-checked</span>=<span class="value">"user.isAdmin"</span>&gt;</span>
+<span class="tag">&lt;<span class="title">button</span> <span class="attribute">data-disabled</span>=<span class="value">"isProcessing"</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
 <p><em>Result if <code>isProcessing</code> is <code>true</code> and <code>user.isAdmin</code> is false:</em></p>
-<pre><code class="lang-html">&lt;label&gt;Is Administrator&lt;/label&gt;
-&lt;input type=&quot;checkbox&quot;&gt;
-&lt;button disabled&gt;Submit&lt;/button&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">label</span>&gt;</span>Is Administrator<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"checkbox"</span>&gt;</span>
+<span class="tag">&lt;<span class="title">button</span> <span class="attribute">disabled</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
 
             </div>
             
@@ -394,31 +397,31 @@ running the controller definition if <code>data-controller</code> is set on the 
 be of the format <code>itemName in arrayName</code> where <code>itemName</code> is the name each item inside the array will be referenced
 by inside the element. <code>arrayName</code> is any expression, e.g. <code>post in user.getPosts()</code>.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;div data-repeat=&quot;post in posts&quot; data-class=&quot;{featured:post.isFeatured}&quot;&gt;
-  &lt;h1 data-bind=&quot;post.title&quot;&gt;Title&lt;/h1&gt;
-  &lt;div data-html=&quot;post.body&quot;&gt;&lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-repeat</span>=<span class="value">"post in posts"</span> <span class="attribute">data-class</span>=<span class="value">"{featured:post.isFeatured}"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">h1</span> <span class="attribute">data-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-html</span>=<span class="value">"post.body"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result if there are 2 posts and the first one is featured:</em></p>
-<pre><code class="lang-html">&lt;div class=&quot;featured&quot;&gt;
-  &lt;h1&gt;Little Red&lt;/h1&gt;
-  &lt;div&gt;
-    &lt;p&gt;Little Red Riding Hood is a story about a little girl.&lt;/p&gt;
-    &lt;p&gt;
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"featured"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">h1</span>&gt;</span>Little Red<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">div</span>&gt;</span>
+    <span class="tag">&lt;<span class="title">p</span>&gt;</span>Little Red Riding Hood is a story about a little girl.<span class="tag">&lt;/<span class="title">p</span>&gt;</span>
+    <span class="tag">&lt;<span class="title">p</span>&gt;</span>
       More info can be found on
-      &lt;a href=&quot;http://en.wikipedia.org/wiki/Little_Red_Riding_Hood&quot;&gt;Wikipedia&lt;/a&gt;
-    &lt;/p&gt;
-  &lt;/div&gt;
-&lt;/div&gt;
-&lt;div&gt;
-  &lt;h1&gt;Big Blue&lt;/h1&gt;
-  &lt;div&gt;
-    &lt;p&gt;Some thoughts on the New York Giants.&lt;/p&gt;
-    &lt;p&gt;
+      <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"http://en.wikipedia.org/wiki/Little_Red_Riding_Hood"</span>&gt;</span>Wikipedia<span class="tag">&lt;/<span class="title">a</span>&gt;</span>
+    <span class="tag">&lt;/<span class="title">p</span>&gt;</span>
+  <span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+<span class="tag">&lt;<span class="title">div</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">h1</span>&gt;</span>Big Blue<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">div</span>&gt;</span>
+    <span class="tag">&lt;<span class="title">p</span>&gt;</span>Some thoughts on the New York Giants.<span class="tag">&lt;/<span class="title">p</span>&gt;</span>
+    <span class="tag">&lt;<span class="title">p</span>&gt;</span>
       More info can be found on
-      &lt;a href=&quot;http://en.wikipedia.org/wiki/New_York_Giants&quot;&gt;Wikipedia&lt;/a&gt;
-    &lt;/p&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+      <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"http://en.wikipedia.org/wiki/New_York_Giants"</span>&gt;</span>Wikipedia<span class="tag">&lt;/<span class="title">a</span>&gt;</span>
+    <span class="tag">&lt;/<span class="title">p</span>&gt;</span>
+  <span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 
             </div>
             
@@ -428,7 +431,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 	element.removeAttr(<span class="string">'data-controller'</span>)
 	
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	element = $(<span class="string">'&lt;script type="text/repeat-placeholder"&gt;&lt;!--data-repeat="'</span> + expr + <span class="string">'"--&gt;&lt;/script&gt;'</span>).replaceAll(template)
+	element = $(<span class="string">'&lt;script type="text/repeat-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).replaceAll(template)
 	elements = $()
 	extend = {}
 			
@@ -483,17 +486,17 @@ be just the name of the template/controller, or it may be of the format <code>ex
 <code>expr</code> is an expression who&#39;s value will be set to <code>itemName</code> on the conroller in the partial. Note: any binding
 attributes which appear after <code>data-partial</code> will have the new value available if using the special format.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;!--&lt;div data-partial=&quot;userInfo&quot;&gt;&lt;/div&gt;--&gt;
-&lt;div data-partial=&quot;getUser() as user with userInfo&quot; data-class=&quot;{administrator:user.isAdmin}&quot;&gt;&lt;/div&gt;
+<pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div data-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-partial</span>=<span class="value">"getUser() as user with userInfo"</span> <span class="attribute">data-class</span>=<span class="value">"{administrator:user.isAdmin}"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
 
-&lt;script name=&quot;userInfo&quot; type=&quot;text/html&quot;&gt;
-  &lt;span data-bind=&quot;user.name&quot;&gt;&lt;/span&gt;
-&lt;/script&gt;</code></pre>
+<span class="tag">&lt;<span class="title">script</span> <span class="attribute">name</span>=<span class="value">"userInfo"</span> <span class="attribute">type</span>=<span class="value">"text/html"</span>&gt;</span><span class="javascript">
+  &lt;span data-text=<span class="string">"user.name"</span>&gt;<span class="xml"><span class="tag">&lt;/<span class="title">span</span>&gt;</span>
+</span></span><span class="tag">&lt;/<span class="title">script</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
-<pre><code class="lang-html">&lt;!--&lt;div data-partial=&quot;userInfo&quot;&gt;&lt;/div&gt;--&gt;
-&lt;div class=&quot;administrator&quot;&gt;
-  &lt;span&gt;Jacob&lt;/span&gt;
-&lt;/div&gt;</code></pre>
+<pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div data-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"administrator"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">span</span>&gt;</span>Jacob<span class="tag">&lt;/<span class="title">span</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 
             </div>
             
@@ -525,11 +528,11 @@ attributes which appear after <code>data-partial</code> will have the new value 
 controller definition name which will be run if provided. Use this when you want to sandbox controller values (such
 as a form) or provide functionality provided by that controller to the element.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-html">&lt;form data-controller=&quot;userForm&quot; data-submit=&quot;saveUser()&quot;&gt;
-&lt;/form&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span> <span class="attribute">data-controller</span>=<span class="value">"userForm"</span> <span class="attribute">data-submit</span>=<span class="value">"saveUser()"</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">form</span>&gt;</span></code></pre>
 <p><em>Result if <code>formValid</code> is <code>true</code> and the browser is at &quot;<a href="http://www.example.com/account">http://www.example.com/account</a>&quot;:</em></p>
-<pre><code class="lang-html">&lt;form&gt;
-&lt;/form&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">form</span>&gt;</span></code></pre>
 
             </div>
             

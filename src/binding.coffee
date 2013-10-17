@@ -30,7 +30,7 @@ class Binding
 	# }
 	# ```
 	#
-	# ```html
+	# ```xml
 	# <p data-pirate="post.body">This text will be replaced.</p>
 	# ```
 	@addHandler: (name, handler) ->
@@ -51,7 +51,7 @@ class Binding
 	# Binding.addEventHandler('click')
 	# ```
 	# 
-	# ```html
+	# ```xml
 	# <button data-click="window.alert('hello!')">Say Hello</button>
 	#```
 	@addEventHandler: (eventName) ->
@@ -77,11 +77,11 @@ class Binding
 	# Binding.addAttributeHandler('href')
 	# ```
 	# allows
-	# ```html
+	# ```xml
 	# <a data-href="'/profile/' + person.id">My Profile</a>
 	# ```
 	# which would result in
-	# ```html
+	# ```xml
 	# <a href="/profile/368">My Profile</a>
 	# ```
 	@addAttributeHandler: (name) ->

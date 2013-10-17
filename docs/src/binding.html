@@ -82,7 +82,7 @@ a function that receives three arguments: the jQuery element the attribute was o
     element.text(value)
   }
 }</code></pre>
-<pre><code class="lang-html">&lt;p data-pirate=&quot;post.body&quot;&gt;This text will be replaced.&lt;/p&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">data-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
 
             </div>
             
@@ -119,7 +119,7 @@ using <code>element.bindTo(newChildController)</code>.</p>
               <p>Shortcut, adds a handler that executes the expression when the named event is dispatched.</p>
 <p><strong>Example:</strong> Handles the click event.</p>
 <pre><code class="lang-javascript">Binding.addEventHandler(<span class="string">'click'</span>)</code></pre>
-<pre><code class="lang-html">&lt;button data-click=&quot;window.alert(&#39;hello!&#39;)&quot;&gt;Say Hello&lt;/button&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">data-click</span>=<span class="value">"window.alert('hello!')"</span>&gt;</span>Say Hello<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
 
             </div>
             
@@ -162,9 +162,9 @@ using <code>element.bindTo(newChildController)</code>.</p>
 <p><strong>Example</strong></p>
 <pre><code class="lang-javascript">Binding.addAttributeHandler(<span class="string">'href'</span>)</code></pre>
 <p>allows</p>
-<pre><code class="lang-html">&lt;a data-href=&quot;&#39;/profile/&#39; + person.id&quot;&gt;My Profile&lt;/a&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">data-href</span>=<span class="value">"'/profile/' + person.id"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
 <p>which would result in</p>
-<pre><code class="lang-html">&lt;a href=&quot;/profile/368&quot;&gt;My Profile&lt;/a&gt;</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/profile/368"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
 
             </div>
             

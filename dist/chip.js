@@ -227,7 +227,7 @@ Path.core.route.prototype = {
       }
     });
     _results = [];
-    while ((element = $('[data-controller]')).length) {
+    while ((element = $('[data-controller]:first')).length) {
       name = element.attr('data-controller');
       element.removeAttr('data-controller');
       _results.push(Controller.create(element, name));
@@ -763,7 +763,7 @@ Path.core.route.prototype = {
     });
   });
 
-  Binding.addHandler('bind', function(element, expr, controller) {
+  Binding.addHandler('text', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.text(value != null ? value : '');
     });
@@ -882,7 +882,7 @@ Path.core.route.prototype = {
     controllerName = element.attr('data-controller');
     element.removeAttr('data-controller');
     template = element;
-    element = $('<script type="text/repeat-placeholder"><!--data-repeat="' + expr + '"--></script>').replaceAll(template);
+    element = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template);
     elements = $();
     extend = {};
     createElement = function(item) {
