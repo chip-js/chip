@@ -53,7 +53,7 @@ $ ->
 chip.getTemplate = (name) ->
 	unless chip.templates.hasOwnProperty name
 		throw 'Template "' + name + '" does not exist'
-	$ chip.templates[name]
+	$ chip.templates[name].trim()
 
 # Routing
 # ------
@@ -118,6 +118,6 @@ chip.listen = ->
 	Path.history.listen()
 	if Path.history.supported
 		# Set listeners on links to catch their clicks and use pushState instead
-		$('body').on 'click', 'a[href]', (event) ->
+		$(document).on 'click', 'a[href]', (event) ->
 			event.preventDefault()
 			Path.history.pushState {}, "", $(this).attr("href")

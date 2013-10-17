@@ -242,14 +242,17 @@ one is instantiated.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
-              <p>Get a definition by name</p>
+              <p>Get a definition by name. They can be registered with Controller.define or be functions in the global scope ending
+with “Controller”, e.g. <code>function homeController(controller){...}</code> would be returned for
+<code>Controller.getDefinition(&#39;home&#39;)</code>.</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>	<span class="property">@getDefinition</span>: (name) -&gt;
-		<span class="keyword">unless</span> <span class="property">@definitions</span>.hasOwnProperty name
-			<span class="keyword">throw</span> <span class="string">'Controller definition "'</span> + name + <span class="string">'" does not exist'</span>
-		<span class="keyword">return</span> <span class="property">@definitions</span>[name]</pre></div></div>
+		def = <span class="property">@definitions</span>[name]
+		<span class="keyword">return</span> def <span class="keyword">if</span> def
+		def = window[name + <span class="string">'Controller'</span>]
+		<span class="keyword">return</span> def <span class="keyword">if</span> <span class="keyword">typeof</span> def <span class="keyword">is</span> <span class="string">'function'</span></pre></div></div>
             
         </li>
         
@@ -328,7 +331,7 @@ before the bindings are set up.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="property">@getDefinition</span>(name)(controller) <span class="keyword">if</span> name</pre></div></div>
+            <div class="content"><div class='highlight'><pre>		<span class="property">@getDefinition</span>(name)?(controller) <span class="keyword">if</span> name</pre></div></div>
             
         </li>
         

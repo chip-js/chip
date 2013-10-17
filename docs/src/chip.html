@@ -195,7 +195,7 @@ For all details and documentation:
             <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">getTemplate</span></span> = (name) -&gt;
 	<span class="keyword">unless</span> chip.templates.hasOwnProperty name
 		<span class="keyword">throw</span> <span class="string">'Template "'</span> + name + <span class="string">'" does not exist'</span>
-	$ chip.templates[name]</pre></div></div>
+	$ chip.templates[name].trim()</pre></div></div>
             
         </li>
         
@@ -361,7 +361,7 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		$(<span class="string">'body'</span>).<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
+            <div class="content"><div class='highlight'><pre>		$(document).<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
 			event.preventDefault()
 			Path.history.pushState {}, <span class="string">""</span>, $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)</pre></div></div>
             

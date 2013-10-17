@@ -239,7 +239,7 @@ Path.core.route.prototype = {
     if (!chip.templates.hasOwnProperty(name)) {
       throw 'Template "' + name + '" does not exist';
     }
-    return $(chip.templates[name]);
+    return $(chip.templates[name].trim());
   };
 
   chip.route = function(path, name, subroutes) {
@@ -293,7 +293,7 @@ Path.core.route.prototype = {
   chip.listen = function() {
     Path.history.listen();
     if (Path.history.supported) {
-      return $('body').on('click', 'a[href]', function(event) {
+      return $(document).on('click', 'a[href]', function(event) {
         event.preventDefault();
         return Path.history.pushState({}, "", $(this).attr("href"));
       });
@@ -504,14 +504,19 @@ Path.core.route.prototype = {
     };
 
     Controller.getDefinition = function(name) {
-      if (!this.definitions.hasOwnProperty(name)) {
-        throw 'Controller definition "' + name + '" does not exist';
+      var def;
+      def = this.definitions[name];
+      if (def) {
+        return def;
       }
-      return this.definitions[name];
+      def = window[name + 'Controller'];
+      if (typeof def === 'function') {
+        return def;
+      }
     };
 
     Controller.create = function(element, parentController, name, extend) {
-      var NewController, controller, key, value;
+      var NewController, controller, key, value, _base;
       if (typeof parentController === 'string') {
         extend = name;
         name = parentController;
@@ -538,7 +543,9 @@ Path.core.route.prototype = {
         }
       }
       if (name) {
-        this.getDefinition(name)(controller);
+        if (typeof (_base = this.getDefinition(name)) === "function") {
+          _base(controller);
+        }
       }
       element.bindTo(controller);
       return controller;

@@ -89,11 +89,15 @@ class Controller
 	@define: (name, defineFunction) ->
 		@definitions[name] = defineFunction
 	
-	# Get a definition by name
+	
+	# Get a definition by name. They can be registered with Controller.define or be functions in the global scope ending
+	# with "Controller", e.g. `function homeController(controller){...}` would be returned for
+	# `Controller.getDefinition('home')`.
 	@getDefinition: (name) ->
-		unless @definitions.hasOwnProperty name
-			throw 'Controller definition "' + name + '" does not exist'
-		return @definitions[name]
+		def = @definitions[name]
+		return def if def
+		def = window[name + 'Controller']
+		return def if typeof def is 'function'
 	
 	
 	# Creates a new controller and binds it to the element. This sets up the bindings which update the HTML when data on
@@ -125,7 +129,7 @@ class Controller
 		
 		# If `name` is supplied the controller definition by that name will be run to initialize this controller
 		# before the bindings are set up.
-		@getDefinition(name)(controller) if name
+		@getDefinition(name)?(controller) if name
 		
 		# Bind the element to the new controller and then return it.
 		element.bindTo controller

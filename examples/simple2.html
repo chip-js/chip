@@ -1,0 +1,37 @@
+<html>
+<head>
+	<script src="js/jquery.js"></script>
+	<script src="../dist/chip.js"></script>
+	<script>
+		function homeController(controller) {
+			controller.message = 'Hello!'
+		}
+		
+		// Chip doesn't support hash urls right now, so this page needs to be delivered in a webserver pointing to the root of the repository
+		chip.route('/examples/simple2.html', 'home')
+		chip.route('/welcome', 'welcome')
+		chip.listen()
+	</script>
+</head>
+<body>
+<header>
+	<h1>My App</h1>
+</header>
+<div id="main" data-route>
+	<h1>An Error Occurred</h1>
+	<p>You can place a message here to be displayed when JavaScript is turned off or there is a fatal JS error in the page. Or an HTML-only version of the page if you want!</p>
+</div>
+
+<script name="home" type="text/html">
+	<h1 data-text="message">message</h1>
+	<p>Go see a personal <a href="/welcome">welcome message</a></p>
+</script>
+
+<script name="welcome" type="text/html">
+	<label>Name:</label>
+	<input type="text" data-value="name" placeholder="Enter a name here" autofocus>
+	<button data-click="window.alert(name)">Say it!</button>
+	<h2 data-if="name">Welcome <span data-text="name"></span>!</h2>
+</script>
+</body>
+</html>
