@@ -43,7 +43,7 @@ $ ->
 			chip.templates[name] = $this.html()
 			$this.remove()
 	
-	while (element = $('[data-controller]')).length
+	while (element = $('[data-controller]:first')).length
 		name = element.attr 'data-controller'
 		element.removeAttr 'data-controller'
 		Controller.create element, name
