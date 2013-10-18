@@ -242,6 +242,12 @@ Path.core.route.prototype = {
     return $(chip.templates[name].trim());
   };
 
+  chip.createAppController = function(controller) {
+    var root;
+    root = $('html');
+    return chip.appController = controller ? Controller.setup(root, controller, 'application') : Controller.create(root, null, 'application');
+  };
+
   chip.route = function(path, name, subroutes) {
     var parents;
     if (typeof name === 'function') {
@@ -286,7 +292,7 @@ Path.core.route.prototype = {
     }
     template = chip.getTemplate(name);
     container.data('controller', controller).html(template);
-    controller = Controller.create(container, name);
+    controller = Controller.create(container, chip.appController, name);
     return controller.syncView();
   };
 
@@ -319,15 +325,15 @@ Path.core.route.prototype = {
       } else if (Array.isArray(value) && Array.isArray(this.oldValue)) {
         splices = equality.array(value, this.oldValue);
         if (splices.length) {
-          this.callback(value, splices);
+          this.callback(value, this.oldValue, splices);
         }
       } else if (value && this.oldValue && typeof value === 'object' && typeof this.oldValue === 'object') {
         changeRecords = equality.object(value, this.oldValue);
         if (changeRecords.length) {
-          this.callback(value, changeRecords);
+          this.callback(value, this.oldValue, changeRecords);
         }
       } else if (value !== this.oldValue) {
-        this.callback(value);
+        this.callback(value, this.oldValue);
       } else {
         return;
       }
@@ -468,7 +474,7 @@ Path.core.route.prototype = {
       return Controller.createBoundFunction(this, expr, extraArgNames);
     };
 
-    Controller.prototype.close = function() {
+    Controller.prototype.closeController = function() {
       var observer, _i, _len, _ref;
       if (this._observers) {
         _ref = this._observers;
@@ -516,7 +522,7 @@ Path.core.route.prototype = {
     };
 
     Controller.create = function(element, parentController, name, extend) {
-      var NewController, controller, key, value, _base;
+      var NewController, controller, key, value;
       if (typeof parentController === 'string') {
         extend = name;
         name = parentController;
@@ -531,10 +537,6 @@ Path.core.route.prototype = {
       } else {
         controller = new Controller();
       }
-      element.on('elementRemove', function() {
-        return controller.close();
-      });
-      controller.element = element;
       if (extend) {
         for (key in extend) {
           if (!__hasProp.call(extend, key)) continue;
@@ -542,6 +544,23 @@ Path.core.route.prototype = {
           controller[key] = value;
         }
       }
+      return this.setup(element, controller, name);
+    };
+
+    Controller.setup = function(element, controller, name) {
+      var key, value, _base, _ref;
+      if (!(controller instanceof Controller)) {
+        _ref = Controller.prototype;
+        for (key in _ref) {
+          value = _ref[key];
+          controller[key] = value;
+        }
+      }
+      element.on('elementRemove', function() {
+        return controller.closeController();
+      });
+      controller.element = element;
+      element.data('controller', controller);
       if (name) {
         if (typeof (_base = this.getDefinition(name)) === "function") {
           _base(controller);
@@ -848,7 +867,8 @@ Path.core.route.prototype = {
       }
     });
     setter = controller.getBoundEval(expr + ' = value', 'value');
-    return element.on('keydown keyup', function() {
+    setter(element.val());
+    return element.on('keydown keyup change', function() {
       if (element.val() !== observer.oldValue) {
         setter(element.val());
         observer.skipNextSync();
@@ -884,32 +904,55 @@ Path.core.route.prototype = {
   });
 
   Binding.addBlockHandler('repeat', function(element, expr, controller) {
-    var controllerName, createElement, elements, extend, itemName, template, _ref;
+    var controllerName, createElement, elements, extend, itemName, orig, propName, template, value, _ref, _ref1;
+    orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
+    if (!(itemName && expr)) {
+      throw 'Invalid data-repeat "';
+      +orig;
+      +'". Requires the format "todo in todos"';
+      +' or "key, prop in todos".';
+    }
     controllerName = element.attr('data-controller');
     element.removeAttr('data-controller');
+    _ref1 = itemName.split(/\s*,\s*/), itemName = _ref1[0], propName = _ref1[1];
     template = element;
     element = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template);
     elements = $();
     extend = {};
+    value = null;
     createElement = function(item) {
       var newElement;
       newElement = template.clone();
-      extend[itemName] = item;
+      if (!Array.isArray(value)) {
+        if (propName) {
+          extend[propName] = item;
+        }
+        extend[itemName] = value[item];
+      } else {
+        extend[itemName] = item;
+      }
       Controller.create(newElement, controller, controllerName, extend);
       return newElement.get(0);
     };
-    return controller.watch(expr, function(value, splices) {
+    return controller.watch(expr, function(newValue, oldValue, splices) {
+      value = newValue;
       if (!splices) {
         elements.remove();
         elements = $();
+        if (!(Array.isArray(newValue) && newValue && typeof newValue === 'object')) {
+          newValue = Object.keys(newValue);
+        }
         if (Array.isArray(value)) {
           value.forEach(function(item) {
             return elements.push(createElement(item));
           });
           return element.after(elements);
         }
-      } else if (Array.isArray(value)) {
+      } else if (Array.isArray(value) || (value && typeof value === 'object')) {
+        if (!Array.isArray(value)) {
+          splices = equality.array(Object.keys(value, oldValue));
+        }
         return splices.forEach(function(splice) {
           var addIndex, args, item, newElements, removedElements;
           args = [splice.index, splice.removed.length];

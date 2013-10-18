@@ -27,14 +27,14 @@ class Observer
 		# If an array has changed calculate the splices and call the callback. This 
 		else if Array.isArray(value) and Array.isArray(@oldValue)
 			splices = equality.array value, @oldValue
-			@callback(value, splices) if splices.length
+			@callback(value, @oldValue, splices) if splices.length
 		# If an object has changed calculate the chnages and call the callback
 		else if value and @oldValue and typeof value is 'object' and typeof @oldValue is 'object'
 			changeRecords = equality.object value, @oldValue
-			@callback(value, changeRecords) if changeRecords.length
+			@callback(value, @oldValue, changeRecords) if changeRecords.length
 		# If a value has changed call the callback
 		else if value isnt @oldValue
-			@callback(value)
+			@callback(value, @oldValue)
 		# If nothing has changed, do nothing
 		else
 			return

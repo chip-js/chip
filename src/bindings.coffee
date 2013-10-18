@@ -192,8 +192,9 @@ Binding.addHandler 'value', (element, expr, controller) ->
 			element.val(value)
 	
 	setter = controller.getBoundEval expr + ' = value', 'value'
+	setter element.val()
 	
-	element.on 'keydown keyup', -> # TODO set up the listeners which will update the value, not just for text inputs
+	element.on 'keydown keyup change', -> # TODO set up the listeners which will update the value, not just for text inputs
 		if element.val() isnt observer.oldValue
 			setter element.val()
 			observer.skipNextSync() # don't update this observer, user changed it
@@ -331,33 +332,52 @@ for name in attribs
 # </div>
 # ```
 Binding.addBlockHandler 'repeat', (element, expr, controller) ->
+	orig = expr
 	[ itemName, expr ] = expr.split /\s+in\s+/
+	unless itemName and expr
+		throw 'Invalid data-repeat "'
+		+ orig
+		+ '". Requires the format "todo in todos"'
+		+ ' or "key, prop in todos".' 
+	
 	controllerName = element.attr('data-controller')
 	element.removeAttr('data-controller')
+	[ itemName, propName ] = itemName.split /\s*,\s*/
 	
 	template = element # use a placeholder for the element and the element as a template
 	element = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template)
 	elements = $()
 	extend = {}
+	value = null
 			
 	createElement = (item) ->
 		newElement = template.clone()
-		extend[itemName] = item
+		unless Array.isArray(value)
+			extend[propName] = item if propName
+			extend[itemName] = value[item]
+		else
+			extend[itemName] = item
 		Controller.create newElement, controller, controllerName, extend
 		newElement.get(0)
 	
-	
-	controller.watch expr, (value, splices) ->
+	controller.watch expr, (newValue, oldValue, splices) ->
+		value = newValue
+		
 		if not splices # first time setup (or changing from/to an array value)
 			elements.remove()
 			elements = $()
 			
+			unless Array.isArray(newValue) and newValue and typeof newValue is 'object'
+				newValue = Object.keys newValue
+			
 			if Array.isArray value
 				value.forEach (item) ->
-					elements.push createElement(item)
+					elements.push createElement item
 				element.after(elements)
 		
-		else if Array.isArray value
+		else if Array.isArray(value) or (value and typeof value is 'object')
+			unless Array.isArray(value)
+				splices = equality.array Object.keys(value, oldValue)
 			
 			splices.forEach (splice) ->
 				args = [splice.index, splice.removed.length]
@@ -366,7 +386,7 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 				addIndex = splice.index
 				while (addIndex < splice.index + splice.addedCount)
 					item = value[addIndex]
-					newElements.push createElement(item)
+					newElements.push createElement item
 					addIndex++
 				
 				removedElements = elements.splice.apply(elements, args.concat(newElements))

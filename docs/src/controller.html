@@ -127,7 +127,7 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	close: -&gt;
+            <div class="content"><div class='highlight'><pre>	closeController: -&gt;
 		<span class="keyword">if</span> <span class="property">@_observers</span>
 			<span class="keyword">for</span> observer <span class="keyword">in</span> <span class="property">@_observers</span>
 				observer.close()
@@ -295,10 +295,7 @@ the parent, only read it or call methods on it.</p>
 			NewController.prototype = parentController <span class="keyword">if</span> parentController
 			controller = <span class="keyword">new</span> NewController()
 		<span class="keyword">else</span>
-			controller = <span class="keyword">new</span> Controller()
-		
-		element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.close()
-		controller.element = element</pre></div></div>
+			controller = <span class="keyword">new</span> Controller()</pre></div></div>
             
         </li>
         
@@ -326,12 +323,11 @@ initialized by its definition or bound to its element.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
-              <p>If <code>name</code> is supplied the controller definition by that name will be run to initialize this controller
-before the bindings are set up.</p>
+              <p>Sets up the new controller</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="property">@getDefinition</span>(name)?(controller) <span class="keyword">if</span> name</pre></div></div>
+            <div class="content"><div class='highlight'><pre>		<span class="property">@setup</span> element, controller, name</pre></div></div>
             
         </li>
         
@@ -342,15 +338,14 @@ before the bindings are set up.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
-              <p>Bind the element to the new controller and then return it.</p>
+              <p>Sets up a new controller. Allows for a non-controller object to be made into a controller without a parent.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		element.bindTo controller
-		controller
-	
-
-	<span class="property">@exprCache</span>: {}</pre></div></div>
+            <div class="content"><div class='highlight'><pre>	<span class="property">@setup</span>: (element, controller, name) -&gt;
+		<span class="keyword">unless</span> controller <span class="keyword">instanceof</span> Controller
+			<span class="keyword">for</span> key, value <span class="keyword">of</span> Controller::
+				controller[key] = value</pre></div></div>
             
         </li>
         
@@ -360,6 +355,59 @@ before the bindings are set up.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>Assign element and add cleanup when the element is removed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.closeController()
+		controller.element = element
+		element.data <span class="string">'controller'</span>, controller</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>If <code>name</code> is supplied the controller definition by that name will be run to initialize this controller
+before the bindings are set up.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		<span class="property">@getDefinition</span>(name)?(controller) <span class="keyword">if</span> name</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>Bind the element to the new controller and then return it.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		element.bindTo controller
+		controller
+		
+	
+
+	<span class="property">@exprCache</span>: {}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p><em>private:</em> Creates a function from the given expression, allowing for extra arguments. This function will be cached
 so subsequent calls with the same expression will return the previous function. E.g. the expression “name” will
@@ -372,11 +420,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>Prefix all property lookups with the <code>this</code> keyword. Ignores keywords (window, true, false) and extra args </p>
 
@@ -387,11 +435,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>Returns the cached function for this expression if it exists.</p>
 
@@ -405,11 +453,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>We can safely (until getters/setters are common) add a try/catch around expression that don&#39;t use
 functions. Those that do use functions need the error to occur so developers can debug their code.</p>
@@ -425,11 +473,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-23">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>Caches the function for later</p>
 
@@ -441,11 +489,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-24">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>Throws an error if the expression was not valid JavaScript</p>
 
@@ -457,11 +505,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-25">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p><em>private:</em> Creates a function and binds it to the given controller so it may be called from anywhere
 (e.g. provided to observers).</p>
@@ -475,11 +523,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-26">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <p>Provides the ‘elementRemove’ event to be dispatched when an element is removed from the DOM and cleaned up. Gets
 called when an element with the event ‘elementRemove’, is removed from the DOM. Manually call the listener.</p>
@@ -493,11 +541,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-27">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <p>Searches out possible properties or finds the beginning of strings (which we skip)</p>
 
@@ -508,11 +556,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-28">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p>Adds <code>this.</code> to the beginning of each valid property in an expression</p>
 
@@ -523,11 +571,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-29">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <p>Ignores keywords and provided argument names</p>
 
@@ -540,11 +588,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-30">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-33">&#182;</a>
               </div>
               <p>Goes through each possible property</p>
 
@@ -561,11 +609,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-31">
+        <li id="section-34">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-34">&#182;</a>
               </div>
               <p>Skips to the end of the string, we don&#39;t want to match properties within a string</p>
 
@@ -579,11 +627,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-32">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
               <p>Skips escaped quotes (e.g. &#39;That\&#39;s right!&#39;)</p>
 
@@ -597,11 +645,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-33">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-36">&#182;</a>
               </div>
               <p>Skip portions of a chained expression like func().chain()</p>
 
@@ -615,11 +663,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-34">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
+                <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
               <p>Skip property names like { propertyName: something } and keywords</p>
 
@@ -635,11 +683,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-35">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
+                <a class="pilcrow" href="#section-38">&#182;</a>
               </div>
               <p>Set up for AMD.</p>
 

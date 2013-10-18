@@ -195,7 +195,15 @@ For all details and documentation:
             <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">getTemplate</span></span> = (name) -&gt;
 	<span class="keyword">unless</span> chip.templates.hasOwnProperty name
 		<span class="keyword">throw</span> <span class="string">'Template "'</span> + name + <span class="string">'" does not exist'</span>
-	$ chip.templates[name].trim()</pre></div></div>
+	$ chip.templates[name].trim()
+
+
+chip.<span class="function"><span class="title">createAppController</span></span> = (controller) -&gt;
+	root = $ <span class="string">'html'</span>
+	chip.appController = <span class="keyword">if</span> controller
+		Controller.setup(root, controller, <span class="string">'application'</span>)
+	<span class="keyword">else</span>
+		Controller.create(root, <span class="literal">null</span>, <span class="string">'application'</span>)</pre></div></div>
             
         </li>
         
@@ -250,6 +258,11 @@ template and controller by the same name. This template will be placed in the fi
               <p><code>subroutes</code> should be a function like <code>(route) -&gt;</code> which allows routes to be defined
 relative to the route above it. When these routes are matched, the template and controller with that name will be
 loaded into the first element with the <code>data-route</code> attribute within the outer one.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-javascript">chip.route(<span class="string">'/'</span>, <span class="string">'home'</span>)
+chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</span>, <span class="keyword">function</span>(route) {
+  route(<span class="string">'/:id'</span>, <span class="string">'todo'</span>)
+})</code></pre>
 
             </div>
             
@@ -267,23 +280,6 @@ loaded into the first element with the <code>data-route</code> attribute within 
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <p><strong>Example:</strong></p>
-<pre><code class="lang-javascript">chip.route(<span class="string">'/'</span>, <span class="string">'home'</span>)
-chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</span>, <span class="keyword">function</span>(route) {
-  route(<span class="string">'/:id'</span>, <span class="string">'todo'</span>)
-})</code></pre>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-16">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
-              </div>
               <p>Run a route which was defined by <code>chip.route</code>.</p>
 
             </div>
@@ -295,11 +291,11 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
         </li>
         
         
-        <li id="section-17">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p><strong>Example:</strong> a 3rd level subroute selector would be</p>
 <pre><code class="lang-javascript">$(<span class="string">'[data-route] [data-route] [data-route]'</span>)</code></pre>
@@ -318,27 +314,27 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
         </li>
         
         
-        <li id="section-18">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>TODO allow for a root controllers above this</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	controller = Controller.create container, name
+            <div class="content"><div class='highlight'><pre>	controller = Controller.create container, chip.appController, name
 	controller.syncView()</pre></div></div>
             
         </li>
         
         
-        <li id="section-19">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Set up the listeners for path changes. Chip uses the Path.js library for routing.</p>
 
@@ -351,11 +347,11 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
         </li>
         
         
-        <li id="section-20">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Set listeners on links to catch their clicks and use pushState instead</p>
 

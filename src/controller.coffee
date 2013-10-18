@@ -35,7 +35,7 @@ class Controller
 	
 	
 	# Removes and closes all observers for garbage-collection 
-	close: ->
+	closeController: ->
 		if @_observers
 			for observer in @_observers
 				observer.close()
@@ -119,13 +119,26 @@ class Controller
 		else
 			controller = new Controller()
 		
-		element.on 'elementRemove', -> controller.close()
-		controller.element = element
-		
 		# If `extend` is provided, all properties from that object will be copied over to the controller before it is
 		# initialized by its definition or bound to its element.
 		if extend
 			controller[key] = value for own key, value of extend
+		
+		# Sets up the new controller
+		@setup element, controller, name
+		
+	
+	
+	# Sets up a new controller. Allows for a non-controller object to be made into a controller without a parent.
+	@setup: (element, controller, name) ->
+		unless controller instanceof Controller
+			for key, value of Controller::
+				controller[key] = value
+		
+		# Assign element and add cleanup when the element is removed.
+		element.on 'elementRemove', -> controller.closeController()
+		controller.element = element
+		element.data 'controller', controller
 		
 		# If `name` is supplied the controller definition by that name will be run to initialize this controller
 		# before the bindings are set up.
@@ -134,6 +147,7 @@ class Controller
 		# Bind the element to the new controller and then return it.
 		element.bindTo controller
 		controller
+		
 	
 
 	@exprCache: {}

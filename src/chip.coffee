@@ -55,6 +55,15 @@ chip.getTemplate = (name) ->
 		throw 'Template "' + name + '" does not exist'
 	$ chip.templates[name].trim()
 
+
+chip.createAppController = (controller) ->
+	root = $ 'html'
+	chip.appController = if controller
+		Controller.setup(root, controller, 'application')
+	else
+		Controller.create(root, null, 'application')
+
+
 # Routing
 # ------
 # Create a route to be run when the given URL `path` is hit in the browser URL. The route `name` is used to load the
@@ -76,18 +85,18 @@ chip.route = (path, name, subroutes) ->
 	# `subroutes` should be a function like `(route) ->` which allows routes to be defined
 	# relative to the route above it. When these routes are matched, the template and controller with that name will be
 	# loaded into the first element with the `data-route` attribute within the outer one.
+	# 
+	# **Example:**
+	#```javascript 
+	# chip.route('/', 'home')
+	# chip.route('/todos', 'todos', function(route) {
+	#   route('/:id', 'todo')
+	# })
+	# ```
 	if subroutes
 		chip.route.parents.push path
 		subroutes chip.route
 		chip.route.parents.pop()
-# 
-# **Example:**
-#```javascript 
-# chip.route('/', 'home')
-# chip.route('/todos', 'todos', function(route) {
-#   route('/:id', 'todo')
-# })
-# ```
 
 
 # Run a route which was defined by `chip.route`.
@@ -108,7 +117,7 @@ chip.runRoute = (name, parents) ->
 	container.data('controller', controller).html(template)
 	
 	# TODO allow for a root controllers above this
-	controller = Controller.create container, name
+	controller = Controller.create container, chip.appController, name
 	controller.syncView()
 
 
