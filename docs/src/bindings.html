@@ -462,7 +462,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 			elements.remove()
 			elements = $()
 			
-			<span class="keyword">unless</span> Array.isArray(newValue) <span class="keyword">and</span> newValue <span class="keyword">and</span> <span class="keyword">typeof</span> newValue <span class="keyword">is</span> <span class="string">'object'</span>
+			<span class="keyword">if</span> newValue <span class="keyword">and</span> <span class="keyword">not</span> Array.isArray(newValue) <span class="keyword">and</span> <span class="keyword">typeof</span> newValue <span class="keyword">is</span> <span class="string">'object'</span>
 				newValue = Object.keys newValue
 			
 			<span class="keyword">if</span> Array.isArray value

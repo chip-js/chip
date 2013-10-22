@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Default Filters</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h1">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h1>Default Filters</h1>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h2>filter</h2>
+<p>Adds a filter to filter an array by the given filter function</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">filter</span></span> = (controller, value, filterFunc) -&gt;
+	<span class="keyword">return</span> [] <span class="keyword">unless</span> Array.isArray value
+	<span class="keyword">return</span> value <span class="keyword">unless</span> filterFunc
+	value.filter(filterFunc)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2>date</h2>
+<p>Adds a filter to format dates and strings</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">date</span></span> = (controller, value) -&gt;
+	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">unless</span> value
+	<span class="keyword">unless</span> value <span class="keyword">instanceof</span> Date
+		value = <span class="keyword">new</span> Date(value)
+	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">if</span> isNaN value.getTime()
+	value.toLocaleString()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2>log</h2>
+<p>Adds a filter to log the value of the expression, useful for debugging</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">log</span></span> = (controller, value, prefix = <span class="string">'Log'</span>) -&gt;
+	console.log prefix + <span class="string">':'</span>, value
+	<span class="keyword">return</span> value</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <h2>limit</h2>
+<p>Adds a filter to limit the length of an array or string</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">limit</span></span> = (controller, value, limit) -&gt;
+	<span class="keyword">if</span> value <span class="keyword">and</span> <span class="keyword">typeof</span> value.slice <span class="keyword">is</span> <span class="string">'function'</span>
+		<span class="keyword">if</span> limit &lt; <span class="number">0</span>
+			value.slice limit
+		<span class="keyword">else</span>
+			value.slice <span class="number">0</span>, limit
+	<span class="keyword">else</span>
+		value</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2>sort</h2>
+<p>Adds a filter to sort an array</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">sort</span></span> = (controller, value, sortFunc) -&gt;
+	<span class="keyword">if</span> Array.isArray value
+		value.slice().sort(sortFunc)
+	<span class="keyword">else</span>
+		value</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

@@ -367,7 +367,7 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 			elements.remove()
 			elements = $()
 			
-			unless Array.isArray(newValue) and newValue and typeof newValue is 'object'
+			if newValue and not Array.isArray(newValue) and typeof newValue is 'object'
 				newValue = Object.keys newValue
 			
 			if Array.isArray value

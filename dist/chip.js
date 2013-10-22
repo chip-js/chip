@@ -199,7 +199,7 @@ Path.core.route.prototype = {
 };
 
 (function() {
-  var Binding, Controller, Observer, attribs, chip, keyCode, keyCodes, name, normalizeExpression, varExpr, _i, _len,
+  var Binding, Controller, Observer, argSeparator, attribs, chip, emptyQuoteExpr, keyCode, keyCodes, name, normalizeExpression, pipeExpr, propExpr, quoteExpr, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -474,6 +474,14 @@ Path.core.route.prototype = {
       return Controller.createBoundFunction(this, expr, extraArgNames);
     };
 
+    Controller.prototype.redirect = function(url) {
+      return Path.history.pushState({}, "", url);
+    };
+
+    Controller.prototype.cloneValue = function(property) {
+      return Observer.immutable(this[property]);
+    };
+
     Controller.prototype.closeController = function() {
       var observer, _i, _len, _ref;
       if (this._observers) {
@@ -501,9 +509,23 @@ Path.core.route.prototype = {
       return _results;
     };
 
+    Controller.prototype.runFilter = function() {
+      var args, filter, filterName, value;
+      value = arguments[0], filterName = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
+      filter = Controller.filters[filterName];
+      if (filter) {
+        return filter.apply(null, [this, value].concat(__slice.call(args)));
+      } else {
+        console.error("Filter `" + filterName + "` has not been defined.");
+        return value;
+      }
+    };
+
     Controller.keywords = ['this', 'window', 'true', 'false'];
 
     Controller.definitions = {};
+
+    Controller.filters = {};
 
     Controller.define = function(name, defineFunction) {
       return this.definitions[name] = defineFunction;
@@ -614,42 +636,63 @@ Path.core.route.prototype = {
 
   varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi;
 
+  quoteExpr = /(['"])(\\\1|[^\1])*?\1/g;
+
+  emptyQuoteExpr = /(['"])\1/g;
+
+  propExpr = /((\{|,)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:)?)/gi;
+
+  pipeExpr = /\|(\|)?/g;
+
+  argSeparator = /\s*:\s*/g;
+
   normalizeExpression = function(expr, extraArgNames) {
-    var ignore, index, match, rewritten;
+    var filterString, filterStrings, filters, ignore, strings, _ref;
     ignore = Controller.keywords.concat(extraArgNames);
-    rewritten = '';
-    index = 0;
-    while ((match = varExpr.exec(expr))) {
-      if (match) {
-        match = match[0];
-        rewritten += expr.slice(index, varExpr.lastIndex - match.length);
-        if (match === "'" || match === '"') {
-          index = varExpr.lastIndex;
-          while (index < expr.length) {
-            index = expr.indexOf(match, index) + 1;
-            if (index === 0) {
-              index = expr.length;
-            }
-            if (expr[index - 2] !== '\\') {
-              rewritten += expr.slice(varExpr.lastIndex - 1, index);
-              break;
-            }
-          }
-          varExpr.lastIndex = index;
-        } else if (expr[varExpr.lastIndex - match.length - 1] === '.') {
-          rewritten += match;
-          index = varExpr.lastIndex;
-        } else {
-          if (match.slice(-1) !== ':' && ignore.indexOf(match.split(/\.|\(/).shift()) === -1) {
-            rewritten += 'this.';
-          }
-          rewritten += match;
-          index = varExpr.lastIndex;
-        }
+    strings = [];
+    expr = expr.replace(quoteExpr, function(str, quote) {
+      strings.push(str);
+      return quote + quote;
+    });
+    expr = expr.replace(pipeExpr, function(match, orIndicator) {
+      if (orIndicator) {
+        return match;
       }
+      return '@@@';
+    });
+    filters = expr.split(/\s*@@@\s*/);
+    expr = filters.shift();
+    if (filters.length) {
+      filterStrings = strings.splice(((_ref = expr.match(quoteExpr)) != null ? _ref.length : void 0) || 0);
+      filters = filters.join('@@@').replace(quoteExpr, function() {
+        return filterStrings.shift();
+      }).split('@@@');
+      filterString = '@@@';
+      filters.forEach(function(filter) {
+        var args;
+        args = filter.split(argSeparator);
+        args[0] = "'" + args[0] + "'";
+        return filterString = "runFilter(" + filterString + "," + (args.join(',')) + ")";
+      });
+      filterString = filterString.replace(quoteExpr, function(str, quote) {
+        strings.push(str);
+        return quote + quote;
+      });
+      expr = filterString.replace('@@@', expr);
     }
-    rewritten += expr.slice(index);
-    return rewritten;
+    expr = expr.replace(propExpr, function(match, prefix, objIndicator, propChain, postfix, colon, index, str) {
+      if (objIndicator && colon || str[index + prefix.length - 1] === '.') {
+        return match;
+      }
+      if (ignore.indexOf(propChain.split(/\.|\(/).shift()) !== -1) {
+        return match;
+      }
+      return prefix + 'this.' + propChain + postfix;
+    });
+    expr = expr.replace(emptyQuoteExpr, function() {
+      return strings.shift();
+    });
+    return expr;
   };
 
   this.Controller = Controller;
@@ -940,7 +983,7 @@ Path.core.route.prototype = {
       if (!splices) {
         elements.remove();
         elements = $();
-        if (!(Array.isArray(newValue) && newValue && typeof newValue === 'object')) {
+        if (newValue && !Array.isArray(newValue) && typeof newValue === 'object') {
           newValue = Object.keys(newValue);
         }
         if (Array.isArray(value)) {
@@ -994,6 +1037,57 @@ Path.core.route.prototype = {
   Binding.addBlockHandler('controller', function(element, controllerName, controller) {
     return Controller.create(element, controller, controllerName);
   });
+
+  Controller.filters.filter = function(controller, value, filterFunc) {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    if (!filterFunc) {
+      return value;
+    }
+    return value.filter(filterFunc);
+  };
+
+  Controller.filters.date = function(controller, value) {
+    if (!value) {
+      return '';
+    }
+    if (!(value instanceof Date)) {
+      value = new Date(value);
+    }
+    if (isNaN(value.getTime())) {
+      return '';
+    }
+    return value.toLocaleString();
+  };
+
+  Controller.filters.log = function(controller, value, prefix) {
+    if (prefix == null) {
+      prefix = 'Log';
+    }
+    console.log(prefix + ':', value);
+    return value;
+  };
+
+  Controller.filters.limit = function(controller, value, limit) {
+    if (value && typeof value.slice === 'function') {
+      if (limit < 0) {
+        return value.slice(limit);
+      } else {
+        return value.slice(0, limit);
+      }
+    } else {
+      return value;
+    }
+  };
+
+  Controller.filters.sort = function(controller, value, sortFunc) {
+    if (Array.isArray(value)) {
+      return value.slice().sort(sortFunc);
+    } else {
+      return value;
+    }
+  };
 
   (function() {
     var EDIT_ADD, EDIT_DELETE, EDIT_LEAVE, EDIT_UPDATE, calcEditDistances, equality, newChange, newSplice, sharedPrefix, sharedSuffix, spliceOperationsFromEditDistances;

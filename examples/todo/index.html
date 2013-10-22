@@ -25,7 +25,7 @@
 				<input id="toggle-all" type="checkbox" data-checked="todos.every(filters.done)" data-change="toggleAll()">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-					<li data-repeat="todo in todos.filter(filters[filterName])" data-controller="todo" data-class="{editing:editing,completed:todo.done}">
+					<li data-repeat="todo in todos | filter:filters[filterName]" data-controller="todo" data-class="{editing:editing,completed:todo.done}">
 						<div class="view">
 							<input class="toggle" type="checkbox" data-change="toggleDone(todo)" data-checked="todo.done">
 							<label data-dblclick="editTodo(todo)" data-text="todo.description">Create a TodoMVC template</label>

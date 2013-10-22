@@ -6,6 +6,7 @@ module.exports = function(grunt) {
 		'src/controller.coffee',
 		'src/binding.coffee',
 		'src/bindings.coffee',
+		'src/filters.coffee',
 		'src/equality.coffee'
 	];
 	

@@ -34,6 +34,16 @@ class Controller
 		Controller.createBoundFunction(this, expr, extraArgNames)
 	
 	
+	# Redirects to the provided URL
+	redirect: (url) ->
+		Path.history.pushState {}, "", url
+	
+	
+	# Clones the object at the given property name for processing forms
+	cloneValue: (property) ->
+		Observer.immutable @[property]
+	
+	
 	# Removes and closes all observers for garbage-collection 
 	closeController: ->
 		if @_observers
@@ -54,15 +64,26 @@ class Controller
 			observer.sync()
 	
 	
+	runFilter: (value, filterName, args...) ->
+		filter = Controller.filters[filterName]
+		if filter
+			return filter(this, value, args...)
+		else
+			console.error "Filter `#{filterName}` has not been defined."
+			return value
+	
+	
 	# The keywords which will *not* get `this.` prepended to inside an expression. All other valid variable names will
 	# have `this.` added to them. `this` is the controller instance when the expression is run. Add additional keywords
 	# to this array if there are global variables you wish to use in expressions. E.g. `$` or `jQuery`
-	@keywords = ['this', 'window', 'true', 'false']
+	@keywords: ['this', 'window', 'true', 'false']
 	
 	
 	# Static *private* property, holds "controller definitions" which are functions that get called to initialize
 	# a new controller
-	@definitions = {}
+	@definitions: {}
+	
+	@filters: {}
 	
 	
 	# Define a new controller with the provided function. This function will be called with a new controller every time
@@ -199,45 +220,66 @@ $.event.special.elementRemove =
 
 # Searches out possible properties or finds the beginning of strings (which we skip)
 varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi
+quoteExpr = /(['"])(\\\1|[^\1])*?\1/g
+emptyQuoteExpr = /(['"])\1/g
+propExpr = /((\{|,)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:)?)/gi
+pipeExpr = /\|(\|)?/g
+argSeparator = /\s*:\s*/g
 
-# Adds `this.` to the beginning of each valid property in an expression
+
+# Adds `this.` to the beginning of each valid property in an expression and processes filters
 normalizeExpression = (expr, extraArgNames) ->
 	# Ignores keywords and provided argument names
 	ignore = Controller.keywords.concat(extraArgNames)
-	rewritten = ''
-	index = 0
 	
-	# Goes through each possible property
-	while (match = varExpr.exec(expr))
-		if match
-			match = match[0]
-			rewritten += expr.slice(index, varExpr.lastIndex - match.length)
-			
-			if match is "'" or match is '"'
-				index = varExpr.lastIndex
-				# Skips to the end of the string, we don't want to match properties within a string
-				while index < expr.length
-					index = expr.indexOf(match, index) + 1
-					if index is 0
-						index = expr.length
-					
-					# Skips escaped quotes (e.g. 'That\'s right!')
-					if expr[index - 2] isnt '\\'
-						rewritten += expr.slice(varExpr.lastIndex - 1, index)
-						break
-				varExpr.lastIndex = index
-			# Skip portions of a chained expression like func().chain()
-			else if expr[varExpr.lastIndex - match.length - 1] is '.'
-				rewritten += match
-				index = varExpr.lastIndex
-			else
-				# Skip property names like { propertyName: something } and keywords
-				if match.slice(-1) isnt ':' and ignore.indexOf(match.split(/\.|\(/).shift()) is -1
-					rewritten += 'this.'
-				rewritten += match
-				index = varExpr.lastIndex
-	rewritten += expr.slice(index)
-	rewritten
+	# Adds placeholders for strings so we can process the rest without their content messing us up.
+	strings = []
+	expr = expr.replace quoteExpr, (str, quote) ->
+		strings.push str
+		return quote + quote # placeholder for the string
+	
+	
+	# Processes the filters
+	expr = expr.replace pipeExpr, (match, orIndicator) ->
+		if orIndicator
+			return match
+		return '@@@'
+	
+	filters = expr.split /\s*@@@\s*/
+	expr = filters.shift()
+	if filters.length
+		# Replaces the strings pulled out of the filters in order to escape them and get them in order
+		filterStrings = strings.splice(expr.match(quoteExpr)?.length or 0)
+		filters = filters.join('@@@').replace(quoteExpr, -> filterStrings.shift()).split('@@@')
+		
+		filterString = '@@@'
+		filters.forEach (filter) ->
+			args = filter.split(argSeparator)
+			args[0] = "'" + args[0] + "'"
+			filterString = "runFilter(#{filterString},#{args.join(',')})"
+		
+		filterString = filterString.replace quoteExpr, (str, quote) ->
+			strings.push str
+			return quote + quote # placeholder for the string
+		expr = filterString.replace '@@@', expr
+	
+	
+	# Adds the "this." prefix onto properties found in the expression
+	expr = expr.replace propExpr, (match, prefix, objIndicator, propChain, postfix, colon, index, str) ->
+		if objIndicator and colon or str[index + prefix.length - 1] is '.'
+			return match # skips object keys e.g. test in {test:true}
+		
+		if ignore.indexOf(propChain.split(/\.|\(/).shift()) isnt -1
+			return match # skips keywords e.g. true in {test:true}
+		
+		return prefix + 'this.' + propChain + postfix
+	
+	
+	# Replaces string placeholders.
+	expr = expr.replace emptyQuoteExpr, ->
+		return strings.shift()
+#	console.log expr
+	expr
 
 
 # Set up for AMD.
