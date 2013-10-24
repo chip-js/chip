@@ -300,8 +300,10 @@ Path.core.route.prototype = {
     Path.history.listen();
     if (Path.history.supported) {
       return $(document).on('click', 'a[href]', function(event) {
-        event.preventDefault();
-        return Path.history.pushState({}, "", $(this).attr("href"));
+        if (this.host === location.host) {
+          event.preventDefault();
+          return Path.history.pushState({}, "", $(this).attr("href"));
+        }
       });
     }
   };

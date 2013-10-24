@@ -358,8 +358,9 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
             </div>
             
             <div class="content"><div class='highlight'><pre>		$(document).<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
-			event.preventDefault()
-			Path.history.pushState {}, <span class="string">""</span>, $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)</pre></div></div>
+			<span class="keyword">if</span> <span class="keyword">this</span>.host <span class="keyword">is</span> location.host
+				event.preventDefault()
+				Path.history.pushState {}, <span class="string">""</span>, $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)</pre></div></div>
             
         </li>
         

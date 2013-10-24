@@ -128,5 +128,6 @@ chip.listen = ->
 	if Path.history.supported
 		# Set listeners on links to catch their clicks and use pushState instead
 		$(document).on 'click', 'a[href]', (event) ->
-			event.preventDefault()
-			Path.history.pushState {}, "", $(this).attr("href")
+			if this.host is location.host
+				event.preventDefault()
+				Path.history.pushState {}, "", $(this).attr("href")
