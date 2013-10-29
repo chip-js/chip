@@ -35,7 +35,8 @@
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
               <h2>data-if</h2>
-<p>Adds a handler to show or hide the element if the value is truthy or falsey.</p>
+<p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
+when hidden, replacing it with a non-visible placeholder.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
   <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
@@ -52,11 +53,16 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'if'</span>, (element, expr, controller) -&gt;
+	placeholder = $(<span class="string">'&lt;script type="text/if-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).remove().get(<span class="number">0</span>)
+	elem = element.get(<span class="number">0</span>)
+	
 	controller.watch expr, (value) -&gt;
 		<span class="keyword">if</span> value
-			element.show()
+			<span class="keyword">unless</span> elem.parentNode
+				placeholder.parentNode.replaceChild elem, placeholder
 		<span class="keyword">else</span>
-			element.hide()</pre></div></div>
+			<span class="keyword">unless</span> placeholder.parentNode
+				elem.parentNode.replaceChild placeholder, elem</pre></div></div>
             
         </li>
         
@@ -341,6 +347,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 <ul>
 <li>data-href</li>
 <li>data-src</li>
+<li>data-id</li>
 </ul>
 <p><strong>Example:</strong></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">img</span> <span class="attribute">data-src</span>=<span class="value">"user.avatarUrl"</span>&gt;</span></code></pre>
@@ -349,7 +356,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>attribs = [ <span class="string">'href'</span>, <span class="string">'src'</span> ]
+            <div class="content"><div class='highlight'><pre>attribs = [ <span class="string">'href'</span>, <span class="string">'src'</span>, <span class="string">'id'</span> ]
 <span class="keyword">for</span> name <span class="keyword">in</span> attribs
 	Binding.addAttributeHandler(name)</pre></div></div>
             
@@ -440,7 +447,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 	[ itemName, propName ] = itemName.split <span class="regexp">/\s*,\s*/</span>
 	
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	element = $(<span class="string">'&lt;script type="text/repeat-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).replaceAll(template)
+	placeholder = $(<span class="string">'&lt;script type="text/repeat-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).replaceAll(template)
 	elements = $()
 	extend = {}
 	value = <span class="literal">null</span>
@@ -459,16 +466,18 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 		value = newValue
 		
 		<span class="keyword">if</span> <span class="keyword">not</span> splices <span class="comment"># first time setup (or changing from/to an array value)</span>
-			elements.remove()
-			elements = $()
+			<span class="keyword">if</span> elements.length
+				elements.eq(<span class="number">0</span>).replaceWith(placeholder)
+				elements.remove()
+				elements = $()
 			
 			<span class="keyword">if</span> newValue <span class="keyword">and</span> <span class="keyword">not</span> Array.isArray(newValue) <span class="keyword">and</span> <span class="keyword">typeof</span> newValue <span class="keyword">is</span> <span class="string">'object'</span>
 				newValue = Object.keys newValue
 			
-			<span class="keyword">if</span> Array.isArray value
+			<span class="keyword">if</span> Array.isArray(value) <span class="keyword">and</span> value.length
 				value.forEach (item) -&gt;
 					elements.push createElement item
-				element.after(elements)
+				placeholder.after(elements).remove()
 		
 		<span class="keyword">else</span> <span class="keyword">if</span> Array.isArray(value) <span class="keyword">or</span> (value <span class="keyword">and</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'object'</span>)
 			<span class="keyword">unless</span> Array.isArray(value)
@@ -484,12 +493,21 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 					newElements.push createElement item
 					addIndex++
 				
-				removedElements = elements.splice.apply(elements, args.concat(newElements))
-				$(removedElements).remove()
-				<span class="keyword">if</span> splice.index <span class="keyword">is</span> <span class="number">0</span>
-					element.after(newElements)
-				<span class="keyword">else</span>
-					elements.eq(splice.index - <span class="number">1</span>).after(newElements)</pre></div></div>
+				removedElements = $ elements.splice.apply(elements, args.concat(newElements))
+				
+				<span class="keyword">if</span> removedElements.length
+					<span class="keyword">if</span> elements.length <span class="keyword">is</span> <span class="number">0</span>
+						removedElements.eq(<span class="number">0</span>).replaceWith(placeholder)
+					removedElements.remove()
+				
+				<span class="keyword">if</span> newElements.length
+					<span class="keyword">if</span> splice.index <span class="keyword">is</span> <span class="number">0</span>
+						<span class="keyword">if</span> placeholder.parent().length
+							placeholder.after(newElements).remove()
+						<span class="keyword">else</span>
+							elements.eq(newElements.length).before(newElements)
+					<span class="keyword">else</span>
+						elements.eq(splice.index - <span class="number">1</span>).after(newElements)</pre></div></div>
             
         </li>
         

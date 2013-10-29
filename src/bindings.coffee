@@ -1,7 +1,8 @@
 # # Default Binding Handlers
 
 # ## data-if
-# Adds a handler to show or hide the element if the value is truthy or falsey.
+# Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
+# when hidden, replacing it with a non-visible placeholder.
 #
 # **Example:**
 # ```xml
@@ -20,11 +21,16 @@
 # </ul>
 # ```
 Binding.addHandler 'if', (element, expr, controller) ->
+	placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').remove().get(0)
+	elem = element.get(0)
+	
 	controller.watch expr, (value) ->
 		if value
-			element.show()
+			unless elem.parentNode
+				placeholder.parentNode.replaceChild elem, placeholder
 		else
-			element.hide()
+			unless placeholder.parentNode
+				elem.parentNode.replaceChild placeholder, elem
 
 
 # ## data-text
@@ -346,7 +352,7 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 	[ itemName, propName ] = itemName.split /\s*,\s*/
 	
 	template = element # use a placeholder for the element and the element as a template
-	element = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template)
+	placeholder = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template)
 	elements = $()
 	extend = {}
 	value = null
@@ -365,16 +371,18 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 		value = newValue
 		
 		if not splices # first time setup (or changing from/to an array value)
-			elements.remove()
-			elements = $()
+			if elements.length
+				elements.eq(0).replaceWith(placeholder)
+				elements.remove()
+				elements = $()
 			
 			if newValue and not Array.isArray(newValue) and typeof newValue is 'object'
 				newValue = Object.keys newValue
 			
-			if Array.isArray value
+			if Array.isArray(value) and value.length
 				value.forEach (item) ->
 					elements.push createElement item
-				element.after(elements)
+				placeholder.after(elements).remove()
 		
 		else if Array.isArray(value) or (value and typeof value is 'object')
 			unless Array.isArray(value)
@@ -390,12 +398,21 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 					newElements.push createElement item
 					addIndex++
 				
-				removedElements = elements.splice.apply(elements, args.concat(newElements))
-				$(removedElements).remove()
-				if splice.index is 0
-					element.after(newElements)
-				else
-					elements.eq(splice.index - 1).after(newElements)
+				removedElements = $ elements.splice.apply(elements, args.concat(newElements))
+				
+				if removedElements.length
+					if elements.length is 0
+						removedElements.eq(0).replaceWith(placeholder)
+					removedElements.remove()
+				
+				if newElements.length
+					if splice.index is 0
+						if placeholder.parent().length
+							placeholder.after(newElements).remove()
+						else
+							elements.eq(newElements.length).before(newElements)
+					else
+						elements.eq(splice.index - 1).after(newElements)
 
 
 # ## data-partial

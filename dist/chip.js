@@ -825,11 +825,18 @@ Path.core.route.prototype = {
   }
 
   Binding.addHandler('if', function(element, expr, controller) {
+    var elem, placeholder;
+    placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').remove().get(0);
+    elem = element.get(0);
     return controller.watch(expr, function(value) {
       if (value) {
-        return element.show();
+        if (!elem.parentNode) {
+          return placeholder.parentNode.replaceChild(elem, placeholder);
+        }
       } else {
-        return element.hide();
+        if (!placeholder.parentNode) {
+          return elem.parentNode.replaceChild(placeholder, elem);
+        }
       }
     });
   });
@@ -949,7 +956,7 @@ Path.core.route.prototype = {
   });
 
   Binding.addBlockHandler('repeat', function(element, expr, controller) {
-    var controllerName, createElement, elements, extend, itemName, orig, propName, template, value, _ref, _ref1;
+    var controllerName, createElement, elements, extend, itemName, orig, placeholder, propName, template, value, _ref, _ref1;
     orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
     if (!(itemName && expr)) {
@@ -962,7 +969,7 @@ Path.core.route.prototype = {
     element.removeAttr('data-controller');
     _ref1 = itemName.split(/\s*,\s*/), itemName = _ref1[0], propName = _ref1[1];
     template = element;
-    element = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template);
+    placeholder = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template);
     elements = $();
     extend = {};
     value = null;
@@ -983,16 +990,19 @@ Path.core.route.prototype = {
     return controller.watch(expr, function(newValue, oldValue, splices) {
       value = newValue;
       if (!splices) {
-        elements.remove();
-        elements = $();
+        if (elements.length) {
+          elements.eq(0).replaceWith(placeholder);
+          elements.remove();
+          elements = $();
+        }
         if (newValue && !Array.isArray(newValue) && typeof newValue === 'object') {
           newValue = Object.keys(newValue);
         }
-        if (Array.isArray(value)) {
+        if (Array.isArray(value) && value.length) {
           value.forEach(function(item) {
             return elements.push(createElement(item));
           });
-          return element.after(elements);
+          return placeholder.after(elements).remove();
         }
       } else if (Array.isArray(value) || (value && typeof value === 'object')) {
         if (!Array.isArray(value)) {
@@ -1008,12 +1018,23 @@ Path.core.route.prototype = {
             newElements.push(createElement(item));
             addIndex++;
           }
-          removedElements = elements.splice.apply(elements, args.concat(newElements));
-          $(removedElements).remove();
-          if (splice.index === 0) {
-            return element.after(newElements);
-          } else {
-            return elements.eq(splice.index - 1).after(newElements);
+          removedElements = $(elements.splice.apply(elements, args.concat(newElements)));
+          if (removedElements.length) {
+            if (elements.length === 0) {
+              removedElements.eq(0).replaceWith(placeholder);
+            }
+            removedElements.remove();
+          }
+          if (newElements.length) {
+            if (splice.index === 0) {
+              if (placeholder.parent().length) {
+                return placeholder.after(newElements).remove();
+              } else {
+                return elements.eq(newElements.length).before(newElements);
+              }
+            } else {
+              return elements.eq(splice.index - 1).after(newElements);
+            }
           }
         });
       }
