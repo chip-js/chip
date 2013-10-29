@@ -258,6 +258,7 @@ for own name, keyCode of keyCodes
 # 
 # * data-href
 # * data-src
+# * data-id
 #
 # **Example:**
 # ```xml
@@ -267,7 +268,7 @@ for own name, keyCode of keyCodes
 # ```xml
 # <img src="http://cdn.example.com/avatars/jacwright-small.png">
 # ```
-attribs = [ 'href', 'src' ]
+attribs = [ 'href', 'src', 'id' ]
 for name in attribs
 	Binding.addAttributeHandler(name)
 

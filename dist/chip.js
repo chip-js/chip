@@ -937,7 +937,7 @@ Path.core.route.prototype = {
     Binding.addKeyEventHandler(name, keyCode);
   }
 
-  attribs = ['href', 'src'];
+  attribs = ['href', 'src', 'id'];
 
   for (_i = 0, _len = attribs.length; _i < _len; _i++) {
     name = attribs[_i];
