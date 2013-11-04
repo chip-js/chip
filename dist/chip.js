@@ -266,7 +266,7 @@ Path.core.route.prototype = {
       path = parents.join('') + path;
     }
     Path.map(path).to(function() {
-      return chip.runRoute(name, parents);
+      return chip.runRoute(name, parents, this.params);
     });
     if (subroutes) {
       chip.route.parents.push(path);
@@ -275,7 +275,7 @@ Path.core.route.prototype = {
     }
   };
 
-  chip.runRoute = function(name, parents) {
+  chip.runRoute = function(name, parents, params) {
     var container, controller, path, selector, template, _i, _len;
     selector = ['[data-route]'];
     for (_i = 0, _len = parents.length; _i < _len; _i++) {
@@ -283,7 +283,7 @@ Path.core.route.prototype = {
       selector.push('[data-route]');
     }
     selector = selector.join(' ');
-    container = $(selector);
+    container = $(selector).first();
     controller = container.data('controller');
     if (controller != null) {
       if (typeof controller.teardown === "function") {
@@ -291,8 +291,10 @@ Path.core.route.prototype = {
       }
     }
     template = chip.getTemplate(name);
-    container.data('controller', controller).html(template);
+    container.html(template);
+    Controller.prototype.params = params;
     controller = Controller.create(container, chip.appController, name);
+    container.data('controller', controller);
     return controller.syncView();
   };
 
@@ -300,10 +302,17 @@ Path.core.route.prototype = {
     Path.history.listen();
     if (Path.history.supported) {
       return $(document).on('click', 'a[href]', function(event) {
-        if (this.host === location.host) {
-          event.preventDefault();
-          return Path.history.pushState({}, "", $(this).attr("href"));
+        if (event.isDefaultPrevented()) {
+          return;
         }
+        if (this.host !== location.host) {
+          return;
+        }
+        if (this.href === location.href || this.href === location.href + '#') {
+          return;
+        }
+        event.preventDefault();
+        return Path.history.pushState({}, "", $(this).attr("href"));
       });
     }
   };
@@ -454,6 +463,8 @@ Path.core.route.prototype = {
 
   Controller = (function() {
     function Controller() {}
+
+    Controller.prototype.params = {};
 
     Controller.prototype.watch = function(expr, skipTriggerImmediately, callback) {
       var getter, observer;

@@ -80,7 +80,7 @@ chip.route = (path, name, subroutes) ->
 	parents = chip.route.parents.slice() # unmutable copy
 	path = parents.join('') + path if parents.length # sub-route support
 	
-	Path.map(path).to -> chip.runRoute(name, parents)
+	Path.map(path).to -> chip.runRoute(name, parents, @params)
 	
 	# `subroutes` should be a function like `(route) ->` which allows routes to be defined
 	# relative to the route above it. When these routes are matched, the template and controller with that name will be
@@ -100,7 +100,7 @@ chip.route = (path, name, subroutes) ->
 
 
 # Run a route which was defined by `chip.route`.
-chip.runRoute = (name, parents) ->
+chip.runRoute = (name, parents, params) ->
 	selector = ['[data-route]']
 	selector.push '[data-route]' for path in parents
 	# **Example:** a 3rd level subroute selector would be
@@ -108,16 +108,17 @@ chip.runRoute = (name, parents) ->
 	# $('[data-route] [data-route] [data-route]')
 	# ```
 	selector = selector.join(' ')
-	container = $(selector)
+	container = $(selector).first()
 	
 	controller = container.data('controller')
 	controller?.teardown?()
 	
 	template = chip.getTemplate(name)
-	container.data('controller', controller).html(template)
+	container.html(template)
 	
-	# TODO allow for a root controllers above this
+	Controller::params = params # available to all controllers
 	controller = Controller.create container, chip.appController, name
+	container.data('controller', controller)
 	controller.syncView()
 
 
@@ -128,6 +129,8 @@ chip.listen = ->
 	if Path.history.supported
 		# Set listeners on links to catch their clicks and use pushState instead
 		$(document).on 'click', 'a[href]', (event) ->
-			if this.host is location.host
-				event.preventDefault()
-				Path.history.pushState {}, "", $(this).attr("href")
+			return if event.isDefaultPrevented() # if something else already handled this, we won't
+			return if this.host isnt location.host
+			return if this.href is location.href or this.href is location.href + '#'
+			event.preventDefault()
+			Path.history.pushState {}, "", $(this).attr("href")

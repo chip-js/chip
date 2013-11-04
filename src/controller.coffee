@@ -3,6 +3,9 @@
 # A Controller is the object to which HTML elements are bound.
 class Controller
 	
+	# Default empty params object. This holds the current routing parameters, accessible to all controllers.
+	params: {}
+	
 	# Watches an expression for changes. Calls the `callback` immediately with the initial value and then every time
 	# the value in the expression changes. An expression can be as simple as `name` or as complex as
 	# `user.firstName + ' ' + user.lastName + ' - ' + user.getPostfix()`
