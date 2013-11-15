@@ -59,6 +59,8 @@ class Controller
 	# Syncs the observers to propogate changes to the HTML
 	syncView: (later) ->
 		Observer.sync(later)
+		if typeof later is 'function'
+			setTimeout later
 	
 	
 	# Syncs just the observers for this controller immediately
