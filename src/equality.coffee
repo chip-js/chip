@@ -139,7 +139,7 @@
 	sharedPrefix = (current, old, searchLength) ->
 		for i in [0...searchLength]
 			return i unless current[i] is old[i]
-		return length
+		return searchLength
 	
 	
 	# find the number of items at the end that are the same
