@@ -244,7 +244,7 @@ template and controller by the same name. This template will be placed in the fi
 	parents = chip.route.parents.slice() <span class="comment"># unmutable copy</span>
 	path = parents.join(<span class="string">''</span>) + path <span class="keyword">if</span> parents.length <span class="comment"># sub-route support</span>
 	
-	Path.map(path).to -&gt; chip.runRoute(name, parents)</pre></div></div>
+	Path.map(path).to -&gt; chip.runRoute(name, parents, <span class="property">@params</span>)</pre></div></div>
             
         </li>
         
@@ -284,7 +284,7 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">runRoute</span></span> = (name, parents) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">runRoute</span></span> = (name, parents, params) -&gt;
 	selector = [<span class="string">'[data-route]'</span>]
 	selector.push <span class="string">'[data-route]'</span> <span class="keyword">for</span> path <span class="keyword">in</span> parents</pre></div></div>
             
@@ -303,13 +303,23 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
             </div>
             
             <div class="content"><div class='highlight'><pre>	selector = selector.join(<span class="string">' '</span>)
-	container = $(selector)
+	container = $(selector).first()
 	
 	controller = container.data(<span class="string">'controller'</span>)
 	controller?.teardown?()
 	
 	template = chip.getTemplate(name)
-	container.data(<span class="string">'controller'</span>, controller).html(template)</pre></div></div>
+	container.html(template)
+	
+	Controller::params = params <span class="comment"># available to all controllers</span>
+	controller = Controller.create container, chip.appController, name
+	container.data(<span class="string">'controller'</span>, controller)
+	controller.syncView()
+
+
+chip.<span class="function"><span class="title">redirect</span></span> = (url) -&gt;
+	<span class="keyword">return</span> <span class="keyword">if</span> url <span class="keyword">is</span> location.pathname
+	Path.history.pushState {}, <span class="string">""</span>, url</pre></div></div>
             
         </li>
         
@@ -320,12 +330,15 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
-              <p>TODO allow for a root controllers above this</p>
+              <p>Set up the listeners for path changes. Chip uses the Path.js library for routing.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	controller = Controller.create container, chip.appController, name
-	controller.syncView()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">listen</span></span> = -&gt;
+	<span class="keyword">unless</span> chip.appController
+		$ -&gt; chip.createAppController()
+	Path.history.listen()
+	<span class="keyword">if</span> Path.history.supported</pre></div></div>
             
         </li>
         
@@ -336,31 +349,15 @@ chip.route(<span class="string">'/todos'</span>, <span class="string">'todos'</s
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
-              <p>Set up the listeners for path changes. Chip uses the Path.js library for routing.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">listen</span></span> = -&gt;
-	Path.history.listen()
-	<span class="keyword">if</span> Path.history.supported</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-19">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
-              </div>
               <p>Set listeners on links to catch their clicks and use pushState instead</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>		$(document).<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
-			<span class="keyword">if</span> <span class="keyword">this</span>.host <span class="keyword">is</span> location.host
-				event.preventDefault()
-				Path.history.pushState {}, <span class="string">""</span>, $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)</pre></div></div>
+			<span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
+			<span class="keyword">return</span> <span class="keyword">if</span> <span class="keyword">this</span>.host <span class="keyword">isnt</span> location.host <span class="keyword">or</span> <span class="keyword">this</span>.href <span class="keyword">is</span> location.href + <span class="string">'#'</span>
+			event.preventDefault()
+			chip.redirect $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)</pre></div></div>
             
         </li>
         

@@ -124,7 +124,7 @@ when hidden, replacing it with a non-visible placeholder.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'bind-html'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'html'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		element.html(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
             
@@ -255,16 +255,28 @@ value of <code>&#39;Jac&#39;</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'value'</span>, (element, expr, controller) -&gt;
+	getValue =
+		<span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span>
+			-&gt; element.prop(<span class="string">'checked'</span>)
+		<span class="keyword">else</span>
+			-&gt; element.val()
+	
+	setValue =
+		<span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span>
+			(value) -&gt; element.prop(<span class="string">'checked'</span>, value)
+		<span class="keyword">else</span>
+			(value) -&gt; element.val(value)
+	
 	observer = controller.watch expr, (value) -&gt;
-		<span class="keyword">if</span> element.val() <span class="keyword">isnt</span> value
-			element.val(value)
+		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> value
+			setValue value
 	
 	setter = controller.getBoundEval expr + <span class="string">' = value'</span>, <span class="string">'value'</span>
-	setter element.val()
+	setter getValue()
 	
 	element.<span class="literal">on</span> <span class="string">'keydown keyup change'</span>, -&gt; <span class="comment"># TODO set up the listeners which will update the value, not just for text inputs</span>
-		<span class="keyword">if</span> element.val() <span class="keyword">isnt</span> observer.oldValue
-			setter element.val()
+		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue
+			setter getValue()
 			observer.skipNextSync() <span class="comment"># don't update this observer, user changed it</span>
 			controller.syncView() <span class="comment"># update other expressions looking at this data</span></pre></div></div>
             

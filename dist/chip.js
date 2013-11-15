@@ -311,6 +311,7 @@ Path.core.route.prototype = {
         if (this.href === location.href || this.href === location.href + '#') {
           return;
         }
+        console.log(this.href, location.href);
         event.preventDefault();
         return Path.history.pushState({}, "", $(this).attr("href"));
       });
@@ -923,17 +924,27 @@ Path.core.route.prototype = {
   };
 
   Binding.addHandler('value', function(element, expr, controller) {
-    var observer, setter;
+    var getValue, observer, setValue, setter;
+    getValue = element.attr('type') === 'checkbox' ? function() {
+      return element.prop('checked');
+    } : function() {
+      return element.val();
+    };
+    setValue = element.attr('type') === 'checkbox' ? function(value) {
+      return element.prop('checked', value);
+    } : function(value) {
+      return element.val(value);
+    };
     observer = controller.watch(expr, function(value) {
-      if (element.val() !== value) {
-        return element.val(value);
+      if (getValue() !== value) {
+        return setValue(value);
       }
     });
     setter = controller.getBoundEval(expr + ' = value', 'value');
-    setter(element.val());
+    setter(getValue());
     return element.on('keydown keyup change', function() {
-      if (element.val() !== observer.oldValue) {
-        setter(element.val());
+      if (getValue() !== observer.oldValue) {
+        setter(getValue());
         observer.skipNextSync();
         return controller.syncView();
       }
