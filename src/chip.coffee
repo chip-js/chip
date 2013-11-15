@@ -128,6 +128,8 @@ chip.redirect = (url) ->
 
 # Set up the listeners for path changes. Chip uses the Path.js library for routing.
 chip.listen = ->
+	unless chip.appController
+		$ -> chip.createAppController()
 	Path.history.listen()
 	if Path.history.supported
 		# Set listeners on links to catch their clicks and use pushState instead
