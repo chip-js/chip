@@ -39,7 +39,7 @@ class Controller
 	
 	# Redirects to the provided URL
 	redirect: (url) ->
-		Path.history.pushState {}, "", url
+		chip.redirect(url)
 	
 	
 	# Clones the object at the given property name for processing forms

@@ -122,6 +122,9 @@ chip.runRoute = (name, parents, params) ->
 	controller.syncView()
 
 
+chip.redirect = (url) ->
+	return if url is location.pathname
+	Path.history.pushState {}, "", url
 
 # Set up the listeners for path changes. Chip uses the Path.js library for routing.
 chip.listen = ->
@@ -130,7 +133,6 @@ chip.listen = ->
 		# Set listeners on links to catch their clicks and use pushState instead
 		$(document).on 'click', 'a[href]', (event) ->
 			return if event.isDefaultPrevented() # if something else already handled this, we won't
-			return if this.host isnt location.host
-			return if this.href is location.href or this.href is location.href + '#'
+			return if this.host isnt location.host or this.href is location.href + '#'
 			event.preventDefault()
-			Path.history.pushState {}, "", $(this).attr("href")
+			chip.redirect $(this).attr("href")
