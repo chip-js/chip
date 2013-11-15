@@ -80,7 +80,7 @@ Binding.addHandler 'text', (element, expr, controller) ->
 #   </p>
 # </div>
 # ```
-Binding.addHandler 'bind-html', (element, expr, controller) ->
+Binding.addHandler 'html', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		element.html(if value? then value else '')
 
