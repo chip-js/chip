@@ -251,21 +251,14 @@ normalizeExpression = (expr, extraArgNames) ->
 	filters = expr.split /\s*@@@\s*/
 	expr = filters.shift()
 	if filters.length
-		# Replaces the strings pulled out of the filters in order to escape them and get them in order
-		filterStrings = strings.splice(expr.match(quoteExpr)?.length or 0)
-		filters = filters.join('@@@').replace(quoteExpr, -> filterStrings.shift()).split('@@@')
-		
-		filterString = '@@@'
+		strIndex = expr.match(quoteExpr)?.length or 0
 		filters.forEach (filter) ->
 			args = filter.split(argSeparator)
-			args[0] = "'" + args[0] + "'"
-			filterString = "runFilter(#{filterString},#{args.join(',')})"
+			strings.splice strIndex++, 0, "'" + args[0] + "'"
+			strIndex += filter.match(quoteExpr)?.length or 0
+			args[0] = "''"
+			expr = "runFilter(#{expr},#{args.join(',')})"
 		
-		filterString = filterString.replace quoteExpr, (str, quote) ->
-			strings.push str
-			return quote + quote # placeholder for the string
-		expr = filterString.replace '@@@', expr
-	
 	
 	# Adds the "this." prefix onto properties found in the expression
 	expr = expr.replace propExpr, (match, prefix, objIndicator, propChain, postfix, colon, index, str) ->
