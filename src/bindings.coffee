@@ -193,16 +193,28 @@ Path.onchange = ->
 # And when the user changes the text in the first input to "Jac", `user.firstName` will be updated immediately with the
 # value of `'Jac'`.
 Binding.addHandler 'value', (element, expr, controller) ->
+	getValue =
+		if element.attr('type') is 'checkbox'
+			-> element.prop('checked')
+		else
+			-> element.val()
+	
+	setValue =
+		if element.attr('type') is 'checkbox'
+			(value) -> element.prop('checked', value)
+		else
+			(value) -> element.val(value)
+	
 	observer = controller.watch expr, (value) ->
-		if element.val() isnt value
-			element.val(value)
+		if getValue() isnt value
+			setValue value
 	
 	setter = controller.getBoundEval expr + ' = value', 'value'
-	setter element.val()
+	setter getValue()
 	
 	element.on 'keydown keyup change', -> # TODO set up the listeners which will update the value, not just for text inputs
-		if element.val() isnt observer.oldValue
-			setter element.val()
+		if getValue() isnt observer.oldValue
+			setter getValue()
 			observer.skipNextSync() # don't update this observer, user changed it
 			controller.syncView() # update other expressions looking at this data
 
