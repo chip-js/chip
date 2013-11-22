@@ -298,22 +298,30 @@ Path.core.route.prototype = {
     return controller.syncView();
   };
 
-  chip.listen = function() {
+  chip.redirect = function(url) {
+    if (url === location.pathname) {
+      return;
+    }
+    return Path.history.pushState({}, "", url);
+  };
+
+  chip.listen = function(element) {
+    if (!chip.appController) {
+      $(function() {
+        return chip.createAppController();
+      });
+    }
     Path.history.listen();
-    if (Path.history.supported) {
-      return $(document).on('click', 'a[href]', function(event) {
+    if (Path.history.supported && element !== false) {
+      return $(element || document).on('click', 'a[href]', function(event) {
         if (event.isDefaultPrevented()) {
           return;
         }
-        if (this.host !== location.host) {
+        if (this.host !== location.host || this.href === location.href + '#') {
           return;
         }
-        if (this.href === location.href || this.href === location.href + '#') {
-          return;
-        }
-        console.log(this.href, location.href);
         event.preventDefault();
-        return Path.history.pushState({}, "", $(this).attr("href"));
+        return chip.redirect($(this).attr("href"));
       });
     }
   };
@@ -489,7 +497,7 @@ Path.core.route.prototype = {
     };
 
     Controller.prototype.redirect = function(url) {
-      return Path.history.pushState({}, "", url);
+      return chip.redirect(url);
     };
 
     Controller.prototype.cloneValue = function(property) {
@@ -509,7 +517,10 @@ Path.core.route.prototype = {
     };
 
     Controller.prototype.syncView = function(later) {
-      return Observer.sync(later);
+      Observer.sync(later);
+      if (typeof later === 'function') {
+        return setTimeout(later);
+      }
     };
 
     Controller.prototype.syncNow = function() {
@@ -661,7 +672,7 @@ Path.core.route.prototype = {
   argSeparator = /\s*:\s*/g;
 
   normalizeExpression = function(expr, extraArgNames) {
-    var filterString, filterStrings, filters, ignore, strings, _ref;
+    var filters, ignore, strIndex, strings, _ref;
     ignore = Controller.keywords.concat(extraArgNames);
     strings = [];
     expr = expr.replace(quoteExpr, function(str, quote) {
@@ -677,22 +688,15 @@ Path.core.route.prototype = {
     filters = expr.split(/\s*@@@\s*/);
     expr = filters.shift();
     if (filters.length) {
-      filterStrings = strings.splice(((_ref = expr.match(quoteExpr)) != null ? _ref.length : void 0) || 0);
-      filters = filters.join('@@@').replace(quoteExpr, function() {
-        return filterStrings.shift();
-      }).split('@@@');
-      filterString = '@@@';
+      strIndex = ((_ref = expr.match(quoteExpr)) != null ? _ref.length : void 0) || 0;
       filters.forEach(function(filter) {
-        var args;
+        var args, _ref1;
         args = filter.split(argSeparator);
-        args[0] = "'" + args[0] + "'";
-        return filterString = "runFilter(" + filterString + "," + (args.join(',')) + ")";
+        strings.splice(strIndex++, 0, "'" + args[0] + "'");
+        strIndex += ((_ref1 = filter.match(quoteExpr)) != null ? _ref1.length : void 0) || 0;
+        args[0] = "''";
+        return expr = "runFilter(" + expr + "," + (args.join(',')) + ")";
       });
-      filterString = filterString.replace(quoteExpr, function(str, quote) {
-        strings.push(str);
-        return quote + quote;
-      });
-      expr = filterString.replace('@@@', expr);
     }
     expr = expr.replace(propExpr, function(match, prefix, objIndicator, propChain, postfix, colon, index, str) {
       if (objIndicator && colon || str[index + prefix.length - 1] === '.') {
@@ -859,7 +863,7 @@ Path.core.route.prototype = {
     });
   });
 
-  Binding.addHandler('bind-html', function(element, expr, controller) {
+  Binding.addHandler('html', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.html(value != null ? value : '');
     });
@@ -1249,7 +1253,7 @@ Path.core.route.prototype = {
           return i;
         }
       }
-      return length;
+      return searchLength;
     };
     sharedSuffix = function(current, old, searchLength) {
       var count, index1, index2;

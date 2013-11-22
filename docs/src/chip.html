@@ -233,18 +233,23 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">route</span></span> = (path, name, subroutes) -&gt;
-	<span class="keyword">if</span> <span class="keyword">typeof</span> name <span class="keyword">is</span> <span class="string">'function'</span>
-		subroutes = name
-	
+            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">route</span></span> = (path, name, params, subroutes) -&gt;
 	<span class="keyword">if</span> <span class="keyword">typeof</span> name <span class="keyword">isnt</span> <span class="string">'string'</span>
-		name = path.replace(<span class="regexp">/^\//, '').replace(/\/\w/</span>, (match) -&gt; match.slice(<span class="number">1</span>).toUpperCase())
+		subroutes = params
+		params = name
+		name = path.replace(<span class="regexp">/^\//</span>, <span class="string">''</span>)
+	
+	<span class="keyword">if</span> <span class="keyword">typeof</span> params <span class="keyword">isnt</span> <span class="string">'object'</span>
+		subroutes = params
+		params = {}
 	
 	chip.route.parents = [] <span class="keyword">unless</span> chip.route.parents
 	parents = chip.route.parents.slice() <span class="comment"># unmutable copy</span>
 	path = parents.join(<span class="string">''</span>) + path <span class="keyword">if</span> parents.length <span class="comment"># sub-route support</span>
 	
-	Path.map(path).to -&gt; chip.runRoute(name, parents, <span class="property">@params</span>)</pre></div></div>
+	Path.map(path).to -&gt;
+		combinedParams = $.extend {}, params, <span class="property">@params</span>
+		chip.runRoute name, parents, combinedParams</pre></div></div>
             
         </li>
         
@@ -334,11 +339,11 @@ chip.<span class="function"><span class="title">redirect</span></span> = (url) -
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">listen</span></span> = -&gt;
+            <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">listen</span></span> = (element) -&gt;
 	<span class="keyword">unless</span> chip.appController
 		$ -&gt; chip.createAppController()
 	Path.history.listen()
-	<span class="keyword">if</span> Path.history.supported</pre></div></div>
+	<span class="keyword">if</span> Path.history.supported <span class="keyword">and</span> element <span class="keyword">isnt</span> <span class="literal">false</span></pre></div></div>
             
         </li>
         
@@ -353,7 +358,7 @@ chip.<span class="function"><span class="title">redirect</span></span> = (url) -
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		$(document).<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
+            <div class="content"><div class='highlight'><pre>		$(element <span class="keyword">or</span> document).<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
 			<span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
 			<span class="keyword">return</span> <span class="keyword">if</span> <span class="keyword">this</span>.host <span class="keyword">isnt</span> location.host <span class="keyword">or</span> <span class="keyword">this</span>.href <span class="keyword">is</span> location.href + <span class="string">'#'</span>
 			event.preventDefault()

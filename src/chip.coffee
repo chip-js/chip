@@ -69,18 +69,23 @@ chip.createAppController = (controller) ->
 # Create a route to be run when the given URL `path` is hit in the browser URL. The route `name` is used to load the
 # template and controller by the same name. This template will be placed in the first element on page with a
 # `data-route` attribute.
-chip.route = (path, name, subroutes) ->
-	if typeof name is 'function'
-		subroutes = name
-	
+chip.route = (path, name, params, subroutes) ->
 	if typeof name isnt 'string'
-		name = path.replace(/^\//, '').replace(/\/\w/, (match) -> match.slice(1).toUpperCase())
+		subroutes = params
+		params = name
+		name = path.replace(/^\//, '')
+	
+	if typeof params isnt 'object'
+		subroutes = params
+		params = {}
 	
 	chip.route.parents = [] unless chip.route.parents
 	parents = chip.route.parents.slice() # unmutable copy
 	path = parents.join('') + path if parents.length # sub-route support
 	
-	Path.map(path).to -> chip.runRoute(name, parents, @params)
+	Path.map(path).to ->
+		combinedParams = $.extend {}, params, @params
+		chip.runRoute name, parents, combinedParams
 	
 	# `subroutes` should be a function like `(route) ->` which allows routes to be defined
 	# relative to the route above it. When these routes are matched, the template and controller with that name will be
@@ -127,13 +132,13 @@ chip.redirect = (url) ->
 	Path.history.pushState {}, "", url
 
 # Set up the listeners for path changes. Chip uses the Path.js library for routing.
-chip.listen = ->
+chip.listen = (element) ->
 	unless chip.appController
 		$ -> chip.createAppController()
 	Path.history.listen()
-	if Path.history.supported
+	if Path.history.supported and element isnt false
 		# Set listeners on links to catch their clicks and use pushState instead
-		$(document).on 'click', 'a[href]', (event) ->
+		$(element or document).on 'click', 'a[href]', (event) ->
 			return if event.isDefaultPrevented() # if something else already handled this, we won't
 			return if this.host isnt location.host or this.href is location.href + '#'
 			event.preventDefault()
