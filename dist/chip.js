@@ -14,7 +14,7 @@ var Path = {
         Path.routes.rescue = fn;
     },
     'history': {
-        'initial':{}, // Empty container for "Initial PopstatePopstate" checking variables.
+        'initial':{}, // Empty container for "Initial Popstate" checking variables.
         'pushState': function(state, title, path){
             if(Path.history.supported){
                 history.pushState(state, title, path);
