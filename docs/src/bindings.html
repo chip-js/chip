@@ -25,6 +25,12 @@
 
             </div>
             
+            <div class="content"><div class='highlight'><pre>
+
+Binding.addHandler <span class="string">'debug'</span>, (element, expr, controller) -&gt;
+	controller.watch expr, (value) -&gt;
+		console.info <span class="string">'Debug:'</span>, expr, <span class="string">'='</span>, value</pre></div></div>
+            
         </li>
         
         
@@ -33,45 +39,6 @@
               
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-2">&#182;</a>
-              </div>
-              <h2>data-if</h2>
-<p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
-when hidden, replacing it with a non-visible placeholder.</p>
-<p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"!user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
-<p><em>Result if <code>user</code> is null:</em></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">style</span>=<span class="value">"display:none"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">style</span>=<span class="value">"display:none"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'if'</span>, (element, expr, controller) -&gt;
-	placeholder = $(<span class="string">'&lt;script type="text/if-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).remove().get(<span class="number">0</span>)
-	elem = element.get(<span class="number">0</span>)
-	
-	controller.watch expr, (value) -&gt;
-		<span class="keyword">if</span> value
-			<span class="keyword">unless</span> elem.parentNode
-				placeholder.parentNode.replaceChild elem, placeholder
-		<span class="keyword">else</span>
-			<span class="keyword">unless</span> placeholder.parentNode
-				elem.parentNode.replaceChild placeholder, elem</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-3">
-            <div class="annotation">
-              
-              <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
               <h2>data-text</h2>
 <p>Adds a handler to display text inside an element.</p>
@@ -101,11 +68,11 @@ when hidden, replacing it with a non-visible placeholder.</p>
         </li>
         
         
-        <li id="section-4">
+        <li id="section-3">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-4">&#182;</a>
+                <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
               <h2>data-html</h2>
 <p>Adds a handler to display unescaped HTML inside an element. Be sure it&#39;s trusted!</p>
@@ -131,11 +98,11 @@ when hidden, replacing it with a non-visible placeholder.</p>
         </li>
         
         
-        <li id="section-5">
+        <li id="section-4">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-5">&#182;</a>
+                <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
               <h2>data-class</h2>
 <p>Adds a handler to add classes to an element. If the value of the expression is a string, that string will be set as the
@@ -170,11 +137,11 @@ the class list depending on whether the value of the property is truthy or false
         </li>
         
         
-        <li id="section-6">
+        <li id="section-5">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
               <h2>data-active</h2>
 <p>Adds a handler to add the class “active” to an element if the expression is truthy, or if no expression is
@@ -213,8 +180,8 @@ provided it adds the “active” class if the element or it‘s first anchor ch
 				element.removeClass(<span class="string">'active'</span>)
 		
 		link = element
-			.filter(<span class="string">'a[href],a[data-attr^="href:"]'</span>)
-			.add(element.find(<span class="string">'a[href],a[data-attr^="href:"]'</span>))
+			.filter(<span class="string">'a[href],a[data-href]'</span>)
+			.add(element.find(<span class="string">'a[href],a[data-href]'</span>))
 			.first()
 		<span class="keyword">if</span> link.attr(<span class="string">'data-href'</span>)
 			link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
@@ -228,11 +195,11 @@ Path.<span class="function"><span class="title">onchange</span></span> = -&gt;
         </li>
         
         
-        <li id="section-7">
+        <li id="section-6">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <h2>data-value</h2>
 <p>Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
@@ -283,11 +250,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <h2>data-[event]</h2>
 <p>Adds a handler for each event name in the array. When the event is triggered the expression will be run.</p>
@@ -320,11 +287,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-9">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <h2>data-[key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches.</p>
@@ -343,6 +310,31 @@ value of <code>&#39;Jac&#39;</code>.</p>
             <div class="content"><div class='highlight'><pre>keyCodes = { enter: <span class="number">13</span>, esc: <span class="number">27</span> }
 <span class="keyword">for</span> own name, keyCode <span class="keyword">of</span> keyCodes
 	Binding.addKeyEventHandler(name, keyCode)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <h2>data-[control key event]</h2>
+<p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches and the ctrlKey or metaKey is
+pressed.</p>
+<p><strong>Key Events:</strong></p>
+<ul>
+<li>data-ctrl-enter</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span> <span class="attribute">data-ctrl-enter</span>=<span class="value">"window.alert(element.val())"</span>&gt;</span></code></pre>
+<p><em>Result:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Binding.addKeyEventHandler(<span class="string">'ctrl-enter'</span>, keyCodes.enter, <span class="literal">true</span>)</pre></div></div>
             
         </li>
         
@@ -411,6 +403,49 @@ value of <code>&#39;Jac&#39;</code>.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
+              <h2>data-if</h2>
+<p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
+when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"!user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
+<p><em>Result if <code>user</code> is null:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">style</span>=<span class="value">"display:none"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">style</span>=<span class="value">"display:none"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
+	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
+	placeholder = $(<span class="string">'&lt;script type="text/if-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).replaceAll(template)
+	controllerName = element.attr(<span class="string">'data-controller'</span>)
+	element.removeAttr(<span class="string">'data-controller'</span>)
+	
+	controller.watch expr, (value) -&gt;
+		<span class="keyword">if</span> value
+			<span class="keyword">if</span> placeholder.parent().length
+				element = template.clone()
+				Controller.create element, controller, controllerName
+				placeholder.replaceWith(element)
+		<span class="keyword">else</span>
+			<span class="keyword">unless</span> placeholder.parent().length
+				element.replaceWith(placeholder)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
               <h2>data-repeat</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
 running the controller definition if <code>data-controller</code> is set on the element after <code>data-repeat</code>. The expression must
@@ -445,7 +480,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addBlockHandler <span class="string">'repeat'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'repeat'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
 	orig = expr
 	[ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
 	<span class="keyword">unless</span> itemName <span class="keyword">and</span> expr
@@ -508,7 +543,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 				removedElements = $ elements.splice.apply(elements, args.concat(newElements))
 				
 				<span class="keyword">if</span> removedElements.length
-					<span class="keyword">if</span> elements.length <span class="keyword">is</span> <span class="number">0</span>
+					<span class="keyword">if</span> elements.length - newElements.length <span class="keyword">is</span> <span class="number">0</span> <span class="comment"># removing all existing elements</span>
 						removedElements.eq(<span class="number">0</span>).replaceWith(placeholder)
 					removedElements.remove()
 				
@@ -524,11 +559,11 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
         </li>
         
         
-        <li id="section-13">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <h2>data-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
@@ -550,28 +585,32 @@ attributes which appear after <code>data-partial</code> will have the new value 
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addBlockHandler <span class="string">'partial'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'partial'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
 	parts = expr.split <span class="regexp">/\s+as\s+\s+with\s+/</span>
-	name = parts.pop()
-	[ expr, itemName ] = parts
+	nameExpr = parts.pop()
+	[ itemExpr, itemName ] = parts
+	childController = <span class="literal">null</span>
+	extend = {}
 	
-	<span class="keyword">if</span> expr <span class="keyword">and</span> itemName
-		extend = {}
-		extend[itemName] = controller.eval expr
-		controller.watch expr, <span class="literal">true</span>, (value) -&gt;
-			newController[itemName] = value
+	<span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
+		controller.watch itemExpr, <span class="literal">true</span>, (value) -&gt;
+			childController[itemName] = value
 	
-	element.html chip.getTemplate(name)
-	newController = Controller.create element, controller, name, extend</pre></div></div>
+	controller.watch nameExpr, (name) -&gt;
+		<span class="keyword">return</span> <span class="keyword">unless</span> name?
+		<span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
+			extend[itemName] = controller.eval itemExpr
+		element.html chip.getTemplate(name)
+		childController = Controller.create element, controller, name, extend</pre></div></div>
             
         </li>
         
         
-        <li id="section-14">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <h2>data-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the
@@ -586,7 +625,7 @@ as a form) or provide functionality provided by that controller to the element.<
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addBlockHandler <span class="string">'controller'</span>, (element, controllerName, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'controller'</span>, <span class="number">30</span>, (element, controllerName, controller) -&gt;
 	Controller.create(element, controller, controllerName)</pre></div></div>
             
         </li>

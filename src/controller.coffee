@@ -17,7 +17,6 @@ class Controller
 		@_observers.push observer
 		observer
 	
-	
 	# Evaluates an expression immediately, returning the result
 	eval: (expr) ->
 		Controller.createFunction(expr).call(this)
@@ -81,7 +80,7 @@ class Controller
 	# The keywords which will *not* get `this.` prepended to inside an expression. All other valid variable names will
 	# have `this.` added to them. `this` is the controller instance when the expression is run. Add additional keywords
 	# to this array if there are global variables you wish to use in expressions. E.g. `$` or `jQuery`
-	@keywords: ['this', 'window', 'true', 'false']
+	@keywords: ['this', 'window', '$', 'true', 'false']
 	
 	
 	# Static *private* property, holds "controller definitions" which are functions that get called to initialize
@@ -195,14 +194,15 @@ class Controller
 			if normalizedExpr.indexOf('(') is -1
 				functionBody = "try{return #{normalizedExpr}}catch(e){}"
 			else
-				functionBody = "try{return #{normalizedExpr}}catch(e){throw" +
-					" 'Error processing binding expression `#{expr.replace(/'/g, "\\'")}` ' + e}"
+				functionBody = "try{return #{normalizedExpr}}catch(e){throw new Error(" +
+					"'Error processing binding expression `#{expr.replace(/'/g, "\\'")}` ' + e)}"
 			
 			# Caches the function for later
 			func = @exprCache[normalizedExpr] = Function(extraArgNames..., functionBody)
 		catch e
 			# Throws an error if the expression was not valid JavaScript
-			throw 'Error evaluating code for observer binding: `' + expr + '` with error: ' + e.message
+			throw new Error e.message + ' in observer binding:\n`' + expr + '`\n' +
+			'Compiled binding:\n' + functionBody
 		func
 	
 	

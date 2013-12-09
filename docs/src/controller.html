@@ -240,7 +240,7 @@ to this array if there are global variables you wish to use in expressions. E.g.
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@keywords</span>: [<span class="string">'this'</span>, <span class="string">'window'</span>, <span class="string">'true'</span>, <span class="string">'false'</span>]</pre></div></div>
+            <div class="content"><div class='highlight'><pre>	<span class="property">@keywords</span>: [<span class="string">'this'</span>, <span class="string">'window'</span>, <span class="string">'$'</span>, <span class="string">'true'</span>, <span class="string">'false'</span>]</pre></div></div>
             
         </li>
         
@@ -527,8 +527,8 @@ functions. Those that do use functions need the error to occur so developers can
             <div class="content"><div class='highlight'><pre>			<span class="keyword">if</span> normalizedExpr.indexOf(<span class="string">'('</span>) <span class="keyword">is</span> -<span class="number">1</span>
 				functionBody = <span class="string">"try{return <span class="subst">#{normalizedExpr}</span>}catch(e){}"</span>
 			<span class="keyword">else</span>
-				functionBody = <span class="string">"try{return <span class="subst">#{normalizedExpr}</span>}catch(e){throw"</span> +
-					<span class="string">" 'Error processing binding expression `<span class="subst">#{expr.replace(/'/g, "\\'")}</span>` ' + e}"</span></pre></div></div>
+				functionBody = <span class="string">"try{return <span class="subst">#{normalizedExpr}</span>}catch(e){throw new Error("</span> +
+					<span class="string">"'Error processing binding expression `<span class="subst">#{expr.replace(/'/g, "\\'")}</span>` ' + e)}"</span></pre></div></div>
             
         </li>
         
@@ -559,7 +559,8 @@ functions. Those that do use functions need the error to occur so developers can
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">throw</span> <span class="string">'Error evaluating code for observer binding: `'</span> + expr + <span class="string">'` with error: '</span> + e.message
+            <div class="content"><div class='highlight'><pre>			<span class="keyword">throw</span> <span class="keyword">new</span> Error e.message + <span class="string">' in observer binding:\n`'</span> + expr + <span class="string">'`\n'</span> +
+			<span class="string">'Compiled binding:\n'</span> + functionBody
 		func</pre></div></div>
             
         </li>

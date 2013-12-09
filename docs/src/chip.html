@@ -341,7 +341,7 @@ chip.<span class="function"><span class="title">redirect</span></span> = (url) -
             
             <div class="content"><div class='highlight'><pre>chip.<span class="function"><span class="title">listen</span></span> = (element) -&gt;
 	<span class="keyword">unless</span> chip.appController
-		$ -&gt; chip.createAppController()
+		chip.createAppController()
 	Path.history.listen()
 	<span class="keyword">if</span> Path.history.supported <span class="keyword">and</span> element <span class="keyword">isnt</span> <span class="literal">false</span></pre></div></div>
             

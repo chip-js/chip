@@ -14,7 +14,7 @@ var Path = {
         Path.routes.rescue = fn;
     },
     'history': {
-        'initial':{}, // Empty container for "Initial Popstate" checking variables.
+        'initial':{}, // Empty container for "Initial PopstatePopstate" checking variables.
         'pushState': function(state, title, path){
             if(Path.history.supported){
                 history.pushState(state, title, path);
@@ -248,15 +248,16 @@ Path.core.route.prototype = {
     return chip.appController = controller ? Controller.setup(root, controller, 'application') : Controller.create(root, null, 'application');
   };
 
-  chip.route = function(path, name, subroutes) {
+  chip.route = function(path, name, params, subroutes) {
     var parents;
-    if (typeof name === 'function') {
-      subroutes = name;
-    }
     if (typeof name !== 'string') {
-      name = path.replace(/^\//, '').replace(/\/\w/, function(match) {
-        return match.slice(1).toUpperCase();
-      });
+      subroutes = params;
+      params = name;
+      name = path.replace(/^\//, '');
+    }
+    if (typeof params !== 'object') {
+      subroutes = params;
+      params = {};
     }
     if (!chip.route.parents) {
       chip.route.parents = [];
@@ -266,7 +267,9 @@ Path.core.route.prototype = {
       path = parents.join('') + path;
     }
     Path.map(path).to(function() {
-      return chip.runRoute(name, parents, this.params);
+      var combinedParams;
+      combinedParams = $.extend({}, params, this.params);
+      return chip.runRoute(name, parents, combinedParams);
     });
     if (subroutes) {
       chip.route.parents.push(path);
@@ -307,9 +310,7 @@ Path.core.route.prototype = {
 
   chip.listen = function(element) {
     if (!chip.appController) {
-      $(function() {
-        return chip.createAppController();
-      });
+      chip.createAppController();
     }
     Path.history.listen();
     if (Path.history.supported && element !== false) {
@@ -546,7 +547,7 @@ Path.core.route.prototype = {
       }
     };
 
-    Controller.keywords = ['this', 'window', 'true', 'false'];
+    Controller.keywords = ['this', 'window', '$', 'true', 'false'];
 
     Controller.definitions = {};
 
@@ -633,12 +634,12 @@ Path.core.route.prototype = {
         if (normalizedExpr.indexOf('(') === -1) {
           functionBody = "try{return " + normalizedExpr + "}catch(e){}";
         } else {
-          functionBody = ("try{return " + normalizedExpr + "}catch(e){throw") + (" 'Error processing binding expression `" + (expr.replace(/'/g, "\\'")) + "` ' + e}");
+          functionBody = ("try{return " + normalizedExpr + "}catch(e){throw new Error(") + ("'Error processing binding expression `" + (expr.replace(/'/g, "\\'")) + "` ' + e)}");
         }
         func = this.exprCache[normalizedExpr] = Function.apply(null, __slice.call(extraArgNames).concat([functionBody]));
       } catch (_error) {
         e = _error;
-        throw 'Error evaluating code for observer binding: `' + expr + '` with error: ' + e.message;
+        throw new Error(e.message + ' in observer binding:\n`' + expr + '`\n' + 'Compiled binding:\n' + functionBody);
       }
       return func;
     };
@@ -731,16 +732,24 @@ Path.core.route.prototype = {
 
     Binding.prefix = 'data-';
 
-    Binding.blockHandlers = {};
+    Binding.handlers = [];
 
-    Binding.handlers = {};
-
-    Binding.addHandler = function(name, handler) {
-      return this.handlers[name] = handler;
-    };
-
-    Binding.addBlockHandler = function(name, handler) {
-      return this.blockHandlers[name] = handler;
+    Binding.addHandler = function(name, priority, handler) {
+      var entry;
+      if (typeof priority === 'function') {
+        handler = priority;
+        priority = 0;
+      }
+      entry = {
+        name: name,
+        priority: priority,
+        handler: handler
+      };
+      this.handlers[name] = entry;
+      this.handlers.push(entry);
+      return this.handlers.sort(function(a, b) {
+        return b.priority - a.priority;
+      });
     };
 
     Binding.addEventHandler = function(eventName) {
@@ -752,13 +761,17 @@ Path.core.route.prototype = {
       });
     };
 
-    Binding.addKeyEventHandler = function(name, keyCode) {
+    Binding.addKeyEventHandler = function(name, keyCode, ctrlKey) {
       return this.addHandler(name, function(element, expr, controller) {
         return element.on('keydown', function(event) {
-          if (event.keyCode === keyCode) {
-            event.preventDefault();
-            return controller["eval"](expr);
+          if ((ctrlKey != null) && (event.ctrlKey !== ctrlKey && event.metaKey !== ctrlKey)) {
+            return;
           }
+          if (event.keyCode !== keyCode) {
+            return;
+          }
+          event.preventDefault();
+          return controller["eval"](expr);
         });
       });
     };
@@ -784,42 +797,51 @@ Path.core.route.prototype = {
     };
 
     Binding.process = function(element, controller) {
-      var block, boundElements, handlers, prefixExp, processElement, selector;
+      var attr, attribs, child, newController, node, parentNode, _i, _len, _ref, _results,
+        _this = this;
       if (!controller) {
         controller = Controller.create(element);
       }
-      prefixExp = new RegExp('^' + Binding.prefix);
-      processElement = function(element) {
-        var attr, attribs, expr, handler, node, _results;
-        node = element.get(0);
-        handler = null;
-        attribs = Array.prototype.slice.call(node.attributes).filter(function(attr) {
-          return prefixExp.test(attr.name) && handlers[attr.name.replace(prefixExp, '')];
-        });
-        _results = [];
-        while (attribs.length) {
-          attr = attribs.shift();
-          if (!node.hasAttribute(attr.name)) {
-            continue;
-          }
-          handler = handlers[attr.name.replace(prefixExp, '')];
-          expr = attr.value;
-          node.removeAttribute(attr.name);
-          _results.push(handler(element, expr, controller));
-        }
-        return _results;
-      };
-      handlers = this.blockHandlers;
-      selector = '[' + this.prefix + Object.keys(handlers).join('],[' + this.prefix) + ']';
-      while ((block = element.find(selector)).length) {
-        processElement(block.first());
-      }
-      handlers = this.handlers;
-      selector = '[' + this.prefix + Object.keys(handlers).join('],[' + this.prefix) + ']';
-      boundElements = element.filter(selector).add(element.find(selector));
-      return boundElements.each(function() {
-        return processElement(jQuery(this));
+      node = element.get(0);
+      parentNode = node.parentNode;
+      attribs = Array.prototype.slice.call(node.attributes);
+      attribs = attribs.filter(function(attr) {
+        return attr.name.indexOf(_this.prefix) === 0 && _this.handlers[attr.name.replace(_this.prefix, '')];
       });
+      attribs = attribs.map(function(attr) {
+        var entry;
+        entry = _this.handlers[attr.name.replace(_this.prefix, '')];
+        return {
+          name: attr.name,
+          value: attr.value,
+          priority: entry.priority,
+          handler: entry.handler
+        };
+      });
+      attribs = attribs.sort(function(a, b) {
+        return b.priority - a.priority;
+      });
+      while (attribs.length) {
+        attr = attribs.shift();
+        if (!node.hasAttribute(attr.name)) {
+          continue;
+        }
+        node.removeAttribute(attr.name);
+        newController = attr.handler(element, attr.value, controller);
+        if (node.parentNode !== parentNode) {
+          return;
+        }
+        if (newController instanceof Controller) {
+          controller = newController;
+        }
+      }
+      _ref = node.children;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        child = _ref[_i];
+        _results.push(this.process($(child), controller));
+      }
+      return _results;
     };
 
     return Binding;
@@ -840,20 +862,9 @@ Path.core.route.prototype = {
     chip.Binding = Binding;
   }
 
-  Binding.addHandler('if', function(element, expr, controller) {
-    var elem, placeholder;
-    placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').remove().get(0);
-    elem = element.get(0);
+  Binding.addHandler('debug', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
-      if (value) {
-        if (!elem.parentNode) {
-          return placeholder.parentNode.replaceChild(elem, placeholder);
-        }
-      } else {
-        if (!placeholder.parentNode) {
-          return elem.parentNode.replaceChild(placeholder, elem);
-        }
-      }
+      return console.info('Debug:', expr, '=', value);
     });
   });
 
@@ -911,7 +922,7 @@ Path.core.route.prototype = {
           return element.removeClass('active');
         }
       };
-      link = element.filter('a[href],a[data-attr^="href:"]').add(element.find('a[href],a[data-attr^="href:"]')).first();
+      link = element.filter('a[href],a[data-href]').add(element.find('a[href],a[data-href]')).first();
       if (link.attr('data-href')) {
         link.on('hrefChanged', refresh);
       }
@@ -970,6 +981,8 @@ Path.core.route.prototype = {
     Binding.addKeyEventHandler(name, keyCode);
   }
 
+  Binding.addKeyEventHandler('ctrl-enter', keyCodes.enter, true);
+
   attribs = ['href', 'src', 'id'];
 
   for (_i = 0, _len = attribs.length; _i < _len; _i++) {
@@ -981,7 +994,28 @@ Path.core.route.prototype = {
     return Binding.addAttributeToggleHandler(name);
   });
 
-  Binding.addBlockHandler('repeat', function(element, expr, controller) {
+  Binding.addHandler('if', 50, function(element, expr, controller) {
+    var controllerName, placeholder, template;
+    template = element;
+    placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').replaceAll(template);
+    controllerName = element.attr('data-controller');
+    element.removeAttr('data-controller');
+    return controller.watch(expr, function(value) {
+      if (value) {
+        if (placeholder.parent().length) {
+          element = template.clone();
+          Controller.create(element, controller, controllerName);
+          return placeholder.replaceWith(element);
+        }
+      } else {
+        if (!placeholder.parent().length) {
+          return element.replaceWith(placeholder);
+        }
+      }
+    });
+  });
+
+  Binding.addHandler('repeat', 100, function(element, expr, controller) {
     var controllerName, createElement, elements, extend, itemName, orig, placeholder, propName, template, value, _ref, _ref1;
     orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
@@ -1046,7 +1080,7 @@ Path.core.route.prototype = {
           }
           removedElements = $(elements.splice.apply(elements, args.concat(newElements)));
           if (removedElements.length) {
-            if (elements.length === 0) {
+            if (elements.length - newElements.length === 0) {
               removedElements.eq(0).replaceWith(placeholder);
             }
             removedElements.remove();
@@ -1067,23 +1101,31 @@ Path.core.route.prototype = {
     });
   });
 
-  Binding.addBlockHandler('partial', function(element, expr, controller) {
-    var extend, itemName, newController, parts;
+  Binding.addHandler('partial', 50, function(element, expr, controller) {
+    var childController, extend, itemExpr, itemName, nameExpr, parts;
     parts = expr.split(/\s+as\s+\s+with\s+/);
-    name = parts.pop();
-    expr = parts[0], itemName = parts[1];
-    if (expr && itemName) {
-      extend = {};
-      extend[itemName] = controller["eval"](expr);
-      controller.watch(expr, true, function(value) {
-        return newController[itemName] = value;
+    nameExpr = parts.pop();
+    itemExpr = parts[0], itemName = parts[1];
+    childController = null;
+    extend = {};
+    if (itemExpr && itemName) {
+      controller.watch(itemExpr, true, function(value) {
+        return childController[itemName] = value;
       });
     }
-    element.html(chip.getTemplate(name));
-    return newController = Controller.create(element, controller, name, extend);
+    return controller.watch(nameExpr, function(name) {
+      if (name == null) {
+        return;
+      }
+      if (itemExpr && itemName) {
+        extend[itemName] = controller["eval"](itemExpr);
+      }
+      element.html(chip.getTemplate(name));
+      return childController = Controller.create(element, controller, name, extend);
+    });
   });
 
-  Binding.addBlockHandler('controller', function(element, controllerName, controller) {
+  Binding.addHandler('controller', 30, function(element, controllerName, controller) {
     return Controller.create(element, controller, controllerName);
   });
 

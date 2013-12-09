@@ -1,36 +1,9 @@
 # # Default Binding Handlers
 
-# ## data-if
-# Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
-# when hidden, replacing it with a non-visible placeholder.
-#
-# **Example:**
-# ```xml
-# <ul class="header-links">
-#   <li data-if="user"><a href="/account">My Account</a></li>
-#   <li data-if="user"><a href="/logout">Sign Out</a></li>
-#   <li data-if="!user"><a href="/login">Sign In</a></li>
-# </ul>
-# ```
-# *Result if `user` is null:*
-# ```xml
-# <ul class="header-links">
-#   <li style="display:none"><a href="/account">My Account</a></li>
-#   <li style="display:none"><a href="/logout">Sign Out</a></li>
-#   <li><a href="/login">Sign In</a></li>
-# </ul>
-# ```
-Binding.addHandler 'if', (element, expr, controller) ->
-	placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').remove().get(0)
-	elem = element.get(0)
-	
+
+Binding.addHandler 'debug', (element, expr, controller) ->
 	controller.watch expr, (value) ->
-		if value
-			unless elem.parentNode
-				placeholder.parentNode.replaceChild elem, placeholder
-		else
-			unless placeholder.parentNode
-				elem.parentNode.replaceChild placeholder, elem
+		console.info 'Debug:', expr, '=', value
 
 
 # ## data-text
@@ -157,8 +130,8 @@ Binding.addHandler 'active', (element, expr, controller) ->
 				element.removeClass('active')
 		
 		link = element
-			.filter('a[href],a[data-attr^="href:"]')
-			.add(element.find('a[href],a[data-attr^="href:"]'))
+			.filter('a[href],a[data-href]')
+			.add(element.find('a[href],a[data-href]'))
 			.first()
 		if link.attr('data-href')
 			link.on 'hrefChanged', refresh
@@ -269,6 +242,24 @@ keyCodes = { enter: 13, esc: 27 }
 for own name, keyCode of keyCodes
 	Binding.addKeyEventHandler(name, keyCode)
 
+# ## data-[control key event]
+# Adds a handler which is triggered when the keydown event's `keyCode` property matches and the ctrlKey or metaKey is
+# pressed.
+# 
+# **Key Events:**
+# 
+# * data-ctrl-enter
+#
+# **Example:**
+# ```xml
+# <input data-ctrl-enter="window.alert(element.val())">
+# ```
+# *Result:*
+# ```xml
+# <input>
+# ```
+Binding.addKeyEventHandler('ctrl-enter', keyCodes.enter, true)
+
 # ## data-[attribute]
 # Adds a handler to set the attribute of element to the value of the expression.
 # 
@@ -313,6 +304,42 @@ for name in attribs
 [ 'checked', 'disabled' ].forEach (name) ->
 	Binding.addAttributeToggleHandler(name)
 
+# ## data-if
+# Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
+# when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.
+#
+# **Example:**
+# ```xml
+# <ul class="header-links">
+#   <li data-if="user"><a href="/account">My Account</a></li>
+#   <li data-if="user"><a href="/logout">Sign Out</a></li>
+#   <li data-if="!user"><a href="/login">Sign In</a></li>
+# </ul>
+# ```
+# *Result if `user` is null:*
+# ```xml
+# <ul class="header-links">
+#   <li style="display:none"><a href="/account">My Account</a></li>
+#   <li style="display:none"><a href="/logout">Sign Out</a></li>
+#   <li><a href="/login">Sign In</a></li>
+# </ul>
+# ```
+Binding.addHandler 'if', 50, (element, expr, controller) ->
+	template = element # use a placeholder for the element and the element as a template
+	placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').replaceAll(template)
+	controllerName = element.attr('data-controller')
+	element.removeAttr('data-controller')
+	
+	controller.watch expr, (value) ->
+		if value
+			if placeholder.parent().length
+				element = template.clone()
+				Controller.create element, controller, controllerName
+				placeholder.replaceWith(element)
+		else
+			unless placeholder.parent().length
+				element.replaceWith(placeholder)
+
 
 # ## data-repeat
 # Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
@@ -350,7 +377,7 @@ for name in attribs
 #   </div>
 # </div>
 # ```
-Binding.addBlockHandler 'repeat', (element, expr, controller) ->
+Binding.addHandler 'repeat', 100, (element, expr, controller) ->
 	orig = expr
 	[ itemName, expr ] = expr.split /\s+in\s+/
 	unless itemName and expr
@@ -413,7 +440,7 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 				removedElements = $ elements.splice.apply(elements, args.concat(newElements))
 				
 				if removedElements.length
-					if elements.length is 0
+					if elements.length - newElements.length is 0 # removing all existing elements
 						removedElements.eq(0).replaceWith(placeholder)
 					removedElements.remove()
 				
@@ -449,20 +476,23 @@ Binding.addBlockHandler 'repeat', (element, expr, controller) ->
 #   <span>Jacob</span>
 # </div>
 # ```
-Binding.addBlockHandler 'partial', (element, expr, controller) ->
+Binding.addHandler 'partial', 50, (element, expr, controller) ->
 	parts = expr.split /\s+as\s+\s+with\s+/
-	name = parts.pop()
-	[ expr, itemName ] = parts
+	nameExpr = parts.pop()
+	[ itemExpr, itemName ] = parts
+	childController = null
+	extend = {}
 	
-	if expr and itemName
-		extend = {}
-		extend[itemName] = controller.eval expr
-		controller.watch expr, true, (value) ->
-			newController[itemName] = value
+	if itemExpr and itemName
+		controller.watch itemExpr, true, (value) ->
+			childController[itemName] = value
 	
-	element.html chip.getTemplate(name)
-	newController = Controller.create element, controller, name, extend
-
+	controller.watch nameExpr, (name) ->
+		return unless name?
+		if itemExpr and itemName
+			extend[itemName] = controller.eval itemExpr
+		element.html chip.getTemplate(name)
+		childController = Controller.create element, controller, name, extend
 
 
 # ## data-controller
@@ -480,5 +510,5 @@ Binding.addBlockHandler 'partial', (element, expr, controller) ->
 # <form>
 # </form>
 # ```
-Binding.addBlockHandler 'controller', (element, controllerName, controller) ->
+Binding.addHandler 'controller', 30, (element, controllerName, controller) ->
 	Controller.create(element, controller, controllerName)
