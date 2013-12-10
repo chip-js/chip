@@ -182,7 +182,8 @@ Binding.addHandler 'value', (element, expr, controller) ->
 		if getValue() isnt value
 			setValue value
 	
-	setter = controller.getBoundEval expr + ' = value', 'value'
+	setterController = controller.passthrough or controller
+	setter = setterController.getBoundEval expr + ' = value', 'value'
 	
 	# Sets initial element value. For SELECT elements allows child option element values to be set first.
 	if element.filter('select').length
@@ -341,7 +342,7 @@ Binding.addHandler 'if', 50, (element, expr, controller) ->
 		if value
 			if placeholder.parent().length
 				element = template.clone()
-				Controller.create element, controller, controllerName
+				Controller.create element, controller, controllerName, passthrough: true
 				placeholder.replaceWith(element)
 		else
 			unless placeholder.parent().length

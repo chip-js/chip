@@ -354,6 +354,7 @@ the parent, only read it or call methods on it.</p>
 			<span class="function"><span class="title">NewController</span></span> = -&gt;
 			NewController.prototype = parentController <span class="keyword">if</span> parentController
 			controller = <span class="keyword">new</span> NewController()
+			controller.parent = parentController
 		<span class="keyword">else</span>
 			controller = <span class="keyword">new</span> Controller()</pre></div></div>
             
@@ -387,6 +388,9 @@ initialized by its definition or bound to its element.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> extend
+			<span class="keyword">if</span> extend.passthrough <span class="keyword">and</span> parentController
+				extend.passthrough = parentController.passthrough <span class="keyword">or</span> parentController
+			
 			controller[key] = value <span class="keyword">for</span> own key, value <span class="keyword">of</span> extend</pre></div></div>
             
         </li>

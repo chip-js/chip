@@ -580,11 +580,15 @@ Path.core.route.prototype = {
           NewController.prototype = parentController;
         }
         controller = new NewController();
+        controller.parent = parentController;
       } else {
         controller = new Controller();
       }
       controller._observers = [];
       if (extend) {
+        if (extend.passthrough && parentController) {
+          extend.passthrough = parentController.passthrough || parentController;
+        }
         for (key in extend) {
           if (!__hasProp.call(extend, key)) continue;
           value = extend[key];
@@ -938,7 +942,7 @@ Path.core.route.prototype = {
   };
 
   Binding.addHandler('value', function(element, expr, controller) {
-    var getValue, observer, setValue, setter;
+    var getValue, observer, setValue, setter, setterController;
     getValue = element.attr('type') === 'checkbox' ? function() {
       return element.prop('checked');
     } : function() {
@@ -954,7 +958,8 @@ Path.core.route.prototype = {
         return setValue(value);
       }
     });
-    setter = controller.getBoundEval(expr + ' = value', 'value');
+    setterController = controller.passthrough || controller;
+    setter = setterController.getBoundEval(expr + ' = value', 'value');
     if (element.filter('select').length) {
       setTimeout(function() {
         setValue(controller["eval"](expr));
@@ -1010,7 +1015,9 @@ Path.core.route.prototype = {
       if (value) {
         if (placeholder.parent().length) {
           element = template.clone();
-          Controller.create(element, controller, controllerName);
+          Controller.create(element, controller, controllerName, {
+            passthrough: true
+          });
           return placeholder.replaceWith(element);
         }
       } else {

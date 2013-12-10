@@ -141,6 +141,7 @@ class Controller
 			NewController = ->
 			NewController.prototype = parentController if parentController
 			controller = new NewController()
+			controller.parent = parentController
 		else
 			controller = new Controller()
 		
@@ -150,6 +151,9 @@ class Controller
 		# If `extend` is provided, all properties from that object will be copied over to the controller before it is
 		# initialized by its definition or bound to its element.
 		if extend
+			if extend.passthrough and parentController
+				extend.passthrough = parentController.passthrough or parentController
+			
 			controller[key] = value for own key, value of extend
 		
 		# Sets up the new controller

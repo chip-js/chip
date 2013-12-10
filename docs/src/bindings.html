@@ -238,7 +238,8 @@ value of <code>&#39;Jac&#39;</code>.</p>
 		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> value
 			setValue value
 	
-	setter = controller.getBoundEval expr + <span class="string">' = value'</span>, <span class="string">'value'</span></pre></div></div>
+	setterController = controller.passthrough <span class="keyword">or</span> controller
+	setter = setterController.getBoundEval expr + <span class="string">' = value'</span>, <span class="string">'value'</span></pre></div></div>
             
         </li>
         
@@ -450,7 +451,7 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
 		<span class="keyword">if</span> value
 			<span class="keyword">if</span> placeholder.parent().length
 				element = template.clone()
-				Controller.create element, controller, controllerName
+				Controller.create element, controller, controllerName, passthrough: <span class="literal">true</span>
 				placeholder.replaceWith(element)
 		<span class="keyword">else</span>
 			<span class="keyword">unless</span> placeholder.parent().length
