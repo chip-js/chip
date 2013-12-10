@@ -479,10 +479,8 @@ Path.core.route.prototype = {
     Controller.prototype.watch = function(expr, skipTriggerImmediately, callback) {
       var getter, observer;
       getter = Controller.createBoundFunction(this, expr);
-      if (!this.hasOwnProperty('_observers')) {
-        this._observers = [];
-      }
       observer = Observer.add(getter, skipTriggerImmediately, callback);
+      observer.expr = expr;
       this._observers.push(observer);
       return observer;
     };
@@ -585,6 +583,7 @@ Path.core.route.prototype = {
       } else {
         controller = new Controller();
       }
+      controller._observers = [];
       if (extend) {
         for (key in extend) {
           if (!__hasProp.call(extend, key)) continue;
@@ -797,7 +796,7 @@ Path.core.route.prototype = {
     };
 
     Binding.process = function(element, controller) {
-      var attr, attribs, child, newController, node, parentNode, _i, _len, _ref, _results,
+      var attr, attribs, child, children, newController, node, parentNode, _i, _len, _results,
         _this = this;
       if (!controller) {
         controller = Controller.create(element);
@@ -835,10 +834,10 @@ Path.core.route.prototype = {
           controller = newController;
         }
       }
-      _ref = node.children;
+      children = Array.prototype.slice.call(node.children);
       _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        child = _ref[_i];
+      for (_i = 0, _len = children.length; _i < _len; _i++) {
+        child = children[_i];
         _results.push(this.process($(child), controller));
       }
       return _results;
@@ -956,7 +955,14 @@ Path.core.route.prototype = {
       }
     });
     setter = controller.getBoundEval(expr + ' = value', 'value');
-    setter(getValue());
+    if (element.filter('select').length) {
+      setTimeout(function() {
+        setValue(controller["eval"](expr));
+        return setter(getValue());
+      });
+    } else {
+      setter(getValue());
+    }
     return element.on('keydown keyup change', function() {
       if (getValue() !== observer.oldValue) {
         setter(getValue());

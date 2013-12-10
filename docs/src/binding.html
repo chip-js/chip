@@ -70,9 +70,11 @@ place to register new bind handlers.</p>
               <p>Adds a binding handler that will be run for each attribute whose name matches <code>@prefix + name</code>. The <code>handler</code> is
 a function that receives three arguments: the jQuery element the attribute was on, the value of the attribute
 (usually an expression), and the controller for this area of the page.</p>
-<p>Return <code>false</code> from the handler to stop processing the element and its children immediately. This allows you to
-recurse into the element&#39;s HTML with new controllers. You can do that by using
-<code>element.bindTo(newChildController)</code>.</p>
+<p>If the handler removes the element from its parent (to store as a template for cloning into repeats or ifs) then
+processing will stop on the element and its children immediately. This allows you to recurse into the element
+with new controllers by using <code>element.bindTo(newChildController)</code>.</p>
+<p>If a new controller is returned from the handler this controller will be used for the remaining handlers and the
+children of the element.</p>
 <p>The <code>priority</code> argument is optional and allows handlers with higher priority to be run before those with lower
 priority. The default is <code>0</code>.</p>
 <p><strong>Example:</strong> This binding handler adds pirateized text to an element.</p>
@@ -345,7 +347,8 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">for</span> child <span class="keyword">in</span> node.children
+            <div class="content"><div class='highlight'><pre>		children = Array::slice.call(node.children)
+		<span class="keyword">for</span> child <span class="keyword">in</span> children
 			<span class="property">@process</span> $(child), controller</pre></div></div>
             
         </li>

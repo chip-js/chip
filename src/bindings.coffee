@@ -183,7 +183,14 @@ Binding.addHandler 'value', (element, expr, controller) ->
 			setValue value
 	
 	setter = controller.getBoundEval expr + ' = value', 'value'
-	setter getValue()
+	
+	# Sets initial element value. For SELECT elements allows child option element values to be set first.
+	if element.filter('select').length
+		setTimeout ->
+			setValue controller.eval expr
+			setter getValue()
+	else
+		setter getValue()
 	
 	element.on 'keydown keyup change', -> # TODO set up the listeners which will update the value, not just for text inputs
 		if getValue() isnt observer.oldValue

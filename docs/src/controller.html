@@ -86,8 +86,8 @@ the value in the expression changes. An expression can be as simple as <code>nam
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="property">@_observers</span> = [] <span class="keyword">unless</span> <span class="property">@hasOwnProperty</span>(<span class="string">'_observers'</span>)
-		observer = Observer.add getter, skipTriggerImmediately, callback
+            <div class="content"><div class='highlight'><pre>		observer = Observer.add getter, skipTriggerImmediately, callback
+		observer.expr = expr
 		<span class="property">@_observers</span>.push observer
 		observer</pre></div></div>
             
@@ -366,6 +366,21 @@ the parent, only read it or call methods on it.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
+              <p>Creates the observer array so child controllers don&#39;t inherit this from parents </p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		controller._observers = []</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
               <p>If <code>extend</code> is provided, all properties from that object will be copied over to the controller before it is
 initialized by its definition or bound to its element.</p>
 
@@ -377,11 +392,11 @@ initialized by its definition or bound to its element.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>Sets up the new controller</p>
 
@@ -392,11 +407,11 @@ initialized by its definition or bound to its element.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>Sets up a new controller. Allows for a non-controller object to be made into a controller without a parent.</p>
 
@@ -410,11 +425,11 @@ initialized by its definition or bound to its element.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>Assign element and add cleanup when the element is removed.</p>
 
@@ -427,11 +442,11 @@ initialized by its definition or bound to its element.</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>If <code>name</code> is supplied the controller definition by that name will be run to initialize this controller
 before the bindings are set up.</p>
@@ -443,11 +458,11 @@ before the bindings are set up.</p>
         </li>
         
         
-        <li id="section-24">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>Bind the element to the new controller and then return it.</p>
 
@@ -463,11 +478,11 @@ before the bindings are set up.</p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p><em>private:</em> Creates a function from the given expression, allowing for extra arguments. This function will be cached
 so subsequent calls with the same expression will return the previous function. E.g. the expression “name” will
@@ -480,11 +495,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-26">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>Prefix all property lookups with the <code>this</code> keyword. Ignores keywords (window, true, false) and extra args </p>
 
@@ -495,11 +510,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-27">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p>Returns the cached function for this expression if it exists.</p>
 
@@ -513,11 +528,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-28">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <p>We can safely (until getters/setters are common) add a try/catch around expression that don&#39;t use
 functions. Those that do use functions need the error to occur so developers can debug their code.</p>
@@ -533,11 +548,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-29">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <p>Caches the function for later</p>
 
@@ -549,11 +564,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-30">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p>Throws an error if the expression was not valid JavaScript</p>
 
@@ -566,11 +581,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-31">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <p><em>private:</em> Creates a function and binds it to the given controller so it may be called from anywhere
 (e.g. provided to observers).</p>
@@ -584,11 +599,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-32">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-33">&#182;</a>
               </div>
               <p>Provides the ‘elementRemove’ event to be dispatched when an element is removed from the DOM and cleaned up. Gets
 called when an element with the event ‘elementRemove’, is removed from the DOM. Manually call the listener.</p>
@@ -602,11 +617,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-33">
+        <li id="section-34">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-34">&#182;</a>
               </div>
               <p>Searches out possible properties or finds the beginning of strings (which we skip)</p>
 
@@ -622,11 +637,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-34">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
+                <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
               <p>Adds <code>this.</code> to the beginning of each valid property in an expression and processes filters</p>
 
@@ -637,11 +652,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-35">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
+                <a class="pilcrow" href="#section-36">&#182;</a>
               </div>
               <p>Ignores keywords and provided argument names</p>
 
@@ -652,11 +667,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-36">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
+                <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
               <p>Adds placeholders for strings so we can process the rest without their content messing us up.</p>
 
@@ -670,11 +685,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-37">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-37">&#182;</a>
+                <a class="pilcrow" href="#section-38">&#182;</a>
               </div>
               <p>Processes the filters</p>
 
@@ -699,11 +714,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-38">
+        <li id="section-39">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-38">&#182;</a>
+                <a class="pilcrow" href="#section-39">&#182;</a>
               </div>
               <p>Adds the “this.” prefix onto properties found in the expression</p>
 
@@ -721,11 +736,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-39">
+        <li id="section-40">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-39">&#182;</a>
+                <a class="pilcrow" href="#section-40">&#182;</a>
               </div>
               <p>Replaces string placeholders.</p>
 
@@ -737,11 +752,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-40">
+        <li id="section-41">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-40">&#182;</a>
+                <a class="pilcrow" href="#section-41">&#182;</a>
               </div>
               <p>console.log expr</p>
 
@@ -752,11 +767,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-41">
+        <li id="section-42">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-41">&#182;</a>
+                <a class="pilcrow" href="#section-42">&#182;</a>
               </div>
               <p>Set up for AMD.</p>
 

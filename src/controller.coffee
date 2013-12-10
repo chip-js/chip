@@ -12,8 +12,8 @@ class Controller
 	watch: (expr, skipTriggerImmediately, callback) ->
 		getter = Controller.createBoundFunction(this, expr)
 		# Store the observers with the controller so when it is closed we can clean up all observers as well
-		@_observers = [] unless @hasOwnProperty('_observers')
 		observer = Observer.add getter, skipTriggerImmediately, callback
+		observer.expr = expr
 		@_observers.push observer
 		observer
 	
@@ -143,6 +143,9 @@ class Controller
 			controller = new NewController()
 		else
 			controller = new Controller()
+		
+		# Creates the observer array so child controllers don't inherit this from parents 
+		controller._observers = []
 		
 		# If `extend` is provided, all properties from that object will be copied over to the controller before it is
 		# initialized by its definition or bound to its element.

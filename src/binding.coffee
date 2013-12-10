@@ -159,7 +159,8 @@ class Binding
 				controller = newController
 		
 		# Processes the children of this element after the element has been processed.
-		for child in node.children
+		children = Array::slice.call(node.children)
+		for child in children
 			@process $(child), controller
 	
 
