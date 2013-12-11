@@ -182,6 +182,9 @@ Binding.addHandler 'value', (element, expr, controller) ->
 		if getValue() isnt value
 			setValue value
 	
+	# Cannot set the value for filtered expressions since filters only convert data one-way
+	return if controller.exprHasFilter(expr)
+	
 	setterController = controller.passthrough or controller
 	setter = setterController.getBoundEval expr + ' = value', 'value'
 	

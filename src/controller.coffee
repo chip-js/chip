@@ -286,6 +286,15 @@ normalizeExpression = (expr, extraArgNames) ->
 #	console.log expr
 	expr
 
+# Determines if an expression has a filter (a single pipe)
+hasFilter = (expr) ->
+	expr = expr.replace pipeExpr, (match, orIndicator) ->
+		if orIndicator
+			return match
+		return '@@@'
+	expr.indexOf('@@@') isnt -1
+
+
 
 # Set up for AMD.
 this.Controller = Controller

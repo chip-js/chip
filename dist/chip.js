@@ -199,7 +199,7 @@ Path.core.route.prototype = {
 };
 
 (function() {
-  var Binding, Controller, Observer, argSeparator, attribs, chip, emptyQuoteExpr, keyCode, keyCodes, name, normalizeExpression, pipeExpr, propExpr, quoteExpr, varExpr, _i, _len,
+  var Binding, Controller, Observer, argSeparator, attribs, chip, emptyQuoteExpr, hasFilter, keyCode, keyCodes, name, normalizeExpression, pipeExpr, propExpr, quoteExpr, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -717,6 +717,16 @@ Path.core.route.prototype = {
     return expr;
   };
 
+  hasFilter = function(expr) {
+    expr = expr.replace(pipeExpr, function(match, orIndicator) {
+      if (orIndicator) {
+        return match;
+      }
+      return '@@@';
+    });
+    return expr.indexOf('@@@') !== -1;
+  };
+
   this.Controller = Controller;
 
   if (typeof define === 'function' && define.amd) {
@@ -958,6 +968,9 @@ Path.core.route.prototype = {
         return setValue(value);
       }
     });
+    if (controller.exprHasFilter(expr)) {
+      return;
+    }
     setterController = controller.passthrough || controller;
     setter = setterController.getBoundEval(expr + ' = value', 'value');
     if (element.filter('select').length) {

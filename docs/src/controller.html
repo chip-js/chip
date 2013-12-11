@@ -777,6 +777,26 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-42">&#182;</a>
               </div>
+              <p>Determines if an expression has a filter (a single pipe)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="title">hasFilter</span></span> = (expr) -&gt;
+	expr = expr.replace pipeExpr, (match, orIndicator) -&gt;
+		<span class="keyword">if</span> orIndicator
+			<span class="keyword">return</span> match
+		<span class="keyword">return</span> <span class="string">'@@@'</span>
+	expr.indexOf(<span class="string">'@@@'</span>) <span class="keyword">isnt</span> -<span class="number">1</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
               <p>Set up for AMD.</p>
 
             </div>

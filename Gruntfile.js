@@ -79,7 +79,7 @@ module.exports = function(grunt) {
 
 	// Default task(s).
 	grunt.registerTask('default', [ 'dist' ]);
-	grunt.registerTask('dist', [ 'concat:src', 'coffee', 'concat:dist', 'uglify', 'clean' ]);
+	grunt.registerTask('dist', [ 'concat:src', 'coffee', 'concat:dist', 'uglify', 'clean', 'docs' ]);
 	grunt.registerTask('docs', [ 'docco', 'clean' ]);
 
 };
