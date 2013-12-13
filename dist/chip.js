@@ -1,210 +1,526 @@
-var Path = {
-    'version': "0.8.4",
-    'map': function (path) {
-        if (Path.routes.defined.hasOwnProperty(path)) {
-            return Path.routes.defined[path];
-        } else {
-            return new Path.core.route(path);
-        }
-    },
-    'root': function (path) {
-        Path.routes.root = path;
-    },
-    'rescue': function (fn) {
-        Path.routes.rescue = fn;
-    },
-    'history': {
-        'initial':{}, // Empty container for "Initial Popstate" checking variables.
-        'pushState': function(state, title, path){
-            if(Path.history.supported){
-                history.pushState(state, title, path);
-                Path.dispatch(path);
-            } else {
-                if(Path.history.fallback){
-                    window.location.hash = "#" + path;
-                }
-            }
-        },
-        'popState': function(event){
-            var initialPop = !Path.history.initial.popped && location.href == Path.history.initial.URL;
-            Path.history.initial.popped = true;
-            if(initialPop) return;
-            Path.dispatch(document.location.pathname);
-        },
-        'listen': function(fallback){
-            Path.history.supported = !!(window.history && window.history.pushState);
-            Path.history.fallback  = fallback;
+//----------------------------------------------------------------------
+//
+// ECMAScript 5 Polyfills
+//
+//----------------------------------------------------------------------
 
-            if(Path.history.supported){
-                Path.history.initial.popped = ('state' in window.history), Path.history.initial.URL = location.href;
-                window.onpopstate = Path.history.popState;
-            } else {
-                if(Path.history.fallback){
-                    for(route in Path.routes.defined){
-                        if(route.charAt(0) != "#"){
-                          Path.routes.defined["#"+route] = Path.routes.defined[route];
-                          Path.routes.defined["#"+route].path = "#"+route;
-                        }
-                    }
-                    Path.listen();
-                }
-            }
-        }
-    },
-    'match': function (path, parameterize) {
-        var params = {}, route = null, possible_routes, slice, i, j, compare;
-        for (route in Path.routes.defined) {
-            if (route !== null && route !== undefined) {
-                route = Path.routes.defined[route];
-                possible_routes = route.partition();
-                for (j = 0; j < possible_routes.length; j++) {
-                    slice = possible_routes[j];
-                    compare = path;
-                    if (slice.search(/:/) > 0) {
-                        for (i = 0; i < slice.split("/").length; i++) {
-                            if ((i < compare.split("/").length) && (slice.split("/")[i].charAt(0) === ":")) {
-                                params[slice.split('/')[i].replace(/:/, '')] = compare.split("/")[i];
-                                compare = compare.replace(compare.split("/")[i], slice.split("/")[i]);
-                            }
-                        }
-                    }
-                    if (slice === compare) {
-                        if (parameterize) {
-                            route.params = params;
-                        }
-                        return route;
-                    }
-                }
-            }
-        }
-        return null;
-    },
-    'dispatch': function (passed_route) {
-        var previous_route, matched_route;
-        if (Path.routes.current !== passed_route) {
-            Path.routes.previous = Path.routes.current;
-            Path.routes.current = passed_route;
-            matched_route = Path.match(passed_route, true);
+//----------------------------------------------------------------------
+// ES5 15.2 Object Objects
+//----------------------------------------------------------------------
 
-            if (Path.routes.previous) {
-                previous_route = Path.match(Path.routes.previous);
-                if (previous_route !== null && previous_route.do_exit !== null) {
-                    previous_route.do_exit();
-                }
-            }
+//
+// ES5 15.2.3 Properties of the Object Constructor
+//
 
-            if (matched_route !== null) {
-                matched_route.run();
-	            
-		        // TODO add event listeners, come up with a better way to do this
-		        if (Path.onchange) {
-			        Path.onchange(previous_route, matched_route);
-		        }
-                return true;
-            } else {
-                if (Path.routes.rescue !== null) {
-                    Path.routes.rescue();
-                }
-	            if (Path.onchange) {
-                    Path.onchange(previous_route, matched_route);
-                }
-            }
-        }
-    },
-    'listen': function () {
-        var fn = function(){ Path.dispatch(location.hash); }
+// ES5 15.2.3.2 Object.getPrototypeOf ( O )
+// From http://ejohn.org/blog/objectgetprototypeof/
+// NOTE: won't work for typical function T() {}; T.prototype = {}; new T; case
+// since the constructor property is destroyed.
+if (!Object.getPrototypeOf) {
+  Object.getPrototypeOf = function (o) {
+    if (o !== Object(o)) { throw new TypeError("Object.getPrototypeOf called on non-object"); }
+    return o.__proto__ || o.constructor.prototype || Object.prototype;
+  };
+}
 
-        if (location.hash === "") {
-            if (Path.routes.root !== null) {
-                location.hash = Path.routes.root;
-            }
-        }
+//    // ES5 15.2.3.3 Object.getOwnPropertyDescriptor ( O, P )
+//    if (typeof Object.getOwnPropertyDescriptor !== "function") {
+//        Object.getOwnPropertyDescriptor = function (o, name) {
+//            if (o !== Object(o)) { throw new TypeError(); }
+//            if (o.hasOwnProperty(name)) {
+//                return {
+//                    value: o[name],
+//                    enumerable: true,
+//                    writable: true,
+//                    configurable: true
+//                };
+//            }
+//        };
+//    }
 
-        // The 'document.documentMode' checks below ensure that PathJS fires the right events
-        // even in IE "Quirks Mode".
-        if ("onhashchange" in window && (!document.documentMode || document.documentMode >= 8)) {
-            window.onhashchange = fn;
-        } else {
-            setInterval(fn, 50);
-        }
-
-        if(location.hash !== "") {
-            Path.dispatch(location.hash);
-        }
-    },
-    'core': {
-        'route': function (path) {
-            this.path = path;
-            this.action = null;
-            this.do_enter = [];
-            this.do_exit = null;
-            this.params = {};
-            Path.routes.defined[path] = this;
-        }
-    },
-    'routes': {
-        'current': null,
-        'root': null,
-        'rescue': null,
-        'previous': null,
-        'defined': {}
+// ES5 15.2.3.4 Object.getOwnPropertyNames ( O )
+if (typeof Object.getOwnPropertyNames !== "function") {
+  Object.getOwnPropertyNames = function (o) {
+    if (o !== Object(o)) { throw new TypeError("Object.getOwnPropertyNames called on non-object"); }
+    var props = [], p;
+    for (p in o) {
+      if (Object.prototype.hasOwnProperty.call(o, p)) {
+        props.push(p);
+      }
     }
-};
-Path.core.route.prototype = {
-    'to': function (fn) {
-        this.action = fn;
-        return this;
-    },
-    'enter': function (fns) {
-        if (fns instanceof Array) {
-            this.do_enter = this.do_enter.concat(fns);
-        } else {
-            this.do_enter.push(fns);
-        }
-        return this;
-    },
-    'exit': function (fn) {
-        this.do_exit = fn;
-        return this;
-    },
-    'partition': function () {
-        var parts = [], options = [], re = /\(([^}]+?)\)/g, text, i;
-        while (text = re.exec(this.path)) {
-            parts.push(text[1]);
-        }
-        options.push(this.path.split("(")[0]);
-        for (i = 0; i < parts.length; i++) {
-            options.push(options[options.length - 1] + parts[i]);
-        }
-        return options;
-    },
-    'run': function () {
-        var halt_execution = false, i, result, previous;
+    return props;
+  };
+}
 
-        if (Path.routes.defined[this.path].hasOwnProperty("do_enter")) {
-            if (Path.routes.defined[this.path].do_enter.length > 0) {
-                for (i = 0; i < Path.routes.defined[this.path].do_enter.length; i++) {
-                    result = Path.routes.defined[this.path].do_enter[i].apply(this, null);
-                    if (result === false) {
-                        halt_execution = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!halt_execution) {
-            Path.routes.defined[this.path].action();
-        }
+// ES5 15.2.3.5 Object.create ( O [, Properties] )
+if (typeof Object.create !== "function") {
+  Object.create = function (prototype, properties) {
+    "use strict";
+    if (typeof prototype !== "object") { throw new TypeError(); }
+    /** @constructor */
+    function Ctor() {}
+    Ctor.prototype = prototype;
+    var o = new Ctor();
+    if (prototype) { o.constructor = Ctor; }
+    if (arguments.length > 1) {
+      if (properties !== Object(properties)) { throw new TypeError(); }
+      Object.defineProperties(o, properties);
     }
-};
+    return o;
+  };
+}
+
+// ES 15.2.3.6 Object.defineProperty ( O, P, Attributes )
+// Partial support for most common case - getters, setters, and values
+(function() {
+  if (!Object.defineProperty ||
+      !(function () { try { Object.defineProperty({}, 'x', {}); return true; } catch (e) { return false; } } ())) {
+    var orig = Object.defineProperty;
+    Object.defineProperty = function (o, prop, desc) {
+      "use strict";
+
+      // In IE8 try built-in implementation for defining properties on DOM prototypes.
+      if (orig) { try { return orig(o, prop, desc); } catch (e) {} }
+
+      if (o !== Object(o)) { throw new TypeError("Object.defineProperty called on non-object"); }
+      if (Object.prototype.__defineGetter__ && ('get' in desc)) {
+        Object.prototype.__defineGetter__.call(o, prop, desc.get);
+      }
+      if (Object.prototype.__defineSetter__ && ('set' in desc)) {
+        Object.prototype.__defineSetter__.call(o, prop, desc.set);
+      }
+      if ('value' in desc) {
+        o[prop] = desc.value;
+      }
+      return o;
+    };
+  }
+}());
+
+// ES 15.2.3.7 Object.defineProperties ( O, Properties )
+if (typeof Object.defineProperties !== "function") {
+  Object.defineProperties = function (o, properties) {
+    "use strict";
+    if (o !== Object(o)) { throw new TypeError("Object.defineProperties called on non-object"); }
+    var name;
+    for (name in properties) {
+      if (Object.prototype.hasOwnProperty.call(properties, name)) {
+        Object.defineProperty(o, name, properties[name]);
+      }
+    }
+    return o;
+  };
+}
+
+
+// ES5 15.2.3.14 Object.keys ( O )
+// https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object/keys
+if (!Object.keys) {
+  Object.keys = function (o) {
+    if (o !== Object(o)) { throw new TypeError('Object.keys called on non-object'); }
+    var ret = [], p;
+    for (p in o) {
+      if (Object.prototype.hasOwnProperty.call(o, p)) {
+        ret.push(p);
+      }
+    }
+    return ret;
+  };
+}
+
+//----------------------------------------------------------------------
+// ES5 15.3 Function Objects
+//----------------------------------------------------------------------
+
+//
+// ES5 15.3.4 Properties of the Function Prototype Object
+//
+
+// ES5 15.3.4.5 Function.prototype.bind ( thisArg [, arg1 [, arg2, ... ]] )
+// https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind
+if (!Function.prototype.bind) {
+  Function.prototype.bind = function (o) {
+    if (typeof this !== 'function') { throw new TypeError("Bind must be called on a function"); }
+    var slice = [].slice,
+        args = slice.call(arguments, 1),
+        self = this,
+        bound = function () {
+          return self.apply(this instanceof nop ? this : (o || {}),
+                            args.concat(slice.call(arguments)));
+        };
+
+    /** @constructor */
+    function nop() {}
+    nop.prototype = self.prototype;
+
+    bound.prototype = new nop();
+
+    return bound;
+  };
+}
+
+
+//----------------------------------------------------------------------
+// ES5 15.4 Array Objects
+//----------------------------------------------------------------------
+
+//
+// ES5 15.4.3 Properties of the Array Constructor
+//
+
+
+// ES5 15.4.3.2 Array.isArray ( arg )
+// https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/isArray
+Array.isArray = Array.isArray || function (o) { return Boolean(o && Object.prototype.toString.call(Object(o)) === '[object Array]'); };
+
+
+//
+// ES5 15.4.4 Properties of the Array Prototype Object
+//
+
+// ES5 15.4.4.14 Array.prototype.indexOf ( searchElement [ , fromIndex ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/indexOf
+if (!Array.prototype.indexOf) {
+  Array.prototype.indexOf = function (searchElement /*, fromIndex */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (len === 0) { return -1; }
+
+    var n = 0;
+    if (arguments.length > 0) {
+      n = Number(arguments[1]);
+      if (isNaN(n)) {
+        n = 0;
+      } else if (n !== 0 && n !== (1 / 0) && n !== -(1 / 0)) {
+        n = (n > 0 || -1) * Math.floor(Math.abs(n));
+      }
+    }
+
+    if (n >= len) { return -1; }
+
+    var k = n >= 0 ? n : Math.max(len - Math.abs(n), 0);
+
+    for (; k < len; k++) {
+      if (k in t && t[k] === searchElement) {
+        return k;
+      }
+    }
+    return -1;
+  };
+}
+
+// ES5 15.4.4.15 Array.prototype.lastIndexOf ( searchElement [ , fromIndex ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/lastIndexOf
+if (!Array.prototype.lastIndexOf) {
+  Array.prototype.lastIndexOf = function (searchElement /*, fromIndex*/) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (len === 0) { return -1; }
+
+    var n = len;
+    if (arguments.length > 1) {
+      n = Number(arguments[1]);
+      if (n !== n) {
+        n = 0;
+      } else if (n !== 0 && n !== (1 / 0) && n !== -(1 / 0)) {
+        n = (n > 0 || -1) * Math.floor(Math.abs(n));
+      }
+    }
+
+    var k = n >= 0 ? Math.min(n, len - 1) : len - Math.abs(n);
+
+    for (; k >= 0; k--) {
+      if (k in t && t[k] === searchElement) {
+        return k;
+      }
+    }
+    return -1;
+  };
+}
+
+// ES5 15.4.4.16 Array.prototype.every ( callbackfn [ , thisArg ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/every
+if (!Array.prototype.every) {
+  Array.prototype.every = function (fun /*, thisp */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function") { throw new TypeError(); }
+
+    var thisp = arguments[1], i;
+    for (i = 0; i < len; i++) {
+      if (i in t && !fun.call(thisp, t[i], i, t)) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+}
+
+// ES5 15.4.4.17 Array.prototype.some ( callbackfn [ , thisArg ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/some
+if (!Array.prototype.some) {
+  Array.prototype.some = function (fun /*, thisp */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function") { throw new TypeError(); }
+
+    var thisp = arguments[1], i;
+    for (i = 0; i < len; i++) {
+      if (i in t && fun.call(thisp, t[i], i, t)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+}
+
+// ES5 15.4.4.18 Array.prototype.forEach ( callbackfn [ , thisArg ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/forEach
+if (!Array.prototype.forEach) {
+  Array.prototype.forEach = function (fun /*, thisp */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function") { throw new TypeError(); }
+
+    var thisp = arguments[1], i;
+    for (i = 0; i < len; i++) {
+      if (i in t) {
+        fun.call(thisp, t[i], i, t);
+      }
+    }
+  };
+}
+
+
+// ES5 15.4.4.19 Array.prototype.map ( callbackfn [ , thisArg ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/Map
+if (!Array.prototype.map) {
+  Array.prototype.map = function (fun /*, thisp */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function") { throw new TypeError(); }
+
+    var res = []; res.length = len;
+    var thisp = arguments[1], i;
+    for (i = 0; i < len; i++) {
+      if (i in t) {
+        res[i] = fun.call(thisp, t[i], i, t);
+      }
+    }
+
+    return res;
+  };
+}
+
+// ES5 15.4.4.20 Array.prototype.filter ( callbackfn [ , thisArg ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/Filter
+if (!Array.prototype.filter) {
+  Array.prototype.filter = function (fun /*, thisp */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function") { throw new TypeError(); }
+
+    var res = [];
+    var thisp = arguments[1], i;
+    for (i = 0; i < len; i++) {
+      if (i in t) {
+        var val = t[i]; // in case fun mutates this
+        if (fun.call(thisp, val, i, t)) {
+          res.push(val);
+        }
+      }
+    }
+
+    return res;
+  };
+}
+
+
+// ES5 15.4.4.21 Array.prototype.reduce ( callbackfn [ , initialValue ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/Reduce
+if (!Array.prototype.reduce) {
+  Array.prototype.reduce = function (fun /*, initialValue */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function") { throw new TypeError(); }
+
+    // no value to return if no initial value and an empty array
+    if (len === 0 && arguments.length === 1) { throw new TypeError(); }
+
+    var k = 0;
+    var accumulator;
+    if (arguments.length >= 2) {
+      accumulator = arguments[1];
+    } else {
+      do {
+        if (k in t) {
+          accumulator = t[k++];
+          break;
+        }
+
+        // if array contains no values, no initial value to return
+        if (++k >= len) { throw new TypeError(); }
+      }
+      while (true);
+    }
+
+    while (k < len) {
+      if (k in t) {
+        accumulator = fun.call(undefined, accumulator, t[k], k, t);
+      }
+      k++;
+    }
+
+    return accumulator;
+  };
+}
+
+
+// ES5 15.4.4.22 Array.prototype.reduceRight ( callbackfn [, initialValue ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/ReduceRight
+if (!Array.prototype.reduceRight) {
+  Array.prototype.reduceRight = function (callbackfn /*, initialValue */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof callbackfn !== "function") { throw new TypeError(); }
+
+    // no value to return if no initial value, empty array
+    if (len === 0 && arguments.length === 1) { throw new TypeError(); }
+
+    var k = len - 1;
+    var accumulator;
+    if (arguments.length >= 2) {
+      accumulator = arguments[1];
+    } else {
+      do {
+        if (k in this) {
+          accumulator = this[k--];
+          break;
+        }
+
+        // if array contains no values, no initial value to return
+        if (--k < 0) { throw new TypeError(); }
+      }
+      while (true);
+    }
+
+    while (k >= 0) {
+      if (k in t) {
+        accumulator = callbackfn.call(undefined, accumulator, t[k], k, t);
+      }
+      k--;
+    }
+
+    return accumulator;
+  };
+}
+
+
+//----------------------------------------------------------------------
+// ES5 15.5 String Objects
+//----------------------------------------------------------------------
+
+//
+// ES5 15.5.4 Properties of the String Prototype Object
+//
+
+
+// ES5 15.5.4.20 String.prototype.trim()
+if (!String.prototype.trim) {
+  String.prototype.trim = function () {
+    return String(this).replace(/^\s+/, '').replace(/\s+$/, '');
+  };
+}
+
+
+
+//----------------------------------------------------------------------
+// ES5 15.9 Date Objects
+//----------------------------------------------------------------------
+
+
+//
+// ES 15.9.4 Properties of the Date Constructor
+//
+
+// ES5 15.9.4.4 Date.now ( )
+// From https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Date/now
+if (!Date.now) {
+  Date.now = function now() {
+    return Number(new Date());
+  };
+}
+
+
+//
+// ES5 15.9.5 Properties of the Date Prototype Object
+//
+
+// ES5 15.9.4.43 Date.prototype.toISOString ( )
+// Inspired by http://www.json.org/json2.js
+if (!Date.prototype.toISOString) {
+  Date.prototype.toISOString = function () {
+    function pad2(n) { return ('00' + n).slice(-2); }
+    function pad3(n) { return ('000' + n).slice(-3); }
+
+    return this.getUTCFullYear() + '-' +
+      pad2(this.getUTCMonth() + 1) + '-' +
+      pad2(this.getUTCDate()) + 'T' +
+      pad2(this.getUTCHours()) + ':' +
+      pad2(this.getUTCMinutes()) + ':' +
+      pad2(this.getUTCSeconds()) + '.' +
+      pad3(this.getUTCMilliseconds()) + 'Z';
+  };
+}
 
 (function() {
-  var App, Binding, Controller, Observer, Route, Router, argSeparator, attribs, chip, emptyQuoteExpr, equality, hasFilter, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, propExpr, quoteExpr, varExpr, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, emptyQuoteExpr, equality, hasFilter, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, propExpr, quoteExpr, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
   makeEventEmitter = function(object) {
     var eventEmitter;
+    if (object.trigger) {
+      throw new Error('Object has already become an event emitter');
+    }
     eventEmitter = $({});
     object.on = eventEmitter.on.bind(eventEmitter);
     object.one = eventEmitter.one.bind(eventEmitter);
@@ -226,6 +542,29 @@ Path.core.route.prototype = {
         this.rootApp = app;
       }
       return app;
+    },
+    addBinding: function(name, priority, handler) {
+      return Binding.addBinding(name, priority, handler);
+    },
+    addEventBinding: function(eventName) {
+      return Binding.addEventBinding(eventName);
+    },
+    addKeyEventBinding: function(name, keyCode, ctrlKey) {
+      return Binding.addKeyEventBinding(name, keyCode, ctrlKey);
+    },
+    addAttributeBinding: function(name) {
+      return Binding.addAttributeBinding(name);
+    },
+    addAttributeToggleBinding: function(name) {
+      return Binding.addAttributeToggleBinding(name);
+    },
+    filter: function(name, filter) {
+      if (typeof filter === 'function') {
+        Filter.addFilter(name, filter);
+        return this;
+      } else {
+        return Filter.runFilter(name, filter);
+      }
     }
   };
 
@@ -369,11 +708,11 @@ Path.core.route.prototype = {
         _ref = route.params;
         for (key in _ref) {
           value = _ref[key];
-          if (doneParams[key] === value || !this.params[key]) {
+          if (doneParams[key] === value || !_this.params[key]) {
             continue;
           }
           doneParams[key] = value;
-          this.params[key].forEach(function(callback) {
+          _this.params[key].forEach(function(callback) {
             return callbacks.push(callback.bind(null, req, value));
           });
         }
@@ -464,8 +803,9 @@ Path.core.route.prototype = {
       expr += capture || (format && '([^/.]+?)' || '([^/]+?)') + ')';
       expr += optional || '';
       if (star) {
-        return expr += '(/*)?';
+        expr += '(/*)?';
       }
+      return expr;
     }).replace(/([\/.])/g, '\\$1').replace(/\*/g, '(.*)');
     return new RegExp('^' + path + '$', 'i');
   };
@@ -621,8 +961,6 @@ Path.core.route.prototype = {
   chip.Observer = Observer;
 
   Controller = (function() {
-    Controller.prototype.params = {};
-
     function Controller() {
       this._observers = [];
     }
@@ -689,15 +1027,9 @@ Path.core.route.prototype = {
     };
 
     Controller.prototype.runFilter = function() {
-      var args, filter, filterName, value;
+      var args, filterName, value;
       value = arguments[0], filterName = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
-      filter = Controller.filters[filterName];
-      if (filter) {
-        return filter.apply(null, [this, value].concat(__slice.call(args)));
-      } else {
-        console.error("Filter `" + filterName + "` has not been defined.");
-        return value;
-      }
+      return Filter.runFilter.apply(Filter, [filterName, value].concat(__slice.call(args)));
     };
 
     Controller.keywords = ['this', 'window', '$', 'true', 'false'];
@@ -832,6 +1164,7 @@ Path.core.route.prototype = {
   App = (function() {
     function App(appName) {
       this.name = appName;
+      this.bindingPrefix = 'data-';
       this.controllers = {};
       this.templates = {};
       this.router = new Router();
@@ -919,6 +1252,8 @@ Path.core.route.prototype = {
         }
       } else {
         controller = new Controller();
+        makeEventEmitter(controller);
+        controller.app = this;
       }
       if (options.properties) {
         _ref = options.properties;
@@ -992,21 +1327,25 @@ Path.core.route.prototype = {
     App.prototype.mount = function(path, app) {};
 
     App.prototype.listen = function(options) {
-      var router;
-      router = this.router;
-      $(function() {
-        return router.listen(options);
-      });
-      return this.rootElement.on('click', 'a[href]', function(event) {
-        if (event.isDefaultPrevented()) {
-          return;
-        }
-        if (this.host !== location.host || this.href === location.href + '#') {
-          return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        return router.redirect($(this).attr("href"));
+      var _this = this;
+      return $(function() {
+        var router;
+        _this.router.on('change', function(event, path) {
+          return _this.rootController.trigger('urlChange', path);
+        });
+        router = _this.router;
+        _this.rootElement.on('click', 'a[href]', function(event) {
+          if (event.isDefaultPrevented()) {
+            return;
+          }
+          if (this.host !== location.host || this.href === location.href + '#') {
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          return router.redirect($(this).attr("href"));
+        });
+        return _this.router.listen(options);
       });
     };
 
@@ -1022,11 +1361,9 @@ Path.core.route.prototype = {
       this.expr = expr;
     }
 
-    Binding.prefix = 'data-';
+    Binding.bindings = [];
 
-    Binding.handlers = [];
-
-    Binding.addHandler = function(name, priority, handler) {
+    Binding.addBinding = function(name, priority, handler) {
       var entry;
       if (typeof priority === 'function') {
         handler = priority;
@@ -1037,15 +1374,15 @@ Path.core.route.prototype = {
         priority: priority,
         handler: handler
       };
-      this.handlers[name] = entry;
-      this.handlers.push(entry);
-      return this.handlers.sort(function(a, b) {
+      this.bindings[name] = entry;
+      this.bindings.push(entry);
+      return this.bindings.sort(function(a, b) {
         return b.priority - a.priority;
       });
     };
 
-    Binding.addEventHandler = function(eventName) {
-      return this.addHandler(eventName, function(element, expr, controller) {
+    Binding.addEventBinding = function(eventName) {
+      return this.addBinding(eventName, function(element, expr, controller) {
         return element.on(eventName, function(event) {
           event.preventDefault();
           return controller["eval"](expr);
@@ -1053,8 +1390,8 @@ Path.core.route.prototype = {
       });
     };
 
-    Binding.addKeyEventHandler = function(name, keyCode, ctrlKey) {
-      return this.addHandler(name, function(element, expr, controller) {
+    Binding.addKeyEventBinding = function(name, keyCode, ctrlKey) {
+      return this.addBinding(name, function(element, expr, controller) {
         return element.on('keydown', function(event) {
           if ((ctrlKey != null) && (event.ctrlKey !== ctrlKey && event.metaKey !== ctrlKey)) {
             return;
@@ -1068,8 +1405,8 @@ Path.core.route.prototype = {
       });
     };
 
-    Binding.addAttributeHandler = function(name) {
-      return this.addHandler(name, function(element, expr, controller) {
+    Binding.addAttributeBinding = function(name) {
+      return this.addBinding(name, function(element, expr, controller) {
         return controller.watch(expr, function(value) {
           if (value != null) {
             return element.attr(name, value);
@@ -1080,8 +1417,8 @@ Path.core.route.prototype = {
       });
     };
 
-    Binding.addAttributeToggleHandler = function(name) {
-      return this.addHandler(name, function(element, expr, controller) {
+    Binding.addAttributeToggleBinding = function(name) {
+      return this.addBinding(name, function(element, expr, controller) {
         return controller.watch(expr, function(value) {
           return element.prop(name, value || false);
         });
@@ -1089,20 +1426,21 @@ Path.core.route.prototype = {
     };
 
     Binding.process = function(element, controller) {
-      var attr, attribs, child, children, newController, node, parentNode, _i, _len, _results,
+      var attr, attribs, child, children, newController, node, parentNode, prefix, _i, _len, _results,
         _this = this;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
       }
       node = element.get(0);
       parentNode = node.parentNode;
+      prefix = controller.app.bindingPrefix;
       attribs = Array.prototype.slice.call(node.attributes);
       attribs = attribs.filter(function(attr) {
-        return attr.name.indexOf(_this.prefix) === 0 && _this.handlers[attr.name.replace(_this.prefix, '')];
+        return attr.name.indexOf(prefix) === 0 && _this.bindings[attr.name.replace(prefix, '')];
       });
       attribs = attribs.map(function(attr) {
         var entry;
-        entry = _this.handlers[attr.name.replace(_this.prefix, '')];
+        entry = _this.bindings[attr.name.replace(prefix, '')];
         return {
           name: attr.name,
           value: attr.value,
@@ -1146,25 +1484,54 @@ Path.core.route.prototype = {
 
   chip.Binding = Binding;
 
-  Binding.addHandler('debug', function(element, expr, controller) {
+  Filter = (function() {
+    function Filter(name, filter) {
+      this.name = name;
+      this.filter = filter;
+    }
+
+    Filter.filters = {};
+
+    Filter.addFilter = function(name, filter) {
+      this.filters[name] = new Filter(name, filter);
+      return this;
+    };
+
+    Filter.runFilter = function() {
+      var args, filter, name, value, _ref;
+      name = arguments[0], value = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
+      filter = (_ref = this.filters[name]) != null ? _ref.filter : void 0;
+      if (filter) {
+        return filter.apply(null, [value].concat(__slice.call(args)));
+      } else {
+        console.error("Filter `" + filterName + "` has not been defined.");
+        return value;
+      }
+    };
+
+    return Filter;
+
+  })();
+
+  chip.addBinding('debug', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return console.info('Debug:', expr, '=', value);
     });
   });
 
-  Binding.addHandler('text', function(element, expr, controller) {
+  chip.addBinding('text', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.text(value != null ? value : '');
     });
   });
 
-  Binding.addHandler('html', function(element, expr, controller) {
+  chip.addBinding('html', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.html(value != null ? value : '');
     });
   });
 
-  Binding.addHandler('class', function(element, expr, controller) {
+  chip.addBinding('class', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       var className, toggle, _results;
       if (Array.isArray(value)) {
@@ -1188,7 +1555,7 @@ Path.core.route.prototype = {
     });
   });
 
-  Binding.addHandler('active', function(element, expr, controller) {
+  chip.addBinding('active', function(element, expr, controller) {
     var link, refresh;
     if (expr) {
       return controller.watch(expr, function(value) {
@@ -1210,19 +1577,15 @@ Path.core.route.prototype = {
       if (link.attr('data-href')) {
         link.on('hrefChanged', refresh);
       }
-      $(document).on('urlChange', refresh);
+      controller.on('urlChange', refresh);
       element.on('elementRemove', function() {
-        return $(document).off('urlChange', refresh);
+        return controller.off('urlChange', refresh);
       });
       return refresh();
     }
   });
 
-  Path.onchange = function() {
-    return $(document).trigger('urlChange');
-  };
-
-  Binding.addHandler('value', function(element, expr, controller) {
+  chip.addBinding('value', function(element, expr, controller) {
     var getValue, observer, setValue, setter, setterController;
     getValue = element.attr('type') === 'checkbox' ? function() {
       return element.prop('checked');
@@ -1262,7 +1625,7 @@ Path.core.route.prototype = {
   });
 
   ['click', 'dblclick', 'submit', 'change', 'focus', 'blur'].forEach(function(name) {
-    return Binding.addEventHandler(name);
+    return chip.addEventBinding(name);
   });
 
   keyCodes = {
@@ -1273,23 +1636,23 @@ Path.core.route.prototype = {
   for (name in keyCodes) {
     if (!__hasProp.call(keyCodes, name)) continue;
     keyCode = keyCodes[name];
-    Binding.addKeyEventHandler(name, keyCode);
+    chip.addKeyEventBinding(name, keyCode);
   }
 
-  Binding.addKeyEventHandler('ctrl-enter', keyCodes.enter, true);
+  chip.addKeyEventBinding('ctrl-enter', keyCodes.enter, true);
 
   attribs = ['href', 'src', 'id'];
 
   for (_i = 0, _len = attribs.length; _i < _len; _i++) {
     name = attribs[_i];
-    Binding.addAttributeHandler(name);
+    chip.addAttributeBinding(name);
   }
 
   ['checked', 'disabled'].forEach(function(name) {
-    return Binding.addAttributeToggleHandler(name);
+    return chip.addAttributeToggleBinding(name);
   });
 
-  Binding.addHandler('if', 50, function(element, expr, controller) {
+  chip.addBinding('if', 50, function(element, expr, controller) {
     var controllerName, placeholder, template;
     template = element;
     placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').replaceAll(template);
@@ -1314,7 +1677,7 @@ Path.core.route.prototype = {
     });
   });
 
-  Binding.addHandler('repeat', 100, function(element, expr, controller) {
+  chip.addBinding('repeat', 100, function(element, expr, controller) {
     var controllerName, createElement, elements, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1;
     orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
@@ -1404,7 +1767,7 @@ Path.core.route.prototype = {
     });
   });
 
-  Binding.addHandler('partial', 50, function(element, expr, controller) {
+  chip.addBinding('partial', 50, function(element, expr, controller) {
     var childController, itemExpr, itemName, nameExpr, parts, properties;
     parts = expr.split(/\s+as\s+\s+with\s+/);
     nameExpr = parts.pop();
@@ -1432,14 +1795,14 @@ Path.core.route.prototype = {
     });
   });
 
-  Binding.addHandler('controller', 30, function(element, controllerName, controller) {
+  chip.addBinding('controller', 30, function(element, controllerName, controller) {
     return controller.child({
       element: element,
       name: controllerName
     });
   });
 
-  Controller.filters.filter = function(controller, value, filterFunc) {
+  chip.filter('filter', function(value, filterFunc) {
     if (!Array.isArray(value)) {
       return [];
     }
@@ -1447,9 +1810,9 @@ Path.core.route.prototype = {
       return value;
     }
     return value.filter(filterFunc);
-  };
+  });
 
-  Controller.filters.date = function(controller, value) {
+  chip.filter('date', function(value) {
     if (!value) {
       return '';
     }
@@ -1460,17 +1823,17 @@ Path.core.route.prototype = {
       return '';
     }
     return value.toLocaleString();
-  };
+  });
 
-  Controller.filters.log = function(controller, value, prefix) {
+  chip.filter('log', function(value, prefix) {
     if (prefix == null) {
       prefix = 'Log';
     }
     console.log(prefix + ':', value);
     return value;
-  };
+  });
 
-  Controller.filters.limit = function(controller, value, limit) {
+  chip.filter('limit', function(value, limit) {
     if (value && typeof value.slice === 'function') {
       if (limit < 0) {
         return value.slice(limit);
@@ -1480,15 +1843,15 @@ Path.core.route.prototype = {
     } else {
       return value;
     }
-  };
+  });
 
-  Controller.filters.sort = function(controller, value, sortFunc) {
+  chip.filter('sort', function(value, sortFunc) {
     if (Array.isArray(value)) {
       return value.slice().sort(sortFunc);
     } else {
       return value;
     }
-  };
+  });
 
   equality = {};
 
