@@ -5,10 +5,7 @@
 class Binding
 	constructor: (@name, @expr) ->
 	
-	
-	# The attribute prefix for all binding attributes. This is the default and may be changed.
-	@prefix: 'data-'
-	@handlers: []
+	@bindings: []
 	
 	
 	# Adds a binding handler that will be run for each attribute whose name matches `@prefix + name`. The `handler` is
@@ -27,7 +24,7 @@ class Binding
 	# 
 	# **Example:** This binding handler adds pirateized text to an element.
 	# ```javascript
-	# Binding.addHandler('pirate', function(element, expr, controller) {
+	# Binding.addBinding('pirate', function(element, expr, controller) {
 	#   controller.watch(expr, function(value) {
 	#     value = (value+'' || '')
 	#       .replace(/\Bing\b/g, "in'")
@@ -42,7 +39,7 @@ class Binding
 	# ```xml
 	# <p data-pirate="post.body">This text will be replaced.</p>
 	# ```
-	@addHandler: (name, priority, handler) ->
+	@addBinding: (name, priority, handler) ->
 		if typeof priority is 'function'
 			handler = priority
 			priority = 0
@@ -51,32 +48,32 @@ class Binding
 			name: name
 			priority: priority
 			handler: handler
-		@handlers[name] = entry
-		@handlers.push entry
+		@bindings[name] = entry
+		@bindings.push entry
 		
-		@handlers.sort (a, b) -> b.priority - a.priority
+		@bindings.sort (a, b) -> b.priority - a.priority
 	
 	
 	# Shortcut, adds a handler that executes the expression when the named event is dispatched.
 	#
 	# **Example:** Handles the click event.
 	#```javascript
-	# Binding.addEventHandler('click')
+	# Binding.addEventBinding('click')
 	# ```
 	# 
 	# ```xml
 	# <button data-click="window.alert('hello!')">Say Hello</button>
 	#```
-	@addEventHandler: (eventName) ->
-		@addHandler eventName, (element, expr, controller) ->
+	@addEventBinding: (eventName) ->
+		@addBinding eventName, (element, expr, controller) ->
 			element.on eventName, (event) ->
 				event.preventDefault()
 				controller.eval expr
 	
 	
-	# Shortcut, adds a handler that responds when the given key is pressed, e.g. `Binding.addEventHandler('esc', 27)`.
-	@addKeyEventHandler: (name, keyCode, ctrlKey) ->
-		@addHandler name, (element, expr, controller) ->
+	# Shortcut, adds a handler that responds when the given key is pressed, e.g. `Binding.addEventBinding('esc', 27)`.
+	@addKeyEventBinding: (name, keyCode, ctrlKey) ->
+		@addBinding name, (element, expr, controller) ->
 			element.on 'keydown', (event) ->
 				return if ctrlKey? and (event.ctrlKey isnt ctrlKey and event.metaKey isnt ctrlKey)
 				return unless event.keyCode is keyCode
@@ -88,7 +85,7 @@ class Binding
 	# 
 	# **Example**
 	# ```javascript
-	# Binding.addAttributeHandler('href')
+	# Binding.addAttributeBinding('href')
 	# ```
 	# allows
 	# ```xml
@@ -98,8 +95,8 @@ class Binding
 	# ```xml
 	# <a href="/profile/368">My Profile</a>
 	# ```
-	@addAttributeHandler: (name) ->
-		@addHandler name, (element, expr, controller) ->
+	@addAttributeBinding: (name) ->
+		@addBinding name, (element, expr, controller) ->
 			controller.watch expr, (value) ->
 				if value?
 					element.attr name, value
@@ -108,27 +105,29 @@ class Binding
 	
 	
 	# Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
-	# e.g. `Binding.addAttributeToggleHandler('checked')`.
-	@addAttributeToggleHandler: (name) ->
-		@addHandler name, (element, expr, controller) ->
+	# e.g. `Binding.addAttributeToggleBinding('checked')`.
+	@addAttributeToggleBinding: (name) ->
+		@addBinding name, (element, expr, controller) ->
 			controller.watch expr, (value) ->
 				element.prop name, value or false
 	
 	
 	# Processes the bindings for the given jQuery element and all of its children.
 	@process: (element, controller) ->
-		controller = Controller.create(element) unless controller
+		unless controller instanceof Controller
+			throw new Error 'A Controller is required to bind a jQuery element.'
 		
 		node = element.get(0)
 		parentNode = node.parentNode
+		prefix = controller.app.bindingPrefix
 		
 		# Finds binding attributes and sorts by priority.
 		attribs = Array::slice.call(node.attributes)
 		attribs = attribs.filter (attr) =>
-			attr.name.indexOf(@prefix) is 0 and @handlers[attr.name.replace(@prefix, '')]
+			attr.name.indexOf(prefix) is 0 and @bindings[attr.name.replace(prefix, '')]
 		
 		attribs = attribs.map (attr) =>
-			entry = @handlers[attr.name.replace(@prefix, '')]
+			entry = @bindings[attr.name.replace(prefix, '')]
 			name: attr.name
 			value: attr.value
 			priority: entry.priority
@@ -170,9 +169,4 @@ jQuery.fn.bindTo = (controller) ->
 	Binding.process(this, controller)
 
 
-# Set up for AMD.
-this.Binding = Binding
-if typeof define is 'function' && define.amd
-	define 'chip/binding', -> Binding
-else if typeof exports is 'object' and typeof module is 'object'
-	chip.Binding = Binding
+chip.Binding = Binding

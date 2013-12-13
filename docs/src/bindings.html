@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>Default Binding Handlers</title>
+  <title>Default Bindings</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="docco.css" />
@@ -21,13 +21,13 @@
               <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              <h1>Default Binding Handlers</h1>
+              <h1>Default Bindings</h1>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>
 
-Binding.addHandler <span class="string">'debug'</span>, (element, expr, controller) -&gt;
+chip.addBinding <span class="string">'debug'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		console.info <span class="string">'Debug:'</span>, expr, <span class="string">'='</span>, value</pre></div></div>
             
@@ -61,7 +61,7 @@ Binding.addHandler <span class="string">'debug'</span>, (element, expr, controll
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'text'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'text'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		element.text(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
             
@@ -91,7 +91,7 @@ Binding.addHandler <span class="string">'debug'</span>, (element, expr, controll
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'html'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'html'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		element.html(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
             
@@ -120,7 +120,7 @@ the class list depending on whether the value of the property is truthy or false
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'class'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'class'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		<span class="keyword">if</span> Array.isArray(value)
 			value = value.join(<span class="string">' '</span>)
@@ -165,7 +165,7 @@ provided it adds the “active” class if the element or it‘s first anchor ch
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'active'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'active'</span>, (element, expr, controller) -&gt;
 	<span class="keyword">if</span> expr
 		controller.watch expr, (value) -&gt;
 			<span class="keyword">if</span> value
@@ -185,12 +185,9 @@ provided it adds the “active” class if the element or it‘s first anchor ch
 			.first()
 		<span class="keyword">if</span> link.attr(<span class="string">'data-href'</span>)
 			link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
-		$(document).<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
-		element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; $(document).<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
-		refresh()
-
-Path.<span class="function"><span class="title">onchange</span></span> = -&gt;
-	$(document).trigger(<span class="string">'urlChange'</span>)</pre></div></div>
+		controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
+		element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
+		refresh()</pre></div></div>
             
         </li>
         
@@ -221,7 +218,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'value'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'value'</span>, (element, expr, controller) -&gt;
 	getValue =
 		<span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span>
 			-&gt; element.prop(<span class="string">'checked'</span>)
@@ -317,7 +314,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
             
             <div class="content"><div class='highlight'><pre>[ <span class="string">'click'</span>, <span class="string">'dblclick'</span>, <span class="string">'submit'</span>, <span class="string">'change'</span>, <span class="string">'focus'</span>, <span class="string">'blur'</span> ]
 	.forEach (name) -&gt;
-		Binding.addEventHandler(name)</pre></div></div>
+		chip.addEventBinding(name)</pre></div></div>
             
         </li>
         
@@ -344,7 +341,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
             
             <div class="content"><div class='highlight'><pre>keyCodes = { enter: <span class="number">13</span>, esc: <span class="number">27</span> }
 <span class="keyword">for</span> own name, keyCode <span class="keyword">of</span> keyCodes
-	Binding.addKeyEventHandler(name, keyCode)</pre></div></div>
+	chip.addKeyEventBinding(name, keyCode)</pre></div></div>
             
         </li>
         
@@ -369,7 +366,7 @@ pressed.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addKeyEventHandler(<span class="string">'ctrl-enter'</span>, keyCodes.enter, <span class="literal">true</span>)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>chip.addKeyEventBinding(<span class="string">'ctrl-enter'</span>, keyCodes.enter, <span class="literal">true</span>)</pre></div></div>
             
         </li>
         
@@ -397,7 +394,7 @@ pressed.</p>
             
             <div class="content"><div class='highlight'><pre>attribs = [ <span class="string">'href'</span>, <span class="string">'src'</span>, <span class="string">'id'</span> ]
 <span class="keyword">for</span> name <span class="keyword">in</span> attribs
-	Binding.addAttributeHandler(name)</pre></div></div>
+	chip.addAttributeBinding(name)</pre></div></div>
             
         </li>
         
@@ -427,7 +424,7 @@ pressed.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>[ <span class="string">'checked'</span>, <span class="string">'disabled'</span> ].forEach (name) -&gt;
-	Binding.addAttributeToggleHandler(name)</pre></div></div>
+	chip.addAttributeToggleBinding(name)</pre></div></div>
             
         </li>
         
@@ -456,7 +453,7 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
 	placeholder = $(<span class="string">'&lt;script type="text/if-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).replaceAll(template)
 	controllerName = element.attr(<span class="string">'data-controller'</span>)
@@ -466,7 +463,7 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
 		<span class="keyword">if</span> value
 			<span class="keyword">if</span> placeholder.parent().length
 				element = template.clone()
-				Controller.create element, controller, controllerName, passthrough: <span class="literal">true</span>
+				controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
 				placeholder.replaceWith(element)
 		<span class="keyword">else</span>
 			<span class="keyword">unless</span> placeholder.parent().length
@@ -515,7 +512,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'repeat'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'repeat'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
 	orig = expr
 	[ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
 	<span class="keyword">unless</span> itemName <span class="keyword">and</span> expr
@@ -531,17 +528,17 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
 	placeholder = $(<span class="string">'&lt;script type="text/repeat-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).replaceAll(template)
 	elements = $()
-	extend = {}
+	properties = {}
 	value = <span class="literal">null</span>
 			
 	<span class="function"><span class="title">createElement</span></span> = (item) -&gt;
 		newElement = template.clone()
 		<span class="keyword">unless</span> Array.isArray(value)
-			extend[propName] = item <span class="keyword">if</span> propName
-			extend[itemName] = value[item]
+			properties[propName] = item <span class="keyword">if</span> propName
+			properties[itemName] = value[item]
 		<span class="keyword">else</span>
-			extend[itemName] = item
-		Controller.create newElement, controller, controllerName, extend
+			properties[itemName] = item
+		controller.child element: newElement, name: controllerName, properties: properties
 		newElement.get(<span class="number">0</span>)
 	
 	controller.watch expr, (newValue, oldValue, splices) -&gt;
@@ -620,12 +617,12 @@ attributes which appear after <code>data-partial</code> will have the new value 
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'partial'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'partial'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
 	parts = expr.split <span class="regexp">/\s+as\s+\s+with\s+/</span>
 	nameExpr = parts.pop()
 	[ itemExpr, itemName ] = parts
 	childController = <span class="literal">null</span>
-	extend = {}
+	properties = {}
 	
 	<span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
 		controller.watch itemExpr, <span class="literal">true</span>, (value) -&gt;
@@ -633,10 +630,10 @@ attributes which appear after <code>data-partial</code> will have the new value 
 	
 	controller.watch nameExpr, (name) -&gt;
 		<span class="keyword">return</span> <span class="keyword">unless</span> name?
+		element.html controller.template(name)
 		<span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
-			extend[itemName] = controller.eval itemExpr
-		element.html chip.getTemplate(name)
-		childController = Controller.create element, controller, name, extend</pre></div></div>
+			properties[itemName] = controller.eval itemExpr
+		childController = controller.child element: element, name: name, properties: properties</pre></div></div>
             
         </li>
         
@@ -660,8 +657,8 @@ as a form) or provide functionality provided by that controller to the element.<
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Binding.addHandler <span class="string">'controller'</span>, <span class="number">30</span>, (element, controllerName, controller) -&gt;
-	Controller.create(element, controller, controllerName)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'controller'</span>, <span class="number">30</span>, (element, controllerName, controller) -&gt;
+	controller.child element: element, name: controllerName</pre></div></div>
             
         </li>
         

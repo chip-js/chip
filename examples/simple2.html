@@ -7,10 +7,12 @@
 			controller.message = 'Hello!'
 		}
 		
+		var app = chip.app()
+		
 		// Chip doesn't support hash urls right now, so this page needs to be delivered in a webserver pointing to the root of the repository
-		chip.route('/examples/simple2.html', 'home')
-		chip.route('/welcome', 'welcome')
-		chip.listen()
+		app.route('/', 'home')
+		app.route('/welcome', 'welcome')
+		app.listen({ hashOnly: true })
 	</script>
 </head>
 <body>

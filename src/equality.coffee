@@ -1,9 +1,10 @@
 # # Chip Equality
 # > Based on work from Google's observe-js polyfill: https://github.com/Polymer/observe-js
+
+# A namespace to store the functions on
+equality = {}
+
 (->
-	# A namespace to store the functions on
-	equality = {}
-	
 	# Diffs two objects returning an array of change records. The change record looks like:
 	# ```javascript
 	# {
@@ -227,15 +228,7 @@
 					distances[i][j] = if north < west then north else west
 		
 		distances
-	
-	
-	
-	
-	# Set up for AMD.
-	this.equality = equality
-	if typeof define is 'function' && define.amd
-		define 'chip/equality', -> equality
-	else if typeof exports is 'object' and typeof module is 'object'
-		chip.equality = equality
-	
+		
 ).call(this)
+
+chip.equality = equality

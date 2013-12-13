@@ -39,7 +39,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">filter</span></span> = (controller, value, filterFunc) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'filter'</span>, (value, filterFunc) -&gt;
 	<span class="keyword">return</span> [] <span class="keyword">unless</span> Array.isArray value
 	<span class="keyword">return</span> value <span class="keyword">unless</span> filterFunc
 	value.filter(filterFunc)</pre></div></div>
@@ -58,7 +58,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">date</span></span> = (controller, value) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'date'</span>, (value) -&gt;
 	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">unless</span> value
 	<span class="keyword">unless</span> value <span class="keyword">instanceof</span> Date
 		value = <span class="keyword">new</span> Date(value)
@@ -79,7 +79,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">log</span></span> = (controller, value, prefix = <span class="string">'Log'</span>) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'log'</span>, (value, prefix = <span class="string">'Log'</span>) -&gt;
 	console.log prefix + <span class="string">':'</span>, value
 	<span class="keyword">return</span> value</pre></div></div>
             
@@ -97,7 +97,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">limit</span></span> = (controller, value, limit) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'limit'</span>, (value, limit) -&gt;
 	<span class="keyword">if</span> value <span class="keyword">and</span> <span class="keyword">typeof</span> value.slice <span class="keyword">is</span> <span class="string">'function'</span>
 		<span class="keyword">if</span> limit &lt; <span class="number">0</span>
 			value.slice limit
@@ -120,7 +120,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Controller.filters.<span class="function"><span class="title">sort</span></span> = (controller, value, sortFunc) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'sort'</span>, (value, sortFunc) -&gt;
 	<span class="keyword">if</span> Array.isArray value
 		value.slice().sort(sortFunc)
 	<span class="keyword">else</span>

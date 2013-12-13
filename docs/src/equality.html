@@ -28,8 +28,6 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>(-&gt;</pre></div></div>
-            
         </li>
         
         
@@ -43,7 +41,9 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	equality = {}</pre></div></div>
+            <div class="content"><div class='highlight'><pre>equality = {}
+
+(-&gt;</pre></div></div>
             
         </li>
         
@@ -439,28 +439,11 @@
 					west = distances[i][j - <span class="number">1</span>] + <span class="number">1</span>
 					distances[i][j] = <span class="keyword">if</span> north &lt; west <span class="keyword">then</span> north <span class="keyword">else</span> west
 		
-		distances</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-18">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
-              </div>
-              <p>Set up for AMD.</p>
+		distances
+		
+).call(<span class="keyword">this</span>)
 
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	<span class="keyword">this</span>.equality = equality
-	<span class="keyword">if</span> <span class="keyword">typeof</span> define <span class="keyword">is</span> <span class="string">'function'</span> &amp;&amp; define.amd
-		define <span class="string">'chip/equality'</span>, -&gt; equality
-	<span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> exports <span class="keyword">is</span> <span class="string">'object'</span> <span class="keyword">and</span> <span class="keyword">typeof</span> module <span class="keyword">is</span> <span class="string">'object'</span>
-		chip.equality = equality
-	
-).call(<span class="keyword">this</span>)</pre></div></div>
+chip.equality = equality</pre></div></div>
             
         </li>
         

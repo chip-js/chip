@@ -1,7 +1,7 @@
-# # Default Binding Handlers
+# # Default Bindings
 
 
-Binding.addHandler 'debug', (element, expr, controller) ->
+chip.addBinding 'debug', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		console.info 'Debug:', expr, '=', value
 
@@ -29,7 +29,7 @@ Binding.addHandler 'debug', (element, expr, controller) ->
 #   <span>10/16/2013</span>.
 # </div>
 # ```
-Binding.addHandler 'text', (element, expr, controller) ->
+chip.addBinding 'text', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		element.text(if value? then value else '')
 
@@ -53,7 +53,7 @@ Binding.addHandler 'text', (element, expr, controller) ->
 #   </p>
 # </div>
 # ```
-Binding.addHandler 'html', (element, expr, controller) ->
+chip.addBinding 'html', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		element.html(if value? then value else '')
 
@@ -76,7 +76,7 @@ Binding.addHandler 'html', (element, expr, controller) ->
 #   <button class="btn primary highlight"></button>
 # </div>
 # ```
-Binding.addHandler 'class', (element, expr, controller) ->
+chip.addBinding 'class', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		if Array.isArray(value)
 			value = value.join(' ')
@@ -115,7 +115,7 @@ Binding.addHandler 'class', (element, expr, controller) ->
 #   <li><a href="/profile">Profile</a></li>
 # </ul>
 # ```
-Binding.addHandler 'active', (element, expr, controller) ->
+chip.addBinding 'active', (element, expr, controller) ->
 	if expr
 		controller.watch expr, (value) ->
 			if value
@@ -135,12 +135,9 @@ Binding.addHandler 'active', (element, expr, controller) ->
 			.first()
 		if link.attr('data-href')
 			link.on 'hrefChanged', refresh
-		$(document).on 'urlChange', refresh
-		element.on 'elementRemove', -> $(document).off 'urlChange', refresh
+		controller.on 'urlChange', refresh
+		element.on 'elementRemove', -> controller.off 'urlChange', refresh
 		refresh()
-
-Path.onchange = ->
-	$(document).trigger('urlChange')
 
 
 # ## data-value
@@ -165,7 +162,7 @@ Path.onchange = ->
 # ```
 # And when the user changes the text in the first input to "Jac", `user.firstName` will be updated immediately with the
 # value of `'Jac'`.
-Binding.addHandler 'value', (element, expr, controller) ->
+chip.addBinding 'value', (element, expr, controller) ->
 	getValue =
 		if element.attr('type') is 'checkbox'
 			-> element.prop('checked')
@@ -231,7 +228,7 @@ Binding.addHandler 'value', (element, expr, controller) ->
 # ```
 [ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur' ]
 	.forEach (name) ->
-		Binding.addEventHandler(name)
+		chip.addEventBinding(name)
 
 # ## data-[key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches.
@@ -251,7 +248,7 @@ Binding.addHandler 'value', (element, expr, controller) ->
 # ```
 keyCodes = { enter: 13, esc: 27 }
 for own name, keyCode of keyCodes
-	Binding.addKeyEventHandler(name, keyCode)
+	chip.addKeyEventBinding(name, keyCode)
 
 # ## data-[control key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches and the ctrlKey or metaKey is
@@ -269,7 +266,7 @@ for own name, keyCode of keyCodes
 # ```xml
 # <input>
 # ```
-Binding.addKeyEventHandler('ctrl-enter', keyCodes.enter, true)
+chip.addKeyEventBinding('ctrl-enter', keyCodes.enter, true)
 
 # ## data-[attribute]
 # Adds a handler to set the attribute of element to the value of the expression.
@@ -290,7 +287,7 @@ Binding.addKeyEventHandler('ctrl-enter', keyCodes.enter, true)
 # ```
 attribs = [ 'href', 'src', 'id' ]
 for name in attribs
-	Binding.addAttributeHandler(name)
+	chip.addAttributeBinding(name)
 
 # ## data-[toggle attribute]
 # Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.
@@ -313,7 +310,7 @@ for name in attribs
 # <button disabled>Submit</button>
 # ```
 [ 'checked', 'disabled' ].forEach (name) ->
-	Binding.addAttributeToggleHandler(name)
+	chip.addAttributeToggleBinding(name)
 
 # ## data-if
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -335,7 +332,7 @@ for name in attribs
 #   <li><a href="/login">Sign In</a></li>
 # </ul>
 # ```
-Binding.addHandler 'if', 50, (element, expr, controller) ->
+chip.addBinding 'if', 50, (element, expr, controller) ->
 	template = element # use a placeholder for the element and the element as a template
 	placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').replaceAll(template)
 	controllerName = element.attr('data-controller')
@@ -345,7 +342,7 @@ Binding.addHandler 'if', 50, (element, expr, controller) ->
 		if value
 			if placeholder.parent().length
 				element = template.clone()
-				Controller.create element, controller, controllerName, passthrough: true
+				controller.child element: element, name: controllerName, passthrough: true
 				placeholder.replaceWith(element)
 		else
 			unless placeholder.parent().length
@@ -388,7 +385,7 @@ Binding.addHandler 'if', 50, (element, expr, controller) ->
 #   </div>
 # </div>
 # ```
-Binding.addHandler 'repeat', 100, (element, expr, controller) ->
+chip.addBinding 'repeat', 100, (element, expr, controller) ->
 	orig = expr
 	[ itemName, expr ] = expr.split /\s+in\s+/
 	unless itemName and expr
@@ -404,17 +401,17 @@ Binding.addHandler 'repeat', 100, (element, expr, controller) ->
 	template = element # use a placeholder for the element and the element as a template
 	placeholder = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template)
 	elements = $()
-	extend = {}
+	properties = {}
 	value = null
 			
 	createElement = (item) ->
 		newElement = template.clone()
 		unless Array.isArray(value)
-			extend[propName] = item if propName
-			extend[itemName] = value[item]
+			properties[propName] = item if propName
+			properties[itemName] = value[item]
 		else
-			extend[itemName] = item
-		Controller.create newElement, controller, controllerName, extend
+			properties[itemName] = item
+		controller.child element: newElement, name: controllerName, properties: properties
 		newElement.get(0)
 	
 	controller.watch expr, (newValue, oldValue, splices) ->
@@ -487,12 +484,12 @@ Binding.addHandler 'repeat', 100, (element, expr, controller) ->
 #   <span>Jacob</span>
 # </div>
 # ```
-Binding.addHandler 'partial', 50, (element, expr, controller) ->
+chip.addBinding 'partial', 50, (element, expr, controller) ->
 	parts = expr.split /\s+as\s+\s+with\s+/
 	nameExpr = parts.pop()
 	[ itemExpr, itemName ] = parts
 	childController = null
-	extend = {}
+	properties = {}
 	
 	if itemExpr and itemName
 		controller.watch itemExpr, true, (value) ->
@@ -500,10 +497,10 @@ Binding.addHandler 'partial', 50, (element, expr, controller) ->
 	
 	controller.watch nameExpr, (name) ->
 		return unless name?
+		element.html controller.template(name)
 		if itemExpr and itemName
-			extend[itemName] = controller.eval itemExpr
-		element.html chip.getTemplate(name)
-		childController = Controller.create element, controller, name, extend
+			properties[itemName] = controller.eval itemExpr
+		childController = controller.child element: element, name: name, properties: properties
 
 
 # ## data-controller
@@ -521,5 +518,5 @@ Binding.addHandler 'partial', 50, (element, expr, controller) ->
 # <form>
 # </form>
 # ```
-Binding.addHandler 'controller', 30, (element, controllerName, controller) ->
-	Controller.create(element, controller, controllerName)
+chip.addBinding 'controller', 30, (element, controllerName, controller) ->
+	controller.child element: element, name: controllerName

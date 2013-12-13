@@ -149,9 +149,4 @@ class Observer
 		return copy
 
 
-# Set up for AMD
-this.Observer = Observer
-if typeof define is 'function' && define.amd
-	define 'chip/observer', -> Observer
-else if typeof exports is 'object' and typeof module is 'object'
-	chip.Observer = Observer
+chip.Observer = Observer

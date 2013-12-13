@@ -1,4 +1,4 @@
-Controller.define('todo', function(controller) {
+app.controller('todo', function(controller) {
 	
 	controller.editing = false;
 	controller.editDescription = '';

@@ -19,127 +19,132 @@
 # Initial setup
 # -------------
 # The global namespace. Everything is added onto `chip`
-chip = {}
-this.chip = chip
-
-# Set up for AMD
-if typeof define is 'function' && define.amd
-	define 'chip', chip
-else if typeof exports is 'object' and typeof module is 'object'
-	module.exports = chip
-
-
-# Templates
-# ---------
-# Store the templates here by name. They should be strings of HTML markup.
-chip.templates = {}
-
-# Set up templates by looking for them in the HTML page, then initialize page
-$ ->
-	$('script[type="text/html"]').each ->
-		$this = $(this)
-		name = $this.attr('name') or $this.attr('id')
-		if name
-			chip.templates[name] = $this.html()
-			$this.remove()
+chip =
 	
-	while (element = $('[data-controller]:first')).length
-		name = element.attr 'data-controller'
-		element.removeAttr 'data-controller'
-		Controller.create element, name
-
-# Get a template by name. This method may be overriden to get a jQuery element the way your app needs by setting
-# `chip.getTemplate = function...` where the function returns a jQuery element
-chip.getTemplate = (name) ->
-	unless chip.templates.hasOwnProperty name
-		throw 'Template "' + name + '" does not exist'
-	$ chip.templates[name].trim()
-
-
-chip.createAppController = (controller) ->
-	root = $ 'html'
-	chip.appController = if controller
-		Controller.setup(root, controller, 'application')
-	else
-		Controller.create(root, null, 'application')
-
-
-# Routing
-# ------
-# Create a route to be run when the given URL `path` is hit in the browser URL. The route `name` is used to load the
-# template and controller by the same name. This template will be placed in the first element on page with a
-# `data-route` attribute.
-chip.route = (path, name, params, subroutes) ->
-	if typeof name isnt 'string'
-		subroutes = params
-		params = name
-		name = path.replace(/^\//, '')
+	# Initializes chip to automatically set up the DOM. This is called at page load and should not need to be called.
+	init: ->
+		unless @rootApp
+			@rootApp = chip.app()
+		@rootApp.init()
 	
-	if typeof params isnt 'object'
-		subroutes = params
-		params = {}
 	
-	chip.route.parents = [] unless chip.route.parents
-	parents = chip.route.parents.slice() # unmutable copy
-	path = parents.join('') + path if parents.length # sub-route support
+	# Creates a new chip app
+	app: (appName) ->
+		app = new App(appName)
+		@rootApp = app if not appName
+		app
 	
-	Path.map(path).to ->
-		combinedParams = $.extend {}, params, @params
-		chip.runRoute name, parents, combinedParams
 	
-	# `subroutes` should be a function like `(route) ->` which allows routes to be defined
-	# relative to the route above it. When these routes are matched, the template and controller with that name will be
-	# loaded into the first element with the `data-route` attribute within the outer one.
+	# Bindings
+	# -------
+	
+	
+	# Adds a binding handler that will be run for each attribute whose name matches `@prefix + name`. The `handler` is
+	# a function that receives three arguments: the jQuery element the attribute was on, the value of the attribute
+	# (usually an expression), and the controller for this area of the page.
 	# 
-	# **Example:**
-	#```javascript 
-	# chip.route('/', 'home')
-	# chip.route('/todos', 'todos', function(route) {
-	#   route('/:id', 'todo')
-	# })
-	# ```
-	if subroutes
-		chip.route.parents.push path
-		subroutes chip.route
-		chip.route.parents.pop()
-
-
-# Run a route which was defined by `chip.route`.
-chip.runRoute = (name, parents, params) ->
-	selector = ['[data-route]']
-	selector.push '[data-route]' for path in parents
-	# **Example:** a 3rd level subroute selector would be
+	# If the handler removes the element from its parent (to store as a template for cloning into repeats or ifs) then
+	# processing will stop on the element and its children immediately. This allows you to recurse into the element
+	# with new controllers by using `element.bindTo(newChildController)`.
+	# 
+	# If a new controller is returned from the handler this controller will be used for the remaining handlers and the
+	# children of the element.
+	# 
+	# The `priority` argument is optional and allows handlers with higher priority to be run before those with lower
+	# priority. The default is `0`.
+	# 
+	# **Example:** This binding handler adds pirateized text to an element.
 	# ```javascript
-	# $('[data-route] [data-route] [data-route]')
+	# chip.addBinding('pirate', function(element, expr, controller) {
+	#   controller.watch(expr, function(value) {
+	#     value = (value+'' || '')
+	#       .replace(/\Bing\b/g, "in'")
+	#       .replace(/\bto\b/g, "t'")
+	#       .replace(/\byou\b/, 'ye')
+	#       + ' arrrr!'
+	#     element.text(value)
+	#   }
+	# }
 	# ```
-	selector = selector.join(' ')
-	container = $(selector).first()
+	# 
+	# ```xml
+	# <p data-pirate="post.body">This text will be replaced.</p>
+	# ```
+	addBinding: (name, priority, handler) ->
+		Binding.addBinding(name, priority, handler)
 	
-	controller = container.data('controller')
-	controller?.teardown?()
 	
-	template = chip.getTemplate(name)
-	container.html(template)
+	# Shortcut, adds a handler that executes the expression when the named event is dispatched.
+	#
+	# **Example:** Handles the click event.
+	#```javascript
+	# chip.addEventBinding('click')
+	# ```
+	# 
+	# ```xml
+	# <button data-click="window.alert('hello!')">Say Hello</button>
+	#```
+	addEventBinding: (eventName) ->
+		Binding.addEventBinding(eventName)
 	
-	Controller::params = params # available to all controllers
-	controller = Controller.create container, chip.appController, name
-	container.data('controller', controller)
-	controller.syncView()
+	
+	# Shortcut, adds a handler that responds when the given key is pressed, e.g. `chip.addEventBinding('esc', 27)`.
+	addKeyEventBinding: (name, keyCode, ctrlKey) ->
+		Binding.addKeyEventBinding(name, keyCode, ctrlKey)
+	
+	
+	# Shortcut, adds a handler to set the named attribute to the value of the expression.
+	# 
+	# **Example**
+	# ```javascript
+	# chip.addAttributeBinding('href')
+	# ```
+	# allows
+	# ```xml
+	# <a data-href="'/profile/' + person.id">My Profile</a>
+	# ```
+	# which would result in
+	# ```xml
+	# <a href="/profile/368">My Profile</a>
+	# ```
+	addAttributeBinding: (name) ->
+		Binding.addAttributeBinding(name)
+	
+	
+	# Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
+	# e.g. `chip.addAttributeToggleBinding('checked')`.
+	addAttributeToggleBinding: (name) ->
+		Binding.addAttributeToggleBinding(name)
+		
+	# Filters
+	# -------
+	
+	filter: (name, filter) ->
+		if typeof filter is 'function'
+			Filter.addFilter(name, filter)
+			this
+		else
+			Filter.runFilter(name, filter)
+	
+	
+
+# Initializes chip on page load
+$ -> chip.init()
 
 
-chip.redirect = (url) ->
-	return if url is location.pathname
-	Path.history.pushState {}, "", url
 
-# Set up the listeners for path changes. Chip uses the Path.js library for routing.
-chip.listen = (element) ->
-	unless chip.appController
-		chip.createAppController()
-	Path.history.listen()
-	if Path.history.supported and element isnt false
-		# Set listeners on links to catch their clicks and use pushState instead
-		$(element or document).on 'click', 'a[href]', (event) ->
-			return if event.isDefaultPrevented() # if something else already handled this, we won't
-			return if this.host isnt location.host or this.href is location.href + '#'
-			event.preventDefault()
-			chip.redirect $(this).attr("href")
+## Set up the listeners for path changes. Chip uses the Path.js library for routing.
+#chip.listen = (element) ->
+#	unless chip.appController
+#		chip.createAppController()
+#	Path.history.listen()
+#	if Path.history.supported and element isnt false
+#		# Set listeners on links to catch their clicks and use pushState instead
+#		$(element or document).on 'click', 'a[href]', (event) ->
+#			return if event.isDefaultPrevented() # if something else already handled this, we won't
+#			return if this.host isnt location.host or this.href is location.href + '#'
+#			event.preventDefault()
+#			chip.redirect $(this).attr("href")
+
+
+window.chip = chip

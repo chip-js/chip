@@ -1,17 +1,21 @@
 module.exports = function(grunt) {
-
+	
 	var srcFiles = [
+		'src/utils.coffee',
 		'src/chip.coffee',
+		'src/routing.coffee',
 		'src/observer.coffee',
 		'src/controller.coffee',
+		'src/app.coffee',
 		'src/binding.coffee',
+		'src/filter.coffee',
 		'src/bindings.coffee',
 		'src/filters.coffee',
 		'src/equality.coffee'
 	];
 	
 	var libFiles = [
-		'lib/path.js'
+		'lib/es5.js'
 	];
 	
 	
@@ -69,14 +73,14 @@ module.exports = function(grunt) {
 			}
 		}
 	});
-
+	
 	grunt.loadNpmTasks('grunt-contrib-coffee');
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-docco2');
 	grunt.loadNpmTasks('grunt-contrib-watch');
-
+	
 	// Default task(s).
 	grunt.registerTask('default', [ 'dist' ]);
 	grunt.registerTask('dist', [ 'concat:src', 'coffee', 'concat:dist', 'uglify', 'clean', 'docs' ]);

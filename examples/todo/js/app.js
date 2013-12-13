@@ -1,4 +1,4 @@
 'use strict';
 
-// TODO provide URL hash support
-
+var app = chip.app()
+app.listen({ hashOnly: true })

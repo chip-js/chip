@@ -1,9 +1,8 @@
-Controller.define('todos', function(controller) {
+app.controller('todos', function(controller) {
 	
 	controller.todos = [];
 	controller.newDescription = '';
 	controller.allDone = false;
-	controller.filterName = 'none';
 	controller.filters = {
 		none: function() {
 			return true;
@@ -15,6 +14,7 @@ Controller.define('todos', function(controller) {
 			return !todo.done;
 		}
 	};
+	controller.filter = controller.filters.none;
 	
 	Todo.load(function(err, todos) {
 		controller.todos = todos;
@@ -60,5 +60,20 @@ Controller.define('todos', function(controller) {
 		Todo.store();
 		controller.syncView();
 	};
+	
+	app.route('/', function(req, next) {
+		controller.filter = controller.filters.none
+		controller.syncView()
+	})
+	
+	app.route('/active', function(req, next) {
+		controller.filter = controller.filters.undone
+		controller.syncView()
+	})
+	
+	app.route('/completed', function(req, next) {
+		controller.filter = controller.filters.done
+		controller.syncView()
+	})
 	
 });

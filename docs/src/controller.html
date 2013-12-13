@@ -38,7 +38,9 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Controller</span></span></pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Controller</span></span>
+	
+	constructor: -&gt;</pre></div></div>
             
         </li>
         
@@ -49,11 +51,11 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <p>Default empty params object. This holds the current routing parameters, accessible to all controllers.</p>
+              <p>Creates the observer array so child controllers don&#39;t inherit this from parents </p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	params: {}</pre></div></div>
+            <div class="content"><div class='highlight'><pre>		<span class="property">@_observers</span> = []</pre></div></div>
             
         </li>
         
@@ -138,6 +140,22 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
+              <p>Determines whether an expression has a filter defined. This allows bindings to skip setters when a filter exists.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	exprHasFilter: (expr) -&gt;
+		hasFilter(expr)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
               <p>Redirects to the provided URL</p>
 
             </div>
@@ -148,11 +166,11 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
         </li>
         
         
-        <li id="section-9">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <p>Clones the object at the given property name for processing forms</p>
 
@@ -164,11 +182,11 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
         </li>
         
         
-        <li id="section-10">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <p>Removes and closes all observers for garbage-collection </p>
 
@@ -184,11 +202,11 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
         </li>
         
         
-        <li id="section-11">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>Syncs the observers to propogate changes to the HTML</p>
 
@@ -202,11 +220,11 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
         </li>
         
         
-        <li id="section-12">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>Syncs just the observers for this controller immediately</p>
 
@@ -218,29 +236,7 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 	
 	
 	runFilter: (value, filterName, args...) -&gt;
-		filter = Controller.filters[filterName]
-		<span class="keyword">if</span> filter
-			<span class="keyword">return</span> filter(<span class="keyword">this</span>, value, args...)
-		<span class="keyword">else</span>
-			console.error <span class="string">"Filter `<span class="subst">#{filterName}</span>` has not been defined."</span>
-			<span class="keyword">return</span> value</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-13">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
-              </div>
-              <p>The keywords which will <em>not</em> get <code>this.</code> prepended to inside an expression. All other valid variable names will
-have <code>this.</code> added to them. <code>this</code> is the controller instance when the expression is run. Add additional keywords
-to this array if there are global variables you wish to use in expressions. E.g. <code>$</code> or <code>jQuery</code></p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	<span class="property">@keywords</span>: [<span class="string">'this'</span>, <span class="string">'window'</span>, <span class="string">'$'</span>, <span class="string">'true'</span>, <span class="string">'false'</span>]</pre></div></div>
+		Filter.runFilter(filterName, value, args...)</pre></div></div>
             
         </li>
         
@@ -251,14 +247,16 @@ to this array if there are global variables you wish to use in expressions. E.g.
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
-              <p>Static <em>private</em> property, holds “controller definitions” which are functions that get called to initialize
-a new controller</p>
+              <p>The keywords which will <em>not</em> get <code>this.</code> prepended to inside an expression. All other valid variable names will
+have <code>this.</code> added to them. <code>this</code> is the controller instance when the expression is run. Add additional keywords
+to this array if there are global variables you wish to use in expressions. E.g. <code>$</code> or <code>jQuery</code></p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@definitions</span>: {}
+            <div class="content"><div class='highlight'><pre>	<span class="property">@keywords</span>: [<span class="string">'this'</span>, <span class="string">'window'</span>, <span class="string">'$'</span>, <span class="string">'true'</span>, <span class="string">'false'</span>]
 	
-	<span class="property">@filters</span>: {}</pre></div></div>
+	<span class="property">@filters</span>: {}
+	<span class="property">@exprCache</span>: {}</pre></div></div>
             
         </li>
         
@@ -268,225 +266,6 @@ a new controller</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
-              </div>
-              <p>Define a new controller with the provided function. This function will be called with a new controller every time
-one is instantiated.</p>
-<p><strong>Example:</strong></p>
-<pre><code class="lang-javascript">Controller.define(<span class="string">'home'</span>, <span class="keyword">function</span>(controller) {
-  <span class="comment">// do something as soon as it is instantiated</span>
-  MyAppAPI.loadUser(<span class="keyword">function</span>(err, user) {
-    controller.user = user
-    controller.syncView()
-  })
-
-  <span class="comment">// provide a function for the view to call. E.g. &lt;button data-click="logout"&gt;Logout&lt;/button&gt;</span>
-  controller.logout = <span class="keyword">function</span>() {
-    MyAppAPI.logout(<span class="keyword">function</span>(err) {
-      controller.user = <span class="literal">null</span>
-      controller.syncView()
-    })
-  }
-})</code></pre>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	<span class="property">@define</span>: (name, defineFunction) -&gt;
-		<span class="property">@definitions</span>[name] = defineFunction</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-16">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
-              </div>
-              <p>Get a definition by name. They can be registered with Controller.define or be functions in the global scope ending
-with “Controller”, e.g. <code>function homeController(controller){...}</code> would be returned for
-<code>Controller.getDefinition(&#39;home&#39;)</code>.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	<span class="property">@getDefinition</span>: (name) -&gt;
-		def = <span class="property">@definitions</span>[name]
-		<span class="keyword">return</span> def <span class="keyword">if</span> def
-		def = window[name + <span class="string">'Controller'</span>]
-		<span class="keyword">return</span> def <span class="keyword">if</span> <span class="keyword">typeof</span> def <span class="keyword">is</span> <span class="string">'function'</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-17">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
-              </div>
-              <p>Creates a new controller and binds it to the element. This sets up the bindings which update the HTML when data on
-the controller changes.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	<span class="property">@create</span>: (element, parentController, name, extend) -&gt;
-		<span class="keyword">if</span> <span class="keyword">typeof</span> parentController <span class="keyword">is</span> <span class="string">'string'</span>
-			extend = name
-			name = parentController
-			parentController = <span class="literal">undefined</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-18">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
-              </div>
-              <p>If <code>parentController</code> is provided, the new controller will extend it. Any data or methods on the parent
-controller will be available to the child unless overwritten by the child. This uses the prototype chain, thus
-overwriting a property only sets it on the child and does not change the parent. The child cannot set data on
-the parent, only read it or call methods on it.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> parentController
-			<span class="function"><span class="title">NewController</span></span> = -&gt;
-			NewController.prototype = parentController <span class="keyword">if</span> parentController
-			controller = <span class="keyword">new</span> NewController()
-			controller.parent = parentController
-		<span class="keyword">else</span>
-			controller = <span class="keyword">new</span> Controller()</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-19">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
-              </div>
-              <p>Creates the observer array so child controllers don&#39;t inherit this from parents </p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		controller._observers = []</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-20">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
-              </div>
-              <p>If <code>extend</code> is provided, all properties from that object will be copied over to the controller before it is
-initialized by its definition or bound to its element.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> extend
-			<span class="keyword">if</span> extend.passthrough <span class="keyword">and</span> parentController
-				extend.passthrough = parentController.passthrough <span class="keyword">or</span> parentController
-			
-			controller[key] = value <span class="keyword">for</span> own key, value <span class="keyword">of</span> extend</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-21">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
-              </div>
-              <p>Sets up the new controller</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		<span class="property">@setup</span> element, controller, name</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-22">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
-              </div>
-              <p>Sets up a new controller. Allows for a non-controller object to be made into a controller without a parent.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	<span class="property">@setup</span>: (element, controller, name) -&gt;
-		<span class="keyword">unless</span> controller <span class="keyword">instanceof</span> Controller
-			<span class="keyword">for</span> key, value <span class="keyword">of</span> Controller::
-				controller[key] = value</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-23">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
-              </div>
-              <p>Assign element and add cleanup when the element is removed.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.closeController()
-		controller.element = element
-		element.data <span class="string">'controller'</span>, controller</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-24">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
-              </div>
-              <p>If <code>name</code> is supplied the controller definition by that name will be run to initialize this controller
-before the bindings are set up.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		<span class="property">@getDefinition</span>(name)?(controller) <span class="keyword">if</span> name</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-25">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
-              </div>
-              <p>Bind the element to the new controller and then return it.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		element.bindTo controller
-		controller
-		
-	
-
-	<span class="property">@exprCache</span>: {}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-26">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p><em>private:</em> Creates a function from the given expression, allowing for extra arguments. This function will be cached
 so subsequent calls with the same expression will return the previous function. E.g. the expression “name” will
@@ -499,11 +278,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-27">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p>Prefix all property lookups with the <code>this</code> keyword. Ignores keywords (window, true, false) and extra args </p>
 
@@ -514,11 +293,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-28">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>Returns the cached function for this expression if it exists.</p>
 
@@ -532,11 +311,11 @@ always return a single function with the body <code>return this.name</code>.</p>
         </li>
         
         
-        <li id="section-29">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>We can safely (until getters/setters are common) add a try/catch around expression that don&#39;t use
 functions. Those that do use functions need the error to occur so developers can debug their code.</p>
@@ -552,11 +331,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-30">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Caches the function for later</p>
 
@@ -568,11 +347,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-31">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>Throws an error if the expression was not valid JavaScript</p>
 
@@ -585,11 +364,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-32">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p><em>private:</em> Creates a function and binds it to the given controller so it may be called from anywhere
 (e.g. provided to observers).</p>
@@ -603,11 +382,33 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-33">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>jQuery plugin to get the controller for the given element</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>$.fn.<span class="function"><span class="title">controller</span></span> = (passthrough) -&gt;
+	element = <span class="keyword">this</span>
+	<span class="keyword">while</span> element.length
+		controller = element.data(<span class="string">'controller'</span>)
+		<span class="keyword">if</span> controller
+			<span class="keyword">return</span> <span class="keyword">if</span> passthrough <span class="keyword">and</span> controller.passthrough <span class="keyword">then</span> controller.passthrough <span class="keyword">else</span> controller
+		element = element.parent()
+	<span class="literal">null</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>Provides the ‘elementRemove’ event to be dispatched when an element is removed from the DOM and cleaned up. Gets
 called when an element with the event ‘elementRemove’, is removed from the DOM. Manually call the listener.</p>
@@ -621,11 +422,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-34">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>Searches out possible properties or finds the beginning of strings (which we skip)</p>
 
@@ -641,11 +442,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-35">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>Adds <code>this.</code> to the beginning of each valid property in an expression and processes filters</p>
 
@@ -656,11 +457,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-36">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>Ignores keywords and provided argument names</p>
 
@@ -671,11 +472,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-37">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-37">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>Adds placeholders for strings so we can process the rest without their content messing us up.</p>
 
@@ -689,11 +490,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-38">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-38">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p>Processes the filters</p>
 
@@ -718,11 +519,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-39">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-39">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <p>Adds the “this.” prefix onto properties found in the expression</p>
 
@@ -740,11 +541,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-40">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-40">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <p>Replaces string placeholders.</p>
 
@@ -756,11 +557,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-41">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-41">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p>console.log expr</p>
 
@@ -771,11 +572,11 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-42">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-42">&#182;</a>
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <p>Determines if an expression has a filter (a single pipe)</p>
 
@@ -786,26 +587,10 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
 		<span class="keyword">if</span> orIndicator
 			<span class="keyword">return</span> match
 		<span class="keyword">return</span> <span class="string">'@@@'</span>
-	expr.indexOf(<span class="string">'@@@'</span>) <span class="keyword">isnt</span> -<span class="number">1</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-43">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-43">&#182;</a>
-              </div>
-              <p>Set up for AMD.</p>
+	expr.indexOf(<span class="string">'@@@'</span>) <span class="keyword">isnt</span> -<span class="number">1</span>
 
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="keyword">this</span>.Controller = Controller
-<span class="keyword">if</span> <span class="keyword">typeof</span> define <span class="keyword">is</span> <span class="string">'function'</span> &amp;&amp; define.amd
-	define <span class="string">'chip/controller'</span>, -&gt; Controller
-<span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> exports <span class="keyword">is</span> <span class="string">'object'</span> <span class="keyword">and</span> <span class="keyword">typeof</span> module <span class="keyword">is</span> <span class="string">'object'</span>
-	chip.Controller = Controller</pre></div></div>
+
+chip.Controller = Controller</pre></div></div>
             
         </li>
         

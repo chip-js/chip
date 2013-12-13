@@ -3,8 +3,9 @@
 # A Controller is the object to which HTML elements are bound.
 class Controller
 	
-	# Default empty params object. This holds the current routing parameters, accessible to all controllers.
-	params: {}
+	constructor: ->
+		# Creates the observer array so child controllers don't inherit this from parents 
+		@_observers = []
 	
 	# Watches an expression for changes. Calls the `callback` immediately with the initial value and then every time
 	# the value in the expression changes. An expression can be as simple as `name` or as complex as
@@ -34,6 +35,11 @@ class Controller
 	# ```
 	getBoundEval: (expr, extraArgNames...) ->
 		Controller.createBoundFunction(this, expr, extraArgNames)
+	
+	
+	# Determines whether an expression has a filter defined. This allows bindings to skip setters when a filter exists.
+	exprHasFilter: (expr) ->
+		hasFilter(expr)
 	
 	
 	# Redirects to the provided URL
@@ -69,12 +75,7 @@ class Controller
 	
 	
 	runFilter: (value, filterName, args...) ->
-		filter = Controller.filters[filterName]
-		if filter
-			return filter(this, value, args...)
-		else
-			console.error "Filter `#{filterName}` has not been defined."
-			return value
+		Filter.runFilter(filterName, value, args...)
 	
 	
 	# The keywords which will *not* get `this.` prepended to inside an expression. All other valid variable names will
@@ -82,106 +83,7 @@ class Controller
 	# to this array if there are global variables you wish to use in expressions. E.g. `$` or `jQuery`
 	@keywords: ['this', 'window', '$', 'true', 'false']
 	
-	
-	# Static *private* property, holds "controller definitions" which are functions that get called to initialize
-	# a new controller
-	@definitions: {}
-	
 	@filters: {}
-	
-	
-	# Define a new controller with the provided function. This function will be called with a new controller every time
-	# one is instantiated.
-	#
-	# **Example:**
-	#```javascript
-	# Controller.define('home', function(controller) {
-	#   // do something as soon as it is instantiated
-	#   MyAppAPI.loadUser(function(err, user) {
-	#     controller.user = user
-	#     controller.syncView()
-	#   })
-	#
-	#   // provide a function for the view to call. E.g. <button data-click="logout">Logout</button>
-	#   controller.logout = function() {
-	#     MyAppAPI.logout(function(err) {
-	#       controller.user = null
-	#       controller.syncView()
-	#     })
-	#   }
-	# })
-	# ```
-	@define: (name, defineFunction) ->
-		@definitions[name] = defineFunction
-	
-	
-	# Get a definition by name. They can be registered with Controller.define or be functions in the global scope ending
-	# with "Controller", e.g. `function homeController(controller){...}` would be returned for
-	# `Controller.getDefinition('home')`.
-	@getDefinition: (name) ->
-		def = @definitions[name]
-		return def if def
-		def = window[name + 'Controller']
-		return def if typeof def is 'function'
-	
-	
-	# Creates a new controller and binds it to the element. This sets up the bindings which update the HTML when data on
-	# the controller changes.
-	@create: (element, parentController, name, extend) ->
-		if typeof parentController is 'string'
-			extend = name
-			name = parentController
-			parentController = undefined
-		
-		# If `parentController` is provided, the new controller will extend it. Any data or methods on the parent
-		# controller will be available to the child unless overwritten by the child. This uses the prototype chain, thus
-		# overwriting a property only sets it on the child and does not change the parent. The child cannot set data on
-		# the parent, only read it or call methods on it.
-		if parentController
-			NewController = ->
-			NewController.prototype = parentController if parentController
-			controller = new NewController()
-			controller.parent = parentController
-		else
-			controller = new Controller()
-		
-		# Creates the observer array so child controllers don't inherit this from parents 
-		controller._observers = []
-		
-		# If `extend` is provided, all properties from that object will be copied over to the controller before it is
-		# initialized by its definition or bound to its element.
-		if extend
-			if extend.passthrough and parentController
-				extend.passthrough = parentController.passthrough or parentController
-			
-			controller[key] = value for own key, value of extend
-		
-		# Sets up the new controller
-		@setup element, controller, name
-		
-	
-	
-	# Sets up a new controller. Allows for a non-controller object to be made into a controller without a parent.
-	@setup: (element, controller, name) ->
-		unless controller instanceof Controller
-			for key, value of Controller::
-				controller[key] = value
-		
-		# Assign element and add cleanup when the element is removed.
-		element.on 'elementRemove', -> controller.closeController()
-		controller.element = element
-		element.data 'controller', controller
-		
-		# If `name` is supplied the controller definition by that name will be run to initialize this controller
-		# before the bindings are set up.
-		@getDefinition(name)?(controller) if name
-		
-		# Bind the element to the new controller and then return it.
-		element.bindTo controller
-		controller
-		
-	
-
 	@exprCache: {}
 	
 	# *private:* Creates a function from the given expression, allowing for extra arguments. This function will be cached
@@ -203,7 +105,6 @@ class Controller
 			else
 				functionBody = "try{return #{normalizedExpr}}catch(e){throw new Error(" +
 					"'Error processing binding expression `#{expr.replace(/'/g, "\\'")}` ' + e)}"
-			
 			# Caches the function for later
 			func = @exprCache[normalizedExpr] = Function(extraArgNames..., functionBody)
 		catch e
@@ -220,6 +121,15 @@ class Controller
 		func.bind(controller)
 
 
+# jQuery plugin to get the controller for the given element
+$.fn.controller = (passthrough) ->
+	element = this
+	while element.length
+		controller = element.data('controller')
+		if controller
+			return if passthrough and controller.passthrough then controller.passthrough else controller
+		element = element.parent()
+	null
 
 
 # Provides the 'elementRemove' event to be dispatched when an element is removed from the DOM and cleaned up. Gets
@@ -295,10 +205,4 @@ hasFilter = (expr) ->
 	expr.indexOf('@@@') isnt -1
 
 
-
-# Set up for AMD.
-this.Controller = Controller
-if typeof define is 'function' && define.amd
-	define 'chip/controller', -> Controller
-else if typeof exports is 'object' and typeof module is 'object'
-	chip.Controller = Controller
+chip.Controller = Controller

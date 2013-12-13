@@ -199,132 +199,289 @@ Path.core.route.prototype = {
 };
 
 (function() {
-  var Binding, Controller, Observer, argSeparator, attribs, chip, emptyQuoteExpr, hasFilter, keyCode, keyCodes, name, normalizeExpression, pipeExpr, propExpr, quoteExpr, varExpr, _i, _len,
+  var App, Binding, Controller, Observer, Route, Router, argSeparator, attribs, chip, emptyQuoteExpr, equality, hasFilter, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, propExpr, quoteExpr, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
-  chip = {};
+  makeEventEmitter = function(object) {
+    var eventEmitter;
+    eventEmitter = $({});
+    object.on = eventEmitter.on.bind(eventEmitter);
+    object.one = eventEmitter.one.bind(eventEmitter);
+    object.off = eventEmitter.off.bind(eventEmitter);
+    return object.trigger = eventEmitter.trigger.bind(eventEmitter);
+  };
 
-  this.chip = chip;
-
-  if (typeof define === 'function' && define.amd) {
-    define('chip', chip);
-  } else if (typeof exports === 'object' && typeof module === 'object') {
-    module.exports = chip;
-  }
-
-  chip.templates = {};
+  chip = {
+    init: function() {
+      if (!this.rootApp) {
+        this.rootApp = chip.app();
+      }
+      return this.rootApp.init();
+    },
+    app: function(appName) {
+      var app;
+      app = new App(appName);
+      if (!appName) {
+        this.rootApp = app;
+      }
+      return app;
+    }
+  };
 
   $(function() {
-    var element, name, _results;
-    $('script[type="text/html"]').each(function() {
-      var $this, name;
-      $this = $(this);
-      name = $this.attr('name') || $this.attr('id');
-      if (name) {
-        chip.templates[name] = $this.html();
-        return $this.remove();
-      }
-    });
-    _results = [];
-    while ((element = $('[data-controller]:first')).length) {
-      name = element.attr('data-controller');
-      element.removeAttr('data-controller');
-      _results.push(Controller.create(element, name));
-    }
-    return _results;
+    return chip.init();
   });
 
-  chip.getTemplate = function(name) {
-    if (!chip.templates.hasOwnProperty(name)) {
-      throw 'Template "' + name + '" does not exist';
-    }
-    return $(chip.templates[name].trim());
-  };
+  window.chip = chip;
 
-  chip.createAppController = function(controller) {
-    var root;
-    root = $('html');
-    return chip.appController = controller ? Controller.setup(root, controller, 'application') : Controller.create(root, null, 'application');
-  };
+  Router = (function() {
+    function Router() {
+      this.routes = [];
+      this.params = {};
+      this.prefix = '';
+      makeEventEmitter(this);
+    }
 
-  chip.route = function(path, name, params, subroutes) {
-    var parents;
-    if (typeof name !== 'string') {
-      subroutes = params;
-      params = name;
-      name = path.replace(/^\//, '');
-    }
-    if (typeof params !== 'object') {
-      subroutes = params;
-      params = {};
-    }
-    if (!chip.route.parents) {
-      chip.route.parents = [];
-    }
-    parents = chip.route.parents.slice();
-    if (parents.length) {
-      path = parents.join('') + path;
-    }
-    Path.map(path).to(function() {
-      var combinedParams;
-      combinedParams = $.extend({}, params, this.params);
-      return chip.runRoute(name, parents, combinedParams);
-    });
-    if (subroutes) {
-      chip.route.parents.push(path);
-      subroutes(chip.route);
-      return chip.route.parents.pop();
-    }
-  };
-
-  chip.runRoute = function(name, parents, params) {
-    var container, controller, path, selector, template, _i, _len;
-    selector = ['[data-route]'];
-    for (_i = 0, _len = parents.length; _i < _len; _i++) {
-      path = parents[_i];
-      selector.push('[data-route]');
-    }
-    selector = selector.join(' ');
-    container = $(selector).first();
-    controller = container.data('controller');
-    if (controller != null) {
-      if (typeof controller.teardown === "function") {
-        controller.teardown();
+    Router.prototype.param = function(name, callback) {
+      if (typeof callback !== 'function') {
+        throw new Error('param must have a callback of type "function". Got ' + callback + '.');
       }
-    }
-    template = chip.getTemplate(name);
-    container.html(template);
-    Controller.prototype.params = params;
-    controller = Controller.create(container, chip.appController, name);
-    container.data('controller', controller);
-    return controller.syncView();
-  };
+      (this.params[name] || (this.params[name] = [])).push(callback);
+      return this;
+    };
 
-  chip.redirect = function(url) {
-    if (url === location.pathname) {
-      return;
-    }
-    return Path.history.pushState({}, "", url);
-  };
+    Router.prototype.route = function(path, callback) {
+      if (typeof callback !== 'function') {
+        throw new Error('route must have a callback of type "function". Got ' + callback + '.');
+      }
+      if (path[0] !== '/') {
+        path = '/' + path;
+      }
+      this.routes.push(new Route(path, callback));
+      return this;
+    };
 
-  chip.listen = function(element) {
-    if (!chip.appController) {
-      chip.createAppController();
-    }
-    Path.history.listen();
-    if (Path.history.supported && element !== false) {
-      return $(element || document).on('click', 'a[href]', function(event) {
-        if (event.isDefaultPrevented()) {
+    Router.prototype.redirect = function(url) {
+      url = this.prefix + url;
+      if (this.currentUrl === url) {
+        return;
+      }
+      if (!this.hashOnly && url.indexOf(this.root) !== 0) {
+        location.href = url;
+        return;
+      }
+      if (this.usePushState) {
+        history.pushState({}, '', url);
+        this.dispatch(url);
+      } else {
+        if (!this.hashOnly) {
+          url = url.replace(this.root, '');
+          if (url[0] !== '/') {
+            url = '/' + url;
+          }
+        }
+        location.hash = url === '/' ? '' : '#' + url;
+      }
+      return this;
+    };
+
+    Router.prototype.listen = function(options) {
+      var getUrl, handleChange, url, _ref,
+        _this = this;
+      if (options == null) {
+        options = {};
+      }
+      if (options.root != null) {
+        this.root = options.root;
+      }
+      if (options.prefix != null) {
+        this.prefix = options.prefix;
+      }
+      if (options.hashOnly != null) {
+        this.hashOnly = options.hashOnly;
+      }
+      this.usePushState = !this.hashOnly && (((_ref = window.history) != null ? _ref.pushState : void 0) != null);
+      if ((this.root == null) && !this.usePushState) {
+        this.hashOnly = true;
+      }
+      if (this.hashOnly) {
+        this.prefix = '';
+      }
+      getUrl = null;
+      handleChange = function() {
+        var url;
+        url = getUrl();
+        if (_this.currentUrl === url) {
           return;
         }
-        if (this.host !== location.host || this.href === location.href + '#') {
+        _this.currentUrl = url;
+        return _this.dispatch(url);
+      };
+      if (this.usePushState) {
+        if (location.hash) {
+          url = location.pathname.replace(/\/$/, '') + location.hash.replace(/^#?\/?/, '/');
+          history.replaceState({}, '', url);
+        }
+        getUrl = function() {
+          return location.pathname + location.search;
+        };
+        $(window).on('popstate', handleChange);
+      } else {
+        if (!(this.hashOnly || location.pathname === this.root)) {
+          location.href = this.root + '#' + location.pathname;
           return;
         }
-        event.preventDefault();
-        return chip.redirect($(this).attr("href"));
+        getUrl = function() {
+          return (_this.hashOnly ? '' : location.pathname.replace(/\/$/, '')) + location.hash.replace(/^#?\/?/, '/');
+        };
+        $(window).on('hashchange', handleChange);
+      }
+      handleChange();
+      return this;
+    };
+
+    Router.prototype.dispatch = function(url) {
+      var callbacks, doneParams, next, path, pathParts, req, routes,
+        _this = this;
+      pathParts = document.createElement('a');
+      pathParts.href = url;
+      req = {
+        query: parseQuery(pathParts.search)
+      };
+      path = pathParts.pathname;
+      if (path.indexOf(this.prefix) !== 0) {
+        return;
+      }
+      path = path.replace(this.prefix, '');
+      this.trigger('change', path);
+      routes = this.routes.filter(function(route) {
+        return route.match(path);
       });
+      callbacks = [];
+      doneParams = {};
+      routes.forEach(function(route) {
+        var key, value, _ref;
+        callbacks.push(function(next) {
+          req.params = route.params;
+          return next();
+        });
+        _ref = route.params;
+        for (key in _ref) {
+          value = _ref[key];
+          if (doneParams[key] === value || !this.params[key]) {
+            continue;
+          }
+          doneParams[key] = value;
+          this.params[key].forEach(function(callback) {
+            return callbacks.push(callback.bind(null, req, value));
+          });
+        }
+        return callbacks.push(route.callback.bind(null, req));
+      });
+      next = function(err) {
+        var callback;
+        if (err) {
+          return _this.trigger('error', err);
+        }
+        if (callbacks.length === 0) {
+          return;
+        }
+        callback = callbacks.shift();
+        return callback(next);
+      };
+      if (callbacks.length === 0) {
+        next('notFound');
+      } else {
+        next();
+      }
+      return this;
+    };
+
+    return Router;
+
+  })();
+
+  chip.Router = Router;
+
+  Route = (function() {
+    function Route(path, callback) {
+      this.path = path;
+      this.callback = callback;
+      this.keys = [];
+      this.expr = parsePath(path, this.keys);
     }
+
+    Route.prototype.match = function(path) {
+      var i, key, match, value, _i, _len;
+      if (!(match = this.expr.exec(path))) {
+        return false;
+      }
+      this.params = {};
+      for (i = _i = 0, _len = match.length; _i < _len; i = ++_i) {
+        value = match[i];
+        if (i === 0) {
+          continue;
+        }
+        key = this.keys[i - 1];
+        if (typeof value === 'string') {
+          value = decodeURIComponent(value);
+        }
+        if (!key) {
+          key = '*';
+        }
+        this.params[key] = value;
+      }
+      return true;
+    };
+
+    return Route;
+
+  })();
+
+  chip.Route = Route;
+
+  parsePath = function(path, keys) {
+    if (path instanceof RegExp) {
+      return path;
+    }
+    if (Array.isArray(path)) {
+      path = '(' + path.join('|') + ')';
+    }
+    path = path.concat('/?').replace(/\/\(/g, '(?:/').replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?(\*)?/g, function(_, slash, format, key, capture, optional, star) {
+      var expr;
+      keys.push(key);
+      slash = slash || '';
+      expr = '';
+      if (!optional) {
+        expr += slash;
+      }
+      expr += '(?:';
+      if (optional) {
+        expr += slash;
+      }
+      expr += format || '';
+      expr += capture || (format && '([^/.]+?)' || '([^/]+?)') + ')';
+      expr += optional || '';
+      if (star) {
+        return expr += '(/*)?';
+      }
+    }).replace(/([\/.])/g, '\\$1').replace(/\*/g, '(.*)');
+    return new RegExp('^' + path + '$', 'i');
+  };
+
+  parseQuery = function(search) {
+    var query;
+    query = {};
+    if (search === '') {
+      return query;
+    }
+    search.replace(/^\?/, '').split('&').forEach(function(keyValue) {
+      var key, value, _ref;
+      _ref = keyValue.split('='), key = _ref[0], value = _ref[1];
+      return query[decodeURIComponent(key)] = decodeURIComponent(value);
+    });
+    return query;
   };
 
   Observer = (function() {
@@ -461,20 +618,14 @@ Path.core.route.prototype = {
 
   })();
 
-  this.Observer = Observer;
-
-  if (typeof define === 'function' && define.amd) {
-    define('chip/observer', function() {
-      return Observer;
-    });
-  } else if (typeof exports === 'object' && typeof module === 'object') {
-    chip.Observer = Observer;
-  }
+  chip.Observer = Observer;
 
   Controller = (function() {
-    function Controller() {}
-
     Controller.prototype.params = {};
+
+    function Controller() {
+      this._observers = [];
+    }
 
     Controller.prototype.watch = function(expr, skipTriggerImmediately, callback) {
       var getter, observer;
@@ -493,6 +644,10 @@ Path.core.route.prototype = {
       var expr, extraArgNames;
       expr = arguments[0], extraArgNames = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       return Controller.createBoundFunction(this, expr, extraArgNames);
+    };
+
+    Controller.prototype.exprHasFilter = function(expr) {
+      return hasFilter(expr);
     };
 
     Controller.prototype.redirect = function(url) {
@@ -547,79 +702,7 @@ Path.core.route.prototype = {
 
     Controller.keywords = ['this', 'window', '$', 'true', 'false'];
 
-    Controller.definitions = {};
-
     Controller.filters = {};
-
-    Controller.define = function(name, defineFunction) {
-      return this.definitions[name] = defineFunction;
-    };
-
-    Controller.getDefinition = function(name) {
-      var def;
-      def = this.definitions[name];
-      if (def) {
-        return def;
-      }
-      def = window[name + 'Controller'];
-      if (typeof def === 'function') {
-        return def;
-      }
-    };
-
-    Controller.create = function(element, parentController, name, extend) {
-      var NewController, controller, key, value;
-      if (typeof parentController === 'string') {
-        extend = name;
-        name = parentController;
-        parentController = void 0;
-      }
-      if (parentController) {
-        NewController = function() {};
-        if (parentController) {
-          NewController.prototype = parentController;
-        }
-        controller = new NewController();
-        controller.parent = parentController;
-      } else {
-        controller = new Controller();
-      }
-      controller._observers = [];
-      if (extend) {
-        if (extend.passthrough && parentController) {
-          extend.passthrough = parentController.passthrough || parentController;
-        }
-        for (key in extend) {
-          if (!__hasProp.call(extend, key)) continue;
-          value = extend[key];
-          controller[key] = value;
-        }
-      }
-      return this.setup(element, controller, name);
-    };
-
-    Controller.setup = function(element, controller, name) {
-      var key, value, _base, _ref;
-      if (!(controller instanceof Controller)) {
-        _ref = Controller.prototype;
-        for (key in _ref) {
-          value = _ref[key];
-          controller[key] = value;
-        }
-      }
-      element.on('elementRemove', function() {
-        return controller.closeController();
-      });
-      controller.element = element;
-      element.data('controller', controller);
-      if (name) {
-        if (typeof (_base = this.getDefinition(name)) === "function") {
-          _base(controller);
-        }
-      }
-      element.bindTo(controller);
-      return controller;
-    };
 
     Controller.exprCache = {};
 
@@ -656,6 +739,23 @@ Path.core.route.prototype = {
     return Controller;
 
   })();
+
+  $.fn.controller = function(passthrough) {
+    var controller, element;
+    element = this;
+    while (element.length) {
+      controller = element.data('controller');
+      if (controller) {
+        if (passthrough && controller.passthrough) {
+          return controller.passthrough;
+        } else {
+          return controller;
+        }
+      }
+      element = element.parent();
+    }
+    return null;
+  };
 
   $.event.special.elementRemove = {
     remove: function(event) {
@@ -727,15 +827,194 @@ Path.core.route.prototype = {
     return expr.indexOf('@@@') !== -1;
   };
 
-  this.Controller = Controller;
+  chip.Controller = Controller;
 
-  if (typeof define === 'function' && define.amd) {
-    define('chip/controller', function() {
-      return Controller;
-    });
-  } else if (typeof exports === 'object' && typeof module === 'object') {
-    chip.Controller = Controller;
-  }
+  App = (function() {
+    function App(appName) {
+      this.name = appName;
+      this.controllers = {};
+      this.templates = {};
+      this.router = new Router();
+      this.rootElement = $('html');
+    }
+
+    App.prototype.init = function(root) {
+      var app, element, name, _results;
+      if (this.inited) {
+        return;
+      }
+      this.inited = true;
+      if (root) {
+        this.rootElement = root;
+      }
+      this.rootController = this.createController({
+        element: this.rootElement,
+        name: 'application'
+      });
+      app = this;
+      this.rootElement.find('script[type="text/html"]').each(function() {
+        var $this, name;
+        $this = $(this);
+        name = $this.attr('name') || $this.attr('id');
+        if (name) {
+          app.template(name, $this.html());
+          return $this.remove();
+        }
+      });
+      _results = [];
+      while ((element = this.rootElement.find('[data-controller]:first')).length) {
+        name = element.attr('data-controller');
+        element.removeAttr('data-controller');
+        _results.push(this.createController({
+          element: element,
+          name: name,
+          parent: this.rootController
+        }));
+      }
+      return _results;
+    };
+
+    App.prototype.template = function(name, content) {
+      if (arguments.length > 1) {
+        this.templates[name] = content;
+        return this;
+      } else {
+        if (!this.templates.hasOwnProperty(name)) {
+          throw 'Template "' + name + '" does not exist';
+        }
+        return $(this.templates[name].trim());
+      }
+    };
+
+    App.prototype.controller = function(name, initFunction) {
+      if (arguments.length > 1) {
+        this.controllers[name] = initFunction;
+        return this;
+      } else {
+        return this.controllers[name] || window[name + 'Controller'];
+      }
+    };
+
+    App.prototype.createController = function(options) {
+      var NewController, controller, key, value, _base, _ref,
+        _this = this;
+      if (options == null) {
+        options = {};
+      }
+      if (options.parent instanceof Controller) {
+        NewController = function() {
+          return Controller.call(this);
+        };
+        if (options.parent) {
+          NewController.prototype = options.parent;
+        }
+        controller = new NewController();
+        controller.parent = options.parent;
+        if (options.passthrough) {
+          if (options.parent.hasOwnProperty('passthrough')) {
+            controller.passthrough = options.parent.passthrough;
+          } else {
+            controller.passthrough = options.parent;
+          }
+        }
+      } else {
+        controller = new Controller();
+      }
+      if (options.properties) {
+        _ref = options.properties;
+        for (key in _ref) {
+          if (!__hasProp.call(_ref, key)) continue;
+          value = _ref[key];
+          controller[key] = value;
+        }
+      }
+      controller.child = function(options) {
+        if (options == null) {
+          options = {};
+        }
+        options.parent = controller;
+        return _this.createController(options);
+      };
+      controller.template = function(name) {
+        return _this.template(name);
+      };
+      if (options.element) {
+        options.element.on('elementRemove', function() {
+          return controller.closeController();
+        });
+        controller.element = options.element;
+        options.element.data('controller', controller);
+      }
+      if (options.name) {
+        if (typeof (_base = this.controller(options.name)) === "function") {
+          _base(controller);
+        }
+      }
+      if (options.element) {
+        options.element.bindTo(controller);
+      }
+      return controller;
+    };
+
+    App.prototype.route = function(path, handler) {
+      var name,
+        _this = this;
+      if (!handler) {
+        handler = path.replace(/^\//, '');
+      }
+      if (typeof handler === 'string') {
+        name = handler;
+        handler = function(req, next) {
+          var container, controller, key, value;
+          for (key in req) {
+            if (!__hasProp.call(req, key)) continue;
+            value = req[key];
+            Controller.prototype[key] = value;
+          }
+          container = _this.rootElement.find('[data-route]:first');
+          container.html(_this.template(name));
+          controller = _this.createController({
+            element: container,
+            parent: _this.rootController,
+            name: name
+          });
+          return controller.syncView();
+        };
+      }
+      this.router.route(path, handler);
+      return this;
+    };
+
+    App.prototype.redirect = function(url) {
+      return this.router.redirect(url);
+    };
+
+    App.prototype.mount = function(path, app) {};
+
+    App.prototype.listen = function(options) {
+      var router;
+      router = this.router;
+      $(function() {
+        return router.listen(options);
+      });
+      return this.rootElement.on('click', 'a[href]', function(event) {
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+        if (this.host !== location.host || this.href === location.href + '#') {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        return router.redirect($(this).attr("href"));
+      });
+    };
+
+    return App;
+
+  })();
+
+  chip.App = App;
 
   Binding = (function() {
     function Binding(name, expr) {
@@ -812,8 +1091,8 @@ Path.core.route.prototype = {
     Binding.process = function(element, controller) {
       var attr, attribs, child, children, newController, node, parentNode, _i, _len, _results,
         _this = this;
-      if (!controller) {
-        controller = Controller.create(element);
+      if (!(controller instanceof Controller)) {
+        throw new Error('A Controller is required to bind a jQuery element.');
       }
       node = element.get(0);
       parentNode = node.parentNode;
@@ -865,15 +1144,7 @@ Path.core.route.prototype = {
     return Binding.process(this, controller);
   };
 
-  this.Binding = Binding;
-
-  if (typeof define === 'function' && define.amd) {
-    define('chip/binding', function() {
-      return Binding;
-    });
-  } else if (typeof exports === 'object' && typeof module === 'object') {
-    chip.Binding = Binding;
-  }
+  chip.Binding = Binding;
 
   Binding.addHandler('debug', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
@@ -1028,7 +1299,9 @@ Path.core.route.prototype = {
       if (value) {
         if (placeholder.parent().length) {
           element = template.clone();
-          Controller.create(element, controller, controllerName, {
+          controller.child({
+            element: element,
+            name: controllerName,
             passthrough: true
           });
           return placeholder.replaceWith(element);
@@ -1042,7 +1315,7 @@ Path.core.route.prototype = {
   });
 
   Binding.addHandler('repeat', 100, function(element, expr, controller) {
-    var controllerName, createElement, elements, extend, itemName, orig, placeholder, propName, template, value, _ref, _ref1;
+    var controllerName, createElement, elements, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1;
     orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
     if (!(itemName && expr)) {
@@ -1057,20 +1330,24 @@ Path.core.route.prototype = {
     template = element;
     placeholder = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template);
     elements = $();
-    extend = {};
+    properties = {};
     value = null;
     createElement = function(item) {
       var newElement;
       newElement = template.clone();
       if (!Array.isArray(value)) {
         if (propName) {
-          extend[propName] = item;
+          properties[propName] = item;
         }
-        extend[itemName] = value[item];
+        properties[itemName] = value[item];
       } else {
-        extend[itemName] = item;
+        properties[itemName] = item;
       }
-      Controller.create(newElement, controller, controllerName, extend);
+      controller.child({
+        element: newElement,
+        name: controllerName,
+        properties: properties
+      });
       return newElement.get(0);
     };
     return controller.watch(expr, function(newValue, oldValue, splices) {
@@ -1128,12 +1405,12 @@ Path.core.route.prototype = {
   });
 
   Binding.addHandler('partial', 50, function(element, expr, controller) {
-    var childController, extend, itemExpr, itemName, nameExpr, parts;
+    var childController, itemExpr, itemName, nameExpr, parts, properties;
     parts = expr.split(/\s+as\s+\s+with\s+/);
     nameExpr = parts.pop();
     itemExpr = parts[0], itemName = parts[1];
     childController = null;
-    extend = {};
+    properties = {};
     if (itemExpr && itemName) {
       controller.watch(itemExpr, true, function(value) {
         return childController[itemName] = value;
@@ -1143,16 +1420,23 @@ Path.core.route.prototype = {
       if (name == null) {
         return;
       }
+      element.html(controller.template(name));
       if (itemExpr && itemName) {
-        extend[itemName] = controller["eval"](itemExpr);
+        properties[itemName] = controller["eval"](itemExpr);
       }
-      element.html(chip.getTemplate(name));
-      return childController = Controller.create(element, controller, name, extend);
+      return childController = controller.child({
+        element: element,
+        name: name,
+        properties: properties
+      });
     });
   });
 
   Binding.addHandler('controller', 30, function(element, controllerName, controller) {
-    return Controller.create(element, controller, controllerName);
+    return controller.child({
+      element: element,
+      name: controllerName
+    });
   });
 
   Controller.filters.filter = function(controller, value, filterFunc) {
@@ -1206,9 +1490,10 @@ Path.core.route.prototype = {
     }
   };
 
+  equality = {};
+
   (function() {
-    var EDIT_ADD, EDIT_DELETE, EDIT_LEAVE, EDIT_UPDATE, calcEditDistances, equality, newChange, newSplice, sharedPrefix, sharedSuffix, spliceOperationsFromEditDistances;
-    equality = {};
+    var EDIT_ADD, EDIT_DELETE, EDIT_LEAVE, EDIT_UPDATE, calcEditDistances, newChange, newSplice, sharedPrefix, sharedSuffix, spliceOperationsFromEditDistances;
     equality.object = function(object, oldObject) {
       var changeRecords, newValue, oldValue, prop;
       changeRecords = [];
@@ -1387,7 +1672,7 @@ Path.core.route.prototype = {
       edits.reverse();
       return edits;
     };
-    calcEditDistances = function(current, currentStart, currentEnd, old, oldStart, oldEnd) {
+    return calcEditDistances = function(current, currentStart, currentEnd, old, oldStart, oldEnd) {
       var columnCount, distances, i, j, north, rowCount, west, _j, _k, _l, _m;
       rowCount = oldEnd - oldStart + 1;
       columnCount = currentEnd - currentStart + 1;
@@ -1412,14 +1697,8 @@ Path.core.route.prototype = {
       }
       return distances;
     };
-    this.equality = equality;
-    if (typeof define === 'function' && define.amd) {
-      return define('chip/equality', function() {
-        return equality;
-      });
-    } else if (typeof exports === 'object' && typeof module === 'object') {
-      return chip.equality = equality;
-    }
   }).call(this);
+
+  chip.equality = equality;
 
 }).call(this);

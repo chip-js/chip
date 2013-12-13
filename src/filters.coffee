@@ -2,7 +2,7 @@
 
 # ## filter
 # Adds a filter to filter an array by the given filter function
-Controller.filters.filter = (controller, value, filterFunc) ->
+chip.filter 'filter', (value, filterFunc) ->
 	return [] unless Array.isArray value
 	return value unless filterFunc
 	value.filter(filterFunc)
@@ -10,7 +10,7 @@ Controller.filters.filter = (controller, value, filterFunc) ->
 
 # ## date
 # Adds a filter to format dates and strings
-Controller.filters.date = (controller, value) ->
+chip.filter 'date', (value) ->
 	return '' unless value
 	unless value instanceof Date
 		value = new Date(value)
@@ -20,14 +20,14 @@ Controller.filters.date = (controller, value) ->
 
 # ## log
 # Adds a filter to log the value of the expression, useful for debugging
-Controller.filters.log = (controller, value, prefix = 'Log') ->
+chip.filter 'log', (value, prefix = 'Log') ->
 	console.log prefix + ':', value
 	return value
 
 
 # ## limit
 # Adds a filter to limit the length of an array or string
-Controller.filters.limit = (controller, value, limit) ->
+chip.filter 'limit', (value, limit) ->
 	if value and typeof value.slice is 'function'
 		if limit < 0
 			value.slice limit
@@ -39,7 +39,7 @@ Controller.filters.limit = (controller, value, limit) ->
 
 # ## sort
 # Adds a filter to sort an array
-Controller.filters.sort = (controller, value, sortFunc) ->
+chip.filter 'sort', (value, sortFunc) ->
 	if Array.isArray value
 		value.slice().sort(sortFunc)
 	else
