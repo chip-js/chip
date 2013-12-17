@@ -44,7 +44,7 @@ class Controller
 	
 	# Redirects to the provided URL
 	redirect: (url) ->
-		chip.redirect(url)
+		@app.redirect(url)
 	
 	
 	# Clones the object at the given property name for processing forms

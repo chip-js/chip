@@ -100,6 +100,7 @@ class Binding
 			controller.watch expr, (value) ->
 				if value?
 					element.attr name, value
+					element.trigger name + 'Changed'
 				else
 					element.removeAttr name
 	
@@ -122,9 +123,10 @@ class Binding
 		prefix = controller.app.bindingPrefix
 		
 		# Finds binding attributes and sorts by priority.
-		attribs = Array::slice.call(node.attributes)
-		attribs = attribs.filter (attr) =>
-			attr.name.indexOf(prefix) is 0 and @bindings[attr.name.replace(prefix, '')]
+		attribs = $(node.attributes).toArray().filter (attr) =>
+			attr.name.indexOf(prefix) is 0 and
+				@bindings[attr.name.replace(prefix, '')] and
+				attr.value isnt undefined # Fix for IE7
 		
 		attribs = attribs.map (attr) =>
 			entry = @bindings[attr.name.replace(prefix, '')]
@@ -158,8 +160,7 @@ class Binding
 				controller = newController
 		
 		# Processes the children of this element after the element has been processed.
-		children = Array::slice.call(node.children)
-		for child in children
+		element.children().each (index, child) =>
 			@process $(child), controller
 	
 

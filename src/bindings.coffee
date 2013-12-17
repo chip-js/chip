@@ -334,7 +334,7 @@ for name in attribs
 # ```
 chip.addBinding 'if', 50, (element, expr, controller) ->
 	template = element # use a placeholder for the element and the element as a template
-	placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').replaceAll(template)
+	placeholder = $('<!--data-if="' + expr + '"-->').replaceAll(template)
 	controllerName = element.attr('data-controller')
 	element.removeAttr('data-controller')
 	
@@ -399,7 +399,7 @@ chip.addBinding 'repeat', 100, (element, expr, controller) ->
 	[ itemName, propName ] = itemName.split /\s*,\s*/
 	
 	template = element # use a placeholder for the element and the element as a template
-	placeholder = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template)
+	placeholder = $('<!--data-repeat="' + expr + '"-->').replaceAll(template)
 	elements = $()
 	properties = {}
 	value = null

@@ -204,6 +204,7 @@ be used by your application. Use <code>redirect()</code> instead.</p>
 		pathParts.href = url
 		req = query: parseQuery(pathParts.search)
 		path = pathParts.pathname
+		path = <span class="string">'/'</span> + path <span class="keyword">if</span> path[<span class="number">0</span>] <span class="keyword">isnt</span> <span class="string">'/'</span>
 		<span class="keyword">return</span> <span class="keyword">if</span> path.indexOf(<span class="property">@prefix</span>) <span class="keyword">isnt</span> <span class="number">0</span>
 		path = path.replace <span class="property">@prefix</span>, <span class="string">''</span>
 		
@@ -211,7 +212,6 @@ be used by your application. Use <code>redirect()</code> instead.</p>
 		
 		routes = <span class="property">@routes</span>.filter (route) -&gt; route.match path
 		callbacks = []
-		doneParams = {}
 		
 		routes.forEach (route) =&gt;</pre></div></div>
             
@@ -228,17 +228,15 @@ be used by your application. Use <code>redirect()</code> instead.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			callbacks.push (next) -&gt;
+            <div class="content"><div class='highlight'><pre>			callbacks.push (req, next) -&gt;
 				req.params = route.params
 				next()
 			
 			<span class="keyword">for</span> key, value <span class="keyword">of</span> route.params
-				<span class="keyword">continue</span> <span class="keyword">if</span> doneParams[key] <span class="keyword">is</span> value <span class="keyword">or</span> <span class="keyword">not</span> <span class="property">@params</span>[key]
-				doneParams[key] = value
-				<span class="property">@params</span>[key].forEach (callback) -&gt;
-					callbacks.push callback.bind(<span class="literal">null</span>, req, value)
+				<span class="keyword">continue</span> <span class="keyword">unless</span> <span class="property">@params</span>[key]
+				callbacks.push <span class="property">@params</span>[key]...
 			
-			callbacks.push route.callback.bind(<span class="literal">null</span>, req)</pre></div></div>
+			callbacks.push route.callback</pre></div></div>
             
         </li>
         
@@ -257,7 +255,7 @@ be used by your application. Use <code>redirect()</code> instead.</p>
 			<span class="keyword">return</span> <span class="property">@trigger</span>(<span class="string">'error'</span>, err) <span class="keyword">if</span> err
 			<span class="keyword">return</span> <span class="keyword">if</span> callbacks.length <span class="keyword">is</span> <span class="number">0</span>
 			callback = callbacks.shift()
-			callback(next)
+			callback(req, next)
 		
 		<span class="keyword">if</span> callbacks.length <span class="keyword">is</span> <span class="number">0</span>
 			next(<span class="string">'notFound'</span>)

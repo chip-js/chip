@@ -16,7 +16,7 @@ class App
 	
 	# Initializes templates and controllers from the entire page or the `root` element if provided.
 	init: (root) ->
-		return if @inited
+		return @rootController if @inited
 		@inited = true
 		@rootElement = root if root
 		@rootController = @createController element: @rootElement, name: 'application'
@@ -33,6 +33,8 @@ class App
 			name = element.attr 'data-controller'
 			element.removeAttr 'data-controller'
 			@createController element: element, name: name, parent: @rootController
+
+		@rootController
 	
 	
 	# Templates
@@ -145,6 +147,16 @@ class App
 	
 	# Routing
 	# ------
+	
+	# Registers a `callback` function to be called when the given param `name` is matched in a URL
+	param: (name, callback) ->
+		wrappedCallback = (req, next) =>
+			@rootController.params = req.params
+			@rootController.query = req.query
+			callback @rootController, next
+		@router.param name, wrappedCallback
+		this
+	
 	# Create a route to be run when the given URL `path` is hit in the browser URL. The route `name` is used to load the
 	# template and controller by the same name. This template will be placed in the first element on page with a
 	# `data-route` attribute.
@@ -152,16 +164,21 @@ class App
 		handler = path.replace /^\//, '' unless handler
 		if typeof handler is 'string'
 			name = handler
-			handler = (req, next) =>
-				for own key, value of req
-					Controller::[key] = value # available to all controllers
+			callback = (req, next) =>
+				@rootController.params = req.params
+				@rootController.query = req.query
 				
 				container = @rootElement.find('[data-route]:first')
 				container.html(@template(name))
 				controller = @createController element: container, parent: @rootController, name: name
 				controller.syncView()
+		else
+			callback = (req, next) =>
+				@rootController.params = req.params
+				@rootController.query = req.query
+				handler @rootController, next
 			
-		@router.route path, handler
+		@router.route path, callback
 		this
 	
 	

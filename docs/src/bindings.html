@@ -455,7 +455,7 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
             
             <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">'&lt;script type="text/if-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).replaceAll(template)
+	placeholder = $(<span class="string">'&lt;!--data-if="'</span> + expr + <span class="string">'"--&gt;'</span>).replaceAll(template)
 	controllerName = element.attr(<span class="string">'data-controller'</span>)
 	element.removeAttr(<span class="string">'data-controller'</span>)
 	
@@ -526,7 +526,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 	[ itemName, propName ] = itemName.split <span class="regexp">/\s*,\s*/</span>
 	
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">'&lt;script type="text/repeat-placeholder"&gt;&lt;!--'</span> + expr + <span class="string">'--&gt;&lt;/script&gt;'</span>).replaceAll(template)
+	placeholder = $(<span class="string">'&lt;!--data-repeat="'</span> + expr + <span class="string">'"--&gt;'</span>).replaceAll(template)
 	elements = $()
 	properties = {}
 	value = <span class="literal">null</span>

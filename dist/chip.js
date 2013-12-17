@@ -681,7 +681,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Router.prototype.dispatch = function(url) {
-      var callbacks, doneParams, next, path, pathParts, req, routes,
+      var callbacks, next, path, pathParts, req, routes,
         _this = this;
       pathParts = document.createElement('a');
       pathParts.href = url;
@@ -689,6 +689,9 @@ if (!Date.prototype.toISOString) {
         query: parseQuery(pathParts.search)
       };
       path = pathParts.pathname;
+      if (path[0] !== '/') {
+        path = '/' + path;
+      }
       if (path.indexOf(this.prefix) !== 0) {
         return;
       }
@@ -698,25 +701,21 @@ if (!Date.prototype.toISOString) {
         return route.match(path);
       });
       callbacks = [];
-      doneParams = {};
       routes.forEach(function(route) {
         var key, value, _ref;
-        callbacks.push(function(next) {
+        callbacks.push(function(req, next) {
           req.params = route.params;
           return next();
         });
         _ref = route.params;
         for (key in _ref) {
           value = _ref[key];
-          if (doneParams[key] === value || !_this.params[key]) {
+          if (!_this.params[key]) {
             continue;
           }
-          doneParams[key] = value;
-          _this.params[key].forEach(function(callback) {
-            return callbacks.push(callback.bind(null, req, value));
-          });
+          callbacks.push.apply(callbacks, _this.params[key]);
         }
-        return callbacks.push(route.callback.bind(null, req));
+        return callbacks.push(route.callback);
       });
       next = function(err) {
         var callback;
@@ -727,7 +726,7 @@ if (!Date.prototype.toISOString) {
           return;
         }
         callback = callbacks.shift();
-        return callback(next);
+        return callback(req, next);
       };
       if (callbacks.length === 0) {
         next('notFound');
@@ -989,7 +988,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype.redirect = function(url) {
-      return chip.redirect(url);
+      return this.app.redirect(url);
     };
 
     Controller.prototype.cloneValue = function(property) {
@@ -1172,9 +1171,9 @@ if (!Date.prototype.toISOString) {
     }
 
     App.prototype.init = function(root) {
-      var app, element, name, _results;
+      var app, element, name;
       if (this.inited) {
-        return;
+        return this.rootController;
       }
       this.inited = true;
       if (root) {
@@ -1194,17 +1193,16 @@ if (!Date.prototype.toISOString) {
           return $this.remove();
         }
       });
-      _results = [];
       while ((element = this.rootElement.find('[data-controller]:first')).length) {
         name = element.attr('data-controller');
         element.removeAttr('data-controller');
-        _results.push(this.createController({
+        this.createController({
           element: element,
           name: name,
           parent: this.rootController
-        }));
+        });
       }
-      return _results;
+      return this.rootController;
     };
 
     App.prototype.template = function(name, content) {
@@ -1291,21 +1289,30 @@ if (!Date.prototype.toISOString) {
       return controller;
     };
 
+    App.prototype.param = function(name, callback) {
+      var wrappedCallback,
+        _this = this;
+      wrappedCallback = function(req, next) {
+        _this.rootController.params = req.params;
+        _this.rootController.query = req.query;
+        return callback(_this.rootController, next);
+      };
+      this.router.param(name, wrappedCallback);
+      return this;
+    };
+
     App.prototype.route = function(path, handler) {
-      var name,
+      var callback, name,
         _this = this;
       if (!handler) {
         handler = path.replace(/^\//, '');
       }
       if (typeof handler === 'string') {
         name = handler;
-        handler = function(req, next) {
-          var container, controller, key, value;
-          for (key in req) {
-            if (!__hasProp.call(req, key)) continue;
-            value = req[key];
-            Controller.prototype[key] = value;
-          }
+        callback = function(req, next) {
+          var container, controller;
+          _this.rootController.params = req.params;
+          _this.rootController.query = req.query;
           container = _this.rootElement.find('[data-route]:first');
           container.html(_this.template(name));
           controller = _this.createController({
@@ -1315,8 +1322,14 @@ if (!Date.prototype.toISOString) {
           });
           return controller.syncView();
         };
+      } else {
+        callback = function(req, next) {
+          _this.rootController.params = req.params;
+          _this.rootController.query = req.query;
+          return handler(_this.rootController, next);
+        };
       }
-      this.router.route(path, handler);
+      this.router.route(path, callback);
       return this;
     };
 
@@ -1409,7 +1422,8 @@ if (!Date.prototype.toISOString) {
       return this.addBinding(name, function(element, expr, controller) {
         return controller.watch(expr, function(value) {
           if (value != null) {
-            return element.attr(name, value);
+            element.attr(name, value);
+            return element.trigger(name + 'Changed');
           } else {
             return element.removeAttr(name);
           }
@@ -1426,7 +1440,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.process = function(element, controller) {
-      var attr, attribs, child, children, newController, node, parentNode, prefix, _i, _len, _results,
+      var attr, attribs, newController, node, parentNode, prefix,
         _this = this;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
@@ -1434,9 +1448,8 @@ if (!Date.prototype.toISOString) {
       node = element.get(0);
       parentNode = node.parentNode;
       prefix = controller.app.bindingPrefix;
-      attribs = Array.prototype.slice.call(node.attributes);
-      attribs = attribs.filter(function(attr) {
-        return attr.name.indexOf(prefix) === 0 && _this.bindings[attr.name.replace(prefix, '')];
+      attribs = $(node.attributes).toArray().filter(function(attr) {
+        return attr.name.indexOf(prefix) === 0 && _this.bindings[attr.name.replace(prefix, '')] && attr.value !== void 0;
       });
       attribs = attribs.map(function(attr) {
         var entry;
@@ -1465,13 +1478,9 @@ if (!Date.prototype.toISOString) {
           controller = newController;
         }
       }
-      children = Array.prototype.slice.call(node.children);
-      _results = [];
-      for (_i = 0, _len = children.length; _i < _len; _i++) {
-        child = children[_i];
-        _results.push(this.process($(child), controller));
-      }
-      return _results;
+      return element.children().each(function(index, child) {
+        return _this.process($(child), controller);
+      });
     };
 
     return Binding;
@@ -1655,7 +1664,7 @@ if (!Date.prototype.toISOString) {
   chip.addBinding('if', 50, function(element, expr, controller) {
     var controllerName, placeholder, template;
     template = element;
-    placeholder = $('<script type="text/if-placeholder"><!--' + expr + '--></script>').replaceAll(template);
+    placeholder = $('<!--data-if="' + expr + '"-->').replaceAll(template);
     controllerName = element.attr('data-controller');
     element.removeAttr('data-controller');
     return controller.watch(expr, function(value) {
@@ -1691,7 +1700,7 @@ if (!Date.prototype.toISOString) {
     element.removeAttr('data-controller');
     _ref1 = itemName.split(/\s*,\s*/), itemName = _ref1[0], propName = _ref1[1];
     template = element;
-    placeholder = $('<script type="text/repeat-placeholder"><!--' + expr + '--></script>').replaceAll(template);
+    placeholder = $('<!--data-repeat="' + expr + '"-->').replaceAll(template);
     elements = $();
     properties = {};
     value = null;

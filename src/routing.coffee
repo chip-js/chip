@@ -95,6 +95,7 @@ class Router
 		pathParts.href = url
 		req = query: parseQuery(pathParts.search)
 		path = pathParts.pathname
+		path = '/' + path if path[0] isnt '/'
 		return if path.indexOf(@prefix) isnt 0
 		path = path.replace @prefix, ''
 		
@@ -102,28 +103,25 @@ class Router
 		
 		routes = @routes.filter (route) -> route.match path
 		callbacks = []
-		doneParams = {}
 		
 		routes.forEach (route) =>
 			# set the params on the req object first
-			callbacks.push (next) ->
+			callbacks.push (req, next) ->
 				req.params = route.params
 				next()
 			
 			for key, value of route.params
-				continue if doneParams[key] is value or not @params[key]
-				doneParams[key] = value
-				@params[key].forEach (callback) ->
-					callbacks.push callback.bind(null, req, value)
+				continue unless @params[key]
+				callbacks.push @params[key]...
 			
-			callbacks.push route.callback.bind(null, req)
+			callbacks.push route.callback
 		
 		# Calls each callback one by one until either there is an error or we call all of them.
 		next = (err) =>
 			return @trigger('error', err) if err
 			return if callbacks.length is 0
 			callback = callbacks.shift()
-			callback(next)
+			callback(req, next)
 		
 		if callbacks.length is 0
 			next('notFound')
