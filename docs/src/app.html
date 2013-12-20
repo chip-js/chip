@@ -249,10 +249,10 @@ the parent, only read it or call methods on it.</p>
 			controller = <span class="keyword">new</span> NewController()
 			controller.parent = options.parent
 			<span class="keyword">if</span> options.passthrough
-				<span class="keyword">if</span> options.parent.hasOwnProperty(<span class="string">'passthrough'</span>)
-					controller.passthrough = options.parent.passthrough
+				<span class="keyword">if</span> options.parent.passthrough()
+					controller.passthrough options.parent.passthrough()
 				<span class="keyword">else</span>
-					controller.passthrough = options.parent
+					controller.passthrough options.parent
 		<span class="keyword">else</span>
 			controller = <span class="keyword">new</span> Controller()
 			makeEventEmitter(controller)</pre></div></div>

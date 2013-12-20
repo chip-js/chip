@@ -14,7 +14,7 @@ class Filter
 	
 	
 	@runFilter: (name, value, args...) ->
-		filter = @filters[name]?.filter
+		filter = @filters[name]?.filter or window[name]
 		if filter
 			return filter(value, args...)
 		else

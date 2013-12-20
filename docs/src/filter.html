@@ -51,7 +51,7 @@ place to register new bind handlers.</p>
 	
 	
 	<span class="property">@runFilter</span>: (name, value, args...) -&gt;
-		filter = <span class="property">@filters</span>[name]?.filter
+		filter = <span class="property">@filters</span>[name]?.filter <span class="keyword">or</span> window[name]
 		<span class="keyword">if</span> filter
 			<span class="keyword">return</span> filter(value, args...)
 		<span class="keyword">else</span>

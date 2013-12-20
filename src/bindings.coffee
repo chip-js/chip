@@ -179,23 +179,17 @@ chip.addBinding 'value', (element, expr, controller) ->
 		if getValue() isnt value
 			setValue value
 	
-	# Cannot set the value for filtered expressions since filters only convert data one-way
-	return if controller.exprHasFilter(expr)
-	
-	setterController = controller.passthrough or controller
-	setter = setterController.getBoundEval expr + ' = value', 'value'
-	
 	# Sets initial element value. For SELECT elements allows child option element values to be set first.
-	if element.filter('select').length
+	if element.is('select')
 		setTimeout ->
 			setValue controller.eval expr
-			setter getValue()
+			controller.evalSetter expr, getValue()
 	else
-		setter getValue()
+		controller.evalSetter expr, getValue()
 	
 	element.on 'keydown keyup change', -> # TODO set up the listeners which will update the value, not just for text inputs
 		if getValue() isnt observer.oldValue
-			setter getValue()
+			controller.evalSetter expr, getValue()
 			observer.skipNextSync() # don't update this observer, user changed it
 			controller.syncView() # update other expressions looking at this data
 

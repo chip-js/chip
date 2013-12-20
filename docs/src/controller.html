@@ -118,6 +118,24 @@ the value in the expression changes. An expression can be as simple as <code>nam
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
+              <p>Evaluates an expression immediately as a setter, setting <code>value</code> to the expression running through filters.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	evalSetter: (expr, value) -&gt;
+		<span class="keyword">return</span> <span class="property">@passthrough</span>().evalSetter(expr, value) <span class="keyword">if</span> <span class="property">@passthrough</span>()
+		expr = expr.replace(<span class="regexp">/(\s*\||$)/</span>, <span class="string">' = value$1'</span>)
+		Controller.createFunction(expr, [<span class="string">'value'</span>]).call(<span class="keyword">this</span>, value)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
               <p>Creates a bound function which can be called any time to evaluate the expession. <code>extraArgNames</code> can be provided
 to provide for additional data to be passed into the returned function.</p>
 <p><strong>Example:</strong></p>
@@ -130,22 +148,6 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
             
             <div class="content"><div class='highlight'><pre>	getBoundEval: (expr, extraArgNames...) -&gt;
 		Controller.createBoundFunction(<span class="keyword">this</span>, expr, extraArgNames)</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-8">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
-              </div>
-              <p>Determines whether an expression has a filter defined. This allows bindings to skip setters when a filter exists.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	exprHasFilter: (expr) -&gt;
-		hasFilter(expr)</pre></div></div>
             
         </li>
         
@@ -236,7 +238,14 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 	
 	
 	runFilter: (value, filterName, args...) -&gt;
-		Filter.runFilter(filterName, value, args...)</pre></div></div>
+		Filter.runFilter(filterName, value, args...)
+	
+	
+	passthrough: (value) -&gt;
+		<span class="keyword">if</span> arguments.length
+			<span class="property">@_passthrough</span> = value
+		<span class="keyword">else</span>
+			<span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'_passthrough'</span>) <span class="keyword">then</span> <span class="property">@_passthrough</span> <span class="keyword">else</span> <span class="literal">null</span></pre></div></div>
             
         </li>
         
@@ -267,9 +276,9 @@ to this array if there are global variables you wish to use in expressions. E.g.
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <p><em>private:</em> Creates a function from the given expression, allowing for extra arguments. This function will be cached
-so subsequent calls with the same expression will return the previous function. E.g. the expression “name” will
-always return a single function with the body <code>return this.name</code>.</p>
+              <p><em>private:</em> Creates a function from the given expression, allowing for extra arguments. This function will be
+cached so subsequent calls with the same expression will return the previous function. E.g. the expression “name”
+will always return a single function with the body <code>return this.name</code>.</p>
 
             </div>
             
@@ -284,11 +293,12 @@ always return a single function with the body <code>return this.name</code>.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
-              <p>Prefix all property lookups with the <code>this</code> keyword. Ignores keywords (window, true, false) and extra args </p>
+              <p>Returns the cached function for this expression if it exists.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		normalizedExpr = normalizeExpression expr, extraArgNames</pre></div></div>
+            <div class="content"><div class='highlight'><pre>		func = <span class="property">@exprCache</span>[expr]
+		<span class="keyword">return</span> func <span class="keyword">if</span> func</pre></div></div>
             
         </li>
         
@@ -299,12 +309,11 @@ always return a single function with the body <code>return this.name</code>.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
-              <p>Returns the cached function for this expression if it exists.</p>
+              <p>Prefix all property lookups with the <code>this</code> keyword. Ignores keywords (window, true, false) and extra args </p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		func = <span class="property">@exprCache</span>[normalizedExpr]
-		<span class="keyword">return</span> func <span class="keyword">if</span> func
+            <div class="content"><div class='highlight'><pre>		normalizedExpr = normalizeExpression expr, extraArgNames
 		
 		<span class="keyword">try</span></pre></div></div>
             
@@ -318,15 +327,13 @@ always return a single function with the body <code>return this.name</code>.</p>
                 <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>We can safely (until getters/setters are common) add a try/catch around expression that don&#39;t use
-functions. Those that do use functions need the error to occur so developers can debug their code.</p>
+functions. Those that do use functions need the error to occur so developers can debug their code.
+Caches the function for later</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">if</span> normalizedExpr.indexOf(<span class="string">'('</span>) <span class="keyword">is</span> -<span class="number">1</span>
-				functionBody = <span class="string">"try{return <span class="subst">#{normalizedExpr}</span>}catch(e){}"</span>
-			<span class="keyword">else</span>
-				functionBody = <span class="string">"try{return <span class="subst">#{normalizedExpr}</span>}catch(e){throw new Error("</span> +
-					<span class="string">"'Error processing binding expression `<span class="subst">#{expr.replace(/'/g, "\\'")}</span>` ' + e)}"</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>			func = <span class="property">@exprCache</span>[expr] = Function(extraArgNames..., normalizedExpr)
+		<span class="keyword">catch</span> e</pre></div></div>
             
         </li>
         
@@ -336,22 +343,6 @@ functions. Those that do use functions need the error to occur so developers can
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-19">&#182;</a>
-              </div>
-              <p>Caches the function for later</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>			func = <span class="property">@exprCache</span>[normalizedExpr] = Function(extraArgNames..., functionBody)
-		<span class="keyword">catch</span> e</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-20">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>Throws an error if the expression was not valid JavaScript</p>
 
@@ -364,11 +355,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-21">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p><em>private:</em> Creates a function and binds it to the given controller so it may be called from anywhere
 (e.g. provided to observers).</p>
@@ -382,11 +373,11 @@ functions. Those that do use functions need the error to occur so developers can
         </li>
         
         
-        <li id="section-22">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>jQuery plugin to get the controller for the given element</p>
 
@@ -397,18 +388,18 @@ functions. Those that do use functions need the error to occur so developers can
 	<span class="keyword">while</span> element.length
 		controller = element.data(<span class="string">'controller'</span>)
 		<span class="keyword">if</span> controller
-			<span class="keyword">return</span> <span class="keyword">if</span> passthrough <span class="keyword">and</span> controller.passthrough <span class="keyword">then</span> controller.passthrough <span class="keyword">else</span> controller
+			<span class="keyword">return</span> <span class="keyword">if</span> passthrough <span class="keyword">and</span> controller.passthrough() <span class="keyword">then</span> controller.passthrough() <span class="keyword">else</span> controller
 		element = element.parent()
 	<span class="literal">null</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-23">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>Provides the ‘elementRemove’ event to be dispatched when an element is removed from the DOM and cleaned up. Gets
 called when an element with the event ‘elementRemove’, is removed from the DOM. Manually call the listener.</p>
@@ -422,11 +413,11 @@ called when an element with the event ‘elementRemove’, is removed from the D
         </li>
         
         
-        <li id="section-24">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>Searches out possible properties or finds the beginning of strings (which we skip)</p>
 
@@ -437,7 +428,26 @@ quoteExpr = <span class="regexp">/(['"])(\\\1|[^\1])*?\1/g</span>
 emptyQuoteExpr = <span class="regexp">/(['"])\1/g</span>
 propExpr = <span class="regexp">/((\{|,)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:)?)/gi</span>
 pipeExpr = <span class="regexp">/\|(\|)?/g</span>
-argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
+argSeparator = <span class="regexp">/\s*:\s*/g</span>
+setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>Adds <code>this.</code> to the beginning of each valid property in an expression and processes filters</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="title">normalizeExpression</span></span> = (expr, extraArgNames) -&gt;
+	options =
+		references: <span class="number">0</span>
+		ignore: Controller.keywords.concat(extraArgNames) <span class="comment"># Ignores keywords and provided argument names</span></pre></div></div>
             
         </li>
         
@@ -447,36 +457,6 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-25">&#182;</a>
-              </div>
-              <p>Adds <code>this.</code> to the beginning of each valid property in an expression and processes filters</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="title">normalizeExpression</span></span> = (expr, extraArgNames) -&gt;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-26">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
-              </div>
-              <p>Ignores keywords and provided argument names</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	ignore = Controller.keywords.concat(extraArgNames)</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-27">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>Adds placeholders for strings so we can process the rest without their content messing us up.</p>
 
@@ -490,13 +470,13 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
-        <li id="section-28">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
-              <p>Processes the filters</p>
+              <p>Removes filters from expression string</p>
 
             </div>
             
@@ -506,46 +486,60 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
 		<span class="keyword">return</span> <span class="string">'@@@'</span>
 	
 	filters = expr.split <span class="regexp">/\s*@@@\s*/</span>
-	expr = filters.shift()
-	<span class="keyword">if</span> filters.length
+	expr = filters.shift()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>Processes the filters</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="keyword">if</span> filters.length
+		<span class="keyword">if</span> setterExpr.test(expr)
+			[ setter, value ] = expr.split(<span class="string">' = '</span>)
+			setter = processProperties(setter, options).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
+			value = processProperties(value, options)
+		<span class="keyword">else</span>
+			setter = <span class="string">''</span>
+			value = processProperties(expr, options)
+		
 		strIndex = expr.match(quoteExpr)?.length <span class="keyword">or</span> <span class="number">0</span>
 		filters.forEach (filter) -&gt;
 			args = filter.split(argSeparator)
 			strings.splice strIndex++, <span class="number">0</span>, <span class="string">"'"</span> + args[<span class="number">0</span>] + <span class="string">"'"</span>
 			strIndex += filter.match(quoteExpr)?.length <span class="keyword">or</span> <span class="number">0</span>
 			args[<span class="number">0</span>] = <span class="string">"''"</span>
-			expr = <span class="string">"runFilter(<span class="subst">#{expr}</span>,<span class="subst">#{args.join(',')}</span>)"</span></pre></div></div>
+			args = args.map (arg) -&gt;
+				processProperties arg, options
+			value = <span class="string">"this.runFilter(<span class="subst">#{value}</span>,<span class="subst">#{args.join(',')}</span>)"</span>
+		
+		expr = setter + value
+	<span class="keyword">else</span>
+		<span class="keyword">if</span> setterExpr.test(expr)
+			[ setter, value ] = expr.split(<span class="string">' = '</span>)
+			setter = processProperties(setter, options).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
+			value = processProperties(value, options)
+			expr = setter + value
+		<span class="keyword">else</span>
+			expr = processProperties(expr, options)
+	
+	expr = <span class="string">'return '</span> + expr</pre></div></div>
             
         </li>
         
         
-        <li id="section-29">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
-              </div>
-              <p>Adds the “this.” prefix onto properties found in the expression</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>	expr = expr.replace propExpr, (match, prefix, objIndicator, propChain, postfix, colon, index, str) -&gt;
-		<span class="keyword">if</span> objIndicator <span class="keyword">and</span> colon <span class="keyword">or</span> str[index + prefix.length - <span class="number">1</span>] <span class="keyword">is</span> <span class="string">'.'</span>
-			<span class="keyword">return</span> match <span class="comment"># skips object keys e.g. test in {test:true}</span>
-		
-		<span class="keyword">if</span> ignore.indexOf(propChain.split(<span class="regexp">/\.|\(/</span>).shift()) <span class="keyword">isnt</span> -<span class="number">1</span>
-			<span class="keyword">return</span> match <span class="comment"># skips keywords e.g. true in {test:true}</span>
-		
-		<span class="keyword">return</span> prefix + <span class="string">'this.'</span> + propChain + postfix</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-30">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p>Replaces string placeholders.</p>
 
@@ -557,17 +551,62 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
         </li>
         
         
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p>Prepends reference variable definitions</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="keyword">if</span> options.references
+		refs = []
+		<span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">1.</span>.options.references]
+			refs.push <span class="string">'_ref'</span> + i
+		expr = <span class="string">'var '</span> + refs.join(<span class="string">', '</span>) + <span class="string">';\n'</span> + expr
+		
+	console.log <span class="string">'EXPR:'</span>, expr
+	expr
+
+
+
+<span class="function"><span class="title">processProperties</span></span> = (expr, options = {}) -&gt;
+	options.references = <span class="number">0</span> <span class="keyword">unless</span> options.references
+	options.ignore = [] <span class="keyword">unless</span> options.ignore</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>Adds the “this.” prefix onto properties found in the expression and modifies to handle null exceptions.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	expr.replace propExpr, (match, prefix, objIndicator, propChain, postfix, colon, index, str) -&gt;</pre></div></div>
+            
+        </li>
+        
+        
         <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
-              <p>console.log expr</p>
+              <p><code>objIndicator</code> is <code>{</code> or <code>,</code> and let&#39;s us know this is an object property name (e.g. prop in <code>{prop:false}</code>).
+<code>prefix</code> is <code>objIndicator</code> with the whitespace that may come after it.
+<code>propChain</code> is the chain of properties matched (e.g. <code>this.user.email</code>).
+<code>colon</code> matches the colon (:) after the property (if it is an object). We use colon and objIndicator to know.
+<code>postfix</code> is the <code>colon</code> with whitespace before it.</p>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>	expr</pre></div></div>
             
         </li>
         
@@ -578,16 +617,80 @@ argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
-              <p>Determines if an expression has a filter (a single pipe)</p>
+              <p>skips object keys e.g. test in <code>{test:true}</code> and keywords e.g. true in <code>{test:true}</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="title">hasFilter</span></span> = (expr) -&gt;
-	expr = expr.replace pipeExpr, (match, orIndicator) -&gt;
-		<span class="keyword">if</span> orIndicator
+            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> objIndicator <span class="keyword">and</span> colon <span class="keyword">or</span> options.ignore.indexOf(propChain.split(<span class="regexp">/\.|\(/</span>).shift()) <span class="keyword">isnt</span> -<span class="number">1</span>
+			<span class="keyword">return</span> match</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>continuations after a function (e.g. <code>getUser().firstName</code>).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> str[index + prefix.length - <span class="number">1</span>] <span class="keyword">is</span> <span class="string">'.'</span>
 			<span class="keyword">return</span> match
-		<span class="keyword">return</span> <span class="string">'@@@'</span>
-	expr.indexOf(<span class="string">'@@@'</span>) <span class="keyword">isnt</span> -<span class="number">1</span>
+		
+		parts = propChain.split(<span class="string">'.'</span>)
+		newChain = <span class="string">''</span>
+		
+		<span class="keyword">if</span> parts.length <span class="keyword">is</span> <span class="number">1</span>
+			newChain = <span class="string">'this.'</span> + parts[<span class="number">0</span>]
+		<span class="keyword">else</span>
+			newChain += <span class="string">'('</span>
+			parts.forEach (part, index) -&gt;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>if the last</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>				<span class="keyword">if</span> index <span class="keyword">is</span> parts.length - <span class="number">1</span>
+					newChain += <span class="string">"_ref<span class="subst">#{options.references}</span>.<span class="subst">#{part}</span>)"</span>
+					<span class="keyword">return</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-35">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-35">&#182;</a>
+              </div>
+              <p>if the first</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>				<span class="keyword">else</span> <span class="keyword">if</span> index <span class="keyword">is</span> <span class="number">0</span>
+					part = <span class="string">'this.'</span> + part
+				<span class="keyword">else</span>
+					part = <span class="string">'_ref'</span> + options.references + <span class="string">'.'</span> + part
+				
+				ref = <span class="string">'_ref'</span> + ++options.references
+				newChain += <span class="string">"(<span class="subst">#{ref}</span> = <span class="subst">#{part}</span>) == null ? undefined : "</span>
+				
+		
+		<span class="keyword">return</span> prefix + newChain + postfix
+
+
 
 
 chip.Controller = Controller</pre></div></div>

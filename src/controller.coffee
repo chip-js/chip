@@ -22,6 +22,12 @@ class Controller
 	eval: (expr) ->
 		Controller.createFunction(expr).call(this)
 	
+	# Evaluates an expression immediately as a setter, setting `value` to the expression running through filters.
+	evalSetter: (expr, value) ->
+		return @passthrough().evalSetter(expr, value) if @passthrough()
+		expr = expr.replace(/(\s*\||$)/, ' = value$1')
+		Controller.createFunction(expr, ['value']).call(this, value)
+	
 	
 	# Creates a bound function which can be called any time to evaluate the expession. `extraArgNames` can be provided
 	# to provide for additional data to be passed into the returned function.
@@ -35,11 +41,6 @@ class Controller
 	# ```
 	getBoundEval: (expr, extraArgNames...) ->
 		Controller.createBoundFunction(this, expr, extraArgNames)
-	
-	
-	# Determines whether an expression has a filter defined. This allows bindings to skip setters when a filter exists.
-	exprHasFilter: (expr) ->
-		hasFilter(expr)
 	
 	
 	# Redirects to the provided URL
@@ -78,6 +79,13 @@ class Controller
 		Filter.runFilter(filterName, value, args...)
 	
 	
+	passthrough: (value) ->
+		if arguments.length
+			@_passthrough = value
+		else
+			if @hasOwnProperty('_passthrough') then @_passthrough else null
+	
+	
 	# The keywords which will *not* get `this.` prepended to inside an expression. All other valid variable names will
 	# have `this.` added to them. `this` is the controller instance when the expression is run. Add additional keywords
 	# to this array if there are global variables you wish to use in expressions. E.g. `$` or `jQuery`
@@ -86,27 +94,22 @@ class Controller
 	@filters: {}
 	@exprCache: {}
 	
-	# *private:* Creates a function from the given expression, allowing for extra arguments. This function will be cached
-	# so subsequent calls with the same expression will return the previous function. E.g. the expression "name" will
-	# always return a single function with the body `return this.name`.
+	# *private:* Creates a function from the given expression, allowing for extra arguments. This function will be
+	# cached so subsequent calls with the same expression will return the previous function. E.g. the expression "name"
+	# will always return a single function with the body `return this.name`.
 	@createFunction: (expr, extraArgNames = []) ->
+		# Returns the cached function for this expression if it exists.
+		func = @exprCache[expr]
+		return func if func
+		
 		# Prefix all property lookups with the `this` keyword. Ignores keywords (window, true, false) and extra args 
 		normalizedExpr = normalizeExpression expr, extraArgNames
-		
-		# Returns the cached function for this expression if it exists.
-		func = @exprCache[normalizedExpr]
-		return func if func
 		
 		try
 			# We can safely (until getters/setters are common) add a try/catch around expression that don't use
 			# functions. Those that do use functions need the error to occur so developers can debug their code.
-			if normalizedExpr.indexOf('(') is -1
-				functionBody = "try{return #{normalizedExpr}}catch(e){}"
-			else
-				functionBody = "try{return #{normalizedExpr}}catch(e){throw new Error(" +
-					"'Error processing binding expression `#{expr.replace(/'/g, "\\'")}` ' + e)}"
 			# Caches the function for later
-			func = @exprCache[normalizedExpr] = Function(extraArgNames..., functionBody)
+			func = @exprCache[expr] = Function(extraArgNames..., normalizedExpr)
 		catch e
 			# Throws an error if the expression was not valid JavaScript
 			throw new Error e.message + ' in observer binding:\n`' + expr + '`\n' +
@@ -127,7 +130,7 @@ $.fn.controller = (passthrough) ->
 	while element.length
 		controller = element.data('controller')
 		if controller
-			return if passthrough and controller.passthrough then controller.passthrough else controller
+			return if passthrough and controller.passthrough() then controller.passthrough() else controller
 		element = element.parent()
 	null
 
@@ -147,12 +150,14 @@ emptyQuoteExpr = /(['"])\1/g
 propExpr = /((\{|,)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:)?)/gi
 pipeExpr = /\|(\|)?/g
 argSeparator = /\s*:\s*/g
+setterExpr = /\s=\s/
 
 
 # Adds `this.` to the beginning of each valid property in an expression and processes filters
 normalizeExpression = (expr, extraArgNames) ->
-	# Ignores keywords and provided argument names
-	ignore = Controller.keywords.concat(extraArgNames)
+	options =
+		references: 0
+		ignore: Controller.keywords.concat(extraArgNames) # Ignores keywords and provided argument names
 	
 	# Adds placeholders for strings so we can process the rest without their content messing us up.
 	strings = []
@@ -161,7 +166,7 @@ normalizeExpression = (expr, extraArgNames) ->
 		return quote + quote # placeholder for the string
 	
 	
-	# Processes the filters
+	# Removes filters from expression string
 	expr = expr.replace pipeExpr, (match, orIndicator) ->
 		if orIndicator
 			return match
@@ -169,40 +174,100 @@ normalizeExpression = (expr, extraArgNames) ->
 	
 	filters = expr.split /\s*@@@\s*/
 	expr = filters.shift()
+	
+	# Processes the filters
 	if filters.length
+		if setterExpr.test(expr)
+			[ setter, value ] = expr.split(' = ')
+			setter = processProperties(setter, options).replace(/^\(|\)$/g, '') + ' = '
+			value = processProperties(value, options)
+		else
+			setter = ''
+			value = processProperties(expr, options)
+		
 		strIndex = expr.match(quoteExpr)?.length or 0
 		filters.forEach (filter) ->
 			args = filter.split(argSeparator)
 			strings.splice strIndex++, 0, "'" + args[0] + "'"
 			strIndex += filter.match(quoteExpr)?.length or 0
 			args[0] = "''"
-			expr = "runFilter(#{expr},#{args.join(',')})"
+			args = args.map (arg) ->
+				processProperties arg, options
+			value = "this.runFilter(#{value},#{args.join(',')})"
 		
+		expr = setter + value
+	else
+		if setterExpr.test(expr)
+			[ setter, value ] = expr.split(' = ')
+			setter = processProperties(setter, options).replace(/^\(|\)$/g, '') + ' = '
+			value = processProperties(value, options)
+			expr = setter + value
+		else
+			expr = processProperties(expr, options)
 	
-	# Adds the "this." prefix onto properties found in the expression
-	expr = expr.replace propExpr, (match, prefix, objIndicator, propChain, postfix, colon, index, str) ->
-		if objIndicator and colon or str[index + prefix.length - 1] is '.'
-			return match # skips object keys e.g. test in {test:true}
-		
-		if ignore.indexOf(propChain.split(/\.|\(/).shift()) isnt -1
-			return match # skips keywords e.g. true in {test:true}
-		
-		return prefix + 'this.' + propChain + postfix
-	
+	expr = 'return ' + expr
 	
 	# Replaces string placeholders.
 	expr = expr.replace emptyQuoteExpr, ->
 		return strings.shift()
-#	console.log expr
+	
+	# Prepends reference variable definitions
+	if options.references
+		refs = []
+		for i in [1..options.references]
+			refs.push '_ref' + i
+		expr = 'var ' + refs.join(', ') + ';\n' + expr
+		
+	console.log 'EXPR:', expr
 	expr
 
-# Determines if an expression has a filter (a single pipe)
-hasFilter = (expr) ->
-	expr = expr.replace pipeExpr, (match, orIndicator) ->
-		if orIndicator
+
+
+processProperties = (expr, options = {}) ->
+	options.references = 0 unless options.references
+	options.ignore = [] unless options.ignore
+	
+	# Adds the "this." prefix onto properties found in the expression and modifies to handle null exceptions.
+	expr.replace propExpr, (match, prefix, objIndicator, propChain, postfix, colon, index, str) ->
+		# `objIndicator` is `{` or `,` and let's us know this is an object property name (e.g. prop in `{prop:false}`).
+		# `prefix` is `objIndicator` with the whitespace that may come after it.
+		# `propChain` is the chain of properties matched (e.g. `this.user.email`).
+		# `colon` matches the colon (:) after the property (if it is an object). We use colon and objIndicator to know.
+		# `postfix` is the `colon` with whitespace before it.
+		
+		# skips object keys e.g. test in `{test:true}` and keywords e.g. true in `{test:true}`.
+		if objIndicator and colon or options.ignore.indexOf(propChain.split(/\.|\(/).shift()) isnt -1
 			return match
-		return '@@@'
-	expr.indexOf('@@@') isnt -1
+		
+		# continuations after a function (e.g. `getUser().firstName`).
+		if str[index + prefix.length - 1] is '.'
+			return match
+		
+		parts = propChain.split('.')
+		newChain = ''
+		
+		if parts.length is 1
+			newChain = 'this.' + parts[0]
+		else
+			newChain += '('
+			parts.forEach (part, index) ->
+				# if the last
+				if index is parts.length - 1
+					newChain += "_ref#{options.references}.#{part})"
+					return
+				# if the first
+				else if index is 0
+					part = 'this.' + part
+				else
+					part = '_ref' + options.references + '.' + part
+				
+				ref = '_ref' + ++options.references
+				newChain += "(#{ref} = #{part}) == null ? undefined : "
+				
+		
+		return prefix + newChain + postfix
+
+
 
 
 chip.Controller = Controller

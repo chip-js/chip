@@ -103,10 +103,10 @@ class App
 			controller = new NewController()
 			controller.parent = options.parent
 			if options.passthrough
-				if options.parent.hasOwnProperty('passthrough')
-					controller.passthrough = options.parent.passthrough
+				if options.parent.passthrough()
+					controller.passthrough options.parent.passthrough()
 				else
-					controller.passthrough = options.parent
+					controller.passthrough options.parent
 		else
 			controller = new Controller()
 			makeEventEmitter(controller)

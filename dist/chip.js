@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, emptyQuoteExpr, equality, hasFilter, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, propExpr, quoteExpr, varExpr, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, emptyQuoteExpr, equality, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, processProperties, propExpr, quoteExpr, setterExpr, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -977,14 +977,18 @@ if (!Date.prototype.toISOString) {
       return Controller.createFunction(expr).call(this);
     };
 
+    Controller.prototype.evalSetter = function(expr, value) {
+      if (this.passthrough()) {
+        return this.passthrough().evalSetter(expr, value);
+      }
+      expr = expr.replace(/(\s*\||$)/, ' = value$1');
+      return Controller.createFunction(expr, ['value']).call(this, value);
+    };
+
     Controller.prototype.getBoundEval = function() {
       var expr, extraArgNames;
       expr = arguments[0], extraArgNames = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       return Controller.createBoundFunction(this, expr, extraArgNames);
-    };
-
-    Controller.prototype.exprHasFilter = function(expr) {
-      return hasFilter(expr);
     };
 
     Controller.prototype.redirect = function(url) {
@@ -1031,6 +1035,18 @@ if (!Date.prototype.toISOString) {
       return Filter.runFilter.apply(Filter, [filterName, value].concat(__slice.call(args)));
     };
 
+    Controller.prototype.passthrough = function(value) {
+      if (arguments.length) {
+        return this._passthrough = value;
+      } else {
+        if (this.hasOwnProperty('_passthrough')) {
+          return this._passthrough;
+        } else {
+          return null;
+        }
+      }
+    };
+
     Controller.keywords = ['this', 'window', '$', 'true', 'false'];
 
     Controller.filters = {};
@@ -1038,22 +1054,17 @@ if (!Date.prototype.toISOString) {
     Controller.exprCache = {};
 
     Controller.createFunction = function(expr, extraArgNames) {
-      var e, func, functionBody, normalizedExpr;
+      var e, func, normalizedExpr;
       if (extraArgNames == null) {
         extraArgNames = [];
       }
-      normalizedExpr = normalizeExpression(expr, extraArgNames);
-      func = this.exprCache[normalizedExpr];
+      func = this.exprCache[expr];
       if (func) {
         return func;
       }
+      normalizedExpr = normalizeExpression(expr, extraArgNames);
       try {
-        if (normalizedExpr.indexOf('(') === -1) {
-          functionBody = "try{return " + normalizedExpr + "}catch(e){}";
-        } else {
-          functionBody = ("try{return " + normalizedExpr + "}catch(e){throw new Error(") + ("'Error processing binding expression `" + (expr.replace(/'/g, "\\'")) + "` ' + e)}");
-        }
-        func = this.exprCache[normalizedExpr] = Function.apply(null, __slice.call(extraArgNames).concat([functionBody]));
+        func = this.exprCache[expr] = Function.apply(null, __slice.call(extraArgNames).concat([normalizedExpr]));
       } catch (_error) {
         e = _error;
         throw new Error(e.message + ' in observer binding:\n`' + expr + '`\n' + 'Compiled binding:\n' + functionBody);
@@ -1077,8 +1088,8 @@ if (!Date.prototype.toISOString) {
     while (element.length) {
       controller = element.data('controller');
       if (controller) {
-        if (passthrough && controller.passthrough) {
-          return controller.passthrough;
+        if (passthrough && controller.passthrough()) {
+          return controller.passthrough();
         } else {
           return controller;
         }
@@ -1106,9 +1117,14 @@ if (!Date.prototype.toISOString) {
 
   argSeparator = /\s*:\s*/g;
 
+  setterExpr = /\s=\s/;
+
   normalizeExpression = function(expr, extraArgNames) {
-    var filters, ignore, strIndex, strings, _ref;
-    ignore = Controller.keywords.concat(extraArgNames);
+    var filters, i, options, refs, setter, strIndex, strings, value, _i, _ref, _ref1, _ref2, _ref3;
+    options = {
+      references: 0,
+      ignore: Controller.keywords.concat(extraArgNames)
+    };
     strings = [];
     expr = expr.replace(quoteExpr, function(str, quote) {
       strings.push(str);
@@ -1123,39 +1139,92 @@ if (!Date.prototype.toISOString) {
     filters = expr.split(/\s*@@@\s*/);
     expr = filters.shift();
     if (filters.length) {
-      strIndex = ((_ref = expr.match(quoteExpr)) != null ? _ref.length : void 0) || 0;
+      if (setterExpr.test(expr)) {
+        _ref = expr.split(' = '), setter = _ref[0], value = _ref[1];
+        setter = processProperties(setter, options).replace(/^\(|\)$/g, '') + ' = ';
+        value = processProperties(value, options);
+      } else {
+        setter = '';
+        value = processProperties(expr, options);
+      }
+      strIndex = ((_ref1 = expr.match(quoteExpr)) != null ? _ref1.length : void 0) || 0;
       filters.forEach(function(filter) {
-        var args, _ref1;
+        var args, _ref2;
         args = filter.split(argSeparator);
         strings.splice(strIndex++, 0, "'" + args[0] + "'");
-        strIndex += ((_ref1 = filter.match(quoteExpr)) != null ? _ref1.length : void 0) || 0;
+        strIndex += ((_ref2 = filter.match(quoteExpr)) != null ? _ref2.length : void 0) || 0;
         args[0] = "''";
-        return expr = "runFilter(" + expr + "," + (args.join(',')) + ")";
+        args = args.map(function(arg) {
+          return processProperties(arg, options);
+        });
+        return value = "this.runFilter(" + value + "," + (args.join(',')) + ")";
       });
+      expr = setter + value;
+    } else {
+      if (setterExpr.test(expr)) {
+        _ref2 = expr.split(' = '), setter = _ref2[0], value = _ref2[1];
+        setter = processProperties(setter, options).replace(/^\(|\)$/g, '') + ' = ';
+        value = processProperties(value, options);
+        expr = setter + value;
+      } else {
+        expr = processProperties(expr, options);
+      }
     }
-    expr = expr.replace(propExpr, function(match, prefix, objIndicator, propChain, postfix, colon, index, str) {
-      if (objIndicator && colon || str[index + prefix.length - 1] === '.') {
-        return match;
-      }
-      if (ignore.indexOf(propChain.split(/\.|\(/).shift()) !== -1) {
-        return match;
-      }
-      return prefix + 'this.' + propChain + postfix;
-    });
+    expr = 'return ' + expr;
     expr = expr.replace(emptyQuoteExpr, function() {
       return strings.shift();
     });
+    if (options.references) {
+      refs = [];
+      for (i = _i = 1, _ref3 = options.references; 1 <= _ref3 ? _i <= _ref3 : _i >= _ref3; i = 1 <= _ref3 ? ++_i : --_i) {
+        refs.push('_ref' + i);
+      }
+      expr = 'var ' + refs.join(', ') + ';\n' + expr;
+    }
+    console.log('EXPR:', expr);
     return expr;
   };
 
-  hasFilter = function(expr) {
-    expr = expr.replace(pipeExpr, function(match, orIndicator) {
-      if (orIndicator) {
+  processProperties = function(expr, options) {
+    if (options == null) {
+      options = {};
+    }
+    if (!options.references) {
+      options.references = 0;
+    }
+    if (!options.ignore) {
+      options.ignore = [];
+    }
+    return expr.replace(propExpr, function(match, prefix, objIndicator, propChain, postfix, colon, index, str) {
+      var newChain, parts;
+      if (objIndicator && colon || options.ignore.indexOf(propChain.split(/\.|\(/).shift()) !== -1) {
         return match;
       }
-      return '@@@';
+      if (str[index + prefix.length - 1] === '.') {
+        return match;
+      }
+      parts = propChain.split('.');
+      newChain = '';
+      if (parts.length === 1) {
+        newChain = 'this.' + parts[0];
+      } else {
+        newChain += '(';
+        parts.forEach(function(part, index) {
+          var ref;
+          if (index === parts.length - 1) {
+            newChain += "_ref" + options.references + "." + part + ")";
+            return;
+          } else if (index === 0) {
+            part = 'this.' + part;
+          } else {
+            part = '_ref' + options.references + '.' + part;
+          }
+          ref = '_ref' + ++options.references;
+          return newChain += "(" + ref + " = " + part + ") == null ? undefined : ";
+        });
+      }
+      return prefix + newChain + postfix;
     });
-    return expr.indexOf('@@@') !== -1;
   };
 
   chip.Controller = Controller;
@@ -1242,10 +1311,10 @@ if (!Date.prototype.toISOString) {
         controller = new NewController();
         controller.parent = options.parent;
         if (options.passthrough) {
-          if (options.parent.hasOwnProperty('passthrough')) {
-            controller.passthrough = options.parent.passthrough;
+          if (options.parent.passthrough()) {
+            controller.passthrough(options.parent.passthrough());
           } else {
-            controller.passthrough = options.parent;
+            controller.passthrough(options.parent);
           }
         }
       } else {
@@ -1509,7 +1578,7 @@ if (!Date.prototype.toISOString) {
     Filter.runFilter = function() {
       var args, filter, name, value, _ref;
       name = arguments[0], value = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
-      filter = (_ref = this.filters[name]) != null ? _ref.filter : void 0;
+      filter = ((_ref = this.filters[name]) != null ? _ref.filter : void 0) || window[name];
       if (filter) {
         return filter.apply(null, [value].concat(__slice.call(args)));
       } else {
@@ -1595,7 +1664,7 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.addBinding('value', function(element, expr, controller) {
-    var getValue, observer, setValue, setter, setterController;
+    var getValue, observer, setValue;
     getValue = element.attr('type') === 'checkbox' ? function() {
       return element.prop('checked');
     } : function() {
@@ -1611,22 +1680,17 @@ if (!Date.prototype.toISOString) {
         return setValue(value);
       }
     });
-    if (controller.exprHasFilter(expr)) {
-      return;
-    }
-    setterController = controller.passthrough || controller;
-    setter = setterController.getBoundEval(expr + ' = value', 'value');
-    if (element.filter('select').length) {
+    if (element.is('select')) {
       setTimeout(function() {
         setValue(controller["eval"](expr));
-        return setter(getValue());
+        return controller.evalSetter(expr, getValue());
       });
     } else {
-      setter(getValue());
+      controller.evalSetter(expr, getValue());
     }
     return element.on('keydown keyup change', function() {
       if (getValue() !== observer.oldValue) {
-        setter(getValue());
+        controller.evalSetter(expr, getValue());
         observer.skipNextSync();
         return controller.syncView();
       }
