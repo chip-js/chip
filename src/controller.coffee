@@ -218,7 +218,6 @@ normalizeExpression = (expr, extraArgNames) ->
 			refs.push '_ref' + i
 		expr = 'var ' + refs.join(', ') + ';\n' + expr
 		
-	console.log 'EXPR:', expr
 	expr
 
 

@@ -1181,7 +1181,6 @@ if (!Date.prototype.toISOString) {
       }
       expr = 'var ' + refs.join(', ') + ';\n' + expr;
     }
-    console.log('EXPR:', expr);
     return expr;
   };
 
