@@ -436,30 +436,30 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	route: (path, handler) -&gt;
-		handler = path.replace <span class="regexp">/^\//</span>, <span class="string">''</span> <span class="keyword">unless</span> handler
-		<span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'string'</span>
-			name = handler
-			<span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
-				<span class="property">@rootController</span>.params = req.params
-				<span class="property">@rootController</span>.query = req.query
-				
-				container = <span class="property">@rootElement</span>.find(<span class="string">'[data-route]:first'</span>)
-				container.html(<span class="property">@template</span>(name))
-				controller = <span class="property">@createController</span> element: container, parent: <span class="property">@rootController</span>, name: name
-				controller.syncView()
-		<span class="keyword">else</span>
-			<span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
-				<span class="property">@rootController</span>.params = req.params
-				<span class="property">@rootController</span>.query = req.query
-				handler <span class="property">@rootController</span>, next
+            <div class="content"><div class='highlight'><pre>	route: (path, handler, subroutes) -&gt;
+		
+		<span class="function"><span class="title">handleRoute</span></span> = (path, handler, subroutes, depth, before) =&gt;
+			<span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'function'</span> <span class="keyword">and</span> handler.toString().match(<span class="regexp">/\(route\)/</span>)
+				subroutes = handler
+				handler = <span class="literal">null</span>
 			
-		<span class="property">@router</span>.route path, callback
-		<span class="keyword">this</span>
-	
-	
-	redirect: (url) -&gt;
-		<span class="property">@router</span>.redirect(url)</pre></div></div>
+			handler = path.replace <span class="regexp">/^\//</span>, <span class="string">''</span> <span class="keyword">unless</span> handler
+			
+			<span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'string'</span>
+				name = handler
+				<span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
+					parentController = <span class="property">@rootController</span>
+					parentController = before(req, next) <span class="keyword">if</span> before
+					<span class="property">@rootController</span>.params = req.params
+					<span class="property">@rootController</span>.query = req.query
+					selector = []
+					selector.push(<span class="string">'[data-route]'</span>) <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">0.</span>.depth]
+					container = <span class="property">@rootElement</span>.find selector.join(<span class="string">' '</span>) + <span class="string">':first'</span>
+					<span class="keyword">return</span> <span class="keyword">unless</span> container.length
+					container.attr(<span class="string">'data-route'</span>, name)
+					container.html(<span class="property">@template</span>(name))
+					controller = <span class="property">@createController</span> element: container, parent: parentController, name: name
+					controller.syncView()</pre></div></div>
             
         </li>
         
@@ -470,11 +470,17 @@ template and controller by the same name. This template will be placed in the fi
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
-              <p>Mounts an app to a URL prefix.</p>
+              <p>Adds the subroutes and only calls this callback before they get called when they match.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	mount: (path, app) -&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>				<span class="keyword">if</span> <span class="keyword">typeof</span> subroutes <span class="keyword">is</span> <span class="string">'function'</span>
+					subroutes (subpath, handler, subroutes) =&gt;
+						subpath = <span class="string">''</span> <span class="keyword">if</span> subpath <span class="keyword">is</span> <span class="string">'/'</span>
+						handleRoute path + subpath, handler, subroutes, depth + <span class="number">1</span>, callback
+					<span class="keyword">return</span>
+				
+			<span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'function'</span></pre></div></div>
             
         </li>
         
@@ -485,6 +491,63 @@ template and controller by the same name. This template will be placed in the fi
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
+              <p>Subroutes not supported with callbacks, only with string handlers.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>				<span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
+					<span class="property">@rootController</span>.params = req.params
+					<span class="property">@rootController</span>.query = req.query
+					handler <span class="property">@rootController</span>, next
+			<span class="keyword">else</span>
+				<span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">'route handler must be a string path or a function'</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>Adds the callback to the route (unless subroutes existed).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>			<span class="property">@router</span>.route path, callback
+		
+		handleRoute(path, handler, subroutes, <span class="number">0</span>)
+		<span class="keyword">this</span>
+	
+	
+	redirect: (url) -&gt;
+		<span class="property">@router</span>.redirect(url)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>Mounts an app to a URL prefix.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	mount: (path, app) -&gt;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
               <p>Listen to URL changes</p>
 
             </div>
@@ -494,13 +557,12 @@ template and controller by the same name. This template will be placed in the fi
 			<span class="property">@router</span>.<span class="literal">on</span> <span class="string">'change'</span>, (event, path) =&gt;
 				<span class="property">@rootController</span>.trigger <span class="string">'urlChange'</span>, path
 			
-			router = <span class="property">@router</span>
+			app = <span class="keyword">this</span>
 			<span class="property">@rootElement</span>.<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
 				<span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
 				<span class="keyword">return</span> <span class="keyword">if</span> <span class="keyword">this</span>.host <span class="keyword">isnt</span> location.host <span class="keyword">or</span> <span class="keyword">this</span>.href <span class="keyword">is</span> location.href + <span class="string">'#'</span>
 				event.preventDefault()
-				event.stopPropagation()
-				router.redirect $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)
+				app.redirect $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)
 
 			<span class="property">@router</span>.listen options
 

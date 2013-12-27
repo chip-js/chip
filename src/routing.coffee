@@ -37,12 +37,13 @@ class Router
 		return if @currentUrl is url
 		
 		# Redirects if the url isn't at this page.
-		if not @hashOnly and url.indexOf(@root) isnt 0
+		if not @hashOnly and @root and url.indexOf(@root) isnt 0
 			location.href = url
 			return
 		
 		if @usePushState
 			history.pushState {}, '', url
+			@currentUrl = url
 			@dispatch url
 		else
 			if not @hashOnly

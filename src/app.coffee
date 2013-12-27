@@ -160,25 +160,51 @@ class App
 	# Create a route to be run when the given URL `path` is hit in the browser URL. The route `name` is used to load the
 	# template and controller by the same name. This template will be placed in the first element on page with a
 	# `data-route` attribute.
-	route: (path, handler) ->
-		handler = path.replace /^\//, '' unless handler
-		if typeof handler is 'string'
-			name = handler
-			callback = (req, next) =>
-				@rootController.params = req.params
-				@rootController.query = req.query
-				
-				container = @rootElement.find('[data-route]:first')
-				container.html(@template(name))
-				controller = @createController element: container, parent: @rootController, name: name
-				controller.syncView()
-		else
-			callback = (req, next) =>
-				@rootController.params = req.params
-				@rootController.query = req.query
-				handler @rootController, next
+	route: (path, handler, subroutes) ->
+		
+		handleRoute = (path, handler, subroutes, depth, before) =>
+			if typeof handler is 'function' and handler.toString().match(/\(route\)/)
+				subroutes = handler
+				handler = null
 			
-		@router.route path, callback
+			handler = path.replace /^\//, '' unless handler
+			
+			if typeof handler is 'string'
+				name = handler
+				callback = (req, next) =>
+					parentController = @rootController
+					parentController = before(req, next) if before
+					@rootController.params = req.params
+					@rootController.query = req.query
+					selector = []
+					selector.push('[data-route]') for i in [0..depth]
+					container = @rootElement.find selector.join(' ') + ':first'
+					return unless container.length
+					container.attr('data-route', name)
+					container.html(@template(name))
+					controller = @createController element: container, parent: parentController, name: name
+					controller.syncView()
+				
+				# Adds the subroutes and only calls this callback before they get called when they match.
+				if typeof subroutes is 'function'
+					subroutes (subpath, handler, subroutes) =>
+						subpath = '' if subpath is '/'
+						handleRoute path + subpath, handler, subroutes, depth + 1, callback
+					return
+				
+			else if typeof handler is 'function'
+				# Subroutes not supported with callbacks, only with string handlers.
+				callback = (req, next) =>
+					@rootController.params = req.params
+					@rootController.query = req.query
+					handler @rootController, next
+			else
+				throw new Error('route handler must be a string path or a function')
+			
+			# Adds the callback to the route (unless subroutes existed).
+			@router.route path, callback
+		
+		handleRoute(path, handler, subroutes, 0)
 		this
 	
 	
@@ -196,13 +222,12 @@ class App
 			@router.on 'change', (event, path) =>
 				@rootController.trigger 'urlChange', path
 			
-			router = @router
+			app = this
 			@rootElement.on 'click', 'a[href]', (event) ->
 				return if event.isDefaultPrevented() # if something else already handled this, we won't
 				return if this.host isnt location.host or this.href is location.href + '#'
 				event.preventDefault()
-				event.stopPropagation()
-				router.redirect $(this).attr("href")
+				app.redirect $(this).attr("href")
 
 			@router.listen options
 
