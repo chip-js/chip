@@ -11,7 +11,10 @@ class Controller
 	# the value in the expression changes. An expression can be as simple as `name` or as complex as
 	# `user.firstName + ' ' + user.lastName + ' - ' + user.getPostfix()`
 	watch: (expr, skipTriggerImmediately, callback) ->
-		getter = Controller.createBoundFunction(this, expr)
+		if typeof expr is 'function'
+			getter = expr
+		else
+			getter = Controller.createBoundFunction(this, expr)
 		# Store the observers with the controller so when it is closed we can clean up all observers as well
 		observer = Observer.add getter, skipTriggerImmediately, callback
 		observer.expr = expr
@@ -46,6 +49,7 @@ class Controller
 	# Redirects to the provided URL
 	redirect: (url) ->
 		@app.redirect(url)
+		this
 	
 	
 	# Clones the object at the given property name for processing forms
@@ -67,12 +71,14 @@ class Controller
 		Observer.sync(later)
 		if typeof later is 'function'
 			setTimeout later
+		this
 	
 	
 	# Syncs just the observers for this controller immediately
 	syncNow: ->
 		for observer in @_observers
 			observer.sync()
+		this
 	
 	
 	runFilter: (value, filterName, args...) ->
@@ -147,7 +153,6 @@ $.event.special.elementRemove =
 varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi
 quoteExpr = /(['"])(\\\1|[^\1])*?\1/g
 emptyQuoteExpr = /(['"])\1/g
-propExpr = /((\{|,)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:)?)/gi
 pipeExpr = /\|(\|)?/g
 argSeparator = /\s*:\s*/g
 setterExpr = /\s=\s/
@@ -155,6 +160,7 @@ setterExpr = /\s=\s/
 
 # Adds `this.` to the beginning of each valid property in an expression and processes filters
 normalizeExpression = (expr, extraArgNames) ->
+	orig = expr
 	options =
 		references: 0
 		ignore: Controller.keywords.concat(extraArgNames) # Ignores keywords and provided argument names
@@ -225,48 +231,89 @@ normalizeExpression = (expr, extraArgNames) ->
 processProperties = (expr, options = {}) ->
 	options.references = 0 unless options.references
 	options.ignore = [] unless options.ignore
+	propExpr = /((\{|,|\.)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:|\()?)/gi
+	currentIndex = 0
+	newExpr = ''
 	
 	# Adds the "this." prefix onto properties found in the expression and modifies to handle null exceptions.
-	expr.replace propExpr, (match, prefix, objIndicator, propChain, postfix, colon, index, str) ->
+	processProperty = (match, prefix, objIndicator, propChain, postfix, colonOrParen) ->
+		index = propExpr.lastIndex - match.length
 		# `objIndicator` is `{` or `,` and let's us know this is an object property name (e.g. prop in `{prop:false}`).
 		# `prefix` is `objIndicator` with the whitespace that may come after it.
 		# `propChain` is the chain of properties matched (e.g. `this.user.email`).
-		# `colon` matches the colon (:) after the property (if it is an object). We use colon and objIndicator to know.
-		# `postfix` is the `colon` with whitespace before it.
+		# `colonOrParen` matches the colon (:) after the property (if it is an object) or parenthesis if it is a
+		# function. We use `colonOrParen` and `objIndicator` to know if it is an object.
+		# `postfix` is the `colonOrParen` with whitespace before it.
 		
 		# skips object keys e.g. test in `{test:true}` and keywords e.g. true in `{test:true}`.
-		if objIndicator and colon or options.ignore.indexOf(propChain.split(/\.|\(/).shift()) isnt -1
+		if objIndicator and colonOrParen is ':' or options.ignore.indexOf(propChain.split(/\.|\(/).shift()) isnt -1
 			return match
 		
-		# continuations after a function (e.g. `getUser().firstName`).
-		if str[index + prefix.length - 1] is '.'
-			return match
+		# continuations after a function (e.g. `getUser(12).firstName`).
+		continuation = prefix is '.'
+		if continuation
+			prefix = ''
 		
 		parts = propChain.split('.')
 		newChain = ''
 		
-		if parts.length is 1
+		if parts.length is 1 and not continuation
 			newChain = 'this.' + parts[0]
 		else
-			newChain += '('
-			parts.forEach (part, index) ->
+			newChain += '(' unless continuation
+			
+			parts.forEach (part, partIndex) ->
 				# if the last
-				if index is parts.length - 1
+				if partIndex is parts.length - 1
+					if colonOrParen is '('
+						# Handles a function to be called in its correct scope
+						# Finds the end of the function and processes the arguments
+						parenCount = 1
+						startIndex = propExpr.lastIndex
+						endIndex = startIndex - 1
+						while endIndex++ < expr.length
+							switch expr[endIndex]
+								when '(' then parenCount++
+								when ')' then parenCount--
+							break if parenCount is 0
+						
+						propExpr.lastIndex = endIndex + 1
+						innards = processProperties expr.slice(startIndex, endIndex), options
+						part += '(' + innards + ')'
+						postfix = ''
+						if expr[endIndex + 1] is '.'
+							newChain += processPart(options, part, partIndex, continuation)
+							console.log 'will continue:', newChain
+							return
 					newChain += "_ref#{options.references}.#{part})"
 					return
-				# if the first
-				else if index is 0
-					part = 'this.' + part
 				else
-					part = '_ref' + options.references + '.' + part
-				
-				ref = '_ref' + ++options.references
-				newChain += "(#{ref} = #{part}) == null ? undefined : "
-				
+					newChain += processPart(options, part, partIndex, continuation)
 		
+		if continuation
+			console.log 'continuation:', newChain
 		return prefix + newChain + postfix
+	
+	
+	while (matchArgs = propExpr.exec expr)
+		index = propExpr.lastIndex - matchArgs[0].length
+		newExpr += expr.slice(currentIndex, index) + processProperty matchArgs...
+		currentIndex = propExpr.lastIndex
+	newExpr += expr.slice(currentIndex)
+	
+	newExpr
 
 
+
+processPart = (options, part, index, continuation) ->
+	# if the first
+	if index is 0 and not continuation
+		part = "this.#{part}"
+	else
+		part = "_ref#{options.references}.#{part}"
+	
+	ref = "_ref#{++options.references}"
+	"(#{ref} = #{part}) == null ? undefined : "
 
 
 chip.Controller = Controller
