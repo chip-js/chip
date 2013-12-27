@@ -130,14 +130,34 @@ chip.addBinding 'active', (element, expr, controller) ->
 				element.removeClass('active')
 		
 		link = element
-			.filter('a[href],a[data-href]')
-			.add(element.find('a[href],a[data-href]'))
+			.filter('a')
+			.add(element.find('a'))
 			.first()
-		if link.attr('data-href')
-			link.on 'hrefChanged', refresh
+		link.on 'hrefChanged', refresh
 		controller.on 'urlChange', refresh
 		element.on 'elementRemove', -> controller.off 'urlChange', refresh
 		refresh()
+
+
+# ## data-active-section
+# The same as active except that the active class is added for any URL which starts with the link (marks active for the
+# whole section.
+# ```
+chip.addBinding 'active-section', (element, expr, controller) ->
+	refresh = ->
+		if link.length and location.href.indexOf(link.get(0).href) is 0
+			element.addClass('active')
+		else
+			element.removeClass('active')
+	
+	link = element
+		.filter('a')
+		.add(element.find('a'))
+		.first()
+	link.on 'hrefChanged', refresh
+	controller.on 'urlChange', refresh
+	element.on 'elementRemove', -> controller.off 'urlChange', refresh
+	refresh()
 
 
 # ## data-value

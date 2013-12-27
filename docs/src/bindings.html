@@ -180,11 +180,10 @@ provided it adds the “active” class if the element or it‘s first anchor ch
 				element.removeClass(<span class="string">'active'</span>)
 		
 		link = element
-			.filter(<span class="string">'a[href],a[data-href]'</span>)
-			.add(element.find(<span class="string">'a[href],a[data-href]'</span>))
+			.filter(<span class="string">'a'</span>)
+			.add(element.find(<span class="string">'a'</span>))
 			.first()
-		<span class="keyword">if</span> link.attr(<span class="string">'data-href'</span>)
-			link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
+		link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
 		controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
 		element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
 		refresh()</pre></div></div>
@@ -197,6 +196,38 @@ provided it adds the “active” class if the element or it‘s first anchor ch
               
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2>data-active-section</h2>
+<p>The same as active except that the active class is added for any URL which starts with the link (marks active for the
+whole section.
+```</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'active-section'</span>, (element, expr, controller) -&gt;
+	<span class="function"><span class="title">refresh</span></span> = -&gt;
+		<span class="keyword">if</span> link.length <span class="keyword">and</span> location.href.indexOf(link.get(<span class="number">0</span>).href) <span class="keyword">is</span> <span class="number">0</span>
+			element.addClass(<span class="string">'active'</span>)
+		<span class="keyword">else</span>
+			element.removeClass(<span class="string">'active'</span>)
+	
+	link = element
+		.filter(<span class="string">'a'</span>)
+		.add(element.find(<span class="string">'a'</span>))
+		.first()
+	link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
+	controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
+	element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
+	refresh()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <h2>data-value</h2>
 <p>Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
@@ -238,11 +269,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-7">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>Sets initial element value. For SELECT elements allows child option element values to be set first.</p>
 
@@ -264,11 +295,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <h2>data-[event]</h2>
 <p>Adds a handler for each event name in the array. When the event is triggered the expression will be run.</p>
@@ -301,11 +332,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-9">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <h2>data-[key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches.</p>
@@ -328,11 +359,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-10">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <h2>data-[control key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches and the ctrlKey or metaKey is
@@ -353,11 +384,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-11">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <h2>data-[attribute]</h2>
 <p>Adds a handler to set the attribute of element to the value of the expression.</p>
@@ -381,11 +412,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <h2>data-[toggle attribute]</h2>
 <p>Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.</p>
@@ -411,11 +442,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <h2>data-if</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -454,11 +485,11 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
         </li>
         
         
-        <li id="section-14">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <h2>data-repeat</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
@@ -573,11 +604,11 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
         </li>
         
         
-        <li id="section-15">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <h2>data-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
@@ -620,11 +651,11 @@ attributes which appear after <code>data-partial</code> will have the new value 
         </li>
         
         
-        <li id="section-16">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <h2>data-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the

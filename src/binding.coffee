@@ -167,7 +167,8 @@ class Binding
 
 # Sets up the binding handlers for this jQuery element and all of its descendants
 jQuery.fn.bindTo = (controller) ->
-	Binding.process(this, controller)
+	if this.length isnt 0
+		Binding.process(this, controller)
 
 
 chip.Binding = Binding

@@ -354,7 +354,8 @@ makes the DOM cleaner.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>jQuery.fn.<span class="function"><span class="title">bindTo</span></span> = (controller) -&gt;
-	Binding.process(<span class="keyword">this</span>, controller)
+	<span class="keyword">if</span> <span class="keyword">this</span>.length <span class="keyword">isnt</span> <span class="number">0</span>
+		Binding.process(<span class="keyword">this</span>, controller)
 
 
 chip.Binding = Binding</pre></div></div>
