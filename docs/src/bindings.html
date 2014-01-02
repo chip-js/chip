@@ -491,13 +491,13 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <h2>data-repeat</h2>
+              <h2>data-each</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
-running the controller definition if <code>data-controller</code> is set on the element after <code>data-repeat</code>. The expression must
+running the controller definition if <code>data-controller</code> is set on the element after <code>data-each</code>. The expression must
 be of the format <code>itemName in arrayName</code> where <code>itemName</code> is the name each item inside the array will be referenced
 by inside the element. <code>arrayName</code> is any expression, e.g. <code>post in user.getPosts()</code>.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-repeat</span>=<span class="value">"post in posts"</span> <span class="attribute">data-class</span>=<span class="value">"{featured:post.isFeatured}"</span>&gt;</span>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-each</span>=<span class="value">"post in posts"</span> <span class="attribute">data-class</span>=<span class="value">"{featured:post.isFeatured}"</span>&gt;</span>
   <span class="tag">&lt;<span class="title">h1</span> <span class="attribute">data-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
   <span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-html</span>=<span class="value">"post.body"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
@@ -525,21 +525,21 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'repeat'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'each'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
 	orig = expr
 	[ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
 	<span class="keyword">unless</span> itemName <span class="keyword">and</span> expr
-		<span class="keyword">throw</span> <span class="string">'Invalid data-repeat "'</span>
+		<span class="keyword">throw</span> <span class="string">'Invalid data-each "'</span>
 		+ orig
 		+ <span class="string">'". Requires the format "todo in todos"'</span>
-		+ <span class="string">' or "key, prop in todos".'</span> 
+		+ <span class="string">' or "key, prop in todos".'</span>
 	
 	controllerName = element.attr(<span class="string">'data-controller'</span>)
 	element.removeAttr(<span class="string">'data-controller'</span>)
 	[ itemName, propName ] = itemName.split <span class="regexp">/\s*,\s*/</span>
 	
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">'&lt;!--data-repeat="'</span> + expr + <span class="string">'"--&gt;'</span>).replaceAll(template)
+	placeholder = $(<span class="string">'&lt;!--data-each="'</span> + expr + <span class="string">'"--&gt;'</span>).replaceAll(template)
 	elements = $()
 	properties = {}
 	value = <span class="literal">null</span>

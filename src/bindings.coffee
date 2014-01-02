@@ -363,15 +363,15 @@ chip.addBinding 'if', 50, (element, expr, controller) ->
 				element.replaceWith(placeholder)
 
 
-# ## data-repeat
+# ## data-each
 # Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
-# running the controller definition if `data-controller` is set on the element after `data-repeat`. The expression must
+# running the controller definition if `data-controller` is set on the element after `data-each`. The expression must
 # be of the format `itemName in arrayName` where `itemName` is the name each item inside the array will be referenced
 # by inside the element. `arrayName` is any expression, e.g. `post in user.getPosts()`.
 #
 # **Example:**
 # ```xml
-# <div data-repeat="post in posts" data-class="{featured:post.isFeatured}">
+# <div data-each="post in posts" data-class="{featured:post.isFeatured}">
 #   <h1 data-text="post.title">Title</h1>
 #   <div data-html="post.body"></div>
 # </div>
@@ -399,21 +399,21 @@ chip.addBinding 'if', 50, (element, expr, controller) ->
 #   </div>
 # </div>
 # ```
-chip.addBinding 'repeat', 100, (element, expr, controller) ->
+chip.addBinding 'each', 100, (element, expr, controller) ->
 	orig = expr
 	[ itemName, expr ] = expr.split /\s+in\s+/
 	unless itemName and expr
-		throw 'Invalid data-repeat "'
+		throw 'Invalid data-each "'
 		+ orig
 		+ '". Requires the format "todo in todos"'
-		+ ' or "key, prop in todos".' 
+		+ ' or "key, prop in todos".'
 	
 	controllerName = element.attr('data-controller')
 	element.removeAttr('data-controller')
 	[ itemName, propName ] = itemName.split /\s*,\s*/
 	
 	template = element # use a placeholder for the element and the element as a template
-	placeholder = $('<!--data-repeat="' + expr + '"-->').replaceAll(template)
+	placeholder = $('<!--data-each="' + expr + '"-->').replaceAll(template)
 	elements = $()
 	properties = {}
 	value = null

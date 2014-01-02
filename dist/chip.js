@@ -1864,12 +1864,12 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.addBinding('repeat', 100, function(element, expr, controller) {
+  chip.addBinding('each', 100, function(element, expr, controller) {
     var controllerName, createElement, elements, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1;
     orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
     if (!(itemName && expr)) {
-      throw 'Invalid data-repeat "';
+      throw 'Invalid data-each "';
       +orig;
       +'". Requires the format "todo in todos"';
       +' or "key, prop in todos".';
@@ -1878,7 +1878,7 @@ if (!Date.prototype.toISOString) {
     element.removeAttr('data-controller');
     _ref1 = itemName.split(/\s*,\s*/), itemName = _ref1[0], propName = _ref1[1];
     template = element;
-    placeholder = $('<!--data-repeat="' + expr + '"-->').replaceAll(template);
+    placeholder = $('<!--data-each="' + expr + '"-->').replaceAll(template);
     elements = $();
     properties = {};
     value = null;

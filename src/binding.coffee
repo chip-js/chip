@@ -169,7 +169,7 @@ class Binding
 			# Calls the handler function allowing the handler to set up the binding.
 			newController = attr.handler element, attr.value, controller
 			
-			# Stops processing if the element was removed from the DOM. data-if and data-repeat for example.
+			# Stops processing if the element was removed from the DOM. data-if and data-each for example.
 			return if node.parentNode isnt parentNode
 			
 			# Sets controller to new controller if a new controller has been defined by a handler.
