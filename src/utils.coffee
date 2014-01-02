@@ -7,3 +7,5 @@ makeEventEmitter = (object) ->
 	object.one = eventEmitter.one.bind(eventEmitter)
 	object.off = eventEmitter.off.bind(eventEmitter)
 	object.trigger = eventEmitter.trigger.bind(eventEmitter)
+
+chip.makeEventEmitter = makeEventEmitter

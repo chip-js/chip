@@ -73,7 +73,7 @@ priority. The default is <code>0</code>.</p>
       + <span class="string">' arrrr!'</span>
     element.text(value)
   }
-}</code></pre>
+})</code></pre>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">data-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
 
             </div>
@@ -101,6 +101,28 @@ priority. The default is <code>0</code>.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
+              <p>Removes a binding handler that was added with <code>addBinding()</code>.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-javascript">Binding.removeBinding(<span class="string">'pirate'</span>)</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">data-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	<span class="property">@removeBinding</span>: (name) -&gt;
+		entry = <span class="property">@bindings</span>[name]
+		<span class="keyword">return</span> <span class="keyword">unless</span> entry
+		<span class="keyword">delete</span> <span class="property">@bindings</span>[name]
+		<span class="property">@bindings</span>.splice <span class="property">@bindings</span>.indexOf(entry), <span class="number">1</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
               <p>Shortcut, adds a handler that executes the expression when the named event is dispatched.</p>
 <p><strong>Example:</strong> Handles the click event.</p>
 <pre><code class="lang-javascript">Binding.addEventBinding(<span class="string">'click'</span>)</code></pre>
@@ -117,11 +139,11 @@ priority. The default is <code>0</code>.</p>
         </li>
         
         
-        <li id="section-5">
+        <li id="section-6">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-5">&#182;</a>
+                <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <p>Shortcut, adds a handler that responds when the given key is pressed, e.g. <code>Binding.addEventBinding(&#39;esc&#39;, 27)</code>.</p>
 
@@ -138,11 +160,11 @@ priority. The default is <code>0</code>.</p>
         </li>
         
         
-        <li id="section-6">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <p>Shortcut, adds a handler to set the named attribute to the value of the expression.</p>
 <p><strong>Example</strong></p>
@@ -166,11 +188,11 @@ priority. The default is <code>0</code>.</p>
         </li>
         
         
-        <li id="section-7">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
 e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
@@ -185,11 +207,11 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <p>Processes the bindings for the given jQuery element and all of its children.</p>
 
@@ -206,11 +228,11 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
         </li>
         
         
-        <li id="section-9">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <p>Finds binding attributes and sorts by priority.</p>
 
@@ -234,11 +256,11 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
         </li>
         
         
-        <li id="section-10">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <p>Go through each binding attribute from first to last.</p>
 
@@ -250,11 +272,11 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
         </li>
         
         
-        <li id="section-11">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>Don&#39;t re-process if it has been removed. Could happen if one handler uses another and removes it.</p>
 
@@ -265,11 +287,11 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>Remove the binding handlers so they only get processed once. This simplifies our code, but it also
 makes the DOM cleaner.</p>
@@ -281,11 +303,11 @@ makes the DOM cleaner.</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p>Calls the handler function allowing the handler to set up the binding.</p>
 
@@ -296,11 +318,11 @@ makes the DOM cleaner.</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>Stops processing if the element was removed from the DOM. data-if and data-repeat for example.</p>
 
@@ -311,11 +333,11 @@ makes the DOM cleaner.</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p>Sets controller to new controller if a new controller has been defined by a handler.</p>
 
@@ -327,11 +349,11 @@ makes the DOM cleaner.</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>Processes the children of this element after the element has been processed.</p>
 
@@ -343,11 +365,11 @@ makes the DOM cleaner.</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Sets up the binding handlers for this jQuery element and all of its descendants</p>
 

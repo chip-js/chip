@@ -33,7 +33,7 @@ class Binding
 	#       + ' arrrr!'
 	#     element.text(value)
 	#   }
-	# }
+	# })
 	# ```
 	# 
 	# ```xml
@@ -52,6 +52,23 @@ class Binding
 		@bindings.push entry
 		
 		@bindings.sort (a, b) -> b.priority - a.priority
+	
+	
+	# Removes a binding handler that was added with `addBinding()`.
+	# 
+	# **Example:**
+	# ```javascript
+	# Binding.removeBinding('pirate')
+	# ```
+	# 
+	# ```xml
+	# <p data-pirate="post.body">This text will be replaced.</p>
+	# ```
+	@removeBinding: (name) ->
+		entry = @bindings[name]
+		return unless entry
+		delete @bindings[name]
+		@bindings.splice @bindings.indexOf(entry), 1
 	
 	
 	# Shortcut, adds a handler that executes the expression when the named event is dispatched.

@@ -516,18 +516,6 @@ if (!Date.prototype.toISOString) {
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
-  makeEventEmitter = function(object) {
-    var eventEmitter;
-    if (object.trigger) {
-      throw new Error('Object has already become an event emitter');
-    }
-    eventEmitter = $({});
-    object.on = eventEmitter.on.bind(eventEmitter);
-    object.one = eventEmitter.one.bind(eventEmitter);
-    object.off = eventEmitter.off.bind(eventEmitter);
-    return object.trigger = eventEmitter.trigger.bind(eventEmitter);
-  };
-
   chip = {
     init: function() {
       if (!this.rootApp) {
@@ -573,6 +561,20 @@ if (!Date.prototype.toISOString) {
   });
 
   window.chip = chip;
+
+  makeEventEmitter = function(object) {
+    var eventEmitter;
+    if (object.trigger) {
+      throw new Error('Object has already become an event emitter');
+    }
+    eventEmitter = $({});
+    object.on = eventEmitter.on.bind(eventEmitter);
+    object.one = eventEmitter.one.bind(eventEmitter);
+    object.off = eventEmitter.off.bind(eventEmitter);
+    return object.trigger = eventEmitter.trigger.bind(eventEmitter);
+  };
+
+  chip.makeEventEmitter = makeEventEmitter;
 
   Router = (function() {
     function Router() {
@@ -1545,6 +1547,16 @@ if (!Date.prototype.toISOString) {
       return this.bindings.sort(function(a, b) {
         return b.priority - a.priority;
       });
+    };
+
+    Binding.removeBinding = function(name) {
+      var entry;
+      entry = this.bindings[name];
+      if (!entry) {
+        return;
+      }
+      delete this.bindings[name];
+      return this.bindings.splice(this.bindings.indexOf(entry), 1);
     };
 
     Binding.addEventBinding = function(eventName) {

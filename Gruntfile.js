@@ -1,8 +1,8 @@
 module.exports = function(grunt) {
 	
 	var srcFiles = [
-		'src/utils.coffee',
 		'src/chip.coffee',
+		'src/utils.coffee',
 		'src/routing.coffee',
 		'src/observer.coffee',
 		'src/controller.coffee',
