@@ -571,7 +571,8 @@ if (!Date.prototype.toISOString) {
     object.on = eventEmitter.on.bind(eventEmitter);
     object.one = eventEmitter.one.bind(eventEmitter);
     object.off = eventEmitter.off.bind(eventEmitter);
-    return object.trigger = eventEmitter.trigger.bind(eventEmitter);
+    object.trigger = eventEmitter.trigger.bind(eventEmitter);
+    return object;
   };
 
   chip.makeEventEmitter = makeEventEmitter;
@@ -1248,7 +1249,6 @@ if (!Date.prototype.toISOString) {
               postfix = '';
               if (expr[endIndex + 1] === '.') {
                 newChain += processPart(options, part, partIndex, continuation);
-                console.log('will continue:', newChain);
                 return;
               }
             }
@@ -1257,9 +1257,6 @@ if (!Date.prototype.toISOString) {
             return newChain += processPart(options, part, partIndex, continuation);
           }
         });
-      }
-      if (continuation) {
-        console.log('continuation:', newChain);
       }
       return prefix + newChain + postfix;
     };
@@ -1293,6 +1290,7 @@ if (!Date.prototype.toISOString) {
       this.templates = {};
       this.router = new Router();
       this.rootElement = $('html');
+      this.translations = {};
     }
 
     App.prototype.init = function(root) {
@@ -1342,6 +1340,20 @@ if (!Date.prototype.toISOString) {
       }
     };
 
+    App.prototype.translate = function(translations) {
+      var key, value, _ref, _ref1;
+      _ref = this.translations;
+      for (key in _ref) {
+        value = _ref[key];
+        delete this.translations[key];
+      }
+      for (key in translations) {
+        value = translations[key];
+        this.translations[key] = value;
+      }
+      return (_ref1 = this.rootController) != null ? _ref1.trigger('translationChange', [this.translations]) : void 0;
+    };
+
     App.prototype.controller = function(name, initFunction) {
       if (arguments.length > 1) {
         this.controllers[name] = initFunction;
@@ -1377,6 +1389,7 @@ if (!Date.prototype.toISOString) {
         controller = new Controller();
         makeEventEmitter(controller);
         controller.app = this;
+        controller.translations = this.translations;
       }
       if (options.properties) {
         _ref = options.properties;
@@ -1500,7 +1513,7 @@ if (!Date.prototype.toISOString) {
       return $(function() {
         var app;
         _this.router.on('change', function(event, path) {
-          return _this.rootController.trigger('urlChange', path);
+          return _this.rootController.trigger('urlChange', [path]);
         });
         app = _this;
         _this.rootElement.on('click', 'a[href]', function(event) {
@@ -1705,6 +1718,50 @@ if (!Date.prototype.toISOString) {
     return controller.watch(expr, function(value) {
       return element.html(value != null ? value : '');
     });
+  });
+
+  chip.addBinding('translate', function(element, expr, controller) {
+    var i, node, nodes, placeholders, refresh, text, _i, _len;
+    nodes = element.get(0).childNodes;
+    text = '';
+    placeholders = [];
+    for (i = _i = 0, _len = nodes.length; _i < _len; i = ++_i) {
+      node = nodes[i];
+      if (node.nodeType === 3) {
+        if (!(node.nodeValue.trim() === '' && (i === 0 || i === nodes.length - 1))) {
+          text += node.nodeValue;
+        }
+      } else if (node.nodeType === 1) {
+        text += '%{' + placeholders.length + '}';
+        placeholders.push(node);
+      }
+    }
+    refresh = function() {
+      var exp, lastIndex, match, startIndex, translation;
+      translation = controller.translations[text] || text;
+      exp = /%{(\d+)}/g;
+      nodes = [];
+      lastIndex = 0;
+      while ((match = exp.exec(translation))) {
+        startIndex = exp.lastIndex - match[0].length;
+        if (lastIndex !== startIndex) {
+          nodes.push(document.createTextNode(translation.slice(lastIndex, startIndex)));
+        }
+        nodes.push(placeholders[match[1]]);
+        lastIndex = exp.lastIndex;
+      }
+      if (lastIndex !== translation.length) {
+        nodes.push(document.createTextNode(translation.slice(lastIndex)));
+      }
+      return element.html(nodes);
+    };
+    element.on('elementRemove', function() {
+      return controller.off('translationChange', refresh);
+    });
+    controller.on('translationChange', refresh);
+    if (controller.translations[text]) {
+      return refresh();
+    }
   });
 
   chip.addBinding('class', function(element, expr, controller) {

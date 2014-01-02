@@ -706,15 +706,12 @@ Finds the end of the function and processes the arguments</p>
 						postfix = <span class="string">''</span>
 						<span class="keyword">if</span> expr[endIndex + <span class="number">1</span>] <span class="keyword">is</span> <span class="string">'.'</span>
 							newChain += processPart(options, part, partIndex, continuation)
-							console.log <span class="string">'will continue:'</span>, newChain
 							<span class="keyword">return</span>
 					newChain += <span class="string">"_ref<span class="subst">#{options.references}</span>.<span class="subst">#{part}</span>)"</span>
 					<span class="keyword">return</span>
 				<span class="keyword">else</span>
 					newChain += processPart(options, part, partIndex, continuation)
 		
-		<span class="keyword">if</span> continuation
-			console.log <span class="string">'continuation:'</span>, newChain
 		<span class="keyword">return</span> prefix + newChain + postfix
 	
 	

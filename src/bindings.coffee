@@ -58,6 +58,59 @@ chip.addBinding 'html', (element, expr, controller) ->
 		element.html(if value? then value else '')
 
 
+# ## data-translate
+# Adds a handler to translate the text inside an element.
+#
+# **Example:**
+# ```xml
+# <h1 data-translate>Welcome <span data-text="name"></span>!</h1>
+# ```
+# *Result:*
+# ```xml
+# <h1>Welcome <span>Jacob</span>!</h1>
+# ```
+# *Result after changing the translations with `app.translate({"Welcome %{0}!":"Sup %{0} Yo!"})`:*
+# ```xml
+# <h1>Sup <span>Jacob</span> Yo!</h1>
+# ```
+chip.addBinding 'translate', (element, expr, controller) ->
+	nodes = element.get(0).childNodes
+	text = ''
+	placeholders = []
+	for node, i in nodes
+		if node.nodeType is 3
+			# Don't include whitespace at the beginning and end of the translated string
+			unless node.nodeValue.trim() is '' and (i is 0 or i is nodes.length - 1)
+				text += node.nodeValue
+		else if node.nodeType is 1
+			text += '%{' + placeholders.length + '}'
+			placeholders.push node
+	
+	refresh = ->
+		translation = controller.translations[text] or text
+		exp = /%{(\d+)}/g
+		nodes = []
+		lastIndex = 0
+		while (match = exp.exec translation)
+			startIndex = exp.lastIndex - match[0].length
+			if lastIndex isnt startIndex
+				nodes.push document.createTextNode translation.slice lastIndex, startIndex
+			nodes.push placeholders[match[1]]
+			lastIndex = exp.lastIndex
+		
+		if lastIndex isnt translation.length
+			nodes.push document.createTextNode translation.slice lastIndex
+		
+		element.html nodes
+	
+	element.on 'elementRemove', -> controller.off 'translationChange', refresh
+	controller.on 'translationChange', refresh
+	
+	# don't process if no translation is loaded
+	if controller.translations[text]
+		refresh()
+
+
 # ## data-class
 # Adds a handler to add classes to an element. If the value of the expression is a string, that string will be set as the
 # class attribute. If the value is an array of strings, those will be set as the element classes. These two methods

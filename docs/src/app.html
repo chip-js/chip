@@ -60,7 +60,8 @@ another app allowing for modules. An App is created automatically if none are cr
 		<span class="property">@controllers</span> = {}
 		<span class="property">@templates</span> = {}
 		<span class="property">@router</span> = <span class="keyword">new</span> Router()
-		<span class="property">@rootElement</span> = $(<span class="string">'html'</span>)</pre></div></div>
+		<span class="property">@rootElement</span> = $(<span class="string">'html'</span>)
+		<span class="property">@translations</span> = {}</pre></div></div>
             
         </li>
         
@@ -153,7 +154,7 @@ instance of a defined template. This instance is a jQuery element.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
-              <h2>Controllers</h2>
+              <h2>Translations</h2>
 
             </div>
             
@@ -177,6 +178,53 @@ instance of a defined template. This instance is a jQuery element.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Provides translation strings for the app</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	translate: (translations) -&gt;
+		<span class="keyword">for</span> key, value <span class="keyword">of</span> <span class="property">@translations</span>
+			<span class="keyword">delete</span> <span class="property">@translations</span>[key]
+		
+		<span class="keyword">for</span> key, value <span class="keyword">of</span> translations
+			<span class="property">@translations</span>[key] = value
+		
+		<span class="property">@rootController</span>?.trigger <span class="string">'translationChange'</span>, [<span class="property">@translations</span>]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <h2>Controllers</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>Defines a new controller with the provided initialization function. Registers the <code>initFunction</code> function to with
 <code>name</code> and the function will be called with the new controller as its only parameter every time one is
@@ -212,11 +260,11 @@ function on the global scope with the name <code>name + &#39;Controller&#39;</co
         </li>
         
         
-        <li id="section-11">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p>Creates a new controller. Sets <code>options.parent</code> as the parent controller to this one. Sets <code>options.properties</code>
 properties onto the controller before binding and initialization. Binds <code>options.element</code> to the controller which
@@ -230,11 +278,11 @@ updates HTML as data updates. Initializes the new controller with the <code>opti
         </li>
         
         
-        <li id="section-12">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>If <code>options.parent</code> is provided, the new controller will extend it. Any data or methods on the parent
 controller will be available to the child unless overwritten by the child. This uses the prototype chain, thus
@@ -260,26 +308,27 @@ the parent, only read it or call methods on it.</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p>Sets instance of app on this controller as a top-level controller</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			controller.app = <span class="keyword">this</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>			controller.app = <span class="keyword">this</span>
+			controller.translations = <span class="property">@translations</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-14">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>If <code>extend</code> is provided, all properties from that object will be copied over to the controller before it is
 initialized by its definition or bound to its element.</p>
@@ -292,11 +341,11 @@ initialized by its definition or bound to its element.</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Creates a function on the controller to create child controllers</p>
 
@@ -309,11 +358,11 @@ initialized by its definition or bound to its element.</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Creates a function on the controller to get template instances</p>
 
@@ -327,11 +376,11 @@ initialized by its definition or bound to its element.</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>Assign element and add cleanup when the element is removed.</p>
 
@@ -344,11 +393,11 @@ initialized by its definition or bound to its element.</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>If <code>name</code> is supplied the controller definition by that name will be run to initialize this controller
 before the bindings are set up.</p>
@@ -360,11 +409,11 @@ before the bindings are set up.</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>Binds the element to the new controller and then return it.</p>
 
@@ -378,11 +427,11 @@ before the bindings are set up.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <h2>Routing</h2>
 
@@ -391,11 +440,11 @@ before the bindings are set up.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               
             </div>
@@ -403,11 +452,11 @@ before the bindings are set up.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>Registers a <code>callback</code> function to be called when the given param <code>name</code> is matched in a URL</p>
 
@@ -424,11 +473,11 @@ before the bindings are set up.</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>Create a route to be run when the given URL <code>path</code> is hit in the browser URL. The route <code>name</code> is used to load the
 template and controller by the same name. This template will be placed in the first element on page with a
@@ -464,11 +513,11 @@ template and controller by the same name. This template will be placed in the fi
         </li>
         
         
-        <li id="section-24">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>Adds the subroutes and only calls this callback before they get called when they match.</p>
 
@@ -485,11 +534,11 @@ template and controller by the same name. This template will be placed in the fi
         </li>
         
         
-        <li id="section-25">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p>Subroutes not supported with callbacks, only with string handlers.</p>
 
@@ -505,11 +554,11 @@ template and controller by the same name. This template will be placed in the fi
         </li>
         
         
-        <li id="section-26">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <p>Adds the callback to the route (unless subroutes existed).</p>
 
@@ -527,11 +576,11 @@ template and controller by the same name. This template will be placed in the fi
         </li>
         
         
-        <li id="section-27">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <p>Mounts an app to a URL prefix.</p>
 
@@ -542,11 +591,11 @@ template and controller by the same name. This template will be placed in the fi
         </li>
         
         
-        <li id="section-28">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p>Listen to URL changes</p>
 
@@ -555,7 +604,7 @@ template and controller by the same name. This template will be placed in the fi
             <div class="content"><div class='highlight'><pre>	listen: (options) -&gt;
 		$ =&gt;
 			<span class="property">@router</span>.<span class="literal">on</span> <span class="string">'change'</span>, (event, path) =&gt;
-				<span class="property">@rootController</span>.trigger <span class="string">'urlChange'</span>, path
+				<span class="property">@rootController</span>.trigger <span class="string">'urlChange'</span>, [path]
 			
 			app = <span class="keyword">this</span>
 			<span class="property">@rootElement</span>.<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;

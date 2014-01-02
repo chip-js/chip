@@ -12,6 +12,7 @@ class App
 		@templates = {}
 		@router = new Router()
 		@rootElement = $('html')
+		@translations = {}
 	
 	
 	# Initializes templates and controllers from the entire page or the `root` element if provided.
@@ -50,6 +51,20 @@ class App
 			unless @templates.hasOwnProperty name
 				throw 'Template "' + name + '" does not exist'
 			$ @templates[name].trim()
+	
+	
+	# Translations
+	# ------------
+	
+	# Provides translation strings for the app
+	translate: (translations) ->
+		for key, value of @translations
+			delete @translations[key]
+		
+		for key, value of translations
+			@translations[key] = value
+		
+		@rootController?.trigger 'translationChange', [@translations]
 	
 	
 	# Controllers
@@ -113,6 +128,7 @@ class App
 			
 			# Sets instance of app on this controller as a top-level controller
 			controller.app = this
+			controller.translations = @translations
 		
 		# If `extend` is provided, all properties from that object will be copied over to the controller before it is
 		# initialized by its definition or bound to its element.
@@ -220,7 +236,7 @@ class App
 	listen: (options) ->
 		$ =>
 			@router.on 'change', (event, path) =>
-				@rootController.trigger 'urlChange', path
+				@rootController.trigger 'urlChange', [path]
 			
 			app = this
 			@rootElement.on 'click', 'a[href]', (event) ->

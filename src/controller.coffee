@@ -283,15 +283,12 @@ processProperties = (expr, options = {}) ->
 						postfix = ''
 						if expr[endIndex + 1] is '.'
 							newChain += processPart(options, part, partIndex, continuation)
-							console.log 'will continue:', newChain
 							return
 					newChain += "_ref#{options.references}.#{part})"
 					return
 				else
 					newChain += processPart(options, part, partIndex, continuation)
 		
-		if continuation
-			console.log 'continuation:', newChain
 		return prefix + newChain + postfix
 	
 	
