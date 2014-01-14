@@ -251,7 +251,8 @@ class App
 				return if event.isDefaultPrevented() # if something else already handled this, we won't
 				return if this.host isnt location.host or this.href is location.href + '#'
 				event.preventDefault()
-				app.redirect $(this).attr("href")
+				unless $(this).attr('disabled')
+					app.redirect $(this).attr('href')
 			
 			@router.on 'change', @_routeHandler
 			@rootElement.on 'click', 'a[href]', @_clickHandler

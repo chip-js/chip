@@ -85,7 +85,8 @@ class Binding
 		@addBinding eventName, (element, expr, controller) ->
 			element.on eventName, (event) ->
 				event.preventDefault()
-				controller.eval expr
+				unless element.attr('disabled')
+					controller.eval expr
 	
 	
 	# Shortcut, adds a handler that responds when the given key is pressed, e.g. `Binding.addEventBinding('esc', 27)`.
@@ -95,7 +96,8 @@ class Binding
 				return if ctrlKey? and (event.ctrlKey isnt ctrlKey and event.metaKey isnt ctrlKey)
 				return unless event.keyCode is keyCode
 				event.preventDefault()
-				controller.eval expr
+				unless element.attr('disabled')
+					controller.eval expr
 	
 	
 	# Shortcut, adds a handler to set the named attribute to the value of the expression.
@@ -127,7 +129,7 @@ class Binding
 	@addAttributeToggleBinding: (name) ->
 		@addBinding name, (element, expr, controller) ->
 			controller.watch expr, (value) ->
-				element.prop name, value or false
+				element.attr name, value and true or false
 	
 	
 	# Processes the bindings for the given jQuery element and all of its children.

@@ -605,7 +605,14 @@ if (!Date.prototype.toISOString) {
     };
 
     Router.prototype.redirect = function(url) {
-      url = this.prefix + url;
+      var pathParts;
+      if (url[0] === '.') {
+        pathParts = document.createElement('a');
+        pathParts.href = url;
+        url = pathParts.pathname;
+      } else {
+        url = this.prefix + url;
+      }
       if (this.currentUrl === url) {
         return;
       }
@@ -1541,7 +1548,9 @@ if (!Date.prototype.toISOString) {
             return;
           }
           event.preventDefault();
-          return app.redirect($(this).attr("href"));
+          if (!$(this).attr('disabled')) {
+            return app.redirect($(this).attr('href'));
+          }
         };
         _this.router.on('change', _this._routeHandler);
         _this.rootElement.on('click', 'a[href]', _this._clickHandler);
@@ -1596,7 +1605,9 @@ if (!Date.prototype.toISOString) {
       return this.addBinding(eventName, function(element, expr, controller) {
         return element.on(eventName, function(event) {
           event.preventDefault();
-          return controller["eval"](expr);
+          if (!element.attr('disabled')) {
+            return controller["eval"](expr);
+          }
         });
       });
     };
@@ -1611,7 +1622,9 @@ if (!Date.prototype.toISOString) {
             return;
           }
           event.preventDefault();
-          return controller["eval"](expr);
+          if (!element.attr('disabled')) {
+            return controller["eval"](expr);
+          }
         });
       });
     };
@@ -1632,7 +1645,7 @@ if (!Date.prototype.toISOString) {
     Binding.addAttributeToggleBinding = function(name) {
       return this.addBinding(name, function(element, expr, controller) {
         return controller.watch(expr, function(value) {
-          return element.prop(name, value || false);
+          return element.attr(name, value && true || false);
         });
       });
     };

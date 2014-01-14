@@ -632,7 +632,8 @@ template and controller by the same name. This template will be placed in the fi
 				<span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
 				<span class="keyword">return</span> <span class="keyword">if</span> <span class="keyword">this</span>.host <span class="keyword">isnt</span> location.host <span class="keyword">or</span> <span class="keyword">this</span>.href <span class="keyword">is</span> location.href + <span class="string">'#'</span>
 				event.preventDefault()
-				app.redirect $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)
+				<span class="keyword">unless</span> $(<span class="keyword">this</span>).attr(<span class="string">'disabled'</span>)
+					app.redirect $(<span class="keyword">this</span>).attr(<span class="string">'href'</span>)
 			
 			<span class="property">@router</span>.<span class="literal">on</span> <span class="string">'change'</span>, <span class="property">@_routeHandler</span>
 			<span class="property">@rootElement</span>.<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, <span class="property">@_clickHandler</span>
