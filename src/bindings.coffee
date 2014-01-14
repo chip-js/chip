@@ -6,17 +6,17 @@ chip.addBinding 'debug', (element, expr, controller) ->
 		console.info 'Debug:', expr, '=', value
 
 
-# ## data-text
+# ## chip-text
 # Adds a handler to display text inside an element.
 #
 # **Example:**
 # ```xml
-# <h1 data-text="post.title">Title</h1>
+# <h1 chip-text="post.title">Title</h1>
 # <div class="info">
 #   Written by
-#   <span data-text="post.author.name">author</span>
+#   <span chip-text="post.author.name">author</span>
 #   on
-#   <span data-text="post.date.toLocaleDateString()">date</span>.
+#   <span chip-text="post.date.toLocaleDateString()">date</span>.
 # </div>
 # ```
 # *Result:*
@@ -34,13 +34,13 @@ chip.addBinding 'text', (element, expr, controller) ->
 		element.text(if value? then value else '')
 
 
-# ## data-html
+# ## chip-html
 # Adds a handler to display unescaped HTML inside an element. Be sure it's trusted!
 #
 # **Example:**
 # ```xml
-# <h1 data-text="post.title">Title</h1>
-# <div data-html="post.body"></div>
+# <h1 chip-text="post.title">Title</h1>
+# <div chip-html="post.body"></div>
 # ```
 # *Result:*
 # ```xml
@@ -58,18 +58,21 @@ chip.addBinding 'html', (element, expr, controller) ->
 		element.html(if value? then value else '')
 
 
-# ## data-translate
+# ## chip-translate
 # Adds a handler to translate the text inside an element.
 #
 # **Example:**
 # ```xml
-# <h1 data-translate>Welcome <span data-text="name"></span>!</h1>
+# <h1 chip-translate>Welcome <span chip-text="name"></span>!</h1>
 # ```
-# *Result:*
+# *Initial Result:*
 # ```xml
 # <h1>Welcome <span>Jacob</span>!</h1>
 # ```
-# *Result after changing the translations with `app.translate({"Welcome %{0}!":"Sup %{0} Yo!"})`:*
+# *Result after changing the translations with*
+# ```
+# app.translate({"Welcome %{0}!":"Sup %{0} Yo!"})
+# ```
 # ```xml
 # <h1>Sup <span>Jacob</span> Yo!</h1>
 # ```
@@ -111,7 +114,7 @@ chip.addBinding 'translate', (element, expr, controller) ->
 		refresh()
 
 
-# ## data-class
+# ## chip-class
 # Adds a handler to add classes to an element. If the value of the expression is a string, that string will be set as the
 # class attribute. If the value is an array of strings, those will be set as the element classes. These two methods
 # overwrite any existing classes. If the value is an object, each property of that object will be toggled on or off in
@@ -119,8 +122,8 @@ chip.addBinding 'translate', (element, expr, controller) ->
 # 
 # **Example:**
 # ```xml
-# <div data-class="theClasses">
-#   <button class="btn primary" data-class="{highlight:ready}"></button>
+# <div chip-class="theClasses">
+#   <button class="btn primary" chip-class="{highlight:ready}"></button>
 # </div>
 # ```
 # *Result if `theClases` equals "red blue" and `ready` is `true`:*
@@ -144,18 +147,18 @@ chip.addBinding 'class', (element, expr, controller) ->
 					element.removeClass(className)
 
 
-# ## data-active
+# ## chip-active
 # Adds a handler to add the class "active" to an element if the expression is truthy, or if no expression is
 # provided it adds the "active" class if the element or it's first anchor child's href matches the URL in the browser.
 #
 # **Example:**
 # ```xml
-# <button class="btn btn-primary" data-active="formValid">Submit</button>
+# <button class="btn btn-primary" chip-active="formValid">Submit</button>
 # 
 # <ul class="header-links">
-#   <li data-active><a href="/posts">My Blog</a></li>
-#   <li data-active><a href="/account">My Account</a></li>
-#   <li data-active><a href="/profile">Profile</a></li>
+#   <li chip-active><a href="/posts">My Blog</a></li>
+#   <li chip-active><a href="/account">My Account</a></li>
+#   <li chip-active><a href="/profile">Profile</a></li>
 # </ul>
 # ```
 # *Result if `formValid` is `true` and the browser is at "http://www.example.com/account":*
@@ -192,10 +195,9 @@ chip.addBinding 'active', (element, expr, controller) ->
 		refresh()
 
 
-# ## data-active-section
+# ## chip-active-section
 # The same as active except that the active class is added for any URL which starts with the link (marks active for the
 # whole section.
-# ```
 chip.addBinding 'active-section', (element, expr, controller) ->
 	refresh = ->
 		if link.length and location.href.indexOf(link.get(0).href) is 0
@@ -213,17 +215,17 @@ chip.addBinding 'active-section', (element, expr, controller) ->
 	refresh()
 
 
-# ## data-value
+# ## chip-value
 # Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
 # the form element, providing two way binding.
 #
 # **Example:**
 # ```xml
 # <label>First Name</label>
-# <input type="text" name="firstName" data-value="user.firstName">
+# <input type="text" name="firstName" chip-value="user.firstName">
 #
 # <label>Last Name</label>
-# <input type="text" name="lastName" data-value="user.lastName">
+# <input type="text" name="lastName" chip-value="user.lastName">
 # ```
 # *Result:*
 # ```xml
@@ -267,21 +269,21 @@ chip.addBinding 'value', (element, expr, controller) ->
 			controller.syncView() # update other expressions looking at this data
 
 
-# ## data-[event]
+# ## chip-[event]
 # Adds a handler for each event name in the array. When the event is triggered the expression will be run.
 # 
 # **Events:**
 # 
-# * data-click
-# * data-dblclick
-# * data-submit
-# * data-change
-# * data-focus
-# * data-blur
+# * chip-click
+# * chip-dblclick
+# * chip-submit
+# * chip-change
+# * chip-focus
+# * chip-blur
 #
 # **Example:**
 # ```xml
-# <form data-submit="saveUser()">
+# <form chip-submit="saveUser()">
 #   <input name="firstName" value="Jacob">
 #   <button>Save</button>
 # </form>
@@ -297,17 +299,17 @@ chip.addBinding 'value', (element, expr, controller) ->
 	.forEach (name) ->
 		chip.addEventBinding(name)
 
-# ## data-[key event]
+# ## chip-[key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches.
 # 
 # **Key Events:**
 # 
-# * data-enter
-# * data-esc
+# * chip-enter
+# * chip-esc
 #
 # **Example:**
 # ```xml
-# <input data-enter="window.alert(element.val())">
+# <input chip-enter="window.alert(element.val())">
 # ```
 # *Result:*
 # ```xml
@@ -317,17 +319,17 @@ keyCodes = { enter: 13, esc: 27 }
 for own name, keyCode of keyCodes
 	chip.addKeyEventBinding(name, keyCode)
 
-# ## data-[control key event]
+# ## chip-[control key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches and the ctrlKey or metaKey is
 # pressed.
 # 
 # **Key Events:**
 # 
-# * data-ctrl-enter
+# * chip-ctrl-enter
 #
 # **Example:**
 # ```xml
-# <input data-ctrl-enter="window.alert(element.val())">
+# <input chip-ctrl-enter="window.alert(element.val())">
 # ```
 # *Result:*
 # ```xml
@@ -335,18 +337,18 @@ for own name, keyCode of keyCodes
 # ```
 chip.addKeyEventBinding('ctrl-enter', keyCodes.enter, true)
 
-# ## data-[attribute]
+# ## chip-[attribute]
 # Adds a handler to set the attribute of element to the value of the expression.
 # 
 # **Attributes:**
 # 
-# * data-href
-# * data-src
-# * data-id
+# * chip-href
+# * chip-src
+# * chip-id
 #
 # **Example:**
 # ```xml
-# <img data-src="user.avatarUrl">
+# <img chip-src="user.avatarUrl">
 # ```
 # *Result:*
 # ```xml
@@ -356,19 +358,19 @@ attribs = [ 'href', 'src', 'id' ]
 for name in attribs
 	chip.addAttributeBinding(name)
 
-# ## data-[toggle attribute]
+# ## chip-[toggle attribute]
 # Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.
 # 
 # **Attributes:**
 # 
-# * data-checked
-# * data-disabled
+# * chip-checked
+# * chip-disabled
 #
 # **Example:**
 # ```xml
 # <label>Is Administrator</label>
-# <input type="checkbox" data-checked="user.isAdmin">
-# <button data-disabled="isProcessing">Submit</button>
+# <input type="checkbox" chip-checked="user.isAdmin">
+# <button chip-disabled="isProcessing">Submit</button>
 # ```
 # *Result if `isProcessing` is `true` and `user.isAdmin` is false:*
 # ```xml
@@ -379,16 +381,16 @@ for name in attribs
 [ 'checked', 'disabled' ].forEach (name) ->
 	chip.addAttributeToggleBinding(name)
 
-# ## data-if
+# ## chip-if
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
 # when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.
 #
 # **Example:**
 # ```xml
 # <ul class="header-links">
-#   <li data-if="user"><a href="/account">My Account</a></li>
-#   <li data-if="user"><a href="/logout">Sign Out</a></li>
-#   <li data-if="!user"><a href="/login">Sign In</a></li>
+#   <li chip-if="user"><a href="/account">My Account</a></li>
+#   <li chip-if="user"><a href="/logout">Sign Out</a></li>
+#   <li chip-if="!user"><a href="/login">Sign In</a></li>
 # </ul>
 # ```
 # *Result if `user` is null:*
@@ -400,10 +402,11 @@ for name in attribs
 # </ul>
 # ```
 chip.addBinding 'if', 50, (element, expr, controller) ->
+	prefix = controller.app.bindingPrefix
 	template = element # use a placeholder for the element and the element as a template
-	placeholder = $('<!--data-if="' + expr + '"-->').replaceAll(template)
-	controllerName = element.attr('data-controller')
-	element.removeAttr('data-controller')
+	placeholder = $("<!--#{prefix}if=\#{expr}\"-->").replaceAll(template)
+	controllerName = element.attr(prefix + 'controller')
+	element.removeAttr(prefix + 'controller')
 	
 	controller.watch expr, (value) ->
 		if value
@@ -416,17 +419,17 @@ chip.addBinding 'if', 50, (element, expr, controller) ->
 				element.replaceWith(placeholder)
 
 
-# ## data-each
+# ## chip-each
 # Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
-# running the controller definition if `data-controller` is set on the element after `data-each`. The expression must
+# running the controller definition if `chip-controller` is set on the element after `chip-each`. The expression must
 # be of the format `itemName in arrayName` where `itemName` is the name each item inside the array will be referenced
 # by inside the element. `arrayName` is any expression, e.g. `post in user.getPosts()`.
 #
 # **Example:**
 # ```xml
-# <div data-each="post in posts" data-class="{featured:post.isFeatured}">
-#   <h1 data-text="post.title">Title</h1>
-#   <div data-html="post.body"></div>
+# <div chip-each="post in posts" chip-class="{featured:post.isFeatured}">
+#   <h1 chip-text="post.title">Title</h1>
+#   <div chip-html="post.body"></div>
 # </div>
 # ```
 # *Result if there are 2 posts and the first one is featured:*
@@ -453,20 +456,21 @@ chip.addBinding 'if', 50, (element, expr, controller) ->
 # </div>
 # ```
 chip.addBinding 'each', 100, (element, expr, controller) ->
+	prefix = controller.app.bindingPrefix
 	orig = expr
 	[ itemName, expr ] = expr.split /\s+in\s+/
 	unless itemName and expr
-		throw 'Invalid data-each "'
+		throw "Invalid #{prefix}each \""
 		+ orig
 		+ '". Requires the format "todo in todos"'
 		+ ' or "key, prop in todos".'
 	
-	controllerName = element.attr('data-controller')
-	element.removeAttr('data-controller')
+	controllerName = element.attr(prefix + 'controller')
+	element.removeAttr(prefix + 'controller')
 	[ itemName, propName ] = itemName.split /\s*,\s*/
 	
 	template = element # use a placeholder for the element and the element as a template
-	placeholder = $('<!--data-each="' + expr + '"-->').replaceAll(template)
+	placeholder = $("<!--#{prefix}each=\"#{expr}\"-->").replaceAll(template)
 	elements = $()
 	properties = {}
 	value = null
@@ -529,24 +533,24 @@ chip.addBinding 'each', 100, (element, expr, controller) ->
 						elements.eq(splice.index - 1).after(newElements)
 
 
-# ## data-partial
+# ## chip-partial
 # Adds a handler to set the contents of the element with the template and controller by that name. The expression may
 # be just the name of the template/controller, or it may be of the format `expr as itemName with partialName` where
 # `expr` is an expression who's value will be set to `itemName` on the conroller in the partial. Note: any binding
-# attributes which appear after `data-partial` will have the new value available if using the special format.
+# attributes which appear after `chip-partial` will have the new value available if using the special format.
 #
 # **Example:**
 # ```xml
-# <!--<div data-partial="userInfo"></div>-->
-# <div data-partial="getUser() as user with userInfo" data-class="{administrator:user.isAdmin}"></div>
+# <!--<div chip-partial="userInfo"></div>-->
+# <div chip-partial="getUser() as user with userInfo" chip-class="{administrator:user.isAdmin}"></div>
 # 
 # <script name="userInfo" type="text/html">
-#   <span data-text="user.name"></span>
+#   <span chip-text="user.name"></span>
 # </script>
 # ```
 # *Result:*
 # ```xml
-# <!--<div data-partial="userInfo"></div>-->
+# <!--<div chip-partial="userInfo"></div>-->
 # <div class="administrator">
 #   <span>Jacob</span>
 # </div>
@@ -570,14 +574,14 @@ chip.addBinding 'partial', 50, (element, expr, controller) ->
 		childController = controller.child element: element, name: name, properties: properties
 
 
-# ## data-controller
+# ## chip-controller
 # Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the
 # controller definition name which will be run if provided. Use this when you want to sandbox controller values (such
 # as a form) or provide functionality provided by that controller to the element.
 #
 # **Example:**
 # ```xml
-# <form data-controller="userForm" data-submit="saveUser()">
+# <form chip-controller="userForm" chip-submit="saveUser()">
 # </form>
 # ```
 # *Result if `formValid` is `true` and the browser is at "http://www.example.com/account":*

@@ -7,11 +7,11 @@
 <header>
 	<h1>My App</h1>
 </header>
-<div id="main" data-controller>
+<div id="main" chip-controller>
 	<label>Name:</label>
-	<input type="text" data-value="name" placeholder="Enter a name here" autofocus>
-	<button data-click="window.alert(name)">Say it!</button>
-	<h2 data-if="name">Welcome <span data-text="name"></span>!</h2>
+	<input type="text" chip-value="name" placeholder="Enter a name here" autofocus>
+	<button chip-click="window.alert(name)">Say it!</button>
+	<h2 chip-if="name">Welcome <span chip-text="name"></span>!</h2>
 </div>
 </body>
 </html>

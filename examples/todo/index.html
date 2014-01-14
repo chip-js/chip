@@ -14,45 +14,45 @@
 		<script src="js/controllers/todos.js"></script>
 		<script src="js/controllers/todo.js"></script>
 	</head>
-	<body data-controller="todos">
+	<body chip-controller="todos">
 		<section id="todoapp">
 			<header id="header">
 				<h1>todos</h1>
-				<input id="new-todo" placeholder="What needs to be done?" autofocus data-value="newDescription" data-enter="createTodo()">
+				<input id="new-todo" placeholder="What needs to be done?" autofocus chip-value="newDescription" chip-enter="createTodo()">
 			</header>
 			<!-- This section should be hidden by default and shown when there are todos -->
-			<section id="main" data-if="todos.length">
-				<input id="toggle-all" type="checkbox" data-checked="todos.every(filters.done)" data-change="toggleAll()">
+			<section id="main" chip-if="todos.length">
+				<input id="toggle-all" type="checkbox" chip-checked="todos.every(filters.done)" chip-change="toggleAll()">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-					<li data-repeat="todo in todos | filter:filter" data-controller="todo" data-class="{editing:editing,completed:todo.done}">
+					<li chip-repeat="todo in todos | filter:filter" chip-controller="todo" chip-class="{editing:editing,completed:todo.done}">
 						<div class="view">
-							<input class="toggle" type="checkbox" data-change="toggleDone(todo)" data-checked="todo.done">
-							<label data-dblclick="editTodo(todo)" data-text="todo.description">Create a TodoMVC template</label>
-							<button class="destroy" data-click="removeTodo(todo)"></button>
+							<input class="toggle" type="checkbox" chip-change="toggleDone(todo)" chip-checked="todo.done">
+							<label chip-dblclick="editTodo(todo)" chip-text="todo.description">Create a TodoMVC template</label>
+							<button class="destroy" chip-click="removeTodo(todo)"></button>
 						</div>
-						<input class="edit" data-value="editDescription" data-esc="cancelEditing()" data-blur="cancelEditing()" data-enter="saveTodo()">
+						<input class="edit" chip-value="editDescription" chip-esc="cancelEditing()" chip-blur="cancelEditing()" chip-enter="saveTodo()">
 					</li>
 				</ul>
 			</section>
 			<!-- This footer should hidden by default and shown when there are todos -->
-			<footer id="footer" data-if="todos.length">
+			<footer id="footer" chip-if="todos.length">
 				<!-- This should be `0 items left` by default -->
-				<span id="todo-count"><strong data-text="todos.filter(filters.undone).length">1</strong> <span data-text="todos.filter(filters.undone).length == 1 ? 'item':'items'">item</span> left</span>
+				<span id="todo-count"><strong chip-text="todos.filter(filters.undone).length">1</strong> <span chip-text="todos.filter(filters.undone).length == 1 ? 'item':'items'">item</span> left</span>
 				<!-- Remove this if you don't implement routing -->
 				<ul id="filters">
 					<li>
-						<a class="selected" href="#/" data-class="{selected:filter == filters.none}">All</a>
+						<a class="selected" href="#/" chip-class="{selected:filter == filters.none}">All</a>
 					</li>
 					<li>
-						<a href="#/active" data-class="{selected:filter == filters.undone}">Active</a>
+						<a href="#/active" chip-class="{selected:filter == filters.undone}">Active</a>
 					</li>
 					<li>
-						<a href="#/completed" data-class="{selected:filter == filters.done}">Completed</a>
+						<a href="#/completed" chip-class="{selected:filter == filters.done}">Completed</a>
 					</li>
 				</ul>
 				<!-- Hidden if no completed items are left ↓ -->
-				<button id="clear-completed" data-if="todos.filter(filters.done).length" data-click="clearCompleted()">Clear completed (<span data-text="todos.filter(filters.done).length">0</span>)</button>
+				<button id="clear-completed" chip-if="todos.filter(filters.done).length" chip-click="clearCompleted()">Clear completed (<span chip-text="todos.filter(filters.done).length">0</span>)</button>
 			</footer>
 		</section>
 		<footer id="info">

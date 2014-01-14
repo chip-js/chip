@@ -40,15 +40,15 @@ chip.addBinding <span class="string">'debug'</span>, (element, expr, controller)
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <h2>data-text</h2>
+              <h2>chip-text</h2>
 <p>Adds a handler to display text inside an element.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span> <span class="attribute">data-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span> <span class="attribute">chip-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
 <span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"info"</span>&gt;</span>
   Written by
-  <span class="tag">&lt;<span class="title">span</span> <span class="attribute">data-text</span>=<span class="value">"post.author.name"</span>&gt;</span>author<span class="tag">&lt;/<span class="title">span</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">span</span> <span class="attribute">chip-text</span>=<span class="value">"post.author.name"</span>&gt;</span>author<span class="tag">&lt;/<span class="title">span</span>&gt;</span>
   on
-  <span class="tag">&lt;<span class="title">span</span> <span class="attribute">data-text</span>=<span class="value">"post.date.toLocaleDateString()"</span>&gt;</span>date<span class="tag">&lt;/<span class="title">span</span>&gt;</span>.
+  <span class="tag">&lt;<span class="title">span</span> <span class="attribute">chip-text</span>=<span class="value">"post.date.toLocaleDateString()"</span>&gt;</span>date<span class="tag">&lt;/<span class="title">span</span>&gt;</span>.
 <span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span>&gt;</span>Little Red<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
@@ -74,11 +74,11 @@ chip.addBinding <span class="string">'debug'</span>, (element, expr, controller)
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <h2>data-html</h2>
+              <h2>chip-html</h2>
 <p>Adds a handler to display unescaped HTML inside an element. Be sure it&#39;s trusted!</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span> <span class="attribute">data-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
-<span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-html</span>=<span class="value">"post.body"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span> <span class="attribute">chip-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"post.body"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span>&gt;</span>Little Red<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
 <span class="tag">&lt;<span class="title">div</span>&gt;</span>
@@ -104,13 +104,14 @@ chip.addBinding <span class="string">'debug'</span>, (element, expr, controller)
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
-              <h2>data-translate</h2>
+              <h2>chip-translate</h2>
 <p>Adds a handler to translate the text inside an element.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span> <span class="attribute">data-translate</span>&gt;</span>Welcome <span class="tag">&lt;<span class="title">span</span> <span class="attribute">data-text</span>=<span class="value">"name"</span>&gt;</span><span class="tag">&lt;/<span class="title">span</span>&gt;</span>!<span class="tag">&lt;/<span class="title">h1</span>&gt;</span></code></pre>
-<p><em>Result:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span> <span class="attribute">chip-translate</span>&gt;</span>Welcome <span class="tag">&lt;<span class="title">span</span> <span class="attribute">chip-text</span>=<span class="value">"name"</span>&gt;</span><span class="tag">&lt;/<span class="title">span</span>&gt;</span>!<span class="tag">&lt;/<span class="title">h1</span>&gt;</span></code></pre>
+<p><em>Initial Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span>&gt;</span>Welcome <span class="tag">&lt;<span class="title">span</span>&gt;</span>Jacob<span class="tag">&lt;/<span class="title">span</span>&gt;</span>!<span class="tag">&lt;/<span class="title">h1</span>&gt;</span></code></pre>
-<p><em>Result after changing the translations with <code>app.translate({&quot;Welcome %{0}!&quot;:&quot;Sup %{0} Yo!&quot;})</code>:</em></p>
+<p><em>Result after changing the translations with</em></p>
+<pre><code>app.translate({<span class="string">"Welcome %{0}!"</span>:<span class="string">"Sup %{0} Yo!"</span>})</code></pre>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span>&gt;</span>Sup <span class="tag">&lt;<span class="title">span</span>&gt;</span>Jacob<span class="tag">&lt;/<span class="title">span</span>&gt;</span> Yo!<span class="tag">&lt;/<span class="title">h1</span>&gt;</span></code></pre>
 
             </div>
@@ -186,14 +187,14 @@ chip.addBinding <span class="string">'debug'</span>, (element, expr, controller)
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
-              <h2>data-class</h2>
+              <h2>chip-class</h2>
 <p>Adds a handler to add classes to an element. If the value of the expression is a string, that string will be set as the
 class attribute. If the value is an array of strings, those will be set as the element classes. These two methods
 overwrite any existing classes. If the value is an object, each property of that object will be toggled on or off in
 the class list depending on whether the value of the property is truthy or falsey.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-class</span>=<span class="value">"theClasses"</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn primary"</span> <span class="attribute">data-class</span>=<span class="value">"{highlight:ready}"</span>&gt;</span><span class="tag">&lt;/<span class="title">button</span>&gt;</span>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-class</span>=<span class="value">"theClasses"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn primary"</span> <span class="attribute">chip-class</span>=<span class="value">"{highlight:ready}"</span>&gt;</span><span class="tag">&lt;/<span class="title">button</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result if <code>theClases</code> equals “red blue” and <code>ready</code> is <code>true</code>:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"red blue"</span>&gt;</span>
@@ -225,16 +226,16 @@ the class list depending on whether the value of the property is truthy or false
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
-              <h2>data-active</h2>
+              <h2>chip-active</h2>
 <p>Adds a handler to add the class “active” to an element if the expression is truthy, or if no expression is
 provided it adds the “active” class if the element or it‘s first anchor child’s href matches the URL in the browser.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn btn-primary"</span> <span class="attribute">data-active</span>=<span class="value">"formValid"</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn btn-primary"</span> <span class="attribute">chip-active</span>=<span class="value">"formValid"</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span>
 
 <span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/posts"</span>&gt;</span>My Blog<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/profile"</span>&gt;</span>Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/posts"</span>&gt;</span>My Blog<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-active</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/profile"</span>&gt;</span>Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
 <p><em>Result if <code>formValid</code> is <code>true</code> and the browser is at &quot;<a href="http://www.example.com/account">http://www.example.com/account</a>&quot;:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">class</span>=<span class="value">"btn btn-primary active"</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span>
@@ -279,10 +280,9 @@ provided it adds the “active” class if the element or it‘s first anchor ch
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
-              <h2>data-active-section</h2>
+              <h2>chip-active-section</h2>
 <p>The same as active except that the active class is added for any URL which starts with the link (marks active for the
-whole section.
-```</p>
+whole section.</p>
 
             </div>
             
@@ -311,15 +311,15 @@ whole section.
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
-              <h2>data-value</h2>
+              <h2>chip-value</h2>
 <p>Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
 the form element, providing two way binding.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">label</span>&gt;</span>First Name<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
-<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"firstName"</span> <span class="attribute">data-value</span>=<span class="value">"user.firstName"</span>&gt;</span>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"firstName"</span> <span class="attribute">chip-value</span>=<span class="value">"user.firstName"</span>&gt;</span>
 
 <span class="tag">&lt;<span class="title">label</span>&gt;</span>Last Name<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
-<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"lastName"</span> <span class="attribute">data-value</span>=<span class="value">"user.lastName"</span>&gt;</span></code></pre>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"lastName"</span> <span class="attribute">chip-value</span>=<span class="value">"user.lastName"</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">label</span>&gt;</span>First Name<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
 <span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"text"</span> <span class="attribute">name</span>=<span class="value">"firstName"</span> <span class="attribute">value</span>=<span class="value">"Jacob"</span>&gt;</span>
@@ -383,19 +383,19 @@ value of <code>&#39;Jac&#39;</code>.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
-              <h2>data-[event]</h2>
+              <h2>chip-[event]</h2>
 <p>Adds a handler for each event name in the array. When the event is triggered the expression will be run.</p>
 <p><strong>Events:</strong></p>
 <ul>
-<li>data-click</li>
-<li>data-dblclick</li>
-<li>data-submit</li>
-<li>data-change</li>
-<li>data-focus</li>
-<li>data-blur</li>
+<li>chip-click</li>
+<li>chip-dblclick</li>
+<li>chip-submit</li>
+<li>chip-change</li>
+<li>chip-focus</li>
+<li>chip-blur</li>
 </ul>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span> <span class="attribute">data-submit</span>=<span class="value">"saveUser()"</span>&gt;</span>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span> <span class="attribute">chip-submit</span>=<span class="value">"saveUser()"</span>&gt;</span>
   <span class="tag">&lt;<span class="title">input</span> <span class="attribute">name</span>=<span class="value">"firstName"</span> <span class="attribute">value</span>=<span class="value">"Jacob"</span>&gt;</span>
   <span class="tag">&lt;<span class="title">button</span>&gt;</span>Save<span class="tag">&lt;/<span class="title">button</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">form</span>&gt;</span></code></pre>
@@ -420,15 +420,15 @@ value of <code>&#39;Jac&#39;</code>.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
-              <h2>data-[key event]</h2>
+              <h2>chip-[key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches.</p>
 <p><strong>Key Events:</strong></p>
 <ul>
-<li>data-enter</li>
-<li>data-esc</li>
+<li>chip-enter</li>
+<li>chip-esc</li>
 </ul>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span> <span class="attribute">data-enter</span>=<span class="value">"window.alert(element.val())"</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span> <span class="attribute">chip-enter</span>=<span class="value">"window.alert(element.val())"</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span>&gt;</span></code></pre>
 
@@ -447,15 +447,15 @@ value of <code>&#39;Jac&#39;</code>.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
-              <h2>data-[control key event]</h2>
+              <h2>chip-[control key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches and the ctrlKey or metaKey is
 pressed.</p>
 <p><strong>Key Events:</strong></p>
 <ul>
-<li>data-ctrl-enter</li>
+<li>chip-ctrl-enter</li>
 </ul>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span> <span class="attribute">data-ctrl-enter</span>=<span class="value">"window.alert(element.val())"</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span> <span class="attribute">chip-ctrl-enter</span>=<span class="value">"window.alert(element.val())"</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">input</span>&gt;</span></code></pre>
 
@@ -472,16 +472,16 @@ pressed.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <h2>data-[attribute]</h2>
+              <h2>chip-[attribute]</h2>
 <p>Adds a handler to set the attribute of element to the value of the expression.</p>
 <p><strong>Attributes:</strong></p>
 <ul>
-<li>data-href</li>
-<li>data-src</li>
-<li>data-id</li>
+<li>chip-href</li>
+<li>chip-src</li>
+<li>chip-id</li>
 </ul>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">img</span> <span class="attribute">data-src</span>=<span class="value">"user.avatarUrl"</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">img</span> <span class="attribute">chip-src</span>=<span class="value">"user.avatarUrl"</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">img</span> <span class="attribute">src</span>=<span class="value">"http://cdn.example.com/avatars/jacwright-small.png"</span>&gt;</span></code></pre>
 
@@ -500,17 +500,17 @@ pressed.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
-              <h2>data-[toggle attribute]</h2>
+              <h2>chip-[toggle attribute]</h2>
 <p>Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.</p>
 <p><strong>Attributes:</strong></p>
 <ul>
-<li>data-checked</li>
-<li>data-disabled</li>
+<li>chip-checked</li>
+<li>chip-disabled</li>
 </ul>
 <p><strong>Example:</strong></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">label</span>&gt;</span>Is Administrator<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
-<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"checkbox"</span> <span class="attribute">data-checked</span>=<span class="value">"user.isAdmin"</span>&gt;</span>
-<span class="tag">&lt;<span class="title">button</span> <span class="attribute">data-disabled</span>=<span class="value">"isProcessing"</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
+<span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"checkbox"</span> <span class="attribute">chip-checked</span>=<span class="value">"user.isAdmin"</span>&gt;</span>
+<span class="tag">&lt;<span class="title">button</span> <span class="attribute">chip-disabled</span>=<span class="value">"isProcessing"</span>&gt;</span>Submit<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
 <p><em>Result if <code>isProcessing</code> is <code>true</code> and <code>user.isAdmin</code> is false:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">label</span>&gt;</span>Is Administrator<span class="tag">&lt;/<span class="title">label</span>&gt;</span>
 <span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"checkbox"</span>&gt;</span>
@@ -530,14 +530,14 @@ pressed.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
-              <h2>data-if</h2>
+              <h2>chip-if</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
 when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">data-if</span>=<span class="value">"!user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-if</span>=<span class="value">"!user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
 <p><em>Result if <code>user</code> is null:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
@@ -549,10 +549,11 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
+	prefix = controller.app.bindingPrefix
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">'&lt;!--data-if="'</span> + expr + <span class="string">'"--&gt;'</span>).replaceAll(template)
-	controllerName = element.attr(<span class="string">'data-controller'</span>)
-	element.removeAttr(<span class="string">'data-controller'</span>)
+	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>if=\#{expr}\"--&gt;"</span>).replaceAll(template)
+	controllerName = element.attr(prefix + <span class="string">'controller'</span>)
+	element.removeAttr(prefix + <span class="string">'controller'</span>)
 	
 	controller.watch expr, (value) -&gt;
 		<span class="keyword">if</span> value
@@ -573,15 +574,15 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
-              <h2>data-each</h2>
+              <h2>chip-each</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
-running the controller definition if <code>data-controller</code> is set on the element after <code>data-each</code>. The expression must
+running the controller definition if <code>chip-controller</code> is set on the element after <code>chip-each</code>. The expression must
 be of the format <code>itemName in arrayName</code> where <code>itemName</code> is the name each item inside the array will be referenced
 by inside the element. <code>arrayName</code> is any expression, e.g. <code>post in user.getPosts()</code>.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-each</span>=<span class="value">"post in posts"</span> <span class="attribute">data-class</span>=<span class="value">"{featured:post.isFeatured}"</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">h1</span> <span class="attribute">data-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-html</span>=<span class="value">"post.body"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-each</span>=<span class="value">"post in posts"</span> <span class="attribute">chip-class</span>=<span class="value">"{featured:post.isFeatured}"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">h1</span> <span class="attribute">chip-text</span>=<span class="value">"post.title"</span>&gt;</span>Title<span class="tag">&lt;/<span class="title">h1</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"post.body"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result if there are 2 posts and the first one is featured:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"featured"</span>&gt;</span>
@@ -608,20 +609,21 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'each'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
+	prefix = controller.app.bindingPrefix
 	orig = expr
 	[ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
 	<span class="keyword">unless</span> itemName <span class="keyword">and</span> expr
-		<span class="keyword">throw</span> <span class="string">'Invalid data-each "'</span>
+		<span class="keyword">throw</span> <span class="string">"Invalid <span class="subst">#{prefix}</span>each \""</span>
 		+ orig
 		+ <span class="string">'". Requires the format "todo in todos"'</span>
 		+ <span class="string">' or "key, prop in todos".'</span>
 	
-	controllerName = element.attr(<span class="string">'data-controller'</span>)
-	element.removeAttr(<span class="string">'data-controller'</span>)
+	controllerName = element.attr(prefix + <span class="string">'controller'</span>)
+	element.removeAttr(prefix + <span class="string">'controller'</span>)
 	[ itemName, propName ] = itemName.split <span class="regexp">/\s*,\s*/</span>
 	
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">'&lt;!--data-each="'</span> + expr + <span class="string">'"--&gt;'</span>).replaceAll(template)
+	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>each=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
 	elements = $()
 	properties = {}
 	value = <span class="literal">null</span>
@@ -692,20 +694,20 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
-              <h2>data-partial</h2>
+              <h2>chip-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
 be just the name of the template/controller, or it may be of the format <code>expr as itemName with partialName</code> where
 <code>expr</code> is an expression who&#39;s value will be set to <code>itemName</code> on the conroller in the partial. Note: any binding
-attributes which appear after <code>data-partial</code> will have the new value available if using the special format.</p>
+attributes which appear after <code>chip-partial</code> will have the new value available if using the special format.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div data-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
-<span class="tag">&lt;<span class="title">div</span> <span class="attribute">data-partial</span>=<span class="value">"getUser() as user with userInfo"</span> <span class="attribute">data-class</span>=<span class="value">"{administrator:user.isAdmin}"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+<pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div chip-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-partial</span>=<span class="value">"getUser() as user with userInfo"</span> <span class="attribute">chip-class</span>=<span class="value">"{administrator:user.isAdmin}"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
 
 <span class="tag">&lt;<span class="title">script</span> <span class="attribute">name</span>=<span class="value">"userInfo"</span> <span class="attribute">type</span>=<span class="value">"text/html"</span>&gt;</span><span class="javascript">
-  &lt;span data-text=<span class="string">"user.name"</span>&gt;<span class="xml"><span class="tag">&lt;/<span class="title">span</span>&gt;</span>
+  &lt;span chip-text=<span class="string">"user.name"</span>&gt;<span class="xml"><span class="tag">&lt;/<span class="title">span</span>&gt;</span>
 </span></span><span class="tag">&lt;/<span class="title">script</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
-<pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div data-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
+<pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div chip-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
 <span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"administrator"</span>&gt;</span>
   <span class="tag">&lt;<span class="title">span</span>&gt;</span>Jacob<span class="tag">&lt;/<span class="title">span</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
@@ -739,12 +741,12 @@ attributes which appear after <code>data-partial</code> will have the new value 
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
-              <h2>data-controller</h2>
+              <h2>chip-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the
 controller definition name which will be run if provided. Use this when you want to sandbox controller values (such
 as a form) or provide functionality provided by that controller to the element.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span> <span class="attribute">data-controller</span>=<span class="value">"userForm"</span> <span class="attribute">data-submit</span>=<span class="value">"saveUser()"</span>&gt;</span>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span> <span class="attribute">chip-controller</span>=<span class="value">"userForm"</span> <span class="attribute">chip-submit</span>=<span class="value">"saveUser()"</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">form</span>&gt;</span></code></pre>
 <p><em>Result if <code>formValid</code> is <code>true</code> and the browser is at &quot;<a href="http://www.example.com/account">http://www.example.com/account</a>&quot;:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">form</span>&gt;</span>

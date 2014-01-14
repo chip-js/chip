@@ -82,7 +82,7 @@ class Controller
 	
 	
 	runFilter: (value, filterName, args...) ->
-		Filter.runFilter(filterName, value, args...)
+		Filter.runFilter(this, filterName, value, args...)
 	
 	
 	passthrough: (value) ->

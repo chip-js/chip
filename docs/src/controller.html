@@ -244,7 +244,7 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 	
 	
 	runFilter: (value, filterName, args...) -&gt;
-		Filter.runFilter(filterName, value, args...)
+		Filter.runFilter(<span class="keyword">this</span>, filterName, value, args...)
 	
 	
 	passthrough: (value) -&gt;

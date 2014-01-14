@@ -9,11 +9,14 @@
 
 # Contents
 # --------
-# * [chip](chip.html) contains the namespace, templating, and routing functions for chip
+# * [chip](chip.html) the namespace, creates apps, and registers bindings and filters
+# * [App](app.html) represents an app that can have routes, controllers, and templates defined
 # * [Observer](observer.html) provides a system to globally reevaluate bound expressions and dispatch updates
 # * [Controller](controller.html) is used in the binding to attach data and run actions
 # * [Binding](binding.html) is the base of the binding system
+# * [Filter](filter.html) is the base for filtering within bindings
 # * [Default binding handlers](bindings.html) registers the default binding handlers chip provides
+# * [Default filters](filters.html) registers default filters provided with chip
 # * [equality](equality.html) is a utility for comparing the equality of objects and arrays
 
 # Initial setup
@@ -68,7 +71,7 @@ chip =
 	# ```
 	# 
 	# ```xml
-	# <p data-pirate="post.body">This text will be replaced.</p>
+	# <p chip-pirate="post.body">This text will be replaced.</p>
 	# ```
 	addBinding: (name, priority, handler) ->
 		Binding.addBinding(name, priority, handler)
@@ -82,7 +85,7 @@ chip =
 	# ```
 	# 
 	# ```xml
-	# <button data-click="window.alert('hello!')">Say Hello</button>
+	# <button chip-click="window.alert('hello!')">Say Hello</button>
 	#```
 	addEventBinding: (eventName) ->
 		Binding.addEventBinding(eventName)
@@ -101,7 +104,7 @@ chip =
 	# ```
 	# allows
 	# ```xml
-	# <a data-href="'/profile/' + person.id">My Profile</a>
+	# <a chip-href="'/profile/' + person.id">My Profile</a>
 	# ```
 	# which would result in
 	# ```xml
@@ -133,8 +136,8 @@ $ -> chip.init()
 
 
 
-## Set up the listeners for path changes. Chip uses the Path.js library for routing.
-#chip.listen = (element) ->
+# Set up the listeners for path changes. Chip uses the Path.js library for routing.
+# chip.listen = (element) ->
 #	unless chip.appController
 #		chip.createAppController()
 #	Path.history.listen()

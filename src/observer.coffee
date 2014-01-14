@@ -40,7 +40,7 @@ class Observer
 			return
 		
 		# Store in immutable version of the value, allowing for arrays and objects to change instance but not
-		# content and still refrain from dispatching callbacks (e.g. when using an object in data-class)
+		# content and still refrain from dispatching callbacks (e.g. when using an object in chip-class)
 		@oldValue = Observer.immutable value
 	
 	

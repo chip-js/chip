@@ -54,6 +54,10 @@ class Router
 	
 	
 	listen: (options = {}) ->
+		if options.stop
+			$(window).off 'popstate hashchange', @_handleChange if @_handleChange
+			return this
+		
 		@root = options.root if options.root?
 		@prefix = options.prefix if options.prefix?
 		@hashOnly = options.hashOnly if options.hashOnly?
@@ -62,7 +66,7 @@ class Router
 		@prefix = '' if @hashOnly
 		getUrl = null
 		
-		handleChange = =>
+		@_handleChange = =>
 			url = getUrl()
 			return if @currentUrl is url
 			@currentUrl = url
@@ -75,7 +79,7 @@ class Router
 				history.replaceState({}, '', url)
 			
 			getUrl = -> location.pathname + location.search
-			$(window).on 'popstate', handleChange
+			$(window).on 'popstate', @_handleChange
 		else
 			# If we aren't just using hashes and the page isn't at the root url, redirect to the roote page now
 			unless @hashOnly or location.pathname is @root
@@ -83,9 +87,9 @@ class Router
 				return # Reloading page, no need to continue executing script
 			
 			getUrl = => (if @hashOnly then '' else location.pathname.replace /\/$/, '') + location.hash.replace(/^#?\/?/, '/')
-			$(window).on 'hashchange', handleChange
+			$(window).on 'hashchange', @_handleChange
 		
-		handleChange()
+		@_handleChange()
 		this
 	
 	

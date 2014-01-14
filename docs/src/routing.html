@@ -126,6 +126,10 @@ portion of the URL.</p>
 	
 	
 	listen: (options = {}) -&gt;
+		<span class="keyword">if</span> options.stop
+			$(window).<span class="literal">off</span> <span class="string">'popstate hashchange'</span>, <span class="property">@_handleChange</span> <span class="keyword">if</span> <span class="property">@_handleChange</span>
+			<span class="keyword">return</span> <span class="keyword">this</span>
+		
 		<span class="property">@root</span> = options.root <span class="keyword">if</span> options.root?
 		<span class="property">@prefix</span> = options.prefix <span class="keyword">if</span> options.prefix?
 		<span class="property">@hashOnly</span> = options.hashOnly <span class="keyword">if</span> options.hashOnly?
@@ -134,7 +138,7 @@ portion of the URL.</p>
 		<span class="property">@prefix</span> = <span class="string">''</span> <span class="keyword">if</span> <span class="property">@hashOnly</span>
 		getUrl = <span class="literal">null</span>
 		
-		<span class="function"><span class="title">handleChange</span></span> = =&gt;
+		<span class="property">@_handleChange</span> = =&gt;
 			url = getUrl()
 			<span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@currentUrl</span> <span class="keyword">is</span> url
 			<span class="property">@currentUrl</span> = url
@@ -160,7 +164,7 @@ portion of the URL.</p>
 				history.replaceState({}, '', url)
 			
 			getUrl = -&gt; location.pathname + location.search
-			$(window).on 'popstate', handleChange
+			$(window).on 'popstate', @_handleChange
 		else</pre></div></div>
             
         </li>
@@ -181,9 +185,9 @@ portion of the URL.</p>
 				return # Reloading page, no need to continue executing script
 			
 			getUrl = =&gt; (if @hashOnly then '' else location.pathname.replace /\/$/, '') + location.hash.replace(/^#?\/?/, '/')
-			$(window).on 'hashchange', handleChange
+			$(window).on 'hashchange', @_handleChange
 		
-		handleChange()
+		@_handleChange()
 		this</pre></div></div>
             
         </li>

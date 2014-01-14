@@ -37,7 +37,7 @@ class Binding
 	# ```
 	# 
 	# ```xml
-	# <p data-pirate="post.body">This text will be replaced.</p>
+	# <p chip-pirate="post.body">This text will be replaced.</p>
 	# ```
 	@addBinding: (name, priority, handler) ->
 		if typeof priority is 'function'
@@ -62,7 +62,7 @@ class Binding
 	# ```
 	# 
 	# ```xml
-	# <p data-pirate="post.body">This text will be replaced.</p>
+	# <p chip-pirate="post.body">This text will be replaced.</p>
 	# ```
 	@removeBinding: (name) ->
 		entry = @bindings[name]
@@ -79,7 +79,7 @@ class Binding
 	# ```
 	# 
 	# ```xml
-	# <button data-click="window.alert('hello!')">Say Hello</button>
+	# <button chip-click="window.alert('hello!')">Say Hello</button>
 	#```
 	@addEventBinding: (eventName) ->
 		@addBinding eventName, (element, expr, controller) ->
@@ -106,7 +106,7 @@ class Binding
 	# ```
 	# allows
 	# ```xml
-	# <a data-href="'/profile/' + person.id">My Profile</a>
+	# <a chip-href="'/profile/' + person.id">My Profile</a>
 	# ```
 	# which would result in
 	# ```xml
@@ -169,7 +169,7 @@ class Binding
 			# Calls the handler function allowing the handler to set up the binding.
 			newController = attr.handler element, attr.value, controller
 			
-			# Stops processing if the element was removed from the DOM. data-if and data-each for example.
+			# Stops processing if the element was removed from the DOM. chip-if and chip-each for example.
 			return if node.parentNode isnt parentNode
 			
 			# Sets controller to new controller if a new controller has been defined by a handler.

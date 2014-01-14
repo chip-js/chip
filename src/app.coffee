@@ -7,7 +7,7 @@ class App
 	# Creates a new app
 	constructor: (appName) ->
 		@name = appName
-		@bindingPrefix = 'data-'
+		@bindingPrefix = 'chip-'
 		@controllers = {}
 		@templates = {}
 		@router = new Router()
@@ -30,9 +30,9 @@ class App
 				app.template name, $this.html()
 				$this.remove()
 		
-		while (element = @rootElement.find('[data-controller]:first')).length
-			name = element.attr 'data-controller'
-			element.removeAttr 'data-controller'
+		while (element = @rootElement.find("[#{@bindingPrefix}controller]:first")).length
+			name = element.attr "#{@bindingPrefix}controller"
+			element.removeAttr "#{@bindingPrefix}controller"
 			@createController element: element, name: name, parent: @rootController
 
 		@rootController
@@ -41,7 +41,7 @@ class App
 	# Templates
 	# ---------
 	
-	# Defines a new template by name with the provided `content` string. If no `content` is given then returns a new
+	# Registers a new template by name with the provided `content` string. If no `content` is given then returns a new
 	# instance of a defined template. This instance is a jQuery element.
 	template: (name, content) ->
 		if arguments.length > 1
@@ -56,10 +56,13 @@ class App
 	# Translations
 	# ------------
 	
-	# Provides translation strings for the app
-	translate: (translations) ->
-		for key, value of @translations
-			delete @translations[key]
+	# Provides translation strings for the app. Set `merge` to `true` if you want to add translations rather than
+	# replacing all of them with new ones.
+	translate: (translations, merge) ->
+		unless merge
+			# Don't delete this object since controllers reference it.
+			for key, value of @translations
+				delete @translations[key]
 		
 		for key, value of translations
 			@translations[key] = value
@@ -70,12 +73,12 @@ class App
 	# Controllers
 	# ---------
 	
-	# Defines a new controller with the provided initialization function. Registers the `initFunction` function to with
-	# `name` and the function will be called with the new controller as its only parameter every time one is
-	# instantiated with that name.
+	# Defines a controller initialization function. Registers the `initFunction` function with `name`. The function will
+	# be called with an instance of a controller as its only parameter every time a controller is created with that
+	# name.
 	# 
-	# Gets a controller by name if no `initFunction` is provided. Returns the `initFunction` previously registered or a
-	# function on the global scope with the name `name + 'Controller'` (e.g. `function blogController(){}`).
+	# If no `initFunction` is provided, returns the `initFunction` previously registered or if none has been registered
+	# a function on the global scope with the name `name + 'Controller'` (e.g. `function blogController(){}`).
 	# 
 	# **Example:**
 	#```javascript
@@ -86,7 +89,7 @@ class App
 	#     controller.syncView()
 	#   })
 	#
-	#   // provide a function for the view to call. E.g. <button data-click="logout">Logout</button>
+	#   // provide a function for the view to call. E.g. <button chip-click="logout">Logout</button>
 	#   controller.logout = function() {
 	#     MyAppAPI.logout(function(err) {
 	#       controller.user = null
@@ -175,7 +178,7 @@ class App
 	
 	# Create a route to be run when the given URL `path` is hit in the browser URL. The route `name` is used to load the
 	# template and controller by the same name. This template will be placed in the first element on page with a
-	# `data-route` attribute.
+	# `chip-route` attribute.
 	route: (path, handler, subroutes) ->
 		
 		handleRoute = (path, handler, subroutes, depth, before) =>
@@ -193,10 +196,10 @@ class App
 					@rootController.params = req.params
 					@rootController.query = req.query
 					selector = []
-					selector.push('[data-route]') for i in [0..depth]
+					selector.push("[#{@bindingPrefix}route]") for i in [0..depth]
 					container = @rootElement.find selector.join(' ') + ':first'
 					return unless container.length
-					container.attr('data-route', name)
+					container.attr("#{@bindingPrefix}route", name)
 					container.html(@template(name))
 					controller = @createController element: container, parent: parentController, name: name
 					controller.syncView()
@@ -235,17 +238,25 @@ class App
 	# Listen to URL changes
 	listen: (options) ->
 		$ =>
-			@router.on 'change', (event, path) =>
-				@rootController.trigger 'urlChange', [path]
+			if options.stop
+				@router.off 'change', @_routeHandler if @_routeHandler
+				@rootElement.off 'click', 'a[href]', @_clickHandler if @_clickHandler
+				return @router.listen options
 			
 			app = this
-			@rootElement.on 'click', 'a[href]', (event) ->
+			@_routeHandler = (event, path) =>
+				@rootController.trigger 'urlChange', [path]
+			
+			@_clickHandler = (event) ->
 				return if event.isDefaultPrevented() # if something else already handled this, we won't
 				return if this.host isnt location.host or this.href is location.href + '#'
 				event.preventDefault()
 				app.redirect $(this).attr("href")
-
+			
+			@router.on 'change', @_routeHandler
+			@rootElement.on 'click', 'a[href]', @_clickHandler
 			@router.listen options
+		this
 
 
 chip.App = App

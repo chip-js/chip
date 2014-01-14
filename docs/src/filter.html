@@ -50,12 +50,12 @@ place to register new bind handlers.</p>
 		<span class="keyword">this</span>
 	
 	
-	<span class="property">@runFilter</span>: (name, value, args...) -&gt;
+	<span class="property">@runFilter</span>: (controller, name, value, args...) -&gt;
 		filter = <span class="property">@filters</span>[name]?.filter <span class="keyword">or</span> window[name]
 		<span class="keyword">if</span> filter
-			<span class="keyword">return</span> filter(value, args...)
+			<span class="keyword">return</span> filter.apply(controller, [value, args...])
 		<span class="keyword">else</span>
-			console.error <span class="string">"Filter `<span class="subst">#{filterName}</span>` has not been defined."</span>
+			console.error <span class="string">"Filter `<span class="subst">#{name}</span>` has not been defined."</span>
 			<span class="keyword">return</span> value</pre></div></div>
             
         </li>

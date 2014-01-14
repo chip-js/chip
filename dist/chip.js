@@ -630,10 +630,16 @@ if (!Date.prototype.toISOString) {
     };
 
     Router.prototype.listen = function(options) {
-      var getUrl, handleChange, url, _ref,
+      var getUrl, url, _ref,
         _this = this;
       if (options == null) {
         options = {};
+      }
+      if (options.stop) {
+        if (this._handleChange) {
+          $(window).off('popstate hashchange', this._handleChange);
+        }
+        return this;
       }
       if (options.root != null) {
         this.root = options.root;
@@ -652,7 +658,7 @@ if (!Date.prototype.toISOString) {
         this.prefix = '';
       }
       getUrl = null;
-      handleChange = function() {
+      this._handleChange = function() {
         var url;
         url = getUrl();
         if (_this.currentUrl === url) {
@@ -669,7 +675,7 @@ if (!Date.prototype.toISOString) {
         getUrl = function() {
           return location.pathname + location.search;
         };
-        $(window).on('popstate', handleChange);
+        $(window).on('popstate', this._handleChange);
       } else {
         if (!(this.hashOnly || location.pathname === this.root)) {
           location.href = this.root + '#' + location.pathname;
@@ -678,9 +684,9 @@ if (!Date.prototype.toISOString) {
         getUrl = function() {
           return (_this.hashOnly ? '' : location.pathname.replace(/\/$/, '')) + location.hash.replace(/^#?\/?/, '/');
         };
-        $(window).on('hashchange', handleChange);
+        $(window).on('hashchange', this._handleChange);
       }
-      handleChange();
+      this._handleChange();
       return this;
     };
 
@@ -1041,7 +1047,7 @@ if (!Date.prototype.toISOString) {
     Controller.prototype.runFilter = function() {
       var args, filterName, value;
       value = arguments[0], filterName = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
-      return Filter.runFilter.apply(Filter, [filterName, value].concat(__slice.call(args)));
+      return Filter.runFilter.apply(Filter, [this, filterName, value].concat(__slice.call(args)));
     };
 
     Controller.prototype.passthrough = function(value) {
@@ -1285,7 +1291,7 @@ if (!Date.prototype.toISOString) {
   App = (function() {
     function App(appName) {
       this.name = appName;
-      this.bindingPrefix = 'data-';
+      this.bindingPrefix = 'chip-';
       this.controllers = {};
       this.templates = {};
       this.router = new Router();
@@ -1316,9 +1322,9 @@ if (!Date.prototype.toISOString) {
           return $this.remove();
         }
       });
-      while ((element = this.rootElement.find('[data-controller]:first')).length) {
-        name = element.attr('data-controller');
-        element.removeAttr('data-controller');
+      while ((element = this.rootElement.find("[" + this.bindingPrefix + "controller]:first")).length) {
+        name = element.attr("" + this.bindingPrefix + "controller");
+        element.removeAttr("" + this.bindingPrefix + "controller");
         this.createController({
           element: element,
           name: name,
@@ -1340,12 +1346,14 @@ if (!Date.prototype.toISOString) {
       }
     };
 
-    App.prototype.translate = function(translations) {
+    App.prototype.translate = function(translations, merge) {
       var key, value, _ref, _ref1;
-      _ref = this.translations;
-      for (key in _ref) {
-        value = _ref[key];
-        delete this.translations[key];
+      if (!merge) {
+        _ref = this.translations;
+        for (key in _ref) {
+          value = _ref[key];
+          delete this.translations[key];
+        }
       }
       for (key in translations) {
         value = translations[key];
@@ -1463,13 +1471,13 @@ if (!Date.prototype.toISOString) {
             _this.rootController.query = req.query;
             selector = [];
             for (i = _i = 0; 0 <= depth ? _i <= depth : _i >= depth; i = 0 <= depth ? ++_i : --_i) {
-              selector.push('[data-route]');
+              selector.push("[" + _this.bindingPrefix + "route]");
             }
             container = _this.rootElement.find(selector.join(' ') + ':first');
             if (!container.length) {
               return;
             }
-            container.attr('data-route', name);
+            container.attr("" + _this.bindingPrefix + "route", name);
             container.html(_this.template(name));
             controller = _this.createController({
               element: container,
@@ -1510,13 +1518,22 @@ if (!Date.prototype.toISOString) {
 
     App.prototype.listen = function(options) {
       var _this = this;
-      return $(function() {
+      $(function() {
         var app;
-        _this.router.on('change', function(event, path) {
-          return _this.rootController.trigger('urlChange', [path]);
-        });
+        if (options.stop) {
+          if (_this._routeHandler) {
+            _this.router.off('change', _this._routeHandler);
+          }
+          if (_this._clickHandler) {
+            _this.rootElement.off('click', 'a[href]', _this._clickHandler);
+          }
+          return _this.router.listen(options);
+        }
         app = _this;
-        _this.rootElement.on('click', 'a[href]', function(event) {
+        _this._routeHandler = function(event, path) {
+          return _this.rootController.trigger('urlChange', [path]);
+        };
+        _this._clickHandler = function(event) {
           if (event.isDefaultPrevented()) {
             return;
           }
@@ -1525,9 +1542,12 @@ if (!Date.prototype.toISOString) {
           }
           event.preventDefault();
           return app.redirect($(this).attr("href"));
-        });
+        };
+        _this.router.on('change', _this._routeHandler);
+        _this.rootElement.on('click', 'a[href]', _this._clickHandler);
         return _this.router.listen(options);
       });
+      return this;
     };
 
     return App;
@@ -1687,13 +1707,13 @@ if (!Date.prototype.toISOString) {
     };
 
     Filter.runFilter = function() {
-      var args, filter, name, value, _ref;
-      name = arguments[0], value = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
+      var args, controller, filter, name, value, _ref;
+      controller = arguments[0], name = arguments[1], value = arguments[2], args = 4 <= arguments.length ? __slice.call(arguments, 3) : [];
       filter = ((_ref = this.filters[name]) != null ? _ref.filter : void 0) || window[name];
       if (filter) {
-        return filter.apply(null, [value].concat(__slice.call(args)));
+        return filter.apply(controller, [value].concat(__slice.call(args)));
       } else {
-        console.error("Filter `" + filterName + "` has not been defined.");
+        console.error("Filter `" + name + "` has not been defined.");
         return value;
       }
     };
@@ -1897,11 +1917,12 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.addBinding('if', 50, function(element, expr, controller) {
-    var controllerName, placeholder, template;
+    var controllerName, placeholder, prefix, template;
+    prefix = controller.app.bindingPrefix;
     template = element;
-    placeholder = $('<!--data-if="' + expr + '"-->').replaceAll(template);
-    controllerName = element.attr('data-controller');
-    element.removeAttr('data-controller');
+    placeholder = $("<!--" + prefix + "if=\#{expr}\"-->").replaceAll(template);
+    controllerName = element.attr(prefix + 'controller');
+    element.removeAttr(prefix + 'controller');
     return controller.watch(expr, function(value) {
       if (value) {
         if (placeholder.parent().length) {
@@ -1922,20 +1943,21 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.addBinding('each', 100, function(element, expr, controller) {
-    var controllerName, createElement, elements, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1;
+    var controllerName, createElement, elements, itemName, orig, placeholder, prefix, propName, properties, template, value, _ref, _ref1;
+    prefix = controller.app.bindingPrefix;
     orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
     if (!(itemName && expr)) {
-      throw 'Invalid data-each "';
+      throw "Invalid " + prefix + "each \"";
       +orig;
       +'". Requires the format "todo in todos"';
       +' or "key, prop in todos".';
     }
-    controllerName = element.attr('data-controller');
-    element.removeAttr('data-controller');
+    controllerName = element.attr(prefix + 'controller');
+    element.removeAttr(prefix + 'controller');
     _ref1 = itemName.split(/\s*,\s*/), itemName = _ref1[0], propName = _ref1[1];
     template = element;
-    placeholder = $('<!--data-each="' + expr + '"-->').replaceAll(template);
+    placeholder = $("<!--" + prefix + "each=\"" + expr + "\"-->").replaceAll(template);
     elements = $();
     properties = {};
     value = null;

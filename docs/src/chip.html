@@ -67,11 +67,14 @@ For all details and documentation:
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
               <ul>
-<li><a href="chip.html">chip</a> contains the namespace, templating, and routing functions for chip</li>
+<li><a href="chip.html">chip</a> the namespace, creates apps, and registers bindings and filters</li>
+<li><a href="app.html">App</a> represents an app that can have routes, controllers, and templates defined</li>
 <li><a href="observer.html">Observer</a> provides a system to globally reevaluate bound expressions and dispatch updates</li>
 <li><a href="controller.html">Controller</a> is used in the binding to attach data and run actions</li>
 <li><a href="binding.html">Binding</a> is the base of the binding system</li>
+<li><a href="filter.html">Filter</a> is the base for filtering within bindings</li>
 <li><a href="bindings.html">Default binding handlers</a> registers the default binding handlers chip provides</li>
+<li><a href="filters.html">Default filters</a> registers default filters provided with chip</li>
 <li><a href="equality.html">equality</a> is a utility for comparing the equality of objects and arrays</li>
 </ul>
 
@@ -196,7 +199,7 @@ priority. The default is <code>0</code>.</p>
     element.text(value)
   }
 }</code></pre>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">data-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">chip-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
 
             </div>
             
@@ -215,7 +218,7 @@ priority. The default is <code>0</code>.</p>
               <p>Shortcut, adds a handler that executes the expression when the named event is dispatched.</p>
 <p><strong>Example:</strong> Handles the click event.</p>
 <pre><code class="lang-javascript">chip.addEventBinding(<span class="string">'click'</span>)</code></pre>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">data-click</span>=<span class="value">"window.alert('hello!')"</span>&gt;</span>Say Hello<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">chip-click</span>=<span class="value">"window.alert('hello!')"</span>&gt;</span>Say Hello<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
 
             </div>
             
@@ -251,7 +254,7 @@ priority. The default is <code>0</code>.</p>
 <p><strong>Example</strong></p>
 <pre><code class="lang-javascript">chip.addAttributeBinding(<span class="string">'href'</span>)</code></pre>
 <p>allows</p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">data-href</span>=<span class="value">"'/profile/' + person.id"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">chip-href</span>=<span class="value">"'/profile/' + person.id"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
 <p>which would result in</p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/profile/368"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
 
@@ -331,11 +334,11 @@ e.g. <code>chip.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
         <li id="section-19">
             <div class="annotation">
               
-              <div class="pilwrap for-h1">
+              <div class="pilwrap ">
                 <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
-              <h1>Set up the listeners for path changes. Chip uses the Path.js library for routing.</h1>
-<p>chip.listen = (element) -&gt;
+              <p>Set up the listeners for path changes. Chip uses the Path.js library for routing.
+chip.listen = (element) -&gt;
 unless chip.appController
     chip.createAppController()
 Path.history.listen()
