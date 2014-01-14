@@ -33,7 +33,13 @@ class Router
 	
 	
 	redirect: (url) ->
-		url = @prefix + url
+		if url[0] is '.'
+			pathParts = document.createElement('a')
+			pathParts.href = url
+			url = pathParts.pathname
+		else
+			url = @prefix + url
+		
 		return if @currentUrl is url
 		
 		# Redirects if the url isn't at this page.

@@ -93,7 +93,13 @@ portion of the URL.</p>
 	
 	
 	redirect: (url) -&gt;
-		url = <span class="property">@prefix</span> + url
+		<span class="keyword">if</span> url[<span class="number">0</span>] <span class="keyword">is</span> <span class="string">'.'</span>
+			pathParts = document.createElement(<span class="string">'a'</span>)
+			pathParts.href = url
+			url = pathParts.pathname
+		<span class="keyword">else</span>
+			url = <span class="property">@prefix</span> + url
+		
 		<span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@currentUrl</span> <span class="keyword">is</span> url</pre></div></div>
             
         </li>
