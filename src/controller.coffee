@@ -119,7 +119,7 @@ class Controller
 		catch e
 			# Throws an error if the expression was not valid JavaScript
 			throw new Error e.message + ' in observer binding:\n`' + expr + '`\n' +
-			'Compiled binding:\n' + functionBody
+			'Compiled binding:\n' + normalizedExpr
 		func
 	
 	
