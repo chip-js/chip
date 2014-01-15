@@ -27,7 +27,7 @@
             
             <div class="content"><div class='highlight'><pre>
 
-chip.addBinding <span class="string">'debug'</span>, (element, expr, controller) -&gt;
+chip.binding <span class="string">'debug'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		console.info <span class="string">'Debug:'</span>, expr, <span class="string">'='</span>, value</pre></div></div>
             
@@ -61,7 +61,7 @@ chip.addBinding <span class="string">'debug'</span>, (element, expr, controller)
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'text'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'text'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		element.text(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
             
@@ -91,7 +91,7 @@ chip.addBinding <span class="string">'debug'</span>, (element, expr, controller)
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'html'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'html'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		element.html(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
             
@@ -116,7 +116,7 @@ chip.addBinding <span class="string">'debug'</span>, (element, expr, controller)
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'translate'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'translate'</span>, (element, expr, controller) -&gt;
 	nodes = element.get(<span class="number">0</span>).childNodes
 	text = <span class="string">''</span>
 	placeholders = []
@@ -203,7 +203,7 @@ the class list depending on whether the value of the property is truthy or false
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'class'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'class'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
 		<span class="keyword">if</span> Array.isArray(value)
 			value = value.join(<span class="string">' '</span>)
@@ -248,7 +248,7 @@ provided it adds the “active” class if the element or it‘s first anchor ch
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'active'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'active'</span>, (element, expr, controller) -&gt;
 	<span class="keyword">if</span> expr
 		controller.watch expr, (value) -&gt;
 			<span class="keyword">if</span> value
@@ -286,7 +286,7 @@ whole section.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'active-section'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'active-section'</span>, (element, expr, controller) -&gt;
 	<span class="function"><span class="title">refresh</span></span> = -&gt;
 		<span class="keyword">if</span> link.length <span class="keyword">and</span> location.href.indexOf(link.get(<span class="number">0</span>).href) <span class="keyword">is</span> <span class="number">0</span>
 			element.addClass(<span class="string">'active'</span>)
@@ -331,7 +331,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'value'</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'value'</span>, (element, expr, controller) -&gt;
 	getValue =
 		<span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span>
 			-&gt; element.prop(<span class="string">'checked'</span>)
@@ -409,7 +409,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
             
             <div class="content"><div class='highlight'><pre>[ <span class="string">'click'</span>, <span class="string">'dblclick'</span>, <span class="string">'submit'</span>, <span class="string">'change'</span>, <span class="string">'focus'</span>, <span class="string">'blur'</span> ]
 	.forEach (name) -&gt;
-		chip.addEventBinding(name)</pre></div></div>
+		chip.eventBinding(name)</pre></div></div>
             
         </li>
         
@@ -436,7 +436,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
             
             <div class="content"><div class='highlight'><pre>keyCodes = { enter: <span class="number">13</span>, esc: <span class="number">27</span> }
 <span class="keyword">for</span> own name, keyCode <span class="keyword">of</span> keyCodes
-	chip.addKeyEventBinding(name, keyCode)</pre></div></div>
+	chip.keyEventBinding(name, keyCode)</pre></div></div>
             
         </li>
         
@@ -461,7 +461,7 @@ pressed.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addKeyEventBinding(<span class="string">'ctrl-enter'</span>, keyCodes.enter, <span class="literal">true</span>)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>chip.keyEventBinding(<span class="string">'ctrl-enter'</span>, keyCodes.enter, <span class="literal">true</span>)</pre></div></div>
             
         </li>
         
@@ -489,7 +489,7 @@ pressed.</p>
             
             <div class="content"><div class='highlight'><pre>attribs = [ <span class="string">'href'</span>, <span class="string">'src'</span>, <span class="string">'id'</span> ]
 <span class="keyword">for</span> name <span class="keyword">in</span> attribs
-	chip.addAttributeBinding(name)</pre></div></div>
+	chip.attributeBinding(name)</pre></div></div>
             
         </li>
         
@@ -519,7 +519,7 @@ pressed.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>[ <span class="string">'checked'</span>, <span class="string">'disabled'</span> ].forEach (name) -&gt;
-	chip.addAttributeToggleBinding(name)</pre></div></div>
+	chip.attributeToggleBinding(name)</pre></div></div>
             
         </li>
         
@@ -548,7 +548,7 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
 	prefix = controller.app.bindingPrefix
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
 	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>if=\#{expr}\"--&gt;"</span>).replaceAll(template)
@@ -608,7 +608,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'each'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'each'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
 	prefix = controller.app.bindingPrefix
 	orig = expr
 	[ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
@@ -714,7 +714,7 @@ attributes which appear after <code>chip-partial</code> will have the new value 
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'partial'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'partial'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
 	parts = expr.split <span class="regexp">/\s+as\s+\s+with\s+/</span>
 	nameExpr = parts.pop()
 	[ itemExpr, itemName ] = parts
@@ -754,7 +754,7 @@ as a form) or provide functionality provided by that controller to the element.<
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.addBinding <span class="string">'controller'</span>, <span class="number">30</span>, (element, controllerName, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'controller'</span>, <span class="number">30</span>, (element, controllerName, controller) -&gt;
 	controller.child element: element, name: controllerName</pre></div></div>
             
         </li>

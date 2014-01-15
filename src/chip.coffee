@@ -73,7 +73,7 @@ chip =
 	# ```xml
 	# <p chip-pirate="post.body">This text will be replaced.</p>
 	# ```
-	addBinding: (name, priority, handler) ->
+	binding: (name, priority, handler) ->
 		Binding.addBinding(name, priority, handler)
 	
 	
@@ -87,12 +87,12 @@ chip =
 	# ```xml
 	# <button chip-click="window.alert('hello!')">Say Hello</button>
 	#```
-	addEventBinding: (eventName) ->
+	eventBinding: (eventName) ->
 		Binding.addEventBinding(eventName)
 	
 	
 	# Shortcut, adds a handler that responds when the given key is pressed, e.g. `chip.addEventBinding('esc', 27)`.
-	addKeyEventBinding: (name, keyCode, ctrlKey) ->
+	keyEventBinding: (name, keyCode, ctrlKey) ->
 		Binding.addKeyEventBinding(name, keyCode, ctrlKey)
 	
 	
@@ -110,13 +110,13 @@ chip =
 	# ```xml
 	# <a href="/profile/368">My Profile</a>
 	# ```
-	addAttributeBinding: (name) ->
+	attributeBinding: (name) ->
 		Binding.addAttributeBinding(name)
 	
 	
 	# Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
 	# e.g. `chip.addAttributeToggleBinding('checked')`.
-	addAttributeToggleBinding: (name) ->
+	attributeToggleBinding: (name) ->
 		Binding.addAttributeToggleBinding(name)
 		
 	# Filters

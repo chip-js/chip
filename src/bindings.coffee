@@ -1,7 +1,7 @@
 # # Default Bindings
 
 
-chip.addBinding 'debug', (element, expr, controller) ->
+chip.binding 'debug', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		console.info 'Debug:', expr, '=', value
 
@@ -29,7 +29,7 @@ chip.addBinding 'debug', (element, expr, controller) ->
 #   <span>10/16/2013</span>.
 # </div>
 # ```
-chip.addBinding 'text', (element, expr, controller) ->
+chip.binding 'text', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		element.text(if value? then value else '')
 
@@ -53,7 +53,7 @@ chip.addBinding 'text', (element, expr, controller) ->
 #   </p>
 # </div>
 # ```
-chip.addBinding 'html', (element, expr, controller) ->
+chip.binding 'html', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		element.html(if value? then value else '')
 
@@ -76,7 +76,7 @@ chip.addBinding 'html', (element, expr, controller) ->
 # ```xml
 # <h1>Sup <span>Jacob</span> Yo!</h1>
 # ```
-chip.addBinding 'translate', (element, expr, controller) ->
+chip.binding 'translate', (element, expr, controller) ->
 	nodes = element.get(0).childNodes
 	text = ''
 	placeholders = []
@@ -132,7 +132,7 @@ chip.addBinding 'translate', (element, expr, controller) ->
 #   <button class="btn primary highlight"></button>
 # </div>
 # ```
-chip.addBinding 'class', (element, expr, controller) ->
+chip.binding 'class', (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		if Array.isArray(value)
 			value = value.join(' ')
@@ -171,7 +171,7 @@ chip.addBinding 'class', (element, expr, controller) ->
 #   <li><a href="/profile">Profile</a></li>
 # </ul>
 # ```
-chip.addBinding 'active', (element, expr, controller) ->
+chip.binding 'active', (element, expr, controller) ->
 	if expr
 		controller.watch expr, (value) ->
 			if value
@@ -198,7 +198,7 @@ chip.addBinding 'active', (element, expr, controller) ->
 # ## chip-active-section
 # The same as active except that the active class is added for any URL which starts with the link (marks active for the
 # whole section.
-chip.addBinding 'active-section', (element, expr, controller) ->
+chip.binding 'active-section', (element, expr, controller) ->
 	refresh = ->
 		if link.length and location.href.indexOf(link.get(0).href) is 0
 			element.addClass('active')
@@ -237,7 +237,7 @@ chip.addBinding 'active-section', (element, expr, controller) ->
 # ```
 # And when the user changes the text in the first input to "Jac", `user.firstName` will be updated immediately with the
 # value of `'Jac'`.
-chip.addBinding 'value', (element, expr, controller) ->
+chip.binding 'value', (element, expr, controller) ->
 	getValue =
 		if element.attr('type') is 'checkbox'
 			-> element.prop('checked')
@@ -297,7 +297,7 @@ chip.addBinding 'value', (element, expr, controller) ->
 # ```
 [ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur' ]
 	.forEach (name) ->
-		chip.addEventBinding(name)
+		chip.eventBinding(name)
 
 # ## chip-[key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches.
@@ -317,7 +317,7 @@ chip.addBinding 'value', (element, expr, controller) ->
 # ```
 keyCodes = { enter: 13, esc: 27 }
 for own name, keyCode of keyCodes
-	chip.addKeyEventBinding(name, keyCode)
+	chip.keyEventBinding(name, keyCode)
 
 # ## chip-[control key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches and the ctrlKey or metaKey is
@@ -335,7 +335,7 @@ for own name, keyCode of keyCodes
 # ```xml
 # <input>
 # ```
-chip.addKeyEventBinding('ctrl-enter', keyCodes.enter, true)
+chip.keyEventBinding('ctrl-enter', keyCodes.enter, true)
 
 # ## chip-[attribute]
 # Adds a handler to set the attribute of element to the value of the expression.
@@ -356,7 +356,7 @@ chip.addKeyEventBinding('ctrl-enter', keyCodes.enter, true)
 # ```
 attribs = [ 'href', 'src', 'id' ]
 for name in attribs
-	chip.addAttributeBinding(name)
+	chip.attributeBinding(name)
 
 # ## chip-[toggle attribute]
 # Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.
@@ -379,7 +379,7 @@ for name in attribs
 # <button disabled>Submit</button>
 # ```
 [ 'checked', 'disabled' ].forEach (name) ->
-	chip.addAttributeToggleBinding(name)
+	chip.attributeToggleBinding(name)
 
 # ## chip-if
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -401,7 +401,7 @@ for name in attribs
 #   <li><a href="/login">Sign In</a></li>
 # </ul>
 # ```
-chip.addBinding 'if', 50, (element, expr, controller) ->
+chip.binding 'if', 50, (element, expr, controller) ->
 	prefix = controller.app.bindingPrefix
 	template = element # use a placeholder for the element and the element as a template
 	placeholder = $("<!--#{prefix}if=\#{expr}\"-->").replaceAll(template)
@@ -455,7 +455,7 @@ chip.addBinding 'if', 50, (element, expr, controller) ->
 #   </div>
 # </div>
 # ```
-chip.addBinding 'each', 100, (element, expr, controller) ->
+chip.binding 'each', 100, (element, expr, controller) ->
 	prefix = controller.app.bindingPrefix
 	orig = expr
 	[ itemName, expr ] = expr.split /\s+in\s+/
@@ -555,7 +555,7 @@ chip.addBinding 'each', 100, (element, expr, controller) ->
 #   <span>Jacob</span>
 # </div>
 # ```
-chip.addBinding 'partial', 50, (element, expr, controller) ->
+chip.binding 'partial', 50, (element, expr, controller) ->
 	parts = expr.split /\s+as\s+\s+with\s+/
 	nameExpr = parts.pop()
 	[ itemExpr, itemName ] = parts
@@ -589,5 +589,5 @@ chip.addBinding 'partial', 50, (element, expr, controller) ->
 # <form>
 # </form>
 # ```
-chip.addBinding 'controller', 30, (element, controllerName, controller) ->
+chip.binding 'controller', 30, (element, controllerName, controller) ->
 	controller.child element: element, name: controllerName
