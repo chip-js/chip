@@ -245,8 +245,8 @@ processProperties = (expr, options = {}) ->
 		# function. We use `colonOrParen` and `objIndicator` to know if it is an object.
 		# `postfix` is the `colonOrParen` with whitespace before it.
 		
-		# skips object keys e.g. test in `{test:true}` and keywords e.g. true in `{test:true}`.
-		if objIndicator and colonOrParen is ':' or options.ignore.indexOf(propChain.split(/\.|\(/).shift()) isnt -1
+		# skips object keys e.g. test in `{test:true}`.
+		if objIndicator and colonOrParen is ':'
 			return match
 		
 		# continuations after a function (e.g. `getUser(12).firstName`).
@@ -257,7 +257,7 @@ processProperties = (expr, options = {}) ->
 		parts = propChain.split('.')
 		newChain = ''
 		
-		if parts.length is 1 and not continuation
+		if parts.length is 1 and not continuation and not colonOrParen
 			newChain = 'this.' + parts[0]
 		else
 			newChain += '(' unless continuation
@@ -284,6 +284,10 @@ processProperties = (expr, options = {}) ->
 						if expr[endIndex + 1] is '.'
 							newChain += processPart(options, part, partIndex, continuation)
 							return
+						else if partIndex is 0
+							newChain += processPart(options, part, partIndex, continuation)
+							newChain += "_ref#{options.references})"
+							return
 					newChain += "_ref#{options.references}.#{part})"
 					return
 				else
@@ -305,7 +309,10 @@ processProperties = (expr, options = {}) ->
 processPart = (options, part, index, continuation) ->
 	# if the first
 	if index is 0 and not continuation
-		part = "this.#{part}"
+		if options.ignore.indexOf(part.split(/\.|\(/).shift()) is -1
+			part = "this.#{part}"
+		else
+			part = "#{part}"
 	else
 		part = "_ref#{options.references}.#{part}"
 	

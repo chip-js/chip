@@ -531,19 +531,19 @@ if (!Date.prototype.toISOString) {
       }
       return app;
     },
-    addBinding: function(name, priority, handler) {
+    binding: function(name, priority, handler) {
       return Binding.addBinding(name, priority, handler);
     },
-    addEventBinding: function(eventName) {
+    eventBinding: function(eventName) {
       return Binding.addEventBinding(eventName);
     },
-    addKeyEventBinding: function(name, keyCode, ctrlKey) {
+    keyEventBinding: function(name, keyCode, ctrlKey) {
       return Binding.addKeyEventBinding(name, keyCode, ctrlKey);
     },
-    addAttributeBinding: function(name) {
+    attributeBinding: function(name) {
       return Binding.addAttributeBinding(name);
     },
-    addAttributeToggleBinding: function(name) {
+    attributeToggleBinding: function(name) {
       return Binding.addAttributeToggleBinding(name);
     },
     filter: function(name, filter) {
@@ -1089,7 +1089,7 @@ if (!Date.prototype.toISOString) {
         func = this.exprCache[expr] = Function.apply(null, __slice.call(extraArgNames).concat([normalizedExpr]));
       } catch (_error) {
         e = _error;
-        throw new Error(e.message + ' in observer binding:\n`' + expr + '`\n' + 'Compiled binding:\n' + functionBody);
+        throw new Error(e.message + ' in observer binding:\n`' + expr + '`\n' + 'Compiled binding:\n' + normalizedExpr);
       }
       return func;
     };
@@ -1222,7 +1222,7 @@ if (!Date.prototype.toISOString) {
     processProperty = function(match, prefix, objIndicator, propChain, postfix, colonOrParen) {
       var continuation, index, newChain, parts;
       index = propExpr.lastIndex - match.length;
-      if (objIndicator && colonOrParen === ':' || options.ignore.indexOf(propChain.split(/\.|\(/).shift()) !== -1) {
+      if (objIndicator && colonOrParen === ':') {
         return match;
       }
       continuation = prefix === '.';
@@ -1231,7 +1231,7 @@ if (!Date.prototype.toISOString) {
       }
       parts = propChain.split('.');
       newChain = '';
-      if (parts.length === 1 && !continuation) {
+      if (parts.length === 1 && !continuation && !colonOrParen) {
         newChain = 'this.' + parts[0];
       } else {
         if (!continuation) {
@@ -1263,6 +1263,10 @@ if (!Date.prototype.toISOString) {
               if (expr[endIndex + 1] === '.') {
                 newChain += processPart(options, part, partIndex, continuation);
                 return;
+              } else if (partIndex === 0) {
+                newChain += processPart(options, part, partIndex, continuation);
+                newChain += "_ref" + options.references + ")";
+                return;
               }
             }
             newChain += "_ref" + options.references + "." + part + ")";
@@ -1285,7 +1289,11 @@ if (!Date.prototype.toISOString) {
   processPart = function(options, part, index, continuation) {
     var ref;
     if (index === 0 && !continuation) {
-      part = "this." + part;
+      if (options.ignore.indexOf(part.split(/\.|\(/).shift()) === -1) {
+        part = "this." + part;
+      } else {
+        part = "" + part;
+      }
     } else {
       part = "_ref" + options.references + "." + part;
     }
@@ -1735,25 +1743,25 @@ if (!Date.prototype.toISOString) {
 
   })();
 
-  chip.addBinding('debug', function(element, expr, controller) {
+  chip.binding('debug', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return console.info('Debug:', expr, '=', value);
     });
   });
 
-  chip.addBinding('text', function(element, expr, controller) {
+  chip.binding('text', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.text(value != null ? value : '');
     });
   });
 
-  chip.addBinding('html', function(element, expr, controller) {
+  chip.binding('html', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.html(value != null ? value : '');
     });
   });
 
-  chip.addBinding('translate', function(element, expr, controller) {
+  chip.binding('translate', function(element, expr, controller) {
     var i, node, nodes, placeholders, refresh, text, _i, _len;
     nodes = element.get(0).childNodes;
     text = '';
@@ -1797,7 +1805,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.addBinding('class', function(element, expr, controller) {
+  chip.binding('class', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       var className, toggle, _results;
       if (Array.isArray(value)) {
@@ -1821,7 +1829,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.addBinding('active', function(element, expr, controller) {
+  chip.binding('active', function(element, expr, controller) {
     var link, refresh;
     if (expr) {
       return controller.watch(expr, function(value) {
@@ -1849,7 +1857,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.addBinding('active-section', function(element, expr, controller) {
+  chip.binding('active-section', function(element, expr, controller) {
     var link, refresh;
     refresh = function() {
       if (link.length && location.href.indexOf(link.get(0).href) === 0) {
@@ -1867,7 +1875,7 @@ if (!Date.prototype.toISOString) {
     return refresh();
   });
 
-  chip.addBinding('value', function(element, expr, controller) {
+  chip.binding('value', function(element, expr, controller) {
     var getValue, observer, setValue;
     getValue = element.attr('type') === 'checkbox' ? function() {
       return element.prop('checked');
@@ -1902,7 +1910,7 @@ if (!Date.prototype.toISOString) {
   });
 
   ['click', 'dblclick', 'submit', 'change', 'focus', 'blur'].forEach(function(name) {
-    return chip.addEventBinding(name);
+    return chip.eventBinding(name);
   });
 
   keyCodes = {
@@ -1913,23 +1921,23 @@ if (!Date.prototype.toISOString) {
   for (name in keyCodes) {
     if (!__hasProp.call(keyCodes, name)) continue;
     keyCode = keyCodes[name];
-    chip.addKeyEventBinding(name, keyCode);
+    chip.keyEventBinding(name, keyCode);
   }
 
-  chip.addKeyEventBinding('ctrl-enter', keyCodes.enter, true);
+  chip.keyEventBinding('ctrl-enter', keyCodes.enter, true);
 
   attribs = ['href', 'src', 'id'];
 
   for (_i = 0, _len = attribs.length; _i < _len; _i++) {
     name = attribs[_i];
-    chip.addAttributeBinding(name);
+    chip.attributeBinding(name);
   }
 
   ['checked', 'disabled'].forEach(function(name) {
-    return chip.addAttributeToggleBinding(name);
+    return chip.attributeToggleBinding(name);
   });
 
-  chip.addBinding('if', 50, function(element, expr, controller) {
+  chip.binding('if', 50, function(element, expr, controller) {
     var controllerName, placeholder, prefix, template;
     prefix = controller.app.bindingPrefix;
     template = element;
@@ -1955,7 +1963,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.addBinding('each', 100, function(element, expr, controller) {
+  chip.binding('each', 100, function(element, expr, controller) {
     var controllerName, createElement, elements, itemName, orig, placeholder, prefix, propName, properties, template, value, _ref, _ref1;
     prefix = controller.app.bindingPrefix;
     orig = expr;
@@ -2046,7 +2054,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.addBinding('partial', 50, function(element, expr, controller) {
+  chip.binding('partial', 50, function(element, expr, controller) {
     var childController, itemExpr, itemName, nameExpr, parts, properties;
     parts = expr.split(/\s+as\s+\s+with\s+/);
     nameExpr = parts.pop();
@@ -2074,7 +2082,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.addBinding('controller', 30, function(element, controllerName, controller) {
+  chip.binding('controller', 30, function(element, controllerName, controller) {
     return controller.child({
       element: element,
       name: controllerName
