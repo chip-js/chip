@@ -106,7 +106,7 @@ chip.binding 'translate', (element, expr, controller) ->
 		
 		element.html nodes
 	
-	element.on 'elementRemove', -> controller.off 'translationChange', refresh
+	element.on 'remove', -> controller.off 'translationChange', refresh
 	controller.on 'translationChange', refresh
 	
 	# don't process if no translation is loaded
@@ -191,7 +191,7 @@ chip.binding 'active', (element, expr, controller) ->
 			.first()
 		link.on 'hrefChanged', refresh
 		controller.on 'urlChange', refresh
-		element.on 'elementRemove', -> controller.off 'urlChange', refresh
+		element.on 'remove', -> controller.off 'urlChange', refresh
 		refresh()
 
 
@@ -211,7 +211,7 @@ chip.binding 'active-section', (element, expr, controller) ->
 		.first()
 	link.on 'hrefChanged', refresh
 	controller.on 'urlChange', refresh
-	element.on 'elementRemove', -> controller.off 'urlChange', refresh
+	element.on 'remove', -> controller.off 'urlChange', refresh
 	refresh()
 
 
@@ -396,20 +396,57 @@ for name in attribs
 # *Result if `user` is null:*
 # ```xml
 # <ul class="header-links">
-#   <li style="display:none"><a href="/account">My Account</a></li>
-#   <li style="display:none"><a href="/logout">Sign Out</a></li>
+#   <!--chip-if="user"-->
+#   <!--chip-if="user"-->
 #   <li><a href="/login">Sign In</a></li>
 # </ul>
 # ```
 chip.binding 'if', 50, (element, expr, controller) ->
 	prefix = controller.app.bindingPrefix
 	template = element # use a placeholder for the element and the element as a template
-	placeholder = $("<!--#{prefix}if=\#{expr}\"-->").replaceAll(template)
+	placeholder = $("<!--#{prefix}if=\"#{expr}\"-->").replaceAll(template)
 	controllerName = element.attr(prefix + 'controller')
 	element.removeAttr(prefix + 'controller')
 	
 	controller.watch expr, (value) ->
 		if value
+			if placeholder.parent().length
+				element = template.clone()
+				controller.child element: element, name: controllerName, passthrough: true
+				placeholder.replaceWith(element)
+		else
+			unless placeholder.parent().length
+				element.replaceWith(placeholder)
+
+# ## chip-unless
+# Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
+# when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.
+#
+# **Example:**
+# ```xml
+# <ul class="header-links">
+#   <li chip-if="user"><a href="/account">My Account</a></li>
+#   <li chip-if="user"><a href="/logout">Sign Out</a></li>
+#   <li chip-unless="user"><a href="/login">Sign In</a></li>
+# </ul>
+# ```
+# *Result if `user` is null:*
+# ```xml
+# <ul class="header-links">
+#   <!--chip-if="user"-->
+#   <!--chip-if="user"-->
+#   <li><a href="/login">Sign In</a></li>
+# </ul>
+# ```
+chip.binding 'unless', 50, (element, expr, controller) ->
+	prefix = controller.app.bindingPrefix
+	template = element # use a placeholder for the element and the element as a template
+	placeholder = $("<!--#{prefix}unless=\"#{expr}\"-->").replaceAll(template)
+	controllerName = element.attr(prefix + 'controller')
+	element.removeAttr(prefix + 'controller')
+	
+	controller.watch expr, (value) ->
+		unless value
 			if placeholder.parent().length
 				element = template.clone()
 				controller.child element: element, name: controllerName, passthrough: true
@@ -460,10 +497,10 @@ chip.binding 'each', 100, (element, expr, controller) ->
 	orig = expr
 	[ itemName, expr ] = expr.split /\s+in\s+/
 	unless itemName and expr
-		throw "Invalid #{prefix}each \""
-		+ orig
-		+ '". Requires the format "todo in todos"'
-		+ ' or "key, prop in todos".'
+		throw "Invalid #{prefix}each=\"" +
+			orig +
+			'". Requires the format "item in list"' +
+			' or "key, propery in object".'
 	
 	controllerName = element.attr(prefix + 'controller')
 	element.removeAttr(prefix + 'controller')

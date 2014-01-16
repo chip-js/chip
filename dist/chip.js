@@ -1121,11 +1121,22 @@ if (!Date.prototype.toISOString) {
     return null;
   };
 
-  $.event.special.elementRemove = {
-    remove: function(event) {
-      return event.handler();
-    }
-  };
+  if (!$.widget) {
+    $.cleanData = (function(orig) {
+      return function(elems) {
+        var e, elem, _i, _len;
+        for (_i = 0, _len = elems.length; _i < _len; _i++) {
+          elem = elems[_i];
+          try {
+            $(elem).triggerHandler('remove');
+          } catch (_error) {
+            e = _error;
+          }
+        }
+        return orig(elems);
+      };
+    })($.cleanData);
+  }
 
   varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi;
 
@@ -1220,7 +1231,7 @@ if (!Date.prototype.toISOString) {
     currentIndex = 0;
     newExpr = '';
     processProperty = function(match, prefix, objIndicator, propChain, postfix, colonOrParen) {
-      var continuation, index, newChain, parts;
+      var continuation, index, newChain, part, parts;
       index = propExpr.lastIndex - match.length;
       if (objIndicator && colonOrParen === ':') {
         return match;
@@ -1232,7 +1243,8 @@ if (!Date.prototype.toISOString) {
       parts = propChain.split('.');
       newChain = '';
       if (parts.length === 1 && !continuation && !colonOrParen) {
-        newChain = 'this.' + parts[0];
+        part = parts[0];
+        newChain = options.ignore.indexOf(part) === -1 ? 'this.' + part : part;
       } else {
         if (!continuation) {
           newChain += '(';
@@ -1387,7 +1399,7 @@ if (!Date.prototype.toISOString) {
     };
 
     App.prototype.createController = function(options) {
-      var NewController, controller, key, value, _base, _ref,
+      var NewController, controller, key, old, value, _base, _ref,
         _this = this;
       if (options == null) {
         options = {};
@@ -1433,7 +1445,11 @@ if (!Date.prototype.toISOString) {
         return _this.template(name);
       };
       if (options.element) {
-        options.element.on('elementRemove', function() {
+        if ((old = options.element.data('controller'))) {
+          options.element.off('remove.controller');
+          old.closeController();
+        }
+        options.element.on('remove.controller', function() {
           return controller.closeController();
         });
         controller.element = options.element;
@@ -1489,16 +1505,17 @@ if (!Date.prototype.toISOString) {
               selector.push("[" + _this.bindingPrefix + "route]");
             }
             container = _this.rootElement.find(selector.join(' ') + ':first');
-            if (!container.length) {
-              return;
+            if (container.length && container.attr("" + _this.bindingPrefix + "route") !== name) {
+              container.attr("" + _this.bindingPrefix + "route", name);
+              container.html(_this.template(name));
+              controller = _this.createController({
+                element: container,
+                parent: parentController,
+                name: name
+              });
+            } else {
+              controller = container.data('controller');
             }
-            container.attr("" + _this.bindingPrefix + "route", name);
-            container.html(_this.template(name));
-            controller = _this.createController({
-              element: container,
-              parent: parentController,
-              name: name
-            });
             return controller.syncView();
           };
           if (typeof subroutes === 'function') {
@@ -1796,7 +1813,7 @@ if (!Date.prototype.toISOString) {
       }
       return element.html(nodes);
     };
-    element.on('elementRemove', function() {
+    element.on('remove', function() {
       return controller.off('translationChange', refresh);
     });
     controller.on('translationChange', refresh);
@@ -1850,7 +1867,7 @@ if (!Date.prototype.toISOString) {
       link = element.filter('a').add(element.find('a')).first();
       link.on('hrefChanged', refresh);
       controller.on('urlChange', refresh);
-      element.on('elementRemove', function() {
+      element.on('remove', function() {
         return controller.off('urlChange', refresh);
       });
       return refresh();
@@ -1869,7 +1886,7 @@ if (!Date.prototype.toISOString) {
     link = element.filter('a').add(element.find('a')).first();
     link.on('hrefChanged', refresh);
     controller.on('urlChange', refresh);
-    element.on('elementRemove', function() {
+    element.on('remove', function() {
       return controller.off('urlChange', refresh);
     });
     return refresh();
@@ -1941,11 +1958,37 @@ if (!Date.prototype.toISOString) {
     var controllerName, placeholder, prefix, template;
     prefix = controller.app.bindingPrefix;
     template = element;
-    placeholder = $("<!--" + prefix + "if=\#{expr}\"-->").replaceAll(template);
+    placeholder = $("<!--" + prefix + "if=\"" + expr + "\"-->").replaceAll(template);
     controllerName = element.attr(prefix + 'controller');
     element.removeAttr(prefix + 'controller');
     return controller.watch(expr, function(value) {
       if (value) {
+        if (placeholder.parent().length) {
+          element = template.clone();
+          controller.child({
+            element: element,
+            name: controllerName,
+            passthrough: true
+          });
+          return placeholder.replaceWith(element);
+        }
+      } else {
+        if (!placeholder.parent().length) {
+          return element.replaceWith(placeholder);
+        }
+      }
+    });
+  });
+
+  chip.binding('unless', 50, function(element, expr, controller) {
+    var controllerName, placeholder, prefix, template;
+    prefix = controller.app.bindingPrefix;
+    template = element;
+    placeholder = $("<!--" + prefix + "unless=\"" + expr + "\"-->").replaceAll(template);
+    controllerName = element.attr(prefix + 'controller');
+    element.removeAttr(prefix + 'controller');
+    return controller.watch(expr, function(value) {
+      if (!value) {
         if (placeholder.parent().length) {
           element = template.clone();
           controller.child({
@@ -1969,10 +2012,7 @@ if (!Date.prototype.toISOString) {
     orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
     if (!(itemName && expr)) {
-      throw "Invalid " + prefix + "each \"";
-      +orig;
-      +'". Requires the format "todo in todos"';
-      +' or "key, prop in todos".';
+      throw ("Invalid " + prefix + "each=\"") + orig + '". Requires the format "item in list"' + ' or "key, propery in object".';
     }
     controllerName = element.attr(prefix + 'controller');
     element.removeAttr(prefix + 'controller');

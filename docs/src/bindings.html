@@ -159,7 +159,7 @@ chip.binding <span class="string">'debug'</span>, (element, expr, controller) -&
 		
 		element.html nodes
 	
-	element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'translationChange'</span>, refresh
+	element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'translationChange'</span>, refresh
 	controller.<span class="literal">on</span> <span class="string">'translationChange'</span>, refresh</pre></div></div>
             
         </li>
@@ -268,7 +268,7 @@ provided it adds the “active” class if the element or it‘s first anchor ch
 			.first()
 		link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
 		controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
-		element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
+		element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
 		refresh()</pre></div></div>
             
         </li>
@@ -299,7 +299,7 @@ whole section.</p>
 		.first()
 	link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
 	controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
-	element.<span class="literal">on</span> <span class="string">'elementRemove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
+	element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
 	refresh()</pre></div></div>
             
         </li>
@@ -541,8 +541,8 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
 <span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
 <p><em>Result if <code>user</code> is null:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">style</span>=<span class="value">"display:none"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
-  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">style</span>=<span class="value">"display:none"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="comment">&lt;!--chip-if="user"--&gt;</span>
+  <span class="comment">&lt;!--chip-if="user"--&gt;</span>
   <span class="tag">&lt;<span class="title">li</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
 <span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
 
@@ -551,7 +551,7 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
 	prefix = controller.app.bindingPrefix
 	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>if=\#{expr}\"--&gt;"</span>).replaceAll(template)
+	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>if=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
 	controllerName = element.attr(prefix + <span class="string">'controller'</span>)
 	element.removeAttr(prefix + <span class="string">'controller'</span>)
 	
@@ -573,6 +573,50 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
               
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <h2>chip-unless</h2>
+<p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
+when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/account"</span>&gt;</span>My Account<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-if</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/logout"</span>&gt;</span>Sign Out<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span> <span class="attribute">chip-unless</span>=<span class="value">"user"</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
+<p><em>Result if <code>user</code> is null:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">ul</span> <span class="attribute">class</span>=<span class="value">"header-links"</span>&gt;</span>
+  <span class="comment">&lt;!--chip-if="user"--&gt;</span>
+  <span class="comment">&lt;!--chip-if="user"--&gt;</span>
+  <span class="tag">&lt;<span class="title">li</span>&gt;</span><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/login"</span>&gt;</span>Sign In<span class="tag">&lt;/<span class="title">a</span>&gt;</span><span class="tag">&lt;/<span class="title">li</span>&gt;</span>
+<span class="tag">&lt;/<span class="title">ul</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'unless'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
+	prefix = controller.app.bindingPrefix
+	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
+	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>unless=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
+	controllerName = element.attr(prefix + <span class="string">'controller'</span>)
+	element.removeAttr(prefix + <span class="string">'controller'</span>)
+	
+	controller.watch expr, (value) -&gt;
+		<span class="keyword">unless</span> value
+			<span class="keyword">if</span> placeholder.parent().length
+				element = template.clone()
+				controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
+				placeholder.replaceWith(element)
+		<span class="keyword">else</span>
+			<span class="keyword">unless</span> placeholder.parent().length
+				element.replaceWith(placeholder)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <h2>chip-each</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
@@ -613,10 +657,10 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 	orig = expr
 	[ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
 	<span class="keyword">unless</span> itemName <span class="keyword">and</span> expr
-		<span class="keyword">throw</span> <span class="string">"Invalid <span class="subst">#{prefix}</span>each \""</span>
-		+ orig
-		+ <span class="string">'". Requires the format "todo in todos"'</span>
-		+ <span class="string">' or "key, prop in todos".'</span>
+		<span class="keyword">throw</span> <span class="string">"Invalid <span class="subst">#{prefix}</span>each=\""</span> +
+			orig +
+			<span class="string">'". Requires the format "item in list"'</span> +
+			<span class="string">' or "key, propery in object".'</span>
 	
 	controllerName = element.attr(prefix + <span class="string">'controller'</span>)
 	element.removeAttr(prefix + <span class="string">'controller'</span>)
@@ -688,11 +732,11 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
         </li>
         
         
-        <li id="section-19">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <h2>chip-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
@@ -735,11 +779,11 @@ attributes which appear after <code>chip-partial</code> will have the new value 
         </li>
         
         
-        <li id="section-20">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <h2>chip-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the

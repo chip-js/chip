@@ -141,11 +141,17 @@ $.fn.controller = (passthrough) ->
 	null
 
 
-# Provides the 'elementRemove' event to be dispatched when an element is removed from the DOM and cleaned up. Gets
-# called when an element with the event 'elementRemove', is removed from the DOM. Manually call the listener.
-$.event.special.elementRemove =
-	remove: (event) ->
-		event.handler()
+# Provides the 'remove' event to be dispatched when an element is removed from the DOM and cleaned up. Gets
+# called when an element with the event 'remove', is removed from the DOM. Manually call the listener.
+unless $.widget
+	$.cleanData = ((orig) ->
+		(elems) ->
+			for elem in elems
+				try
+					$(elem).triggerHandler('remove')
+				catch e
+			orig elems
+	)($.cleanData)
 
 
 
@@ -258,7 +264,8 @@ processProperties = (expr, options = {}) ->
 		newChain = ''
 		
 		if parts.length is 1 and not continuation and not colonOrParen
-			newChain = 'this.' + parts[0]
+			part = parts[0]
+			newChain = if options.ignore.indexOf(part) is -1 then 'this.' + part else part
 		else
 			newChain += '(' unless continuation
 			

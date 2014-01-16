@@ -148,8 +148,13 @@ class App
 			@template(name)
 		
 		if options.element
+			# Clean up old controller if one exists
+			if (old = options.element.data 'controller')
+				options.element.off 'remove.controller'
+				old.closeController()
+			
 			# Assign element and add cleanup when the element is removed.
-			options.element.on 'elementRemove', -> controller.closeController()
+			options.element.on 'remove.controller', -> controller.closeController()
 			controller.element = options.element
 			options.element.data 'controller', controller
 		
@@ -198,10 +203,12 @@ class App
 					selector = []
 					selector.push("[#{@bindingPrefix}route]") for i in [0..depth]
 					container = @rootElement.find selector.join(' ') + ':first'
-					return unless container.length
-					container.attr("#{@bindingPrefix}route", name)
-					container.html(@template(name))
-					controller = @createController element: container, parent: parentController, name: name
+					if container.length and container.attr("#{@bindingPrefix}route") isnt name
+						container.attr("#{@bindingPrefix}route", name)
+						container.html(@template(name))
+						controller = @createController element: container, parent: parentController, name: name
+					else
+						controller = container.data('controller')
 					controller.syncView()
 				
 				# Adds the subroutes and only calls this callback before they get called when they match.

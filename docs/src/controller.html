@@ -407,14 +407,20 @@ Caches the function for later</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
-              <p>Provides the ‘elementRemove’ event to be dispatched when an element is removed from the DOM and cleaned up. Gets
-called when an element with the event ‘elementRemove’, is removed from the DOM. Manually call the listener.</p>
+              <p>Provides the ‘remove’ event to be dispatched when an element is removed from the DOM and cleaned up. Gets
+called when an element with the event ‘remove’, is removed from the DOM. Manually call the listener.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>$.event.special.elementRemove =
-	remove: (event) -&gt;
-		event.handler()</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="keyword">unless</span> $.widget
+	$.<span class="function"><span class="title">cleanData</span></span> = ((orig) -&gt;
+		(elems) -&gt;
+			<span class="keyword">for</span> elem <span class="keyword">in</span> elems
+				<span class="keyword">try</span>
+					$(elem).triggerHandler(<span class="string">'remove'</span>)
+				<span class="keyword">catch</span> e
+			orig elems
+	)($.cleanData)</pre></div></div>
             
         </li>
         
@@ -655,7 +661,8 @@ function. We use <code>colonOrParen</code> and <code>objIndicator</code> to know
 		newChain = <span class="string">''</span>
 		
 		<span class="keyword">if</span> parts.length <span class="keyword">is</span> <span class="number">1</span> <span class="keyword">and</span> <span class="keyword">not</span> continuation <span class="keyword">and</span> <span class="keyword">not</span> colonOrParen
-			newChain = <span class="string">'this.'</span> + parts[<span class="number">0</span>]
+			part = parts[<span class="number">0</span>]
+			newChain = <span class="keyword">if</span> options.ignore.indexOf(part) <span class="keyword">is</span> -<span class="number">1</span> <span class="keyword">then</span> <span class="string">'this.'</span> + part <span class="keyword">else</span> part
 		<span class="keyword">else</span>
 			newChain += <span class="string">'('</span> <span class="keyword">unless</span> continuation
 			
