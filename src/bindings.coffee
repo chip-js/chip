@@ -593,7 +593,7 @@ chip.binding 'each', 100, (element, expr, controller) ->
 # </div>
 # ```
 chip.binding 'partial', 50, (element, expr, controller) ->
-	parts = expr.split /\s+as\s+\s+with\s+/
+	parts = expr.split /\s+as\s+|\s+with\s+/
 	nameExpr = parts.pop()
 	[ itemExpr, itemName ] = parts
 	childController = null
