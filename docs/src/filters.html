@@ -128,6 +128,133 @@
             
         </li>
         
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <h2>escape</h2>
+<p>HTML escapes content. For use with other HTML-adding filters such as autolink.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | escape | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<p><em>Result:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>div = <span class="literal">null</span>
+chip.filter <span class="string">'escape'</span>, (value) -&gt;
+	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
+	div.text(value <span class="keyword">or</span> <span class="string">''</span>).text()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <h2>p</h2>
+<p>HTML escapes content wrapping paragraphs in <p> tags.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | p | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<p><em>Result:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span><span class="tag">&lt;<span class="title">p</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;/<span class="title">p</span>&gt;</span>
+<span class="tag">&lt;<span class="title">p</span>&gt;</span>It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'p'</span>, (value) -&gt;
+	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
+	lines = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
+	escaped = lines.map (line) -&gt; div.text(line).text() <span class="keyword">or</span> <span class="string">'&lt;br&gt;'</span>
+	<span class="string">'&lt;p&gt;'</span> + escaped.join(<span class="string">'&lt;/p&gt;&lt;p&gt;'</span>) + <span class="string">'&lt;/p&gt;'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <h2>br</h2>
+<p>HTML escapes content adding <br> tags in place of newlines characters.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | br | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<p><em>Result:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;<span class="title">br</span>&gt;</span>
+It's great<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'br'</span>, (value) -&gt;
+	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
+	lines = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
+	escaped = lines.map (line) -&gt; div.text(line).text()
+	escaped.join(<span class="string">'&lt;br&gt;'</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <h2>newline</h2>
+<p>HTML escapes content adding <p> tags at doulbe newlines and <br> tags in place of single newline characters.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | newline | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<p><em>Result:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span><span class="tag">&lt;<span class="title">p</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;<span class="title">br</span>&gt;</span>
+It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'newline'</span>, (value) -&gt;
+	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
+	paragraphs = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n\s*\r?\n/</span>)
+	escaped = paragraphs.map (paragraph) -&gt;
+		lines = paragraph.split(<span class="regexp">/\r?\n/</span>)
+		escaped = lines.map (line) -&gt; div.text(line).text()
+		escaped.join(<span class="string">'&lt;br&gt;'</span>)
+	<span class="string">'&lt;p&gt;'</span> + escaped.join(<span class="string">'&lt;/p&gt;&lt;p&gt;'</span>) + <span class="string">'&lt;/p&gt;'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <h2>autolink</h2>
+<p>Adds automatic links to escaped content (be sure to escape user content). Can be used on existing HTML content as it
+will skip URLs within HTML tags. Passing true in the second parameter will set the target to <code>_blank</code>.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | escape | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<p><em>Result:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>urlExp = <span class="regexp">/(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi</span>
+chip.filter <span class="string">'autolink'</span>, (value, target) -&gt;
+	target = <span class="keyword">if</span> target <span class="keyword">then</span> <span class="string">' target="_blank"'</span> <span class="keyword">else</span> <span class="string">''</span>
+	(<span class="string">''</span> + value).replace <span class="regexp">/&lt;[^&gt;]+&gt;|[^&lt;]+/g</span>, (match) -&gt;
+		<span class="keyword">return</span> match <span class="keyword">if</span> match[<span class="number">0</span>] <span class="keyword">is</span> <span class="string">'&lt;'</span>
+		match.replace(urlExp, <span class="string">'$1&lt;a href="$2"'</span> + target + <span class="string">'&gt;$2&lt;/a&gt;'</span>)</pre></div></div>
+            
+        </li>
+        
     </ul>
   </div>
 </body>

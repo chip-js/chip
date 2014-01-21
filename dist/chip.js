@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, emptyQuoteExpr, equality, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, varExpr, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, div, emptyQuoteExpr, equality, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, urlExp, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -1140,9 +1140,9 @@ if (!Date.prototype.toISOString) {
 
   varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi;
 
-  quoteExpr = /(['"])(\\\1|[^\1])*?\1/g;
+  quoteExpr = /(['"\/])(\\\1|[^\1])*?\1/g;
 
-  emptyQuoteExpr = /(['"])\1/g;
+  emptyQuoteExpr = /(['"\/])\1/g;
 
   pipeExpr = /\|(\|)?/g;
 
@@ -2096,7 +2096,7 @@ if (!Date.prototype.toISOString) {
 
   chip.binding('partial', 50, function(element, expr, controller) {
     var childController, itemExpr, itemName, nameExpr, parts, properties;
-    parts = expr.split(/\s+as\s+\s+with\s+/);
+    parts = expr.split(/\s+as\s+|\s+with\s+/);
     nameExpr = parts.pop();
     itemExpr = parts[0], itemName = parts[1];
     childController = null;
@@ -2178,6 +2178,68 @@ if (!Date.prototype.toISOString) {
     } else {
       return value;
     }
+  });
+
+  div = null;
+
+  chip.filter('escape', function(value) {
+    if (!div) {
+      div = $('<div></div>');
+    }
+    return div.text(value || '').text();
+  });
+
+  chip.filter('p', function(value) {
+    var escaped, lines;
+    if (!div) {
+      div = $('<div></div>');
+    }
+    lines = (('' + value) || '').split(/\r?\n/);
+    escaped = lines.map(function(line) {
+      return div.text(line).text() || '<br>';
+    });
+    return '<p>' + escaped.join('</p><p>') + '</p>';
+  });
+
+  chip.filter('br', function(value) {
+    var escaped, lines;
+    if (!div) {
+      div = $('<div></div>');
+    }
+    lines = (('' + value) || '').split(/\r?\n/);
+    escaped = lines.map(function(line) {
+      return div.text(line).text();
+    });
+    return escaped.join('<br>');
+  });
+
+  chip.filter('newline', function(value) {
+    var escaped, paragraphs;
+    if (!div) {
+      div = $('<div></div>');
+    }
+    paragraphs = (('' + value) || '').split(/\r?\n\s*\r?\n/);
+    escaped = paragraphs.map(function(paragraph) {
+      var lines;
+      lines = paragraph.split(/\r?\n/);
+      escaped = lines.map(function(line) {
+        return div.text(line).text();
+      });
+      return escaped.join('<br>');
+    });
+    return '<p>' + escaped.join('</p><p>') + '</p>';
+  });
+
+  urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
+
+  chip.filter('autolink', function(value, target) {
+    target = target ? ' target="_blank"' : '';
+    return ('' + value).replace(/<[^>]+>|[^<]+/g, function(match) {
+      if (match[0] === '<') {
+        return match;
+      }
+      return match.replace(urlExp, '$1<a href="$2"' + target + '>$2</a>');
+    });
   });
 
   equality = {};

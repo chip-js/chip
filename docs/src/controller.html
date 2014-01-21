@@ -436,8 +436,8 @@ called when an element with the event ‘remove’, is removed from the DOM. Man
             </div>
             
             <div class="content"><div class='highlight'><pre>varExpr = <span class="regexp">/[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi</span>
-quoteExpr = <span class="regexp">/(['"])(\\\1|[^\1])*?\1/g</span>
-emptyQuoteExpr = <span class="regexp">/(['"])\1/g</span>
+quoteExpr = <span class="regexp">/(['"\/])(\\\1|[^\1])*?\1/g</span>
+emptyQuoteExpr = <span class="regexp">/(['"\/])\1/g</span>
 pipeExpr = <span class="regexp">/\|(\|)?/g</span>
 argSeparator = <span class="regexp">/\s*:\s*/g</span>
 setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>

@@ -759,7 +759,7 @@ attributes which appear after <code>chip-partial</code> will have the new value 
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'partial'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
-	parts = expr.split <span class="regexp">/\s+as\s+\s+with\s+/</span>
+	parts = expr.split <span class="regexp">/\s+as\s+|\s+with\s+/</span>
 	nameExpr = parts.pop()
 	[ itemExpr, itemName ] = parts
 	childController = <span class="literal">null</span>
