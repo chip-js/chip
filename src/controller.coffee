@@ -157,8 +157,8 @@ unless $.widget
 
 # Searches out possible properties or finds the beginning of strings (which we skip)
 varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi
-quoteExpr = /(['"])(\\\1|[^\1])*?\1/g
-emptyQuoteExpr = /(['"])\1/g
+quoteExpr = /(['"\/])(\\\1|[^\1])*?\1/g
+emptyQuoteExpr = /(['"\/])\1/g
 pipeExpr = /\|(\|)?/g
 argSeparator = /\s*:\s*/g
 setterExpr = /\s=\s/
