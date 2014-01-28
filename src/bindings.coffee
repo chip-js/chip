@@ -238,21 +238,31 @@ chip.binding 'active-section', (element, expr, controller) ->
 # And when the user changes the text in the first input to "Jac", `user.firstName` will be updated immediately with the
 # value of `'Jac'`.
 chip.binding 'value', (element, expr, controller) ->
+	# Handles input (checkboxes, radios), select, textarea, option
 	getValue =
-		if element.attr('type') is 'checkbox'
+		if element.attr('type') is 'checkbox' # Handles checkboxes
 			-> element.prop('checked')
-		else
+		else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
+			-> element.find('input:radio:checked').val()
+		else # Handles other form inputs
 			-> element.val()
 	
 	setValue =
 		if element.attr('type') is 'checkbox'
 			(value) -> element.prop('checked', value)
+		else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
+			(value) ->
+				element.find('input:radio:checked').prop('checked', false) # in case the value isn't found in radios
+				element.find('input:radio[value="' + value + '"]').prop('checked', true)
 		else
 			(value) -> element.val(value)
 	
 	observer = controller.watch expr, (value) ->
 		if getValue() isnt value
 			setValue value
+	
+	# Skips setting values on option elements since the user cannot change these with user input
+	return if element.is 'option'
 	
 	# Sets initial element value. For SELECT elements allows child option element values to be set first.
 	if element.is('select')
@@ -262,7 +272,7 @@ chip.binding 'value', (element, expr, controller) ->
 	else
 		controller.evalSetter expr, getValue()
 	
-	element.on 'keydown keyup change', -> # TODO set up the listeners which will update the value, not just for text inputs
+	element.on 'change', ->
 		if getValue() isnt observer.oldValue
 			controller.evalSetter expr, getValue()
 			observer.skipNextSync() # don't update this observer, user changed it

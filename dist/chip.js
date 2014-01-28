@@ -532,7 +532,12 @@ if (!Date.prototype.toISOString) {
       return app;
     },
     binding: function(name, priority, handler) {
-      return Binding.addBinding(name, priority, handler);
+      var _ref;
+      if (priority || handler) {
+        return Binding.addBinding(name, priority, handler);
+      } else {
+        return (_ref = Binding.bindings[name]) != null ? _ref.handler : void 0;
+      }
     },
     eventBinding: function(eventName) {
       return Binding.addEventBinding(eventName);
@@ -1749,7 +1754,7 @@ if (!Date.prototype.toISOString) {
       controller = arguments[0], name = arguments[1], value = arguments[2], args = 4 <= arguments.length ? __slice.call(arguments, 3) : [];
       filter = ((_ref = this.filters[name]) != null ? _ref.filter : void 0) || window[name];
       if (filter) {
-        return filter.apply(controller, [value].concat(__slice.call(args)));
+        return filter.apply(null, [controller, value].concat(__slice.call(args)));
       } else {
         console.error("Filter `" + name + "` has not been defined.");
         return value;
@@ -1896,11 +1901,16 @@ if (!Date.prototype.toISOString) {
     var getValue, observer, setValue;
     getValue = element.attr('type') === 'checkbox' ? function() {
       return element.prop('checked');
+    } : element.is(':not(input,select,textarea,option)') ? function() {
+      return element.find('input:radio:checked').val();
     } : function() {
       return element.val();
     };
     setValue = element.attr('type') === 'checkbox' ? function(value) {
       return element.prop('checked', value);
+    } : element.is(':not(input,select,textarea,option)') ? function(value) {
+      element.find('input:radio:checked').prop('checked', false);
+      return element.find('input:radio[value="' + value + '"]').prop('checked', true);
     } : function(value) {
       return element.val(value);
     };
@@ -1909,6 +1919,9 @@ if (!Date.prototype.toISOString) {
         return setValue(value);
       }
     });
+    if (element.is('option')) {
+      return;
+    }
     if (element.is('select')) {
       setTimeout(function() {
         setValue(controller["eval"](expr));
@@ -1917,7 +1930,7 @@ if (!Date.prototype.toISOString) {
     } else {
       controller.evalSetter(expr, getValue());
     }
-    return element.on('keydown keyup change', function() {
+    return element.on('change', function() {
       if (getValue() !== observer.oldValue) {
         controller.evalSetter(expr, getValue());
         observer.skipNextSync();
@@ -2129,22 +2142,33 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.filter('filter', function(value, filterFunc) {
+  chip.filter('filter', function(controller, value, filterFunc) {
     if (!Array.isArray(value)) {
       return [];
     }
     if (!filterFunc) {
       return value;
     }
-    return value.filter(filterFunc);
+    return value.filter(filterFunc, controller);
   });
 
-  chip.filter('date', function(value) {
+  chip.filter('map', function(controller, value, mapFunc) {
+    if (!((value != null) && mapFunc)) {
+      return value;
+    }
+    if (Array.isArray(value)) {
+      return value.map(mapFunc, controller);
+    } else {
+      return mapFunc.call(controller, value);
+    }
+  });
+
+  chip.filter('date', function(controller, value) {
     if (!value) {
       return '';
     }
     if (!(value instanceof Date)) {
-      value = new Date(value);
+      value = new Date(controller, value);
     }
     if (isNaN(value.getTime())) {
       return '';
@@ -2152,7 +2176,7 @@ if (!Date.prototype.toISOString) {
     return value.toLocaleString();
   });
 
-  chip.filter('log', function(value, prefix) {
+  chip.filter('log', function(controller, value, prefix) {
     if (prefix == null) {
       prefix = 'Log';
     }
@@ -2160,7 +2184,7 @@ if (!Date.prototype.toISOString) {
     return value;
   });
 
-  chip.filter('limit', function(value, limit) {
+  chip.filter('limit', function(controller, value, limit) {
     if (value && typeof value.slice === 'function') {
       if (limit < 0) {
         return value.slice(limit);
@@ -2172,7 +2196,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.filter('sort', function(value, sortFunc) {
+  chip.filter('sort', function(controller, value, sortFunc) {
     if (Array.isArray(value)) {
       return value.slice().sort(sortFunc);
     } else {
@@ -2182,14 +2206,14 @@ if (!Date.prototype.toISOString) {
 
   div = null;
 
-  chip.filter('escape', function(value) {
+  chip.filter('escape', function(controller, value) {
     if (!div) {
       div = $('<div></div>');
     }
-    return div.text(value || '').text();
+    return div.text(controller, value || '').text();
   });
 
-  chip.filter('p', function(value) {
+  chip.filter('p', function(controller, value) {
     var escaped, lines;
     if (!div) {
       div = $('<div></div>');
@@ -2201,7 +2225,7 @@ if (!Date.prototype.toISOString) {
     return '<p>' + escaped.join('</p><p>') + '</p>';
   });
 
-  chip.filter('br', function(value) {
+  chip.filter('br', function(controller, value) {
     var escaped, lines;
     if (!div) {
       div = $('<div></div>');
@@ -2213,7 +2237,7 @@ if (!Date.prototype.toISOString) {
     return escaped.join('<br>');
   });
 
-  chip.filter('newline', function(value) {
+  chip.filter('newline', function(controller, value) {
     var escaped, paragraphs;
     if (!div) {
       div = $('<div></div>');
@@ -2232,7 +2256,7 @@ if (!Date.prototype.toISOString) {
 
   urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
 
-  chip.filter('autolink', function(value, target) {
+  chip.filter('autolink', function(controller, value, target) {
     target = target ? ' target="_blank"' : '';
     return ('' + value).replace(/<[^>]+>|[^<]+/g, function(match) {
       if (match[0] === '<') {
