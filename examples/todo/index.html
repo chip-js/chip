@@ -25,7 +25,7 @@
 				<input id="toggle-all" type="checkbox" chip-checked="todos.every(filters.done)" chip-change="toggleAll()">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-					<li chip-repeat="todo in todos | filter:filter" chip-controller="todo" chip-class="{editing:editing,completed:todo.done}">
+					<li chip-each="todo in todos | filter:filter" chip-controller="todo" chip-class="{editing:editing,completed:todo.done}">
 						<div class="view">
 							<input class="toggle" type="checkbox" chip-change="toggleDone(todo)" chip-checked="todo.done">
 							<label chip-dblclick="editTodo(todo)" chip-text="todo.description">Create a TodoMVC template</label>

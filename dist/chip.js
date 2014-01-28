@@ -1229,6 +1229,7 @@ if (!Date.prototype.toISOString) {
     if (!options.references) {
       options.references = 0;
     }
+    options.currentRef = options.references;
     if (!options.ignore) {
       options.ignore = [];
     }
@@ -1255,9 +1256,13 @@ if (!Date.prototype.toISOString) {
           newChain += '(';
         }
         parts.forEach(function(part, partIndex) {
-          var endIndex, innards, parenCount, startIndex;
-          if (partIndex === parts.length - 1) {
-            if (colonOrParen === '(') {
+          var currentRef, endIndex, innards, parenCount, startIndex;
+          if (partIndex !== parts.length - 1) {
+            return newChain += processPart(options, part, partIndex, continuation);
+          } else {
+            if (colonOrParen !== '(') {
+              return newChain += "_ref" + options.currentRef + "." + part + ")";
+            } else {
               parenCount = 1;
               startIndex = propExpr.lastIndex;
               endIndex = startIndex - 1;
@@ -1274,21 +1279,21 @@ if (!Date.prototype.toISOString) {
                 }
               }
               propExpr.lastIndex = endIndex + 1;
-              innards = processProperties(expr.slice(startIndex, endIndex), options);
-              part += '(' + innards + ')';
               postfix = '';
+              part += '(innards)';
               if (expr[endIndex + 1] === '.') {
                 newChain += processPart(options, part, partIndex, continuation);
-                return;
               } else if (partIndex === 0) {
                 newChain += processPart(options, part, partIndex, continuation);
-                newChain += "_ref" + options.references + ")";
-                return;
+                newChain += "_ref" + options.currentRef + ")";
+              } else {
+                newChain += "_ref" + options.currentRef + "." + part + ")";
               }
+              currentRef = options.currentRef;
+              innards = processProperties(expr.slice(startIndex, endIndex), options);
+              newChain = newChain.replace(/\(innards\)/, '(' + innards + ')');
+              return options.currentRef = currentRef;
             }
-            newChain += "_ref" + options.references + "." + part + ")";
-          } else {
-            return newChain += processPart(options, part, partIndex, continuation);
           }
         });
       }
@@ -1312,9 +1317,10 @@ if (!Date.prototype.toISOString) {
         part = "" + part;
       }
     } else {
-      part = "_ref" + options.references + "." + part;
+      part = "_ref" + options.currentRef + "." + part;
     }
-    ref = "_ref" + (++options.references);
+    options.currentRef = ++options.references;
+    ref = "_ref" + options.currentRef;
     return "(" + ref + " = " + part + ") == null ? undefined : ";
   };
 

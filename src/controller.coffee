@@ -236,6 +236,7 @@ normalizeExpression = (expr, extraArgNames) ->
 
 processProperties = (expr, options = {}) ->
 	options.references = 0 unless options.references
+	options.currentRef = options.references
 	options.ignore = [] unless options.ignore
 	propExpr = /((\{|,|\.)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:|\()?)/gi
 	currentIndex = 0
@@ -271,8 +272,12 @@ processProperties = (expr, options = {}) ->
 			
 			parts.forEach (part, partIndex) ->
 				# if the last
-				if partIndex is parts.length - 1
-					if colonOrParen is '('
+				if partIndex isnt parts.length - 1
+					newChain += processPart(options, part, partIndex, continuation)
+				else
+					if colonOrParen isnt '('
+						newChain += "_ref#{options.currentRef}.#{part})"
+					else
 						# Handles a function to be called in its correct scope
 						# Finds the end of the function and processes the arguments
 						parenCount = 1
@@ -285,20 +290,21 @@ processProperties = (expr, options = {}) ->
 							break if parenCount is 0
 						
 						propExpr.lastIndex = endIndex + 1
-						innards = processProperties expr.slice(startIndex, endIndex), options
-						part += '(' + innards + ')'
 						postfix = ''
+						part += '(innards)'
+						
 						if expr[endIndex + 1] is '.'
 							newChain += processPart(options, part, partIndex, continuation)
-							return
 						else if partIndex is 0
 							newChain += processPart(options, part, partIndex, continuation)
-							newChain += "_ref#{options.references})"
-							return
-					newChain += "_ref#{options.references}.#{part})"
-					return
-				else
-					newChain += processPart(options, part, partIndex, continuation)
+							newChain += "_ref#{options.currentRef})"
+						else
+							newChain += "_ref#{options.currentRef}.#{part})"
+						
+						currentRef = options.currentRef
+						innards = processProperties expr.slice(startIndex, endIndex), options
+						newChain = newChain.replace(/\(innards\)/, '(' + innards + ')')
+						options.currentRef = currentRef
 		
 		return prefix + newChain + postfix
 	
@@ -321,9 +327,10 @@ processPart = (options, part, index, continuation) ->
 		else
 			part = "#{part}"
 	else
-		part = "_ref#{options.references}.#{part}"
+		part = "_ref#{options.currentRef}.#{part}"
 	
-	ref = "_ref#{++options.references}"
+	options.currentRef = ++options.references
+	ref = "_ref#{options.currentRef}"
 	"(#{ref} = #{part}) == null ? undefined : "
 
 
