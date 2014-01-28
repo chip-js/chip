@@ -55,6 +55,8 @@ chip =
 	# 
 	# The `priority` argument is optional and allows handlers with higher priority to be run before those with lower
 	# priority. The default is `0`.
+	#
+	# If only `name` is provided the previously registered handler will be returned, or undefined if there is none.
 	# 
 	# **Example:** This binding handler adds pirateized text to an element.
 	# ```javascript
@@ -74,7 +76,10 @@ chip =
 	# <p chip-pirate="post.body">This text will be replaced.</p>
 	# ```
 	binding: (name, priority, handler) ->
-		Binding.addBinding(name, priority, handler)
+		if priority or handler
+			Binding.addBinding(name, priority, handler)
+		else
+			Binding.bindings[name]?.handler
 	
 	
 	# Shortcut, adds a handler that executes the expression when the named event is dispatched.
