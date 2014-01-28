@@ -1585,7 +1585,7 @@ if (!Date.prototype.toISOString) {
           }
           event.preventDefault();
           if (!$(this).attr('disabled')) {
-            return app.redirect($(this).attr('href'));
+            return app.redirect($(this).attr('href').replace(/^#/, ''));
           }
         };
         _this.router.on('change', _this._routeHandler);

@@ -259,7 +259,7 @@ class App
 				return if this.host isnt location.host or this.href is location.href + '#'
 				event.preventDefault()
 				unless $(this).attr('disabled')
-					app.redirect $(this).attr('href')
+					app.redirect $(this).attr('href').replace(/^#/, '')
 			
 			@router.on 'change', @_routeHandler
 			@rootElement.on 'click', 'a[href]', @_clickHandler
