@@ -39,10 +39,10 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'filter'</span>, (value, filterFunc) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'filter'</span>, (controller, value, filterFunc) -&gt;
 	<span class="keyword">return</span> [] <span class="keyword">unless</span> Array.isArray value
 	<span class="keyword">return</span> value <span class="keyword">unless</span> filterFunc
-	value.filter(filterFunc)</pre></div></div>
+	value.filter(filterFunc, controller)</pre></div></div>
             
         </li>
         
@@ -53,17 +53,17 @@
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <h2>date</h2>
-<p>Adds a filter to format dates and strings</p>
+              <h2>map</h2>
+<p>Adds a filter to map an array or value by the given mapping function</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'date'</span>, (value) -&gt;
-	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">unless</span> value
-	<span class="keyword">unless</span> value <span class="keyword">instanceof</span> Date
-		value = <span class="keyword">new</span> Date(value)
-	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">if</span> isNaN value.getTime()
-	value.toLocaleString()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'map'</span>, (controller, value, mapFunc) -&gt;
+	<span class="keyword">return</span> value <span class="keyword">unless</span> value? <span class="keyword">and</span> mapFunc
+	<span class="keyword">if</span> Array.isArray value
+		value.map(mapFunc, controller)
+	<span class="keyword">else</span>
+		mapFunc.call(controller, value)</pre></div></div>
             
         </li>
         
@@ -74,14 +74,17 @@
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
-              <h2>log</h2>
-<p>Adds a filter to log the value of the expression, useful for debugging</p>
+              <h2>date</h2>
+<p>Adds a filter to format dates and strings</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'log'</span>, (value, prefix = <span class="string">'Log'</span>) -&gt;
-	console.log prefix + <span class="string">':'</span>, value
-	<span class="keyword">return</span> value</pre></div></div>
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'date'</span>, (controller, value) -&gt;
+	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">unless</span> value
+	<span class="keyword">unless</span> value <span class="keyword">instanceof</span> Date
+		value = <span class="keyword">new</span> Date(controller, value)
+	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">if</span> isNaN value.getTime()
+	value.toLocaleString()</pre></div></div>
             
         </li>
         
@@ -92,19 +95,14 @@
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
-              <h2>limit</h2>
-<p>Adds a filter to limit the length of an array or string</p>
+              <h2>log</h2>
+<p>Adds a filter to log the value of the expression, useful for debugging</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'limit'</span>, (value, limit) -&gt;
-	<span class="keyword">if</span> value <span class="keyword">and</span> <span class="keyword">typeof</span> value.slice <span class="keyword">is</span> <span class="string">'function'</span>
-		<span class="keyword">if</span> limit &lt; <span class="number">0</span>
-			value.slice limit
-		<span class="keyword">else</span>
-			value.slice <span class="number">0</span>, limit
-	<span class="keyword">else</span>
-		value</pre></div></div>
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'log'</span>, (controller, value, prefix = <span class="string">'Log'</span>) -&gt;
+	console.log prefix + <span class="string">':'</span>, value
+	<span class="keyword">return</span> value</pre></div></div>
             
         </li>
         
@@ -115,14 +113,17 @@
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
-              <h2>sort</h2>
-<p>Adds a filter to sort an array</p>
+              <h2>limit</h2>
+<p>Adds a filter to limit the length of an array or string</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'sort'</span>, (value, sortFunc) -&gt;
-	<span class="keyword">if</span> Array.isArray value
-		value.slice().sort(sortFunc)
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'limit'</span>, (controller, value, limit) -&gt;
+	<span class="keyword">if</span> value <span class="keyword">and</span> <span class="keyword">typeof</span> value.slice <span class="keyword">is</span> <span class="string">'function'</span>
+		<span class="keyword">if</span> limit &lt; <span class="number">0</span>
+			value.slice limit
+		<span class="keyword">else</span>
+			value.slice <span class="number">0</span>, limit
 	<span class="keyword">else</span>
 		value</pre></div></div>
             
@@ -135,6 +136,26 @@
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
+              <h2>sort</h2>
+<p>Adds a filter to sort an array</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'sort'</span>, (controller, value, sortFunc) -&gt;
+	<span class="keyword">if</span> Array.isArray value
+		value.slice().sort(sortFunc)
+	<span class="keyword">else</span>
+		value</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
               <h2>escape</h2>
 <p>HTML escapes content. For use with other HTML-adding filters such as autolink.</p>
 <p><strong>Example:</strong></p>
@@ -145,18 +166,18 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>div = <span class="literal">null</span>
-chip.filter <span class="string">'escape'</span>, (value) -&gt;
+chip.filter <span class="string">'escape'</span>, (controller, value) -&gt;
 	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
-	div.text(value <span class="keyword">or</span> <span class="string">''</span>).text()</pre></div></div>
+	div.text(controller, value <span class="keyword">or</span> <span class="string">''</span>).text()</pre></div></div>
             
         </li>
         
         
-        <li id="section-8">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <h2>p</h2>
 <p>HTML escapes content wrapping paragraphs in <p> tags.</p>
@@ -168,7 +189,7 @@ chip.filter <span class="string">'escape'</span>, (value) -&gt;
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'p'</span>, (value) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'p'</span>, (controller, value) -&gt;
 	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
 	lines = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
 	escaped = lines.map (line) -&gt; div.text(line).text() <span class="keyword">or</span> <span class="string">'&lt;br&gt;'</span>
@@ -177,11 +198,11 @@ chip.filter <span class="string">'escape'</span>, (value) -&gt;
         </li>
         
         
-        <li id="section-9">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <h2>br</h2>
 <p>HTML escapes content adding <br> tags in place of newlines characters.</p>
@@ -193,7 +214,7 @@ It's great<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'br'</span>, (value) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'br'</span>, (controller, value) -&gt;
 	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
 	lines = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
 	escaped = lines.map (line) -&gt; div.text(line).text()
@@ -202,11 +223,11 @@ It's great<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code
         </li>
         
         
-        <li id="section-10">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <h2>newline</h2>
 <p>HTML escapes content adding <p> tags at doulbe newlines and <br> tags in place of single newline characters.</p>
@@ -218,7 +239,7 @@ It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span cl
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'newline'</span>, (value) -&gt;
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'newline'</span>, (controller, value) -&gt;
 	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
 	paragraphs = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n\s*\r?\n/</span>)
 	escaped = paragraphs.map (paragraph) -&gt;
@@ -230,11 +251,11 @@ It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span cl
         </li>
         
         
-        <li id="section-11">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <h2>autolink</h2>
 <p>Adds automatic links to escaped content (be sure to escape user content). Can be used on existing HTML content as it
@@ -247,7 +268,7 @@ will skip URLs within HTML tags. Passing true in the second parameter will set t
             </div>
             
             <div class="content"><div class='highlight'><pre>urlExp = <span class="regexp">/(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi</span>
-chip.filter <span class="string">'autolink'</span>, (value, target) -&gt;
+chip.filter <span class="string">'autolink'</span>, (controller, value, target) -&gt;
 	target = <span class="keyword">if</span> target <span class="keyword">then</span> <span class="string">' target="_blank"'</span> <span class="keyword">else</span> <span class="string">''</span>
 	(<span class="string">''</span> + value).replace <span class="regexp">/&lt;[^&gt;]+&gt;|[^&lt;]+/g</span>, (match) -&gt;
 		<span class="keyword">return</span> match <span class="keyword">if</span> match[<span class="number">0</span>] <span class="keyword">is</span> <span class="string">'&lt;'</span>

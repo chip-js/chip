@@ -188,6 +188,7 @@ with new controllers by using <code>element.bindTo(newChildController)</code>.</
 children of the element.</p>
 <p>The <code>priority</code> argument is optional and allows handlers with higher priority to be run before those with lower
 priority. The default is <code>0</code>.</p>
+<p>If only <code>name</code> is provided the previously registered handler will be returned, or undefined if there is none.</p>
 <p><strong>Example:</strong> This binding handler adds pirateized text to an element.</p>
 <pre><code class="lang-javascript">chip.addBinding(<span class="string">'pirate'</span>, <span class="keyword">function</span>(element, expr, controller) {
   controller.watch(expr, <span class="keyword">function</span>(value) {
@@ -204,7 +205,10 @@ priority. The default is <code>0</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>	binding: (name, priority, handler) -&gt;
-		Binding.addBinding(name, priority, handler)</pre></div></div>
+		<span class="keyword">if</span> priority <span class="keyword">or</span> handler
+			Binding.addBinding(name, priority, handler)
+		<span class="keyword">else</span>
+			Binding.bindings[name]?.handler</pre></div></div>
             
         </li>
         

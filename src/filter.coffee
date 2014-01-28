@@ -16,7 +16,7 @@ class Filter
 	@runFilter: (controller, name, value, args...) ->
 		filter = @filters[name]?.filter or window[name]
 		if filter
-			return filter.apply(controller, [value, args...])
+			return filter.apply(null, [controller, value, args...])
 		else
 			console.error "Filter `#{name}` has not been defined."
 			return value

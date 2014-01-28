@@ -2,32 +2,41 @@
 
 # ## filter
 # Adds a filter to filter an array by the given filter function
-chip.filter 'filter', (value, filterFunc) ->
+chip.filter 'filter', (controller, value, filterFunc) ->
 	return [] unless Array.isArray value
 	return value unless filterFunc
-	value.filter(filterFunc)
+	value.filter(filterFunc, controller)
+
+# ## map
+# Adds a filter to map an array or value by the given mapping function
+chip.filter 'map', (controller, value, mapFunc) ->
+	return value unless value? and mapFunc
+	if Array.isArray value
+		value.map(mapFunc, controller)
+	else
+		mapFunc.call(controller, value)
 
 
 # ## date
 # Adds a filter to format dates and strings
-chip.filter 'date', (value) ->
+chip.filter 'date', (controller, value) ->
 	return '' unless value
 	unless value instanceof Date
-		value = new Date(value)
+		value = new Date(controller, value)
 	return '' if isNaN value.getTime()
 	value.toLocaleString()
 
 
 # ## log
 # Adds a filter to log the value of the expression, useful for debugging
-chip.filter 'log', (value, prefix = 'Log') ->
+chip.filter 'log', (controller, value, prefix = 'Log') ->
 	console.log prefix + ':', value
 	return value
 
 
 # ## limit
 # Adds a filter to limit the length of an array or string
-chip.filter 'limit', (value, limit) ->
+chip.filter 'limit', (controller, value, limit) ->
 	if value and typeof value.slice is 'function'
 		if limit < 0
 			value.slice limit
@@ -39,7 +48,7 @@ chip.filter 'limit', (value, limit) ->
 
 # ## sort
 # Adds a filter to sort an array
-chip.filter 'sort', (value, sortFunc) ->
+chip.filter 'sort', (controller, value, sortFunc) ->
 	if Array.isArray value
 		value.slice().sort(sortFunc)
 	else
@@ -58,9 +67,9 @@ chip.filter 'sort', (value, sortFunc) ->
 # <div>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!</div>
 # ```
 div = null
-chip.filter 'escape', (value) ->
+chip.filter 'escape', (controller, value) ->
 	div = $('<div></div>') unless div
-	div.text(value or '').text()
+	div.text(controller, value or '').text()
 
 # ## p
 # HTML escapes content wrapping paragraphs in <p> tags.
@@ -74,7 +83,7 @@ chip.filter 'escape', (value) ->
 # <div><p>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!</p>
 # <p>It's great</p></div>
 # ```
-chip.filter 'p', (value) ->
+chip.filter 'p', (controller, value) ->
 	div = $('<div></div>') unless div
 	lines = (('' + value) or '').split(/\r?\n/)
 	escaped = lines.map (line) -> div.text(line).text() or '<br>'
@@ -93,7 +102,7 @@ chip.filter 'p', (value) ->
 # <div>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!<br>
 # It's great</div>
 # ```
-chip.filter 'br', (value) ->
+chip.filter 'br', (controller, value) ->
 	div = $('<div></div>') unless div
 	lines = (('' + value) or '').split(/\r?\n/)
 	escaped = lines.map (line) -> div.text(line).text()
@@ -112,7 +121,7 @@ chip.filter 'br', (value) ->
 # <div><p>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!<br>
 # It's great</p></div>
 # ```
-chip.filter 'newline', (value) ->
+chip.filter 'newline', (controller, value) ->
 	div = $('<div></div>') unless div
 	paragraphs = (('' + value) or '').split(/\r?\n\s*\r?\n/)
 	escaped = paragraphs.map (paragraph) ->
@@ -135,7 +144,7 @@ chip.filter 'newline', (value) ->
 # <div>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!</div>
 # ```
 urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi
-chip.filter 'autolink', (value, target) ->
+chip.filter 'autolink', (controller, value, target) ->
 	target = if target then ' target="_blank"' else ''
 	('' + value).replace /<[^>]+>|[^<]+/g, (match) ->
 		return match if match[0] is '<'
