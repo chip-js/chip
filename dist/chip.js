@@ -1567,7 +1567,8 @@ if (!Date.prototype.toISOString) {
     };
 
     App.prototype.redirect = function(url) {
-      return this.router.redirect(url);
+      this.router.redirect(url);
+      return window.scrollTo(0, 0);
     };
 
     App.prototype.mount = function(path, app) {};

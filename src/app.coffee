@@ -236,6 +236,7 @@ class App
 	
 	redirect: (url) ->
 		@router.redirect(url)
+		window.scrollTo(0, 0)
 	
 	
 	# Mounts an app to a URL prefix.
