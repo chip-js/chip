@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>Chip Binding</title>
+  <title>Chip Filter</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="docco.css" />
@@ -21,7 +21,7 @@
               <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              <h1>Chip Binding</h1>
+              <h1>Chip Filter</h1>
 
             </div>
             
@@ -34,28 +34,106 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <p>A Binding instance is created for each binding attribute in the DOM. Mostly the Binding class is used as a static
-place to register new bind handlers.</p>
+              <p>A Filter is stored to process the value of an expression in <code>controller.watch</code> (and thus most bindings which use
+<code>controller.watch</code>). This alters the value of what comes in with a function that returns a new value. Filters are
+added by using a single pipe character (<code>|</code>) followed by the name of the filter. Multiple filters can be used by
+chaining pipes with filter names. Filters may also have arguments passed to them by using the colon to separate
+arguments from the filter name. The signature of a filter should be <code>function (controller, value, args...)</code> where
+args are extra parameters passed into the filter after colons.</p>
+<p><em>Example:</em></p>
+<pre><code class="lang-js">chip.filter(&#39;uppercase&#39;, function(controller, value) {
+  if (typeof value != &#39;string&#39;) return &#39;&#39;
+  return value.toUppercase()
+})
+
+chip.filter(&#39;replace&#39;, function(controller, value, replace, with) {
+  if (typeof value != &#39;string&#39;) return &#39;&#39;
+  return value.replace(replace, with)
+})
+```xml
+&lt;h1 chip-text=&quot;title | uppercase | replace:&#39;LETTER&#39;:&#39;NUMBER&#39;&quot;&gt;&lt;/h1&gt;</code></pre>
+<p><em>Result:</em></p>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span>&gt;</span>GETTING TO KNOW ALL ABOUT THE NUMBER A<span class="tag">&lt;/<span class="title">h1</span>&gt;</span></code></pre>
+<p>A <code>valueFilter</code> is like a filter but used specifically with the <code>value</code> binding since it is a two-way binding. When
+the value of the element is changed a <code>valueFilter</code> can adjust the value from a string to the correct value type for
+the controller expression. The signature for a <code>valueFilter</code> includes the current value of the expression
+before the optional arguments (if any). This allows dates to be adjusted and possibley other uses.</p>
+<p><em>Example:</em></p>
+<pre><code class="lang-js">chip.filter(&#39;numeric&#39;, function(controller, value) {
+  // value coming from the controller expression, to be set on the element
+  if (value == null || isNaN(value)) return &#39;&#39;
+  return value
+}, function(controller, value, currentValue) {
+  // value coming from the HTML element, this will always be a string
+  value = parseFloat(value)
+  return isNaN(value) ? null : parseFloat(value)
+})
+
+chip.filter(&#39;date-hour&#39;, function(controller, value) {
+  // value coming from the controller expression, to be set on the element
+  if ( !(currentValue instanceof Date) ) return &#39;&#39;
+  var hours = value.getHours()
+  if (hours &gt;= 12) hours -= 12
+  if (hours == 0) hours = 12
+  return hours
+}, function(controller, value, currentValue) {
+  // value coming from the HTML element, this will always be a string
+  value = parseInt(value)
+  if (isNaN(value) || value &lt; 1 || value &gt; 12 || !(currentValue instanceof Date) ) return currentValue
+  var hours = currentValue.getHours()
+  // if PM make 1 become 13
+  if (hours &gt;= 12 &amp;&amp; value != 12) value += 12
+  // if AM make 12 AM 0
+  if (hours &lt; 12 &amp;&amp; value == 12) value = 0
+  currentValue.setHours(value)
+  return currentValue
+})
+```xml
+&lt;label&gt;Number Attending:&lt;/label&gt;
+&lt;input size=&quot;4&quot; chip-value=&quot;event.attendeeCount | numeric&quot;&gt;
+&lt;label&gt;Time:&lt;/label&gt;
+&lt;input size=&quot;2&quot; chip-value=&quot;event.date | date-hour&quot;&gt; :
+&lt;input size=&quot;2&quot; chip-value=&quot;event.date | date-minute&quot;&gt;
+&lt;select chip-value=&quot;event.date | date-ampm&quot;&gt;
+  &lt;option&gt;AM&lt;/option&gt;
+  &lt;option&gt;PM&lt;/option&gt;
+&lt;/select&gt;</code></pre>
 
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Filter</span></span>
 	constructor: (<span class="property">@name</span>, <span class="property">@filter</span>) -&gt;
 	
-	
 	<span class="property">@filters</span>: {}
+	<span class="property">@valueFilters</span>: {}
 	
-	<span class="property">@addFilter</span>: (name, filter) -&gt;
-		<span class="property">@filters</span>[name] = <span class="keyword">new</span> Filter name, filter
+	<span class="property">@addFilter</span>: (name, filter, valueFilter) -&gt;
+		<span class="property">@filters</span>[name] = <span class="keyword">new</span> Filter name, filter <span class="keyword">if</span> filter?
+		<span class="property">@valueFilters</span>[name] = <span class="keyword">new</span> Filter name, valueFilter <span class="keyword">if</span> valueFilter?
 		<span class="keyword">this</span>
 	
 	
+	<span class="property">@getFilter</span>: (name) -&gt;
+		<span class="property">@filters</span>[name]
+	
+	
+	<span class="property">@getValueFilter</span>: (name) -&gt;
+		<span class="property">@valueFilters</span>[name]
+	
+	
 	<span class="property">@runFilter</span>: (controller, name, value, args...) -&gt;
-		filter = <span class="property">@filters</span>[name]?.filter <span class="keyword">or</span> window[name]
+		filter = <span class="property">@filters</span>[name]?.filter
 		<span class="keyword">if</span> filter
 			<span class="keyword">return</span> filter.apply(<span class="literal">null</span>, [controller, value, args...])
 		<span class="keyword">else</span>
-			console.error <span class="string">"Filter `<span class="subst">#{name}</span>` has not been defined."</span>
+			<span class="keyword">return</span> value
+	
+	
+	<span class="property">@runValueFilter</span>: (controller, name, value, currentValue, args...) -&gt;
+		filter = <span class="property">@valueFilters</span>[name]?.filter
+		<span class="keyword">if</span> filter
+			<span class="keyword">return</span> filter.apply(<span class="literal">null</span>, [controller, value, currentValue, args...])
+		<span class="keyword">else</span>
 			<span class="keyword">return</span> value</pre></div></div>
             
         </li>

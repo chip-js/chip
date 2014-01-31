@@ -127,12 +127,15 @@ chip =
 	# Filters
 	# -------
 	
-	filter: (name, filter) ->
-		if typeof filter is 'function'
-			Filter.addFilter(name, filter)
+	filter: (name, filter, valueFilter) ->
+		if typeof filter is 'function' or typeof valueFilter is 'function'
+			Filter.addFilter(name, filter, valueFilter)
 			this
+		else if filter # return both if true is passed, othewise just return the filter
+			[ Filter.getFilter(name), Filter.getValueFilter(name) ]
 		else
-			Filter.runFilter(name, filter)
+			Filter.getFilter(name)
+	
 	
 	
 

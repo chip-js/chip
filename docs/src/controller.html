@@ -247,6 +247,10 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 		Filter.runFilter(<span class="keyword">this</span>, filterName, value, args...)
 	
 	
+	runValueFilter: (value, currentValue, filterName, args...) -&gt;
+		Filter.runValueFilter(<span class="keyword">this</span>, filterName, value, currentValue, args...)
+	
+	
 	passthrough: (value) -&gt;
 		<span class="keyword">if</span> arguments.length
 			<span class="property">@_passthrough</span> = value
@@ -530,7 +534,11 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
 			args[<span class="number">0</span>] = <span class="string">"''"</span>
 			args = args.map (arg) -&gt;
 				processProperties arg, options
-			value = <span class="string">"this.runFilter(<span class="subst">#{value}</span>,<span class="subst">#{args.join(',')}</span>)"</span>
+			<span class="keyword">if</span> setter
+				getter = setter.split(<span class="string">' : '</span>).pop().split(<span class="string">' = '</span>).shift()
+				value = <span class="string">"this.runValueFilter(<span class="subst">#{value}</span>, <span class="subst">#{getter}</span>, <span class="subst">#{args.join(', ')}</span>)"</span>
+			<span class="keyword">else</span>
+				value = <span class="string">"this.runFilter(<span class="subst">#{value}</span>, <span class="subst">#{args.join(', ')}</span>)"</span>
 		
 		expr = setter + value
 	<span class="keyword">else</span>

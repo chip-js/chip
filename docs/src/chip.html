@@ -310,12 +310,14 @@ e.g. <code>chip.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>	
-	filter: (name, filter) -&gt;
-		<span class="keyword">if</span> <span class="keyword">typeof</span> filter <span class="keyword">is</span> <span class="string">'function'</span>
-			Filter.addFilter(name, filter)
+	filter: (name, filter, valueFilter) -&gt;
+		<span class="keyword">if</span> <span class="keyword">typeof</span> filter <span class="keyword">is</span> <span class="string">'function'</span> <span class="keyword">or</span> <span class="keyword">typeof</span> valueFilter <span class="keyword">is</span> <span class="string">'function'</span>
+			Filter.addFilter(name, filter, valueFilter)
 			<span class="keyword">this</span>
+		<span class="keyword">else</span> <span class="keyword">if</span> filter <span class="comment"># return both if true is passed, othewise just return the filter</span>
+			[ Filter.getFilter(name), Filter.getValueFilter(name) ]
 		<span class="keyword">else</span>
-			Filter.runFilter(name, filter)</pre></div></div>
+			Filter.getFilter(name)</pre></div></div>
             
         </li>
         

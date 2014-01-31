@@ -85,6 +85,10 @@ class Controller
 		Filter.runFilter(this, filterName, value, args...)
 	
 	
+	runValueFilter: (value, currentValue, filterName, args...) ->
+		Filter.runValueFilter(this, filterName, value, currentValue, args...)
+	
+	
 	passthrough: (value) ->
 		if arguments.length
 			@_passthrough = value
@@ -205,7 +209,11 @@ normalizeExpression = (expr, extraArgNames) ->
 			args[0] = "''"
 			args = args.map (arg) ->
 				processProperties arg, options
-			value = "this.runFilter(#{value},#{args.join(',')})"
+			if setter
+				getter = setter.split(' : ').pop().split(' = ').shift()
+				value = "this.runValueFilter(#{value}, #{getter}, #{args.join(', ')})"
+			else
+				value = "this.runFilter(#{value}, #{args.join(', ')})"
 		
 		expr = setter + value
 	else

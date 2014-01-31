@@ -551,12 +551,14 @@ if (!Date.prototype.toISOString) {
     attributeToggleBinding: function(name) {
       return Binding.addAttributeToggleBinding(name);
     },
-    filter: function(name, filter) {
-      if (typeof filter === 'function') {
-        Filter.addFilter(name, filter);
+    filter: function(name, filter, valueFilter) {
+      if (typeof filter === 'function' || typeof valueFilter === 'function') {
+        Filter.addFilter(name, filter, valueFilter);
         return this;
+      } else if (filter) {
+        return [Filter.getFilter(name), Filter.getValueFilter(name)];
       } else {
-        return Filter.runFilter(name, filter);
+        return Filter.getFilter(name);
       }
     }
   };
@@ -1062,6 +1064,12 @@ if (!Date.prototype.toISOString) {
       return Filter.runFilter.apply(Filter, [this, filterName, value].concat(__slice.call(args)));
     };
 
+    Controller.prototype.runValueFilter = function() {
+      var args, currentValue, filterName, value;
+      value = arguments[0], currentValue = arguments[1], filterName = arguments[2], args = 4 <= arguments.length ? __slice.call(arguments, 3) : [];
+      return Filter.runValueFilter.apply(Filter, [this, filterName, value, currentValue].concat(__slice.call(args)));
+    };
+
     Controller.prototype.passthrough = function(value) {
       if (arguments.length) {
         return this._passthrough = value;
@@ -1186,7 +1194,7 @@ if (!Date.prototype.toISOString) {
       }
       strIndex = ((_ref1 = expr.match(quoteExpr)) != null ? _ref1.length : void 0) || 0;
       filters.forEach(function(filter) {
-        var args, _ref2;
+        var args, getter, _ref2;
         args = filter.split(argSeparator);
         strings.splice(strIndex++, 0, "'" + args[0] + "'");
         strIndex += ((_ref2 = filter.match(quoteExpr)) != null ? _ref2.length : void 0) || 0;
@@ -1194,7 +1202,12 @@ if (!Date.prototype.toISOString) {
         args = args.map(function(arg) {
           return processProperties(arg, options);
         });
-        return value = "this.runFilter(" + value + "," + (args.join(',')) + ")";
+        if (setter) {
+          getter = setter.split(' : ').pop().split(' = ').shift();
+          return value = "this.runValueFilter(" + value + ", " + getter + ", " + (args.join(', ')) + ")";
+        } else {
+          return value = "this.runFilter(" + value + ", " + (args.join(', ')) + ")";
+        }
       });
       expr = setter + value;
     } else {
@@ -1750,19 +1763,44 @@ if (!Date.prototype.toISOString) {
 
     Filter.filters = {};
 
-    Filter.addFilter = function(name, filter) {
-      this.filters[name] = new Filter(name, filter);
+    Filter.valueFilters = {};
+
+    Filter.addFilter = function(name, filter, valueFilter) {
+      if (filter != null) {
+        this.filters[name] = new Filter(name, filter);
+      }
+      if (valueFilter != null) {
+        this.valueFilters[name] = new Filter(name, valueFilter);
+      }
       return this;
+    };
+
+    Filter.getFilter = function(name) {
+      return this.filters[name];
+    };
+
+    Filter.getValueFilter = function(name) {
+      return this.valueFilters[name];
     };
 
     Filter.runFilter = function() {
       var args, controller, filter, name, value, _ref;
       controller = arguments[0], name = arguments[1], value = arguments[2], args = 4 <= arguments.length ? __slice.call(arguments, 3) : [];
-      filter = ((_ref = this.filters[name]) != null ? _ref.filter : void 0) || window[name];
+      filter = (_ref = this.filters[name]) != null ? _ref.filter : void 0;
       if (filter) {
         return filter.apply(null, [controller, value].concat(__slice.call(args)));
       } else {
-        console.error("Filter `" + name + "` has not been defined.");
+        return value;
+      }
+    };
+
+    Filter.runValueFilter = function() {
+      var args, controller, currentValue, filter, name, value, _ref;
+      controller = arguments[0], name = arguments[1], value = arguments[2], currentValue = arguments[3], args = 5 <= arguments.length ? __slice.call(arguments, 4) : [];
+      filter = (_ref = this.valueFilters[name]) != null ? _ref.filter : void 0;
+      if (filter) {
+        return filter.apply(null, [controller, value, currentValue].concat(__slice.call(args)));
+      } else {
         return value;
       }
     };
@@ -2270,6 +2308,24 @@ if (!Date.prototype.toISOString) {
       }
       return match.replace(urlExp, '$1<a href="$2"' + target + '>$2</a>');
     });
+  });
+
+  chip.filter('int', null, function(controller, value) {
+    value = parseInt(value);
+    if (isNaN(value)) {
+      return null;
+    } else {
+      return value;
+    }
+  });
+
+  chip.filter('float', null, function(controller, value) {
+    value = parseInt(value);
+    if (isNaN(value)) {
+      return null;
+    } else {
+      return value;
+    }
   });
 
   equality = {};

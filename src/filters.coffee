@@ -149,3 +149,13 @@ chip.filter 'autolink', (controller, value, target) ->
 	('' + value).replace /<[^>]+>|[^<]+/g, (match) ->
 		return match if match[0] is '<'
 		match.replace(urlExp, '$1<a href="$2"' + target + '>$2</a>')
+
+
+chip.filter 'int', null, (controller, value) ->
+	value = parseInt(value)
+	if isNaN(value) then null else value
+
+
+chip.filter 'float', null, (controller, value) ->
+	value = parseInt(value)
+	if isNaN(value) then null else value
