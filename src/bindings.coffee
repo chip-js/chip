@@ -58,6 +58,29 @@ chip.binding 'html', (element, expr, controller) ->
 		element.html(if value? then value else '')
 
 
+# ## chip-trim
+# Adds a handler to trim whitespace text nodes inside an element.
+#
+# **Example:**
+# ```xml
+# <div chip-trim class="info">
+#   <span chip-text="post.author.name">author</span>
+#   <span chip-text="post.date.toLocaleDateString()">date</span>
+# </div>
+# ```
+# *Result:*
+# ```xml
+# <div class="info"><span>Jacob Wright</span><span>10/16/2013</span></div>
+# ```
+chip.binding 'trim', (element, expr, controller) ->
+	node = element.get(0).firstChild
+	while node
+		next = node.nextSibling
+		if node.nodeType is Node.TEXT_NODE and node.nodeValue.match /^\s*$/
+			node.parentNode.removeChild node
+		node = next
+
+
 # ## chip-translate
 # Adds a handler to translate the text inside an element.
 #

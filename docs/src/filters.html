@@ -191,7 +191,7 @@ chip.filter <span class="string">'escape'</span>, (controller, value) -&gt;
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'p'</span>, (controller, value) -&gt;
 	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
-	lines = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
+	lines = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
 	escaped = lines.map (line) -&gt; div.text(line).text() <span class="keyword">or</span> <span class="string">'&lt;br&gt;'</span>
 	<span class="string">'&lt;p&gt;'</span> + escaped.join(<span class="string">'&lt;/p&gt;&lt;p&gt;'</span>) + <span class="string">'&lt;/p&gt;'</span></pre></div></div>
             
@@ -216,7 +216,7 @@ It's great<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'br'</span>, (controller, value) -&gt;
 	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
-	lines = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
+	lines = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
 	escaped = lines.map (line) -&gt; div.text(line).text()
 	escaped.join(<span class="string">'&lt;br&gt;'</span>)</pre></div></div>
             
@@ -241,7 +241,7 @@ It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span cl
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'newline'</span>, (controller, value) -&gt;
 	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
-	paragraphs = ((<span class="string">''</span> + value) <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n\s*\r?\n/</span>)
+	paragraphs = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n\s*\r?\n/</span>)
 	escaped = paragraphs.map (paragraph) -&gt;
 		lines = paragraph.split(<span class="regexp">/\r?\n/</span>)
 		escaped = lines.map (line) -&gt; div.text(line).text()

@@ -246,7 +246,7 @@ processProperties = (expr, options = {}) ->
 	options.references = 0 unless options.references
 	options.currentRef = options.references
 	options.ignore = [] unless options.ignore
-	propExpr = /((\{|,|\.)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:|\()?)/gi
+	propExpr = /((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\()?)/gi
 	currentIndex = 0
 	newExpr = ''
 	
@@ -267,9 +267,17 @@ processProperties = (expr, options = {}) ->
 		# continuations after a function (e.g. `getUser(12).firstName`).
 		continuation = prefix is '.'
 		if continuation
+			propChain = '.' + propChain
 			prefix = ''
 		
-		parts = propChain.split('.')
+		breaks = /\.|\[/g
+		index = 0
+		parts = []
+		while (match = breaks.exec propChain)
+			continue if breaks.lastIndex is 1
+			parts.push propChain.slice(index, breaks.lastIndex - 1)
+			index = breaks.lastIndex - 1
+		parts.push propChain.slice(index)
 		newChain = ''
 		
 		if parts.length is 1 and not continuation and not colonOrParen
@@ -284,7 +292,7 @@ processProperties = (expr, options = {}) ->
 					newChain += processPart(options, part, partIndex, continuation)
 				else
 					if colonOrParen isnt '('
-						newChain += "_ref#{options.currentRef}.#{part})"
+						newChain += "_ref#{options.currentRef}#{part})"
 					else
 						# Handles a function to be called in its correct scope
 						# Finds the end of the function and processes the arguments
@@ -307,7 +315,7 @@ processProperties = (expr, options = {}) ->
 							newChain += processPart(options, part, partIndex, continuation)
 							newChain += "_ref#{options.currentRef})"
 						else
-							newChain += "_ref#{options.currentRef}.#{part})"
+							newChain += "_ref#{options.currentRef}#{part})"
 						
 						currentRef = options.currentRef
 						innards = processProperties expr.slice(startIndex, endIndex), options
@@ -335,7 +343,7 @@ processPart = (options, part, index, continuation) ->
 		else
 			part = "#{part}"
 	else
-		part = "_ref#{options.currentRef}.#{part}"
+		part = "_ref#{options.currentRef}#{part}"
 	
 	options.currentRef = ++options.references
 	ref = "_ref#{options.currentRef}"

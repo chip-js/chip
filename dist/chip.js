@@ -1246,20 +1246,31 @@ if (!Date.prototype.toISOString) {
     if (!options.ignore) {
       options.ignore = [];
     }
-    propExpr = /((\{|,|\.)?\s*)([a-z$_\$][a-z_\$0-9\.-]*)(\s*(:|\()?)/gi;
+    propExpr = /((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\()?)/gi;
     currentIndex = 0;
     newExpr = '';
     processProperty = function(match, prefix, objIndicator, propChain, postfix, colonOrParen) {
-      var continuation, index, newChain, part, parts;
+      var breaks, continuation, index, newChain, part, parts;
       index = propExpr.lastIndex - match.length;
       if (objIndicator && colonOrParen === ':') {
         return match;
       }
       continuation = prefix === '.';
       if (continuation) {
+        propChain = '.' + propChain;
         prefix = '';
       }
-      parts = propChain.split('.');
+      breaks = /\.|\[/g;
+      index = 0;
+      parts = [];
+      while ((match = breaks.exec(propChain))) {
+        if (breaks.lastIndex === 1) {
+          continue;
+        }
+        parts.push(propChain.slice(index, breaks.lastIndex - 1));
+        index = breaks.lastIndex - 1;
+      }
+      parts.push(propChain.slice(index));
       newChain = '';
       if (parts.length === 1 && !continuation && !colonOrParen) {
         part = parts[0];
@@ -1274,7 +1285,7 @@ if (!Date.prototype.toISOString) {
             return newChain += processPart(options, part, partIndex, continuation);
           } else {
             if (colonOrParen !== '(') {
-              return newChain += "_ref" + options.currentRef + "." + part + ")";
+              return newChain += "_ref" + options.currentRef + part + ")";
             } else {
               parenCount = 1;
               startIndex = propExpr.lastIndex;
@@ -1300,7 +1311,7 @@ if (!Date.prototype.toISOString) {
                 newChain += processPart(options, part, partIndex, continuation);
                 newChain += "_ref" + options.currentRef + ")";
               } else {
-                newChain += "_ref" + options.currentRef + "." + part + ")";
+                newChain += "_ref" + options.currentRef + part + ")";
               }
               currentRef = options.currentRef;
               innards = processProperties(expr.slice(startIndex, endIndex), options);
@@ -1330,7 +1341,7 @@ if (!Date.prototype.toISOString) {
         part = "" + part;
       }
     } else {
-      part = "_ref" + options.currentRef + "." + part;
+      part = "_ref" + options.currentRef + part;
     }
     options.currentRef = ++options.references;
     ref = "_ref" + options.currentRef;
@@ -1828,6 +1839,20 @@ if (!Date.prototype.toISOString) {
     });
   });
 
+  chip.binding('trim', function(element, expr, controller) {
+    var next, node, _results;
+    node = element.get(0).firstChild;
+    _results = [];
+    while (node) {
+      next = node.nextSibling;
+      if (node.nodeType === Node.TEXT_NODE && node.nodeValue.match(/^\s*$/)) {
+        node.parentNode.removeChild(node);
+      }
+      _results.push(node = next);
+    }
+    return _results;
+  });
+
   chip.binding('translate', function(element, expr, controller) {
     var i, node, nodes, placeholders, refresh, text, _i, _len;
     nodes = element.get(0).childNodes;
@@ -2263,7 +2288,7 @@ if (!Date.prototype.toISOString) {
     if (!div) {
       div = $('<div></div>');
     }
-    lines = (('' + value) || '').split(/\r?\n/);
+    lines = (value || '').split(/\r?\n/);
     escaped = lines.map(function(line) {
       return div.text(line).text() || '<br>';
     });
@@ -2275,7 +2300,7 @@ if (!Date.prototype.toISOString) {
     if (!div) {
       div = $('<div></div>');
     }
-    lines = (('' + value) || '').split(/\r?\n/);
+    lines = (value || '').split(/\r?\n/);
     escaped = lines.map(function(line) {
       return div.text(line).text();
     });
@@ -2287,7 +2312,7 @@ if (!Date.prototype.toISOString) {
     if (!div) {
       div = $('<div></div>');
     }
-    paragraphs = (('' + value) || '').split(/\r?\n\s*\r?\n/);
+    paragraphs = (value || '').split(/\r?\n\s*\r?\n/);
     escaped = paragraphs.map(function(paragraph) {
       var lines;
       lines = paragraph.split(/\r?\n/);
