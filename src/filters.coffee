@@ -85,7 +85,7 @@ chip.filter 'escape', (controller, value) ->
 # ```
 chip.filter 'p', (controller, value) ->
 	div = $('<div></div>') unless div
-	lines = (('' + value) or '').split(/\r?\n/)
+	lines = (value or '').split(/\r?\n/)
 	escaped = lines.map (line) -> div.text(line).text() or '<br>'
 	'<p>' + escaped.join('</p><p>') + '</p>'
 
@@ -104,7 +104,7 @@ chip.filter 'p', (controller, value) ->
 # ```
 chip.filter 'br', (controller, value) ->
 	div = $('<div></div>') unless div
-	lines = (('' + value) or '').split(/\r?\n/)
+	lines = (value or '').split(/\r?\n/)
 	escaped = lines.map (line) -> div.text(line).text()
 	escaped.join('<br>')
 
@@ -123,7 +123,7 @@ chip.filter 'br', (controller, value) ->
 # ```
 chip.filter 'newline', (controller, value) ->
 	div = $('<div></div>') unless div
-	paragraphs = (('' + value) or '').split(/\r?\n\s*\r?\n/)
+	paragraphs = (value or '').split(/\r?\n\s*\r?\n/)
 	escaped = paragraphs.map (paragraph) ->
 		lines = paragraph.split(/\r?\n/)
 		escaped = lines.map (line) -> div.text(line).text()
