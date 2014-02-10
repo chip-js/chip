@@ -432,7 +432,10 @@ value of <code>&#39;Jac&#39;</code>.</p>
 	<span class="keyword">else</span>
 		controller.evalSetter expr, getValue()
 	
-	element.<span class="literal">on</span> <span class="string">'change'</span>, -&gt;
+	events = element.attr(<span class="string">'chip-value-events'</span>) <span class="keyword">or</span> <span class="string">'change'</span>
+	element.removeAttr(<span class="string">'chip-value-events'</span>)
+	
+	element.<span class="literal">on</span> events, -&gt;
 		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue
 			controller.evalSetter expr, getValue()
 			observer.skipNextSync() <span class="comment"># don't update this observer, user changed it</span>
@@ -471,7 +474,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>[ <span class="string">'click'</span>, <span class="string">'dblclick'</span>, <span class="string">'submit'</span>, <span class="string">'change'</span>, <span class="string">'focus'</span>, <span class="string">'blur'</span> ]
+            <div class="content"><div class='highlight'><pre>[ <span class="string">'click'</span>, <span class="string">'dblclick'</span>, <span class="string">'submit'</span>, <span class="string">'change'</span>, <span class="string">'focus'</span>, <span class="string">'blur'</span>, <span class="string">'keydown'</span>, <span class="string">'keyup'</span>, <span class="string">'paste'</span> ]
 	.forEach (name) -&gt;
 		chip.eventBinding(name)</pre></div></div>
             

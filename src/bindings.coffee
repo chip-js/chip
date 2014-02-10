@@ -295,7 +295,10 @@ chip.binding 'value', (element, expr, controller) ->
 	else
 		controller.evalSetter expr, getValue()
 	
-	element.on 'change', ->
+	events = element.attr('chip-value-events') or 'change'
+	element.removeAttr('chip-value-events')
+	
+	element.on events, ->
 		if getValue() isnt observer.oldValue
 			controller.evalSetter expr, getValue()
 			observer.skipNextSync() # don't update this observer, user changed it
@@ -328,7 +331,7 @@ chip.binding 'value', (element, expr, controller) ->
 #   <button>Save</button>
 # </form>
 # ```
-[ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur' ]
+[ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste' ]
 	.forEach (name) ->
 		chip.eventBinding(name)
 
