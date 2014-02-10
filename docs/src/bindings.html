@@ -436,7 +436,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue
 			controller.evalSetter expr, getValue()
 			observer.skipNextSync() <span class="comment"># don't update this observer, user changed it</span>
-			controller.syncView() <span class="comment"># update other expressions looking at this data</span></pre></div></div>
+			controller.sync() <span class="comment"># update other expressions looking at this data</span></pre></div></div>
             
         </li>
         

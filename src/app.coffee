@@ -86,14 +86,14 @@ class App
 	#   // do something as soon as it is instantiated
 	#   MyAppAPI.loadUser(function(err, user) {
 	#     controller.user = user
-	#     controller.syncView()
+	#     controller.sync()
 	#   })
 	#
 	#   // provide a function for the view to call. E.g. <button chip-click="logout">Logout</button>
 	#   controller.logout = function() {
 	#     MyAppAPI.logout(function(err) {
 	#       controller.user = null
-	#       controller.syncView()
+	#       controller.sync()
 	#     })
 	#   }
 	# })
@@ -209,7 +209,8 @@ class App
 						controller = @createController element: container, parent: parentController, name: name
 					else
 						controller = container.data('controller')
-					controller.syncView()
+					if controller
+						controller.sync()
 				
 				# Adds the subroutes and only calls this callback before they get called when they match.
 				if typeof subroutes is 'function'

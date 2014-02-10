@@ -18,20 +18,20 @@ app.controller('todos', function(controller) {
 	
 	Todo.load(function(err, todos) {
 		controller.todos = todos;
-		controller.syncView();
+		controller.sync();
 	});
 	
 	controller.createTodo = function() {
 		var description = controller.newDescription.trim();
 		controller.newDescription = '';
 		if (!description) {
-			controller.syncView();
+			controller.sync();
 			return;
 		}
 		
 		var todo = new Todo({ description: description });
 		controller.todos.unshift(todo);
-		todo.save(controller.syncView);
+		todo.save(controller.sync);
 	};
 	
 	controller.toggleAll = function() {
@@ -43,12 +43,12 @@ app.controller('todos', function(controller) {
 			todo.done = allDone;
 		});
 		Todo.store();
-		controller.syncView();
+		controller.sync();
 	};
 	
 	controller.setFilter = function(name) {
 		controller.filterName = name;
-		controller.syncView();
+		controller.sync();
 	};
 	
 	controller.clearCompleted = function() {
@@ -58,22 +58,22 @@ app.controller('todos', function(controller) {
 			}
 		}
 		Todo.store();
-		controller.syncView();
+		controller.sync();
 	};
 	
 	app.route('/', function(req, next) {
 		controller.filter = controller.filters.none
-		controller.syncView()
+		controller.sync()
 	})
 	
 	app.route('/active', function(req, next) {
 		controller.filter = controller.filters.undone
-		controller.syncView()
+		controller.sync()
 	})
 	
 	app.route('/completed', function(req, next) {
 		controller.filter = controller.filters.done
-		controller.syncView()
+		controller.sync()
 	})
 	
 });

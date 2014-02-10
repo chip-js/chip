@@ -252,14 +252,14 @@ a function on the global scope with the name <code>name + &#39;Controller&#39;</
   <span class="comment">// do something as soon as it is instantiated</span>
   MyAppAPI.loadUser(<span class="keyword">function</span>(err, user) {
     controller.user = user
-    controller.syncView()
+    controller.sync()
   })
 
   <span class="comment">// provide a function for the view to call. E.g. &lt;button chip-click="logout"&gt;Logout&lt;/button&gt;</span>
   controller.logout = <span class="keyword">function</span>() {
     MyAppAPI.logout(<span class="keyword">function</span>(err) {
       controller.user = <span class="literal">null</span>
-      controller.syncView()
+      controller.sync()
     })
   }
 })</code></pre>
@@ -543,7 +543,8 @@ template and controller by the same name. This template will be placed in the fi
 						controller = <span class="property">@createController</span> element: container, parent: parentController, name: name
 					<span class="keyword">else</span>
 						controller = container.data(<span class="string">'controller'</span>)
-					controller.syncView()</pre></div></div>
+					<span class="keyword">if</span> controller
+						controller.sync()</pre></div></div>
             
         </li>
         

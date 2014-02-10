@@ -116,20 +116,21 @@ The declaration of this property informs the application that a ToDo has a prior
 2. Include the additional property in the controller's actions.
 
 ```javascript
-  saveTodo: function() {
-    var description = this.element.find('.edit').val().trim();
-    var priority    = this.element.find('.edit-priority') val().trim(); // We're making a preliminary assumption about our markup here.
+  controller.saveTodo = function() {
+    var description = controller.editDescription.trim();
+    var priority = parseInt(controller.priority);
+    
     if (description) {
-      this.todo.description = description;
-      this.todo.save();
+      controller.todo.description = controller.description;
+      controller.todo.save();
     }
-    if (priority) {
-      this.todo.priority = priority;
-      this.todo.save();
+    if (!isNaN(priority) {
+      controller.todo.priority = priority;
+      controller.todo.save();
     }
-    this.editing = false;
-    syncView();
-  },
+    controller.editing = false;
+    controller.sync();
+  };
 ```
 It's becoming easier to see here how the controller acts as a channel to pass the actions that occurred in the view
 through to persisting the data to the model.
@@ -137,8 +138,8 @@ through to persisting the data to the model.
 3. Include the additional property in the HTML.
 
 ```html
-<input class="edit" chip-value="description" chip-esc="controller.cancelEditing()" chip-blur="controller.cancelEditing()" chip-enter="controller.saveTodo(model, element)">
-<input class="edit-priority" chip-value="priority" chip-esc="controller.cancelEditing()" chip-blur="controller.cancelEditing()" chip-enter="controller.saveTodo(model, element)">
+<input class="edit" chip-value="editDescription" chip-esc="cancelEditing()" chip-blur="cancelEditing()" chip-enter="saveTodo()">
+<input class="edit-priority" chip-value="priority" chip-esc="cancelEditing()" chip-blur="cancelEditing()" chip-enter="saveTodo()">
 ```
 Adding an input here is a good start and we can see that the `saveTodo` expression here should handle this new input well. Functionally speaking,
 this should complete our feature addition, though the actual display and styling begs for a bit more work.

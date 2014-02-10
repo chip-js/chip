@@ -299,7 +299,7 @@ chip.binding 'value', (element, expr, controller) ->
 		if getValue() isnt observer.oldValue
 			controller.evalSetter expr, getValue()
 			observer.skipNextSync() # don't update this observer, user changed it
-			controller.syncView() # update other expressions looking at this data
+			controller.sync() # update other expressions looking at this data
 
 
 # ## chip-[event]
