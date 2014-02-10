@@ -121,10 +121,7 @@ class App
 			controller = new NewController()
 			controller.parent = options.parent
 			if options.passthrough
-				if options.parent.passthrough()
-					controller.passthrough options.parent.passthrough()
-				else
-					controller.passthrough options.parent
+				controller.passthrough options.parent.passthrough() or options.parent
 		else
 			controller = new Controller()
 			makeEventEmitter(controller)
@@ -245,7 +242,7 @@ class App
 		
 	
 	# Listen to URL changes
-	listen: (options) ->
+	listen: (options = {}) ->
 		$ =>
 			if options.stop
 				@router.off 'change', @_routeHandler if @_routeHandler

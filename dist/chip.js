@@ -1040,20 +1040,10 @@ if (!Date.prototype.toISOString) {
       }
     };
 
-    Controller.prototype.syncView = function(later) {
+    Controller.prototype.sync = function(later) {
       Observer.sync(later);
       if (typeof later === 'function') {
         setTimeout(later);
-      }
-      return this;
-    };
-
-    Controller.prototype.syncNow = function() {
-      var observer, _i, _len, _ref;
-      _ref = this._observers;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        observer = _ref[_i];
-        observer.sync();
       }
       return this;
     };
@@ -1449,11 +1439,7 @@ if (!Date.prototype.toISOString) {
         controller = new NewController();
         controller.parent = options.parent;
         if (options.passthrough) {
-          if (options.parent.passthrough()) {
-            controller.passthrough(options.parent.passthrough());
-          } else {
-            controller.passthrough(options.parent);
-          }
+          controller.passthrough(options.parent.passthrough() || options.parent);
         }
       } else {
         controller = new Controller();
@@ -1551,7 +1537,9 @@ if (!Date.prototype.toISOString) {
             } else {
               controller = container.data('controller');
             }
-            return controller.syncView();
+            if (controller) {
+              return controller.sync();
+            }
           };
           if (typeof subroutes === 'function') {
             subroutes(function(subpath, handler, subroutes) {
@@ -1586,6 +1574,9 @@ if (!Date.prototype.toISOString) {
 
     App.prototype.listen = function(options) {
       var _this = this;
+      if (options == null) {
+        options = {};
+      }
       $(function() {
         var app;
         if (options.stop) {
@@ -1968,7 +1959,7 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.binding('value', function(element, expr, controller) {
-    var getValue, observer, setValue;
+    var events, getValue, observer, setValue;
     getValue = element.attr('type') === 'checkbox' ? function() {
       return element.prop('checked');
     } : element.is(':not(input,select,textarea,option)') ? function() {
@@ -2000,16 +1991,18 @@ if (!Date.prototype.toISOString) {
     } else {
       controller.evalSetter(expr, getValue());
     }
-    return element.on('change', function() {
+    events = element.attr('chip-value-events') || 'change';
+    element.removeAttr('chip-value-events');
+    return element.on(events, function() {
       if (getValue() !== observer.oldValue) {
         controller.evalSetter(expr, getValue());
         observer.skipNextSync();
-        return controller.syncView();
+        return controller.sync();
       }
     });
   });
 
-  ['click', 'dblclick', 'submit', 'change', 'focus', 'blur'].forEach(function(name) {
+  ['click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste'].forEach(function(name) {
     return chip.eventBinding(name);
   });
 
