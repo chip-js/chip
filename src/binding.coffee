@@ -171,11 +171,12 @@ class Binding
 			# Calls the handler function allowing the handler to set up the binding.
 			newController = attr.handler element, attr.value, controller
 			
-			# Stops processing if the element was removed from the DOM. chip-if and chip-each for example.
+			# Stops processing of this element and its children if the element was removed from the DOM.
+			# This is used for chip-if and chip-each for example.
 			return if node.parentNode isnt parentNode
 			
 			# Sets controller to new controller if a new controller has been defined by a handler.
-			if newController instanceof Controller
+			if newController instanceof Controller and newController isnt controller
 				controller = newController
 		
 		# Processes the children of this element after the element has been processed.

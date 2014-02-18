@@ -535,9 +535,15 @@ template and controller by the same name. This template will be placed in the fi
 					selector.push(<span class="string">"[<span class="subst">#{@bindingPrefix}</span>route]"</span>) <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">0.</span>.depth]
 					container = <span class="property">@rootElement</span>.find selector.join(<span class="string">' '</span>) + <span class="string">':first'</span>
 					<span class="keyword">if</span> container.length <span class="keyword">and</span> container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>) <span class="keyword">isnt</span> name
+						<span class="function"><span class="title">showNextPage</span></span> = =&gt;
+							container.animateIn().html(<span class="property">@template</span>(name))
+							controller = <span class="property">@createController</span> element: container, parent: parentController, name: name
+							window.scrollTo(<span class="number">0</span>, <span class="number">0</span>)
+						<span class="keyword">if</span> container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>)
+							container.animateOut showNextPage
+						<span class="keyword">else</span>
+							showNextPage()
 						container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>, name)
-						container.html(<span class="property">@template</span>(name))
-						controller = <span class="property">@createController</span> element: container, parent: parentController, name: name
 					<span class="keyword">else</span>
 						controller = container.data(<span class="string">'controller'</span>)
 					<span class="keyword">if</span> controller
@@ -604,8 +610,7 @@ template and controller by the same name. This template will be placed in the fi
 	
 	
 	redirect: (url) -&gt;
-		<span class="property">@router</span>.redirect(url)
-		window.scrollTo(<span class="number">0</span>, <span class="number">0</span>)</pre></div></div>
+		<span class="property">@router</span>.redirect(url)</pre></div></div>
             
         </li>
         

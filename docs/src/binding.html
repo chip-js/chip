@@ -326,7 +326,8 @@ makes the DOM cleaner.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <p>Stops processing if the element was removed from the DOM. chip-if and chip-each for example.</p>
+              <p>Stops processing of this element and its children if the element was removed from the DOM.
+This is used for chip-if and chip-each for example.</p>
 
             </div>
             
@@ -345,7 +346,7 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">if</span> newController <span class="keyword">instanceof</span> Controller
+            <div class="content"><div class='highlight'><pre>			<span class="keyword">if</span> newController <span class="keyword">instanceof</span> Controller <span class="keyword">and</span> newController <span class="keyword">isnt</span> controller
 				controller = newController</pre></div></div>
             
         </li>

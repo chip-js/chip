@@ -417,6 +417,50 @@ for name in attribs
 [ 'checked', 'disabled' ].forEach (name) ->
 	chip.attributeToggleBinding(name)
 
+
+# ## animateIn/animateOut
+# Adds a jquery plugin to allow an element to use CSS3 transitions or animations to animate in or out of the page. This
+# is used with chip-if, chip-each, etc. to show and hide elements.
+$.fn.animateIn = (callback) ->
+	if @parent().length
+		placeholder = $('<!---->')
+		@before(placeholder)
+		@detach()
+	
+	@addClass 'animate-in'
+	
+	if placeholder
+		placeholder.after(this)
+		placeholder.remove()
+	
+	setTimeout =>
+		@removeClass 'animate-in'
+		if callback
+			if @cssDuration('transition') or @cssDuration('animation')
+				@one 'webkittransitionend transitionend webkitanimationend animationend', -> callback()
+			else
+				callback()
+	return this
+
+$.fn.animateOut = (callback) ->
+	if @cssDuration('transition') or @cssDuration('animation')
+		@triggerHandler 'remove'
+		@addClass 'animate-out'
+		
+		@one 'webkittransitionend transitionend webkitanimationend animationend', =>
+			@removeClass 'animate-out'
+			if callback then callback() else @remove()
+	else
+		if callback then callback() else @remove()
+	
+	return this
+
+$.fn.cssDuration = (property) ->
+	time = @css(property + '-duration') or @css('-webkit-' + property + '-duration')
+	millis = parseFloat time
+	millis *= 1000 if /\ds/.test time
+	millis or 0
+
 # ## chip-if
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
 # when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.
@@ -447,12 +491,13 @@ chip.binding 'if', 50, (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		if value
 			if placeholder.parent().length
-				element = template.clone()
+				element = template.clone().animateIn()
 				controller.child element: element, name: controllerName, passthrough: true
 				placeholder.replaceWith(element)
 		else
 			unless placeholder.parent().length
-				element.replaceWith(placeholder)
+				element.animateOut ->
+					element.replaceWith placeholder
 
 # ## chip-unless
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -484,12 +529,13 @@ chip.binding 'unless', 50, (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		unless value
 			if placeholder.parent().length
-				element = template.clone()
+				element = template.clone().animateIn()
 				controller.child element: element, name: controllerName, passthrough: true
 				placeholder.replaceWith(element)
 		else
 			unless placeholder.parent().length
-				element.replaceWith(placeholder)
+				element.before placeholder
+				element.animateOut()
 
 
 # ## chip-each
@@ -594,9 +640,10 @@ chip.binding 'each', 100, (element, expr, controller) ->
 				if removedElements.length
 					if elements.length - newElements.length is 0 # removing all existing elements
 						removedElements.eq(0).replaceWith(placeholder)
-					removedElements.remove()
+					removedElements.animateOut()
 				
 				if newElements.length
+					$(newElements).animateIn()
 					if splice.index is 0
 						if placeholder.parent().length
 							placeholder.after(newElements).remove()
@@ -641,10 +688,12 @@ chip.binding 'partial', 50, (element, expr, controller) ->
 	
 	controller.watch nameExpr, (name) ->
 		return unless name?
-		element.html controller.template(name)
-		if itemExpr and itemName
-			properties[itemName] = controller.eval itemExpr
-		childController = controller.child element: element, name: name, properties: properties
+		element.animateOut ->
+			element.html controller.template(name)
+			if itemExpr and itemName
+				properties[itemName] = controller.eval itemExpr
+			element.animateIn()
+			childController = controller.child element: element, name: name, properties: properties
 
 
 # ## chip-controller

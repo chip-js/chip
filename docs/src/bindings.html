@@ -597,6 +597,61 @@ pressed.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
+              <h2>animateIn/animateOut</h2>
+<p>Adds a jquery plugin to allow an element to use CSS3 transitions or animations to animate in or out of the page. This
+is used with chip-if, chip-each, etc. to show and hide elements.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>$.fn.<span class="function"><span class="title">animateIn</span></span> = (callback) -&gt;
+	<span class="keyword">if</span> <span class="property">@parent</span>().length
+		placeholder = $(<span class="string">'&lt;!----&gt;'</span>)
+		<span class="property">@before</span>(placeholder)
+		<span class="property">@detach</span>()
+	
+	<span class="property">@addClass</span> <span class="string">'animate-in'</span>
+	
+	<span class="keyword">if</span> placeholder
+		placeholder.after(<span class="keyword">this</span>)
+		placeholder.remove()
+	
+	setTimeout =&gt;
+		<span class="property">@removeClass</span> <span class="string">'animate-in'</span>
+		<span class="keyword">if</span> callback
+			<span class="keyword">if</span> <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
+				<span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, -&gt; callback()
+			<span class="keyword">else</span>
+				callback()
+	<span class="keyword">return</span> <span class="keyword">this</span>
+
+$.fn.<span class="function"><span class="title">animateOut</span></span> = (callback) -&gt;
+	<span class="keyword">if</span> <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
+		<span class="property">@triggerHandler</span> <span class="string">'remove'</span>
+		<span class="property">@addClass</span> <span class="string">'animate-out'</span>
+		
+		<span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, =&gt;
+			<span class="property">@removeClass</span> <span class="string">'animate-out'</span>
+			<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="property">@remove</span>()
+	<span class="keyword">else</span>
+		<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="property">@remove</span>()
+	
+	<span class="keyword">return</span> <span class="keyword">this</span>
+
+$.fn.<span class="function"><span class="title">cssDuration</span></span> = (property) -&gt;
+	time = <span class="property">@css</span>(property + <span class="string">'-duration'</span>) <span class="keyword">or</span> <span class="property">@css</span>(<span class="string">'-webkit-'</span> + property + <span class="string">'-duration'</span>)
+	millis = parseFloat time
+	millis *= <span class="number">1000</span> <span class="keyword">if</span> <span class="regexp">/\ds/</span>.test time
+	millis <span class="keyword">or</span> <span class="number">0</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
               <h2>chip-if</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
 when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.</p>
@@ -625,21 +680,22 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
 	controller.watch expr, (value) -&gt;
 		<span class="keyword">if</span> value
 			<span class="keyword">if</span> placeholder.parent().length
-				element = template.clone()
+				element = template.clone().animateIn()
 				controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
 				placeholder.replaceWith(element)
 		<span class="keyword">else</span>
 			<span class="keyword">unless</span> placeholder.parent().length
-				element.replaceWith(placeholder)</pre></div></div>
+				element.animateOut -&gt;
+					element.replaceWith placeholder</pre></div></div>
             
         </li>
         
         
-        <li id="section-21">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <h2>chip-unless</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -669,21 +725,22 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
 	controller.watch expr, (value) -&gt;
 		<span class="keyword">unless</span> value
 			<span class="keyword">if</span> placeholder.parent().length
-				element = template.clone()
+				element = template.clone().animateIn()
 				controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
 				placeholder.replaceWith(element)
 		<span class="keyword">else</span>
 			<span class="keyword">unless</span> placeholder.parent().length
-				element.replaceWith(placeholder)</pre></div></div>
+				element.before placeholder
+				element.animateOut()</pre></div></div>
             
         </li>
         
         
-        <li id="section-22">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <h2>chip-each</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
@@ -785,9 +842,10 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 				<span class="keyword">if</span> removedElements.length
 					<span class="keyword">if</span> elements.length - newElements.length <span class="keyword">is</span> <span class="number">0</span> <span class="comment"># removing all existing elements</span>
 						removedElements.eq(<span class="number">0</span>).replaceWith(placeholder)
-					removedElements.remove()
+					removedElements.animateOut()
 				
 				<span class="keyword">if</span> newElements.length
+					$(newElements).animateIn()
 					<span class="keyword">if</span> splice.index <span class="keyword">is</span> <span class="number">0</span>
 						<span class="keyword">if</span> placeholder.parent().length
 							placeholder.after(newElements).remove()
@@ -799,11 +857,11 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
         </li>
         
         
-        <li id="section-23">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <h2>chip-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
@@ -838,19 +896,21 @@ attributes which appear after <code>chip-partial</code> will have the new value 
 	
 	controller.watch nameExpr, (name) -&gt;
 		<span class="keyword">return</span> <span class="keyword">unless</span> name?
-		element.html controller.template(name)
-		<span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
-			properties[itemName] = controller.eval itemExpr
-		childController = controller.child element: element, name: name, properties: properties</pre></div></div>
+		element.animateOut -&gt;
+			element.html controller.template(name)
+			<span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
+				properties[itemName] = controller.eval itemExpr
+			element.animateIn()
+			childController = controller.child element: element, name: name, properties: properties</pre></div></div>
             
         </li>
         
         
-        <li id="section-24">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <h2>chip-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the

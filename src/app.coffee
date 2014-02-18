@@ -201,9 +201,15 @@ class App
 					selector.push("[#{@bindingPrefix}route]") for i in [0..depth]
 					container = @rootElement.find selector.join(' ') + ':first'
 					if container.length and container.attr("#{@bindingPrefix}route") isnt name
+						showNextPage = =>
+							container.animateIn().html(@template(name))
+							controller = @createController element: container, parent: parentController, name: name
+							window.scrollTo(0, 0)
+						if container.attr("#{@bindingPrefix}route")
+							container.animateOut showNextPage
+						else
+							showNextPage()
 						container.attr("#{@bindingPrefix}route", name)
-						container.html(@template(name))
-						controller = @createController element: container, parent: parentController, name: name
 					else
 						controller = container.data('controller')
 					if controller
@@ -234,7 +240,6 @@ class App
 	
 	redirect: (url) ->
 		@router.redirect(url)
-		window.scrollTo(0, 0)
 	
 	
 	# Mounts an app to a URL prefix.

@@ -1514,7 +1514,7 @@ if (!Date.prototype.toISOString) {
         if (typeof handler === 'string') {
           name = handler;
           callback = function(req, next) {
-            var container, controller, i, parentController, selector, _i;
+            var container, controller, i, parentController, selector, showNextPage, _i;
             parentController = _this.rootController;
             if (before) {
               parentController = before(req, next);
@@ -1527,13 +1527,22 @@ if (!Date.prototype.toISOString) {
             }
             container = _this.rootElement.find(selector.join(' ') + ':first');
             if (container.length && container.attr("" + _this.bindingPrefix + "route") !== name) {
+              showNextPage = function() {
+                var controller;
+                container.animateIn().html(_this.template(name));
+                controller = _this.createController({
+                  element: container,
+                  parent: parentController,
+                  name: name
+                });
+                return window.scrollTo(0, 0);
+              };
+              if (container.attr("" + _this.bindingPrefix + "route")) {
+                container.animateOut(showNextPage);
+              } else {
+                showNextPage();
+              }
               container.attr("" + _this.bindingPrefix + "route", name);
-              container.html(_this.template(name));
-              controller = _this.createController({
-                element: container,
-                parent: parentController,
-                name: name
-              });
             } else {
               controller = container.data('controller');
             }
@@ -1566,8 +1575,7 @@ if (!Date.prototype.toISOString) {
     };
 
     App.prototype.redirect = function(url) {
-      this.router.redirect(url);
-      return window.scrollTo(0, 0);
+      return this.router.redirect(url);
     };
 
     App.prototype.mount = function(path, app) {};
@@ -1737,7 +1745,7 @@ if (!Date.prototype.toISOString) {
         if (node.parentNode !== parentNode) {
           return;
         }
-        if (newController instanceof Controller) {
+        if (newController instanceof Controller && newController !== controller) {
           controller = newController;
         }
       }
@@ -2030,6 +2038,67 @@ if (!Date.prototype.toISOString) {
     return chip.attributeToggleBinding(name);
   });
 
+  $.fn.animateIn = function(callback) {
+    var placeholder,
+      _this = this;
+    if (this.parent().length) {
+      placeholder = $('<!---->');
+      this.before(placeholder);
+      this.detach();
+    }
+    this.addClass('animate-in');
+    if (placeholder) {
+      placeholder.after(this);
+      placeholder.remove();
+    }
+    setTimeout(function() {
+      _this.removeClass('animate-in');
+      if (callback) {
+        if (_this.cssDuration('transition') || _this.cssDuration('animation')) {
+          return _this.one('webkittransitionend transitionend webkitanimationend animationend', function() {
+            return callback();
+          });
+        } else {
+          return callback();
+        }
+      }
+    });
+    return this;
+  };
+
+  $.fn.animateOut = function(callback) {
+    var _this = this;
+    if (this.cssDuration('transition') || this.cssDuration('animation')) {
+      this.triggerHandler('remove');
+      this.addClass('animate-out');
+      this.one('webkittransitionend transitionend webkitanimationend animationend', function() {
+        _this.removeClass('animate-out');
+        if (callback) {
+          return callback();
+        } else {
+          return _this.remove();
+        }
+      });
+    } else {
+      if (callback) {
+        callback();
+      } else {
+        this.remove();
+      }
+    }
+    return this;
+  };
+
+  $.fn.cssDuration = function(property) {
+    var millis, time;
+    time = this.css(property + '-duration') || this.css('-webkit-' + property + '-duration');
+    millis = parseFloat(time);
+    if (/\ds/.test(time)) {
+      millis *= 1000;
+    }
+    return millis || 0;
+  };
+
   chip.binding('if', 50, function(element, expr, controller) {
     var controllerName, placeholder, prefix, template;
     prefix = controller.app.bindingPrefix;
@@ -2040,7 +2109,7 @@ if (!Date.prototype.toISOString) {
     return controller.watch(expr, function(value) {
       if (value) {
         if (placeholder.parent().length) {
-          element = template.clone();
+          element = template.clone().animateIn();
           controller.child({
             element: element,
             name: controllerName,
@@ -2050,7 +2119,9 @@ if (!Date.prototype.toISOString) {
         }
       } else {
         if (!placeholder.parent().length) {
-          return element.replaceWith(placeholder);
+          return element.animateOut(function() {
+            return element.replaceWith(placeholder);
+          });
         }
       }
     });
@@ -2066,7 +2137,7 @@ if (!Date.prototype.toISOString) {
     return controller.watch(expr, function(value) {
       if (!value) {
         if (placeholder.parent().length) {
-          element = template.clone();
+          element = template.clone().animateIn();
           controller.child({
             element: element,
             name: controllerName,
@@ -2076,7 +2147,8 @@ if (!Date.prototype.toISOString) {
         }
       } else {
         if (!placeholder.parent().length) {
-          return element.replaceWith(placeholder);
+          element.before(placeholder);
+          return element.animateOut();
         }
       }
     });
@@ -2152,9 +2224,10 @@ if (!Date.prototype.toISOString) {
             if (elements.length - newElements.length === 0) {
               removedElements.eq(0).replaceWith(placeholder);
             }
-            removedElements.remove();
+            removedElements.animateOut();
           }
           if (newElements.length) {
+            $(newElements).animateIn();
             if (splice.index === 0) {
               if (placeholder.parent().length) {
                 return placeholder.after(newElements).remove();
@@ -2186,14 +2259,17 @@ if (!Date.prototype.toISOString) {
       if (name == null) {
         return;
       }
-      element.html(controller.template(name));
-      if (itemExpr && itemName) {
-        properties[itemName] = controller["eval"](itemExpr);
-      }
-      return childController = controller.child({
-        element: element,
-        name: name,
-        properties: properties
+      return element.animateOut(function() {
+        element.html(controller.template(name));
+        if (itemExpr && itemName) {
+          properties[itemName] = controller["eval"](itemExpr);
+        }
+        element.animateIn();
+        return childController = controller.child({
+          element: element,
+          name: name,
+          properties: properties
+        });
       });
     });
   });
