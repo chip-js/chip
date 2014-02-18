@@ -119,6 +119,11 @@ portion of the URL.</p>
 			location.href = url
 			<span class="keyword">return</span>
 		
+		notFound = <span class="literal">false</span>
+		<span class="property">@on</span> <span class="string">'error'</span>, (<span class="function"><span class="title">errHandler</span></span> = (err) -&gt;
+			notFound = <span class="literal">true</span> <span class="keyword">if</span> err <span class="keyword">is</span> <span class="string">'notFound'</span>
+		)
+		
 		<span class="keyword">if</span> <span class="property">@usePushState</span>
 			history.pushState {}, <span class="string">''</span>, url
 			<span class="property">@currentUrl</span> = url
@@ -128,7 +133,9 @@ portion of the URL.</p>
 				url = url.replace <span class="property">@root</span>, <span class="string">''</span>
 				url = <span class="string">'/'</span> + url <span class="keyword">if</span> url[<span class="number">0</span>] <span class="keyword">isnt</span> <span class="string">'/'</span>
 			location.hash = <span class="keyword">if</span> url <span class="keyword">is</span> <span class="string">'/'</span> <span class="keyword">then</span> <span class="string">''</span> <span class="keyword">else</span> <span class="string">'#'</span> + url
-		<span class="keyword">this</span>
+		
+		<span class="property">@off</span> <span class="string">'error'</span>, errHandler
+		<span class="keyword">return</span> <span class="keyword">not</span> notFound
 	
 	
 	listen: (options = {}) -&gt;

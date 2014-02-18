@@ -61,7 +61,8 @@ another app allowing for modules. An App is created automatically if none are cr
 		<span class="property">@templates</span> = {}
 		<span class="property">@router</span> = <span class="keyword">new</span> Router()
 		<span class="property">@rootElement</span> = $(<span class="string">'html'</span>)
-		<span class="property">@translations</span> = {}</pre></div></div>
+		<span class="property">@translations</span> = {}
+		<span class="property">@router</span>.<span class="literal">on</span> <span class="string">'error'</span>, (err) =&gt; <span class="property">@rootController</span>?.trigger <span class="string">'routeError'</span>, err</pre></div></div>
             
         </li>
         
@@ -536,14 +537,17 @@ template and controller by the same name. This template will be placed in the fi
 					container = <span class="property">@rootElement</span>.find selector.join(<span class="string">' '</span>) + <span class="string">':first'</span>
 					<span class="keyword">if</span> container.length <span class="keyword">and</span> container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>) <span class="keyword">isnt</span> name
 						<span class="function"><span class="title">showNextPage</span></span> = =&gt;
+							container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>, name)
+							<span class="property">@rootController</span>.route = name
 							container.animateIn().html(<span class="property">@template</span>(name))
 							controller = <span class="property">@createController</span> element: container, parent: parentController, name: name
 							window.scrollTo(<span class="number">0</span>, <span class="number">0</span>)
+							<span class="property">@rootController</span>.trigger <span class="string">'routeChange'</span>, name
+						
 						<span class="keyword">if</span> container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>)
 							container.animateOut showNextPage
 						<span class="keyword">else</span>
 							showNextPage()
-						container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>, name)
 					<span class="keyword">else</span>
 						controller = container.data(<span class="string">'controller'</span>)
 					<span class="keyword">if</span> controller

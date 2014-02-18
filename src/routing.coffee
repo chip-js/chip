@@ -47,6 +47,11 @@ class Router
 			location.href = url
 			return
 		
+		notFound = false
+		@on 'error', (errHandler = (err) ->
+			notFound = true if err is 'notFound'
+		)
+		
 		if @usePushState
 			history.pushState {}, '', url
 			@currentUrl = url
@@ -56,7 +61,9 @@ class Router
 				url = url.replace @root, ''
 				url = '/' + url if url[0] isnt '/'
 			location.hash = if url is '/' then '' else '#' + url
-		this
+		
+		@off 'error', errHandler
+		return not notFound
 	
 	
 	listen: (options = {}) ->

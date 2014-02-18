@@ -13,6 +13,7 @@ class App
 		@router = new Router()
 		@rootElement = $('html')
 		@translations = {}
+		@router.on 'error', (err) => @rootController?.trigger 'routeError', err
 	
 	
 	# Initializes templates and controllers from the entire page or the `root` element if provided.
@@ -202,14 +203,17 @@ class App
 					container = @rootElement.find selector.join(' ') + ':first'
 					if container.length and container.attr("#{@bindingPrefix}route") isnt name
 						showNextPage = =>
+							container.attr("#{@bindingPrefix}route", name)
+							@rootController.route = name
 							container.animateIn().html(@template(name))
 							controller = @createController element: container, parent: parentController, name: name
 							window.scrollTo(0, 0)
+							@rootController.trigger 'routeChange', name
+						
 						if container.attr("#{@bindingPrefix}route")
 							container.animateOut showNextPage
 						else
 							showNextPage()
-						container.attr("#{@bindingPrefix}route", name)
 					else
 						controller = container.data('controller')
 					if controller

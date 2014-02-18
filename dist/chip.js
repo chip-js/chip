@@ -612,7 +612,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Router.prototype.redirect = function(url) {
-      var pathParts;
+      var errHandler, notFound, pathParts;
       if (url[0] === '.') {
         pathParts = document.createElement('a');
         pathParts.href = url;
@@ -627,6 +627,12 @@ if (!Date.prototype.toISOString) {
         location.href = url;
         return;
       }
+      notFound = false;
+      this.on('error', (errHandler = function(err) {
+        if (err === 'notFound') {
+          return notFound = true;
+        }
+      }));
       if (this.usePushState) {
         history.pushState({}, '', url);
         this.currentUrl = url;
@@ -640,7 +646,8 @@ if (!Date.prototype.toISOString) {
         }
         location.hash = url === '/' ? '' : '#' + url;
       }
-      return this;
+      this.off('error', errHandler);
+      return !notFound;
     };
 
     Router.prototype.listen = function(options) {
@@ -1342,6 +1349,7 @@ if (!Date.prototype.toISOString) {
 
   App = (function() {
     function App(appName) {
+      var _this = this;
       this.name = appName;
       this.bindingPrefix = 'chip-';
       this.controllers = {};
@@ -1349,6 +1357,10 @@ if (!Date.prototype.toISOString) {
       this.router = new Router();
       this.rootElement = $('html');
       this.translations = {};
+      this.router.on('error', function(err) {
+        var _ref;
+        return (_ref = _this.rootController) != null ? _ref.trigger('routeError', err) : void 0;
+      });
     }
 
     App.prototype.init = function(root) {
@@ -1529,20 +1541,22 @@ if (!Date.prototype.toISOString) {
             if (container.length && container.attr("" + _this.bindingPrefix + "route") !== name) {
               showNextPage = function() {
                 var controller;
+                container.attr("" + _this.bindingPrefix + "route", name);
+                _this.rootController.route = name;
                 container.animateIn().html(_this.template(name));
                 controller = _this.createController({
                   element: container,
                   parent: parentController,
                   name: name
                 });
-                return window.scrollTo(0, 0);
+                window.scrollTo(0, 0);
+                return _this.rootController.trigger('routeChange', name);
               };
               if (container.attr("" + _this.bindingPrefix + "route")) {
                 container.animateOut(showNextPage);
               } else {
                 showNextPage();
               }
-              container.attr("" + _this.bindingPrefix + "route", name);
             } else {
               controller = container.data('controller');
             }
