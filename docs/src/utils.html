@@ -31,15 +31,15 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>
-<span class="function"><span class="title">makeEventEmitter</span></span> = (object) -&gt;
+<span class="function"><span class="title">makeEventEmitter</span></span> = (object, eventEmitter) -&gt;
 	<span class="keyword">if</span> object.trigger
 		<span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">'Object has already become an event emitter'</span>)
-	eventEmitter = $({})
+	eventEmitter = eventEmitter <span class="keyword">or</span> $({})
 	object.<span class="literal">on</span> = eventEmitter.<span class="literal">on</span>.bind(eventEmitter)
 	object.one = eventEmitter.one.bind(eventEmitter)
 	object.<span class="literal">off</span> = eventEmitter.<span class="literal">off</span>.bind(eventEmitter)
 	object.trigger = eventEmitter.trigger.bind(eventEmitter)
-	object
+	eventEmitter
 
 chip.makeEventEmitter = makeEventEmitter</pre></div></div>
             

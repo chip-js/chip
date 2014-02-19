@@ -13,7 +13,8 @@ class App
 		@router = new Router()
 		@rootElement = $('html')
 		@translations = {}
-		@router.on 'error', (err) => @rootController?.trigger 'routeError', err
+		@_emitter = makeEventEmitter(this)
+		@router.on 'error', (event, err) => @trigger 'routeError', [err]
 	
 	
 	# Initializes templates and controllers from the entire page or the `root` element if provided.
@@ -68,7 +69,7 @@ class App
 		for key, value of translations
 			@translations[key] = value
 		
-		@rootController?.trigger 'translationChange', [@translations]
+		@trigger 'translationChange', [@translations]
 	
 	
 	# Controllers
@@ -125,7 +126,7 @@ class App
 				controller.passthrough options.parent.passthrough() or options.parent
 		else
 			controller = new Controller()
-			makeEventEmitter(controller)
+			makeEventEmitter(controller, @_emitter) # this will emit the same events as app, and visa-versa
 			
 			# Sets instance of app on this controller as a top-level controller
 			controller.app = this
@@ -207,8 +208,9 @@ class App
 							@rootController.route = name
 							container.animateIn().html(@template(name))
 							controller = @createController element: container, parent: parentController, name: name
+							controller.sync()
 							window.scrollTo(0, 0)
-							@rootController.trigger 'routeChange', name
+							@trigger 'routeChange', [name]
 						
 						if container.attr("#{@bindingPrefix}route")
 							container.animateOut showNextPage
@@ -216,8 +218,7 @@ class App
 							showNextPage()
 					else
 						controller = container.data('controller')
-					if controller
-						controller.sync()
+						controller?.sync()
 				
 				# Adds the subroutes and only calls this callback before they get called when they match.
 				if typeof subroutes is 'function'
@@ -260,7 +261,7 @@ class App
 			
 			app = this
 			@_routeHandler = (event, path) =>
-				@rootController.trigger 'urlChange', [path]
+				@trigger 'urlChange', [path]
 			
 			@_clickHandler = (event) ->
 				return if event.isDefaultPrevented() # if something else already handled this, we won't

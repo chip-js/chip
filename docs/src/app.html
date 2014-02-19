@@ -62,7 +62,8 @@ another app allowing for modules. An App is created automatically if none are cr
 		<span class="property">@router</span> = <span class="keyword">new</span> Router()
 		<span class="property">@rootElement</span> = $(<span class="string">'html'</span>)
 		<span class="property">@translations</span> = {}
-		<span class="property">@router</span>.<span class="literal">on</span> <span class="string">'error'</span>, (err) =&gt; <span class="property">@rootController</span>?.trigger <span class="string">'routeError'</span>, err</pre></div></div>
+		<span class="property">@_emitter</span> = makeEventEmitter(<span class="keyword">this</span>)
+		<span class="property">@router</span>.<span class="literal">on</span> <span class="string">'error'</span>, (event, err) =&gt; <span class="property">@trigger</span> <span class="string">'routeError'</span>, [err]</pre></div></div>
             
         </li>
         
@@ -207,7 +208,7 @@ replacing all of them with new ones.</p>
 		<span class="keyword">for</span> key, value <span class="keyword">of</span> translations
 			<span class="property">@translations</span>[key] = value
 		
-		<span class="property">@rootController</span>?.trigger <span class="string">'translationChange'</span>, [<span class="property">@translations</span>]</pre></div></div>
+		<span class="property">@trigger</span> <span class="string">'translationChange'</span>, [<span class="property">@translations</span>]</pre></div></div>
             
         </li>
         
@@ -317,7 +318,7 @@ the parent, only read it or call methods on it.</p>
 				controller.passthrough options.parent.passthrough() <span class="keyword">or</span> options.parent
 		<span class="keyword">else</span>
 			controller = <span class="keyword">new</span> Controller()
-			makeEventEmitter(controller)</pre></div></div>
+			makeEventEmitter(controller, <span class="property">@_emitter</span>) <span class="comment"># this will emit the same events as app, and visa-versa</span></pre></div></div>
             
         </li>
         
@@ -541,8 +542,9 @@ template and controller by the same name. This template will be placed in the fi
 							<span class="property">@rootController</span>.route = name
 							container.animateIn().html(<span class="property">@template</span>(name))
 							controller = <span class="property">@createController</span> element: container, parent: parentController, name: name
+							controller.sync()
 							window.scrollTo(<span class="number">0</span>, <span class="number">0</span>)
-							<span class="property">@rootController</span>.trigger <span class="string">'routeChange'</span>, name
+							<span class="property">@trigger</span> <span class="string">'routeChange'</span>, [name]
 						
 						<span class="keyword">if</span> container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>)
 							container.animateOut showNextPage
@@ -550,8 +552,7 @@ template and controller by the same name. This template will be placed in the fi
 							showNextPage()
 					<span class="keyword">else</span>
 						controller = container.data(<span class="string">'controller'</span>)
-					<span class="keyword">if</span> controller
-						controller.sync()</pre></div></div>
+						controller?.sync()</pre></div></div>
             
         </li>
         
@@ -653,7 +654,7 @@ template and controller by the same name. This template will be placed in the fi
 			
 			app = <span class="keyword">this</span>
 			<span class="property">@_routeHandler</span> = (event, path) =&gt;
-				<span class="property">@rootController</span>.trigger <span class="string">'urlChange'</span>, [path]
+				<span class="property">@trigger</span> <span class="string">'urlChange'</span>, [path]
 			
 			<span class="property">@_clickHandler</span> = (event) -&gt;
 				<span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
