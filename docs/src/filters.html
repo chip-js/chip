@@ -275,13 +275,19 @@ chip.filter <span class="string">'autolink'</span>, (controller, value, target) 
 		match.replace(urlExp, <span class="string">'$1&lt;a href="$2"'</span> + target + <span class="string">'&gt;$2&lt;/a&gt;'</span>)
 
 
-chip.filter <span class="string">'int'</span>, <span class="literal">null</span>, (controller, value) -&gt;
-	value = parseInt(value)
+chip.filter <span class="string">'int'</span>, (controller, value) -&gt;
+	value = parseInt value
+	<span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
+, (controller, value) -&gt;
+	value = parseInt value
 	<span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
 
 
-chip.filter <span class="string">'float'</span>, <span class="literal">null</span>, (controller, value) -&gt;
-	value = parseInt(value)
+chip.filter <span class="string">'float'</span>, (controller, value) -&gt;
+	value = parseFloat value
+	<span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
+, (controller, value) -&gt;
+	value = parseInt value
 	<span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value</pre></div></div>
             
         </li>

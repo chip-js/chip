@@ -569,17 +569,16 @@ if (!Date.prototype.toISOString) {
 
   window.chip = chip;
 
-  makeEventEmitter = function(object) {
-    var eventEmitter;
+  makeEventEmitter = function(object, eventEmitter) {
     if (object.trigger) {
       throw new Error('Object has already become an event emitter');
     }
-    eventEmitter = $({});
+    eventEmitter = eventEmitter || $({});
     object.on = eventEmitter.on.bind(eventEmitter);
     object.one = eventEmitter.one.bind(eventEmitter);
     object.off = eventEmitter.off.bind(eventEmitter);
     object.trigger = eventEmitter.trigger.bind(eventEmitter);
-    return object;
+    return eventEmitter;
   };
 
   chip.makeEventEmitter = makeEventEmitter;
@@ -716,9 +715,6 @@ if (!Date.prototype.toISOString) {
         _this = this;
       pathParts = document.createElement('a');
       pathParts.href = url;
-      req = {
-        query: parseQuery(pathParts.search)
-      };
       path = pathParts.pathname;
       if (path[0] !== '/') {
         path = '/' + path;
@@ -727,7 +723,12 @@ if (!Date.prototype.toISOString) {
         return;
       }
       path = path.replace(this.prefix, '');
-      this.trigger('change', path);
+      req = {
+        url: url,
+        path: path,
+        query: parseQuery(pathParts.search)
+      };
+      this.trigger('change', [path]);
       routes = this.routes.filter(function(route) {
         return route.match(path);
       });
@@ -751,10 +752,10 @@ if (!Date.prototype.toISOString) {
       next = function(err) {
         var callback;
         if (err) {
-          return _this.trigger('error', err);
+          return _this.trigger('error', [err]);
         }
         if (callbacks.length === 0) {
-          return;
+          return next('notFound');
         }
         callback = callbacks.shift();
         return callback(req, next);
@@ -1357,9 +1358,9 @@ if (!Date.prototype.toISOString) {
       this.router = new Router();
       this.rootElement = $('html');
       this.translations = {};
-      this.router.on('error', function(err) {
-        var _ref;
-        return (_ref = _this.rootController) != null ? _ref.trigger('routeError', err) : void 0;
+      this._emitter = makeEventEmitter(this);
+      this.router.on('error', function(event, err) {
+        return _this.trigger('routeError', [err]);
       });
     }
 
@@ -1411,7 +1412,7 @@ if (!Date.prototype.toISOString) {
     };
 
     App.prototype.translate = function(translations, merge) {
-      var key, value, _ref, _ref1;
+      var key, value, _ref;
       if (!merge) {
         _ref = this.translations;
         for (key in _ref) {
@@ -1423,7 +1424,7 @@ if (!Date.prototype.toISOString) {
         value = translations[key];
         this.translations[key] = value;
       }
-      return (_ref1 = this.rootController) != null ? _ref1.trigger('translationChange', [this.translations]) : void 0;
+      return this.trigger('translationChange', [this.translations]);
     };
 
     App.prototype.controller = function(name, initFunction) {
@@ -1455,7 +1456,7 @@ if (!Date.prototype.toISOString) {
         }
       } else {
         controller = new Controller();
-        makeEventEmitter(controller);
+        makeEventEmitter(controller, this._emitter);
         controller.app = this;
         controller.translations = this.translations;
       }
@@ -1549,19 +1550,18 @@ if (!Date.prototype.toISOString) {
                   parent: parentController,
                   name: name
                 });
+                controller.sync();
                 window.scrollTo(0, 0);
-                return _this.rootController.trigger('routeChange', name);
+                return _this.trigger('routeChange', [name]);
               };
               if (container.attr("" + _this.bindingPrefix + "route")) {
-                container.animateOut(showNextPage);
+                return container.animateOut(showNextPage);
               } else {
-                showNextPage();
+                return showNextPage();
               }
             } else {
               controller = container.data('controller');
-            }
-            if (controller) {
-              return controller.sync();
+              return controller != null ? controller.sync() : void 0;
             }
           };
           if (typeof subroutes === 'function') {
@@ -1612,7 +1612,7 @@ if (!Date.prototype.toISOString) {
         }
         app = _this;
         _this._routeHandler = function(event, path) {
-          return _this.rootController.trigger('urlChange', [path]);
+          return _this.trigger('urlChange', [path]);
         };
         _this._clickHandler = function(event) {
           if (event.isDefaultPrevented()) {
@@ -1998,7 +1998,7 @@ if (!Date.prototype.toISOString) {
       return element.val(value);
     };
     observer = controller.watch(expr, function(value) {
-      if (getValue() !== value) {
+      if (getValue() != value) {
         return setValue(value);
       }
     });
@@ -2419,7 +2419,14 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.filter('int', null, function(controller, value) {
+  chip.filter('int', function(controller, value) {
+    value = parseInt(value);
+    if (isNaN(value)) {
+      return null;
+    } else {
+      return value;
+    }
+  }, function(controller, value) {
     value = parseInt(value);
     if (isNaN(value)) {
       return null;
@@ -2428,7 +2435,14 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.filter('float', null, function(controller, value) {
+  chip.filter('float', function(controller, value) {
+    value = parseFloat(value);
+    if (isNaN(value)) {
+      return null;
+    } else {
+      return value;
+    }
+  }, function(controller, value) {
     value = parseInt(value);
     if (isNaN(value)) {
       return null;

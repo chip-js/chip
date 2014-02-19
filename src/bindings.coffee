@@ -281,7 +281,7 @@ chip.binding 'value', (element, expr, controller) ->
 			(value) -> element.val(value)
 	
 	observer = controller.watch expr, (value) ->
-		if getValue() isnt value
+		if `getValue() != value` # Allows for string/number equality
 			setValue value
 	
 	# Skips setting values on option elements since the user cannot change these with user input

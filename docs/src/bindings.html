@@ -394,7 +394,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 			(value) -&gt; element.val(value)
 	
 	observer = controller.watch expr, (value) -&gt;
-		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> value
+		<span class="keyword">if</span> `<span class="javascript">getValue() != value</span>` <span class="comment"># Allows for string/number equality</span>
 			setValue value</pre></div></div>
             
         </li>

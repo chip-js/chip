@@ -19,8 +19,8 @@ class Router
 		
 	
 	# Registers a `callback` function to be called when the given path matches a URL. The callback receives two
-	# arguments, `req`, and `next`, where `req` represents the request and has two properties on it, `params` and
-	# `query`., `req.params` which is an object with the parameters from the path (e.g. /:username/* would make a params
+	# arguments, `req`, and `next`, where `req` represents the request and has the properties, `url`, `path`, `params`
+	# and `query`. `req.params` is an object with the parameters from the path (e.g. /:username/* would make a params
 	# object with two properties, `username` and `*`). `req.query` is an object with key-value pairs from the query
 	# portion of the URL.
 	route: (path, callback) ->
@@ -111,13 +111,13 @@ class Router
 	dispatch: (url) ->
 		pathParts = document.createElement('a')
 		pathParts.href = url
-		req = query: parseQuery(pathParts.search)
 		path = pathParts.pathname
 		path = '/' + path if path[0] isnt '/'
 		return if path.indexOf(@prefix) isnt 0
 		path = path.replace @prefix, ''
+		req = url: url, path: path, query: parseQuery(pathParts.search)
 		
-		@trigger 'change', path
+		@trigger 'change', [path]
 		
 		routes = @routes.filter (route) -> route.match path
 		callbacks = []
@@ -136,8 +136,8 @@ class Router
 		
 		# Calls each callback one by one until either there is an error or we call all of them.
 		next = (err) =>
-			return @trigger('error', err) if err
-			return if callbacks.length is 0
+			return @trigger('error', [err]) if err
+			return next('notFound') if callbacks.length is 0
 			callback = callbacks.shift()
 			callback(req, next)
 		

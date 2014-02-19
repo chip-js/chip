@@ -76,8 +76,8 @@
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
               <p>Registers a <code>callback</code> function to be called when the given path matches a URL. The callback receives two
-arguments, <code>req</code>, and <code>next</code>, where <code>req</code> represents the request and has two properties on it, <code>params</code> and
-<code>query</code>., <code>req.params</code> which is an object with the parameters from the path (e.g. /:username/<em> would make a params
+arguments, <code>req</code>, and <code>next</code>, where <code>req</code> represents the request and has the properties, <code>url</code>, <code>path</code>, <code>params</code>
+and <code>query</code>. <code>req.params</code> is an object with the parameters from the path (e.g. /:username/<em> would make a params
 object with two properties, <code>username</code> and `</em><code>).</code>req.query` is an object with key-value pairs from the query
 portion of the URL.</p>
 
@@ -220,13 +220,13 @@ be used by your application. Use <code>redirect()</code> instead.</p>
             <div class="content"><div class='highlight'><pre>	dispatch: (url) -&gt;
 		pathParts = document.createElement(<span class="string">'a'</span>)
 		pathParts.href = url
-		req = query: parseQuery(pathParts.search)
 		path = pathParts.pathname
 		path = <span class="string">'/'</span> + path <span class="keyword">if</span> path[<span class="number">0</span>] <span class="keyword">isnt</span> <span class="string">'/'</span>
 		<span class="keyword">return</span> <span class="keyword">if</span> path.indexOf(<span class="property">@prefix</span>) <span class="keyword">isnt</span> <span class="number">0</span>
 		path = path.replace <span class="property">@prefix</span>, <span class="string">''</span>
+		req = url: url, path: path, query: parseQuery(pathParts.search)
 		
-		<span class="property">@trigger</span> <span class="string">'change'</span>, path
+		<span class="property">@trigger</span> <span class="string">'change'</span>, [path]
 		
 		routes = <span class="property">@routes</span>.filter (route) -&gt; route.match path
 		callbacks = []
@@ -270,8 +270,8 @@ be used by your application. Use <code>redirect()</code> instead.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>		<span class="function"><span class="title">next</span></span> = (err) =&gt;
-			<span class="keyword">return</span> <span class="property">@trigger</span>(<span class="string">'error'</span>, err) <span class="keyword">if</span> err
-			<span class="keyword">return</span> <span class="keyword">if</span> callbacks.length <span class="keyword">is</span> <span class="number">0</span>
+			<span class="keyword">return</span> <span class="property">@trigger</span>(<span class="string">'error'</span>, [err]) <span class="keyword">if</span> err
+			<span class="keyword">return</span> next(<span class="string">'notFound'</span>) <span class="keyword">if</span> callbacks.length <span class="keyword">is</span> <span class="number">0</span>
 			callback = callbacks.shift()
 			callback(req, next)
 		
