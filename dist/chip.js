@@ -518,16 +518,16 @@ if (!Date.prototype.toISOString) {
 
   chip = {
     init: function() {
-      if (!this.rootApp) {
-        this.rootApp = chip.app();
+      if (!chip.rootApp) {
+        chip.rootApp = chip.app();
       }
-      return this.rootApp.init();
+      return chip.rootApp.init();
     },
     app: function(appName) {
       var app;
       app = new App(appName);
       if (!appName) {
-        this.rootApp = app;
+        chip.rootApp = app;
       }
       return app;
     },
@@ -563,9 +563,7 @@ if (!Date.prototype.toISOString) {
     }
   };
 
-  $(function() {
-    return chip.init();
-  });
+  $(document).on('ready.chip', chip.init);
 
   window.chip = chip;
 
@@ -867,7 +865,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Observer.prototype.sync = function() {
-      var changeRecords, splices, value;
+      var changeRecords, oldValueValue, splices, value, valueValue;
       value = this.getter();
       if (this.skip) {
         delete this.skip;
@@ -875,11 +873,25 @@ if (!Date.prototype.toISOString) {
         splices = equality.array(value, this.oldValue);
         if (splices.length) {
           this.callback(value, this.oldValue, splices);
+        } else {
+          return;
         }
       } else if (value && this.oldValue && typeof value === 'object' && typeof this.oldValue === 'object') {
-        changeRecords = equality.object(value, this.oldValue);
-        if (changeRecords.length) {
-          this.callback(value, this.oldValue, changeRecords);
+        valueValue = value.valueOf();
+        oldValueValue = this.oldValue.valueOf();
+        if (typeof valueValue !== 'object' || typeof oldValueValue !== 'object') {
+          if (valueValue !== oldValueValue) {
+            this.callback(value, this.oldValue);
+          } else {
+            return;
+          }
+        } else {
+          changeRecords = equality.object(value, this.oldValue);
+          if (changeRecords.length) {
+            this.callback(value, this.oldValue, changeRecords);
+          } else {
+            return;
+          }
         }
       } else if (value !== this.oldValue) {
         this.callback(value, this.oldValue);
@@ -977,12 +989,16 @@ if (!Date.prototype.toISOString) {
 
     Observer.copyObject = function(object) {
       var copy, key, value;
-      copy = {};
-      for (key in object) {
-        value = object[key];
-        copy[key] = value;
+      if (object.valueOf() !== object) {
+        return new object.constructor(object.valueOf());
+      } else {
+        copy = {};
+        for (key in object) {
+          value = object[key];
+          copy[key] = value;
+        }
+        return copy;
       }
-      return copy;
     };
 
     return Observer;
@@ -1038,6 +1054,9 @@ if (!Date.prototype.toISOString) {
 
     Controller.prototype.closeController = function() {
       var observer, _i, _len, _ref;
+      if (this.hasOwnProperty('beforeClose')) {
+        this.beforeClose();
+      }
       if (this._observers) {
         _ref = this._observers;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -1483,7 +1502,7 @@ if (!Date.prototype.toISOString) {
           options.element.off('remove.controller');
           old.closeController();
         }
-        options.element.on('remove.controller', function() {
+        options.element.one('remove.controller', function() {
           return controller.closeController();
         });
         controller.element = options.element;
@@ -1527,7 +1546,7 @@ if (!Date.prototype.toISOString) {
         if (typeof handler === 'string') {
           name = handler;
           callback = function(req, next) {
-            var container, controller, i, parentController, selector, showNextPage, _i;
+            var container, i, isExistingRoute, isSamePath, parentController, selector, showNextPage, _i;
             parentController = _this.rootController;
             if (before) {
               parentController = before(req, next);
@@ -1539,29 +1558,31 @@ if (!Date.prototype.toISOString) {
               selector.push("[" + _this.bindingPrefix + "route]");
             }
             container = _this.rootElement.find(selector.join(' ') + ':first');
-            if (container.length && container.attr("" + _this.bindingPrefix + "route") !== name) {
+            isExistingRoute = _this.rootController.route;
+            isSamePath = req.path === _this.rootController.path;
+            if (container.length) {
               showNextPage = function() {
-                var controller;
                 container.attr("" + _this.bindingPrefix + "route", name);
                 _this.rootController.route = name;
-                container.animateIn().html(_this.template(name));
-                controller = _this.createController({
-                  element: container,
-                  parent: parentController,
-                  name: name
-                });
-                controller.sync();
-                window.scrollTo(0, 0);
-                return _this.trigger('routeChange', [name]);
+                _this.rootController.path = req.path;
+                _this.trigger('routeChange', [name]);
+                container.animateIn();
+                if (!isSamePath) {
+                  container.html(_this.template(name));
+                  _this.createController({
+                    element: container,
+                    parent: parentController,
+                    name: name
+                  });
+                }
+                _this.rootController.sync();
+                return window.scrollTo(0, 0);
               };
-              if (container.attr("" + _this.bindingPrefix + "route")) {
-                return container.animateOut(showNextPage);
+              if (isExistingRoute) {
+                return container.animateOut(isSamePath, showNextPage);
               } else {
                 return showNextPage();
               }
-            } else {
-              controller = container.data('controller');
-              return controller != null ? controller.sync() : void 0;
             }
           };
           if (typeof subroutes === 'function') {
@@ -1858,8 +1879,12 @@ if (!Date.prototype.toISOString) {
     _results = [];
     while (node) {
       next = node.nextSibling;
-      if (node.nodeType === Node.TEXT_NODE && node.nodeValue.match(/^\s*$/)) {
-        node.parentNode.removeChild(node);
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.nodeValue.match(/^\s*$/)) {
+          node.parentNode.removeChild(node);
+        } else {
+          node.textContent = node.textContent.trim();
+        }
       }
       _results.push(node = next);
     }
@@ -2080,10 +2105,16 @@ if (!Date.prototype.toISOString) {
     return this;
   };
 
-  $.fn.animateOut = function(callback) {
+  $.fn.animateOut = function(dontRemove, callback) {
     var _this = this;
+    if (typeof dontRemove === 'function') {
+      callback = dontRemove;
+      dontRemove = false;
+    }
     if (this.cssDuration('transition') || this.cssDuration('animation')) {
-      this.triggerHandler('remove');
+      if (!dontRemove) {
+        this.triggerHandler('remove');
+      }
       this.addClass('animate-out');
       this.one('webkittransitionend transitionend webkitanimationend animationend', function() {
         _this.removeClass('animate-out');
@@ -2096,7 +2127,7 @@ if (!Date.prototype.toISOString) {
     } else {
       if (callback) {
         callback();
-      } else {
+      } else if (!dontRemove) {
         this.remove();
       }
     }
@@ -2313,6 +2344,21 @@ if (!Date.prototype.toISOString) {
       return value.map(mapFunc, controller);
     } else {
       return mapFunc.call(controller, value);
+    }
+  });
+
+  chip.filter('reduce', function(controller, value, reduceFunc, initialValue) {
+    if (!((value != null) && reduceFunc)) {
+      return value;
+    }
+    if (Array.isArray(value)) {
+      if (arguments.length === 4) {
+        return value.reduce(reduceFunc, initialValue);
+      } else {
+        return value.reduce(reduceFunc);
+      }
+    } else if (arguments.length === 4) {
+      return reduceFunc(initialValue, value);
     }
   });
 

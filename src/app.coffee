@@ -153,7 +153,7 @@ class App
 				old.closeController()
 			
 			# Assign element and add cleanup when the element is removed.
-			options.element.on 'remove.controller', -> controller.closeController()
+			options.element.one 'remove.controller', -> controller.closeController()
 			controller.element = options.element
 			options.element.data 'controller', controller
 		
@@ -202,23 +202,25 @@ class App
 					selector = []
 					selector.push("[#{@bindingPrefix}route]") for i in [0..depth]
 					container = @rootElement.find selector.join(' ') + ':first'
-					if container.length and container.attr("#{@bindingPrefix}route") isnt name
+					isExistingRoute = @rootController.route
+					isSamePath = req.path is @rootController.path # handle query-string changes
+					if container.length
 						showNextPage = =>
 							container.attr("#{@bindingPrefix}route", name)
 							@rootController.route = name
-							container.animateIn().html(@template(name))
-							controller = @createController element: container, parent: parentController, name: name
-							controller.sync()
-							window.scrollTo(0, 0)
+							@rootController.path = req.path
 							@trigger 'routeChange', [name]
+							container.animateIn()
+							unless isSamePath
+								container.html @template(name)
+								@createController element: container, parent: parentController, name: name
+							@rootController.sync()
+							window.scrollTo(0, 0)
 						
-						if container.attr("#{@bindingPrefix}route")
-							container.animateOut showNextPage
+						if isExistingRoute
+							container.animateOut(isSamePath, showNextPage)
 						else
 							showNextPage()
-					else
-						controller = container.data('controller')
-						controller?.sync()
 				
 				# Adds the subroutes and only calls this callback before they get called when they match.
 				if typeof subroutes is 'function'
