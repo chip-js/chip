@@ -445,16 +445,20 @@ $.fn.animateIn = (callback) ->
 				callback()
 	return this
 
-$.fn.animateOut = (callback) ->
+$.fn.animateOut = (dontRemove, callback) ->
+	if typeof dontRemove is 'function'
+		callback = dontRemove
+		dontRemove = false
+	
 	if @cssDuration('transition') or @cssDuration('animation')
-		@triggerHandler 'remove'
+		@triggerHandler 'remove' unless dontRemove
 		@addClass 'animate-out'
 		
 		@one 'webkittransitionend transitionend webkitanimationend animationend', =>
 			@removeClass 'animate-out'
 			if callback then callback() else @remove()
 	else
-		if callback then callback() else @remove()
+		if callback then callback() else unless dontRemove then @remove()
 	
 	return this
 

@@ -627,16 +627,20 @@ is used with chip-if, chip-each, etc. to show and hide elements.</p>
 				callback()
 	<span class="keyword">return</span> <span class="keyword">this</span>
 
-$.fn.<span class="function"><span class="title">animateOut</span></span> = (callback) -&gt;
+$.fn.<span class="function"><span class="title">animateOut</span></span> = (dontRemove, callback) -&gt;
+	<span class="keyword">if</span> <span class="keyword">typeof</span> dontRemove <span class="keyword">is</span> <span class="string">'function'</span>
+		callback = dontRemove
+		dontRemove = <span class="literal">false</span>
+	
 	<span class="keyword">if</span> <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
-		<span class="property">@triggerHandler</span> <span class="string">'remove'</span>
+		<span class="property">@triggerHandler</span> <span class="string">'remove'</span> <span class="keyword">unless</span> dontRemove
 		<span class="property">@addClass</span> <span class="string">'animate-out'</span>
 		
 		<span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, =&gt;
 			<span class="property">@removeClass</span> <span class="string">'animate-out'</span>
 			<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="property">@remove</span>()
 	<span class="keyword">else</span>
-		<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="property">@remove</span>()
+		<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="keyword">unless</span> dontRemove <span class="keyword">then</span> <span class="property">@remove</span>()
 	
 	<span class="keyword">return</span> <span class="keyword">this</span>
 
