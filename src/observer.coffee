@@ -27,11 +27,28 @@ class Observer
 		# If an array has changed calculate the splices and call the callback. This 
 		else if Array.isArray(value) and Array.isArray(@oldValue)
 			splices = equality.array value, @oldValue
-			@callback(value, @oldValue, splices) if splices.length
+			if splices.length
+				@callback(value, @oldValue, splices)
+			else
+				return
 		# If an object has changed calculate the chnages and call the callback
 		else if value and @oldValue and typeof value is 'object' and typeof @oldValue is 'object'
-			changeRecords = equality.object value, @oldValue
-			@callback(value, @oldValue, changeRecords) if changeRecords.length
+			# Allow dates and Number/String objects to be compared
+			valueValue = value.valueOf()
+			oldValueValue = @oldValue.valueOf()
+			
+			# Allow dates and Number/String objects to be compared
+			if typeof valueValue isnt 'object' or typeof oldValueValue isnt 'object'
+				if valueValue isnt oldValueValue
+					@callback(value, @oldValue)
+				else
+					return
+			else
+				changeRecords = equality.object value, @oldValue
+				if changeRecords.length
+					@callback(value, @oldValue, changeRecords)
+				else
+					return
 		# If a value has changed call the callback
 		else if value isnt @oldValue
 			@callback(value, @oldValue)
@@ -39,8 +56,9 @@ class Observer
 		else
 			return
 		
-		# Store in immutable version of the value, allowing for arrays and objects to change instance but not
-		# content and still refrain from dispatching callbacks (e.g. when using an object in chip-class)
+		# Store an immutable version of the value, allowing for arrays and objects to change instance but not
+		# content and still refrain from dispatching callbacks (e.g. when using an object in chip-class or when
+		# using array filters in chip-each)
 		@oldValue = Observer.immutable value
 	
 	
@@ -143,10 +161,14 @@ class Observer
 	# Clones an object. We don't worry/care about prototype. If obj.prop is on the prototype or on the object directly,
 	# we just check if it has changed
 	@copyObject: (object) ->
-		copy = {}
-		for key, value of object
-			copy[key] = value
-		return copy
+		# Handle dates, numbers, and strings
+		if object.valueOf() isnt object
+			new object.constructor object.valueOf()
+		else
+			copy = {}
+			for key, value of object
+				copy[key] = value
+			return copy
 
 
 chip.Observer = Observer
