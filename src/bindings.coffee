@@ -76,8 +76,11 @@ chip.binding 'trim', (element, expr, controller) ->
 	node = element.get(0).firstChild
 	while node
 		next = node.nextSibling
-		if node.nodeType is Node.TEXT_NODE and node.nodeValue.match /^\s*$/
-			node.parentNode.removeChild node
+		if node.nodeType is Node.TEXT_NODE
+			if node.nodeValue.match /^\s*$/
+				node.parentNode.removeChild node
+			else
+				node.textContent = node.textContent.trim()
 		node = next
 
 

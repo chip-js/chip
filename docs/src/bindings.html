@@ -120,8 +120,11 @@ chip.binding <span class="string">'debug'</span>, (element, expr, controller) -&
 	node = element.get(<span class="number">0</span>).firstChild
 	<span class="keyword">while</span> node
 		next = node.nextSibling
-		<span class="keyword">if</span> node.nodeType <span class="keyword">is</span> Node.TEXT_NODE <span class="keyword">and</span> node.nodeValue.match <span class="regexp">/^\s*$/</span>
-			node.parentNode.removeChild node
+		<span class="keyword">if</span> node.nodeType <span class="keyword">is</span> Node.TEXT_NODE
+			<span class="keyword">if</span> node.nodeValue.match <span class="regexp">/^\s*$/</span>
+				node.parentNode.removeChild node
+			<span class="keyword">else</span>
+				node.textContent = node.textContent.trim()
 		node = next</pre></div></div>
             
         </li>
