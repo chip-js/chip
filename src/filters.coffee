@@ -16,6 +16,15 @@ chip.filter 'map', (controller, value, mapFunc) ->
 	else
 		mapFunc.call(controller, value)
 
+# ## reduce
+# Adds a filter to reduce an array or value by the given reduce function
+chip.filter 'reduce', (controller, value, reduceFunc, initialValue) ->
+	return value unless value? and reduceFunc
+	if Array.isArray value
+		if arguments.length is 4 then value.reduce(reduceFunc, initialValue) else value.reduce(reduceFunc)
+	else if arguments.length is 4
+		reduceFunc(initialValue, value)
+
 
 # ## date
 # Adds a filter to format dates and strings
