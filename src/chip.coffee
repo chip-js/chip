@@ -26,15 +26,15 @@ chip =
 	
 	# Initializes chip to automatically set up the DOM. This is called at page load and should not need to be called.
 	init: ->
-		unless @rootApp
-			@rootApp = chip.app()
-		@rootApp.init()
+		unless chip.rootApp
+			chip.rootApp = chip.app()
+		chip.rootApp.init()
 	
 	
 	# Creates a new chip app
 	app: (appName) ->
 		app = new App(appName)
-		@rootApp = app if not appName
+		chip.rootApp = app if not appName
 		app
 	
 	
@@ -140,7 +140,7 @@ chip =
 	
 
 # Initializes chip on page load
-$ -> chip.init()
+$(document).on 'ready.chip', chip.init
 
 
 

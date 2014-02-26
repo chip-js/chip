@@ -122,9 +122,9 @@ For all details and documentation:
             </div>
             
             <div class="content"><div class='highlight'><pre>	init: -&gt;
-		<span class="keyword">unless</span> <span class="property">@rootApp</span>
-			<span class="property">@rootApp</span> = chip.app()
-		<span class="property">@rootApp</span>.init()</pre></div></div>
+		<span class="keyword">unless</span> chip.rootApp
+			chip.rootApp = chip.app()
+		chip.rootApp.init()</pre></div></div>
             
         </li>
         
@@ -141,7 +141,7 @@ For all details and documentation:
             
             <div class="content"><div class='highlight'><pre>	app: (appName) -&gt;
 		app = <span class="keyword">new</span> App(appName)
-		<span class="property">@rootApp</span> = app <span class="keyword">if</span> <span class="keyword">not</span> appName
+		chip.rootApp = app <span class="keyword">if</span> <span class="keyword">not</span> appName
 		app</pre></div></div>
             
         </li>
@@ -332,7 +332,7 @@ e.g. <code>chip.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>$ -&gt; chip.init()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>$(document).<span class="literal">on</span> <span class="string">'ready.chip'</span>, chip.init</pre></div></div>
             
         </li>
         
