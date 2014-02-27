@@ -163,6 +163,13 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'sort'</span>, (controller, value, sortFunc) -&gt;
+	<span class="keyword">if</span> <span class="keyword">typeof</span> sortFunc <span class="keyword">is</span> <span class="string">'string'</span>
+		prop = sortFunc
+		<span class="function"><span class="title">sortFunc</span></span> = (a, b) -&gt;
+			<span class="keyword">return</span> <span class="number">1</span> <span class="keyword">if</span> a[prop] &gt; b[prop]
+			<span class="keyword">return</span> -<span class="number">1</span> <span class="keyword">if</span> a[prop] &lt; b[prop]
+			<span class="keyword">return</span> <span class="number">0</span>
+	
 	<span class="keyword">if</span> Array.isArray value
 		value.slice().sort(sortFunc)
 	<span class="keyword">else</span>

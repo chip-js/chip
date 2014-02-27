@@ -58,6 +58,13 @@ chip.filter 'limit', (controller, value, limit) ->
 # ## sort
 # Adds a filter to sort an array
 chip.filter 'sort', (controller, value, sortFunc) ->
+	if typeof sortFunc is 'string'
+		prop = sortFunc
+		sortFunc = (a, b) ->
+			return 1 if a[prop] > b[prop]
+			return -1 if a[prop] < b[prop]
+			return 0
+	
 	if Array.isArray value
 		value.slice().sort(sortFunc)
 	else

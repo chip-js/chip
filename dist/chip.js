@@ -2402,6 +2402,19 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.filter('sort', function(controller, value, sortFunc) {
+    var prop;
+    if (typeof sortFunc === 'string') {
+      prop = sortFunc;
+      sortFunc = function(a, b) {
+        if (a[prop] > b[prop]) {
+          return 1;
+        }
+        if (a[prop] < b[prop]) {
+          return -1;
+        }
+        return 0;
+      };
+    }
     if (Array.isArray(value)) {
       return value.slice().sort(sortFunc);
     } else {
