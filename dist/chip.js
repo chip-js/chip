@@ -2106,24 +2106,30 @@ if (!Date.prototype.toISOString) {
   };
 
   $.fn.animateOut = function(dontRemove, callback) {
-    var _this = this;
+    var done, duration, timeout,
+      _this = this;
     if (typeof dontRemove === 'function') {
       callback = dontRemove;
       dontRemove = false;
     }
-    if (this.cssDuration('transition') || this.cssDuration('animation')) {
+    duration = this.cssDuration('transition') || this.cssDuration('animation');
+    if (duration) {
       if (!dontRemove) {
         this.triggerHandler('remove');
       }
       this.addClass('animate-out');
-      this.one('webkittransitionend transitionend webkitanimationend animationend', function() {
+      done = function() {
+        clearTimeout(timeout);
+        _this.off('webkittransitionend transitionend webkitanimationend animationend', done);
         _this.removeClass('animate-out');
         if (callback) {
           return callback();
         } else {
           return _this.remove();
         }
-      });
+      };
+      this.one('webkittransitionend transitionend webkitanimationend animationend', done);
+      timeout = setTimeout(done, duration + 10);
     } else {
       if (callback) {
         callback();

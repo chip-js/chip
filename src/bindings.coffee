@@ -450,13 +450,19 @@ $.fn.animateOut = (dontRemove, callback) ->
 		callback = dontRemove
 		dontRemove = false
 	
-	if @cssDuration('transition') or @cssDuration('animation')
+	duration = @cssDuration('transition') or @cssDuration('animation')
+	if duration
 		@triggerHandler 'remove' unless dontRemove
 		@addClass 'animate-out'
-		
-		@one 'webkittransitionend transitionend webkitanimationend animationend', =>
+		done = =>
+			clearTimeout timeout
+			@off 'webkittransitionend transitionend webkitanimationend animationend', done
 			@removeClass 'animate-out'
 			if callback then callback() else @remove()
+		
+		@one 'webkittransitionend transitionend webkitanimationend animationend', done
+		# backup to ensure it "finishes"
+		timeout = setTimeout done, duration + 10
 	else
 		if callback then callback() else unless dontRemove then @remove()
 	

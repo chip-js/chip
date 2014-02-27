@@ -632,13 +632,32 @@ $.fn.<span class="function"><span class="title">animateOut</span></span> = (dont
 		callback = dontRemove
 		dontRemove = <span class="literal">false</span>
 	
-	<span class="keyword">if</span> <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
+	duration = <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
+	<span class="keyword">if</span> duration
 		<span class="property">@triggerHandler</span> <span class="string">'remove'</span> <span class="keyword">unless</span> dontRemove
 		<span class="property">@addClass</span> <span class="string">'animate-out'</span>
-		
-		<span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, =&gt;
+		<span class="function"><span class="title">done</span></span> = =&gt;
+			clearTimeout timeout
+			<span class="property">@off</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, done
 			<span class="property">@removeClass</span> <span class="string">'animate-out'</span>
 			<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="property">@remove</span>()
+		
+		<span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, done</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>backup to ensure it “finishes”</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		timeout = setTimeout done, duration + <span class="number">10</span>
 	<span class="keyword">else</span>
 		<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="keyword">unless</span> dontRemove <span class="keyword">then</span> <span class="property">@remove</span>()
 	
@@ -653,11 +672,11 @@ $.fn.<span class="function"><span class="title">cssDuration</span></span> = (pro
         </li>
         
         
-        <li id="section-21">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <h2>chip-if</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -698,11 +717,11 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
         </li>
         
         
-        <li id="section-22">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <h2>chip-unless</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -743,11 +762,11 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
         </li>
         
         
-        <li id="section-23">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <h2>chip-each</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
@@ -864,11 +883,11 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
         </li>
         
         
-        <li id="section-24">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <h2>chip-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
@@ -913,11 +932,11 @@ attributes which appear after <code>chip-partial</code> will have the new value 
         </li>
         
         
-        <li id="section-25">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <h2>chip-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the
