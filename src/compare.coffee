@@ -1,10 +1,56 @@
-# # Chip Equality
+# # Chip Compare
 # > Based on work from Google's observe-js polyfill: https://github.com/Polymer/observe-js
 
 # A namespace to store the functions on
-equality = {}
+compare = {}
 
 (->
+	# Creates a clone or copy of an array or object (or simply returns a string/number/boolean which are immutable)
+	# Does not provide deep copies.
+	compare.clone = (value, deep) ->
+		if Array.isArray(value)
+			if deep
+				return value.map (value) -> compare.clone value, deep
+			else
+				return value.slice()
+		else if value and typeof value is 'object'
+			if value.valueOf() isnt value
+				return new value.constructor value.valueOf()
+			else
+				copy = {}
+				for key, objValue of value
+					objValue = compare.clone objValue, deep if deep
+					copy[key] = objValue
+				return copy
+		else
+			value
+	
+	
+	# Diffs two values, returning a truthy value if there are changes or `false` if there are no changes. If the two
+	# values are both arrays or both objects, an array of changes (splices or change records) between the two will be
+	# returned. Otherwise  `true` will be returned.
+	compare.values = (value, oldValue) ->
+		# If an array has changed calculate the splices
+		if Array.isArray(value) and Array.isArray(oldValue)
+			splices = compare.arrays value, oldValue
+			return if splices.length then splices else false
+		# If an object has changed calculate the chnages and call the callback
+		else if value and oldValue and typeof value is 'object' and typeof oldValue is 'object'
+			# Allow dates and Number/String objects to be compared
+			valueValue = value.valueOf()
+			oldValueValue = oldValue.valueOf()
+			
+			# Allow dates and Number/String objects to be compared
+			if valueValue isnt value and oldValueValue isnt oldValue
+				return valueValue isnt oldValueValue
+			else
+				changeRecords = compare.objects value, oldValue
+				return if changeRecords.length then changeRecords else false
+		# If a value has changed call the callback
+		else
+			return value isnt oldValue
+	
+	
 	# Diffs two objects returning an array of change records. The change record looks like:
 	# ```javascript
 	# {
@@ -14,7 +60,7 @@ equality = {}
 	#   oldValue: oldValue
 	# }
 	# ```
-	equality.object = (object, oldObject) ->
+	compare.objects = (object, oldObject) ->
 		changeRecords = []
 	
 		# Goes through the old object (should be a clone) and look for things that are now gone or changed
@@ -69,7 +115,7 @@ equality = {}
 	#   addedCount: 0
 	# }
 	# ```
-	equality.array = (value, oldValue) ->
+	compare.arrays = (value, oldValue) ->
 		currentStart = 0
 		currentEnd = value.length
 		oldStart = 0
@@ -231,4 +277,4 @@ equality = {}
 		
 ).call(this)
 
-chip.equality = equality
+chip.compare = compare

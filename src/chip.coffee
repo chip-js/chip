@@ -17,7 +17,7 @@
 # * [Filter](filter.html) is the base for filtering within bindings
 # * [Default binding handlers](bindings.html) registers the default binding handlers chip provides
 # * [Default filters](filters.html) registers default filters provided with chip
-# * [equality](equality.html) is a utility for comparing the equality of objects and arrays
+# * [compare](compare.html) is a utility for comparing the equality of objects and arrays
 
 # Initial setup
 # -------------

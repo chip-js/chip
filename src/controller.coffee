@@ -27,7 +27,7 @@ class Controller
 	
 	# Evaluates an expression immediately as a setter, setting `value` to the expression running through filters.
 	evalSetter: (expr, value) ->
-		return @passthrough().evalSetter(expr, value) if @passthrough()
+		return @passthrough().evalSetter(expr, value) if @passthrough() isnt this
 		expr = expr.replace(/(\s*\||$)/, ' = value$1')
 		Controller.createFunction(expr, ['value']).call(this, value)
 	
@@ -54,7 +54,7 @@ class Controller
 	
 	# Clones the object at the given property name for processing forms
 	cloneValue: (property) ->
-		Observer.immutable @[property]
+		compare.clone @[property]
 	
 	
 	# Removes and closes all observers for garbage-collection 
@@ -87,7 +87,7 @@ class Controller
 		if arguments.length
 			@_passthrough = value
 		else
-			if @hasOwnProperty('_passthrough') then @_passthrough else null
+			if @hasOwnProperty('_passthrough') then @_passthrough else this
 	
 	
 	# The keywords which will *not* get `this.` prepended to inside an expression. All other valid variable names will
@@ -134,7 +134,7 @@ $.fn.controller = (passthrough) ->
 	while element.length
 		controller = element.data('controller')
 		if controller
-			return if passthrough and controller.passthrough() then controller.passthrough() else controller
+			return if passthrough then controller.passthrough() else controller
 		element = element.parent()
 	null
 

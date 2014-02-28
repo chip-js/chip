@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, div, emptyQuoteExpr, equality, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, urlExp, varExpr, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, compare, div, emptyQuoteExpr, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, urlExp, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -865,40 +865,22 @@ if (!Date.prototype.toISOString) {
     };
 
     Observer.prototype.sync = function() {
-      var changeRecords, oldValueValue, splices, value, valueValue;
+      var changed, value;
       value = this.getter();
       if (this.skip) {
         delete this.skip;
-      } else if (Array.isArray(value) && Array.isArray(this.oldValue)) {
-        splices = equality.array(value, this.oldValue);
-        if (splices.length) {
-          this.callback(value, this.oldValue, splices);
-        } else {
+      } else {
+        changed = compare.values(value, this.oldValue);
+        if (!changed) {
           return;
         }
-      } else if (value && this.oldValue && typeof value === 'object' && typeof this.oldValue === 'object') {
-        valueValue = value.valueOf();
-        oldValueValue = this.oldValue.valueOf();
-        if (typeof valueValue !== 'object' || typeof oldValueValue !== 'object') {
-          if (valueValue !== oldValueValue) {
-            this.callback(value, this.oldValue);
-          } else {
-            return;
-          }
+        if (Array.isArray(changed)) {
+          this.callback(value, this.oldValue, changed);
         } else {
-          changeRecords = equality.object(value, this.oldValue);
-          if (changeRecords.length) {
-            this.callback(value, this.oldValue, changeRecords);
-          } else {
-            return;
-          }
+          this.callback(value, this.oldValue);
         }
-      } else if (value !== this.oldValue) {
-        this.callback(value, this.oldValue);
-      } else {
-        return;
       }
-      return this.oldValue = Observer.immutable(value);
+      return this.oldValue = compare.clone(value);
     };
 
     Observer.prototype.close = function() {
@@ -914,7 +896,7 @@ if (!Date.prototype.toISOString) {
         skipTriggerImmediately = false;
       }
       value = getter();
-      observer = new Observer(getter, callback, this.immutable(value));
+      observer = new Observer(getter, callback, compare.clone(value));
       this.observers.push(observer);
       if (!skipTriggerImmediately) {
         callback(value);
@@ -977,30 +959,6 @@ if (!Date.prototype.toISOString) {
       return true;
     };
 
-    Observer.immutable = function(value) {
-      if (Array.isArray(value)) {
-        return value.slice();
-      } else if (value && typeof value === 'object') {
-        return this.copyObject(value);
-      } else {
-        return value;
-      }
-    };
-
-    Observer.copyObject = function(object) {
-      var copy, key, value;
-      if (object.valueOf() !== object) {
-        return new object.constructor(object.valueOf());
-      } else {
-        copy = {};
-        for (key in object) {
-          value = object[key];
-          copy[key] = value;
-        }
-        return copy;
-      }
-    };
-
     return Observer;
 
   })();
@@ -1030,7 +988,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype.evalSetter = function(expr, value) {
-      if (this.passthrough()) {
+      if (this.passthrough() !== this) {
         return this.passthrough().evalSetter(expr, value);
       }
       expr = expr.replace(/(\s*\||$)/, ' = value$1');
@@ -1049,7 +1007,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype.cloneValue = function(property) {
-      return Observer.immutable(this[property]);
+      return compare.clone(this[property]);
     };
 
     Controller.prototype.closeController = function() {
@@ -1094,7 +1052,7 @@ if (!Date.prototype.toISOString) {
         if (this.hasOwnProperty('_passthrough')) {
           return this._passthrough;
         } else {
-          return null;
+          return this;
         }
       }
     };
@@ -1140,7 +1098,7 @@ if (!Date.prototype.toISOString) {
     while (element.length) {
       controller = element.data('controller');
       if (controller) {
-        if (passthrough && controller.passthrough()) {
+        if (passthrough) {
           return controller.passthrough();
         } else {
           return controller;
@@ -1471,7 +1429,7 @@ if (!Date.prototype.toISOString) {
         controller = new NewController();
         controller.parent = options.parent;
         if (options.passthrough) {
-          controller.passthrough(options.parent.passthrough() || options.parent);
+          controller.passthrough(options.parent.passthrough());
         }
       } else {
         controller = new Controller();
@@ -2129,7 +2087,7 @@ if (!Date.prototype.toISOString) {
         }
       };
       this.one('webkittransitionend transitionend webkitanimationend animationend', done);
-      timeout = setTimeout(done, duration + 10);
+      timeout = setTimeout(done, duration + 100);
     } else {
       if (callback) {
         callback();
@@ -2258,7 +2216,7 @@ if (!Date.prototype.toISOString) {
         }
       } else if (Array.isArray(value) || (value && typeof value === 'object')) {
         if (!Array.isArray(value)) {
-          splices = equality.array(Object.keys(value, oldValue));
+          splices = compare.arrays(Object.keys(value), Object.keys(oldValue));
         }
         return splices.forEach(function(splice) {
           var addIndex, args, item, newElements, removedElements;
@@ -2273,7 +2231,7 @@ if (!Date.prototype.toISOString) {
           removedElements = $(elements.splice.apply(elements, args.concat(newElements)));
           if (removedElements.length) {
             if (elements.length - newElements.length === 0) {
-              removedElements.eq(0).replaceWith(placeholder);
+              removedElements.eq(0).before(placeholder);
             }
             removedElements.animateOut();
           }
@@ -2516,11 +2474,65 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  equality = {};
+  compare = {};
 
   (function() {
     var EDIT_ADD, EDIT_DELETE, EDIT_LEAVE, EDIT_UPDATE, calcEditDistances, newChange, newSplice, sharedPrefix, sharedSuffix, spliceOperationsFromEditDistances;
-    equality.object = function(object, oldObject) {
+    compare.clone = function(value, deep) {
+      var copy, key, objValue;
+      if (Array.isArray(value)) {
+        if (deep) {
+          return value.map(function(value) {
+            return compare.clone(value, deep);
+          });
+        } else {
+          return value.slice();
+        }
+      } else if (value && typeof value === 'object') {
+        if (value.valueOf() !== value) {
+          return new value.constructor(value.valueOf());
+        } else {
+          copy = {};
+          for (key in value) {
+            objValue = value[key];
+            if (deep) {
+              objValue = compare.clone(objValue, deep);
+            }
+            copy[key] = objValue;
+          }
+          return copy;
+        }
+      } else {
+        return value;
+      }
+    };
+    compare.values = function(value, oldValue) {
+      var changeRecords, oldValueValue, splices, valueValue;
+      if (Array.isArray(value) && Array.isArray(oldValue)) {
+        splices = compare.arrays(value, oldValue);
+        if (splices.length) {
+          return splices;
+        } else {
+          return false;
+        }
+      } else if (value && oldValue && typeof value === 'object' && typeof oldValue === 'object') {
+        valueValue = value.valueOf();
+        oldValueValue = oldValue.valueOf();
+        if (valueValue !== value && oldValueValue !== oldValue) {
+          return valueValue !== oldValueValue;
+        } else {
+          changeRecords = compare.objects(value, oldValue);
+          if (changeRecords.length) {
+            return changeRecords;
+          } else {
+            return false;
+          }
+        }
+      } else {
+        return value !== oldValue;
+      }
+    };
+    compare.objects = function(object, oldObject) {
       var changeRecords, newValue, oldValue, prop;
       changeRecords = [];
       for (prop in oldObject) {
@@ -2561,7 +2573,7 @@ if (!Date.prototype.toISOString) {
     EDIT_UPDATE = 1;
     EDIT_ADD = 2;
     EDIT_DELETE = 3;
-    equality.array = function(value, oldValue) {
+    compare.arrays = function(value, oldValue) {
       var currentEnd, currentStart, distances, index, minLength, oldEnd, oldIndex, oldStart, op, ops, prefixCount, splice, splices, suffixCount, _j, _len1;
       currentStart = 0;
       currentEnd = value.length;
@@ -2725,6 +2737,6 @@ if (!Date.prototype.toISOString) {
     };
   }).call(this);
 
-  chip.equality = equality;
+  chip.compare = compare;
 
 }).call(this);

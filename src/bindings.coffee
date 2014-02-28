@@ -462,7 +462,7 @@ $.fn.animateOut = (dontRemove, callback) ->
 		
 		@one 'webkittransitionend transitionend webkitanimationend animationend', done
 		# backup to ensure it "finishes"
-		timeout = setTimeout done, duration + 10
+		timeout = setTimeout done, duration + 100
 	else
 		if callback then callback() else unless dontRemove then @remove()
 	
@@ -636,7 +636,7 @@ chip.binding 'each', 100, (element, expr, controller) ->
 		
 		else if Array.isArray(value) or (value and typeof value is 'object')
 			unless Array.isArray(value)
-				splices = equality.array Object.keys(value, oldValue)
+				splices = compare.arrays Object.keys(value), Object.keys(oldValue)
 			
 			splices.forEach (splice) ->
 				args = [splice.index, splice.removed.length]
@@ -652,7 +652,7 @@ chip.binding 'each', 100, (element, expr, controller) ->
 				
 				if removedElements.length
 					if elements.length - newElements.length is 0 # removing all existing elements
-						removedElements.eq(0).replaceWith(placeholder)
+						removedElements.eq(0).before(placeholder)
 					removedElements.animateOut()
 				
 				if newElements.length

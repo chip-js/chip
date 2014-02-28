@@ -315,7 +315,7 @@ the parent, only read it or call methods on it.</p>
 			controller = <span class="keyword">new</span> NewController()
 			controller.parent = options.parent
 			<span class="keyword">if</span> options.passthrough
-				controller.passthrough options.parent.passthrough() <span class="keyword">or</span> options.parent
+				controller.passthrough options.parent.passthrough()
 		<span class="keyword">else</span>
 			controller = <span class="keyword">new</span> Controller()
 			makeEventEmitter(controller, <span class="property">@_emitter</span>) <span class="comment"># this will emit the same events as app, and visa-versa</span></pre></div></div>

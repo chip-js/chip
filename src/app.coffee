@@ -123,7 +123,7 @@ class App
 			controller = new NewController()
 			controller.parent = options.parent
 			if options.passthrough
-				controller.passthrough options.parent.passthrough() or options.parent
+				controller.passthrough options.parent.passthrough()
 		else
 			controller = new Controller()
 			makeEventEmitter(controller, @_emitter) # this will emit the same events as app, and visa-versa
