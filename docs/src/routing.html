@@ -87,13 +87,13 @@ portion of the URL.</p>
 		<span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
 			<span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'route must have a callback of type "function". Got '</span> + callback + <span class="string">'.'</span>
 		
-		path = <span class="string">'/'</span> + path <span class="keyword">unless</span> path[<span class="number">0</span>] <span class="keyword">is</span> <span class="string">'/'</span>
+		path = <span class="string">'/'</span> + path <span class="keyword">unless</span> path.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'/'</span>
 		<span class="property">@routes</span>.push <span class="keyword">new</span> Route path, callback
 		<span class="keyword">this</span>
 	
 	
 	redirect: (url) -&gt;
-		<span class="keyword">if</span> url[<span class="number">0</span>] <span class="keyword">is</span> <span class="string">'.'</span>
+		<span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'.'</span>
 			pathParts = document.createElement(<span class="string">'a'</span>)
 			pathParts.href = url
 			url = pathParts.pathname
@@ -131,7 +131,7 @@ portion of the URL.</p>
 		<span class="keyword">else</span>
 			<span class="keyword">if</span> <span class="keyword">not</span> <span class="property">@hashOnly</span>
 				url = url.replace <span class="property">@root</span>, <span class="string">''</span>
-				url = <span class="string">'/'</span> + url <span class="keyword">if</span> url[<span class="number">0</span>] <span class="keyword">isnt</span> <span class="string">'/'</span>
+				url = <span class="string">'/'</span> + url <span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">isnt</span> <span class="string">'/'</span>
 			location.hash = <span class="keyword">if</span> url <span class="keyword">is</span> <span class="string">'/'</span> <span class="keyword">then</span> <span class="string">''</span> <span class="keyword">else</span> <span class="string">'#'</span> + url
 		
 		<span class="property">@off</span> <span class="string">'error'</span>, errHandler
@@ -178,7 +178,12 @@ portion of the URL.</p>
 			
 			getUrl = -&gt; location.pathname + location.search
 			$(window).on 'popstate', @_handleChange
-		else</pre></div></div>
+		else
+			getUrl = =&gt; (if @hashOnly then '' else location.pathname.replace /\/$/, '') + location.hash.replace(/^#\/?/, '/')
+			$(window).on 'hashchange', @_handleChange
+		
+		@_handleChange()
+		this</pre></div></div>
             
         </li>
         
@@ -189,29 +194,6 @@ portion of the URL.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
-              <p>If we aren‘t just using hashes and the page isn’t at the root url, redirect to the roote page now</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>			unless @hashOnly or location.pathname is @root
-				location.href = @root + '#' + location.pathname
-				return # Reloading page, no need to continue executing script
-			
-			getUrl = =&gt; (if @hashOnly then '' else location.pathname.replace /\/$/, '') + location.hash.replace(/^#?\/?/, '/')
-			$(window).on 'hashchange', @_handleChange
-		
-		@_handleChange()
-		this</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-8">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
-              </div>
               <p>Dispatches all callbacks which match the <code>url</code>. <code>url</code> should be the full pathname of the location and should not
 be used by your application. Use <code>redirect()</code> instead.</p>
 
@@ -221,7 +203,7 @@ be used by your application. Use <code>redirect()</code> instead.</p>
 		pathParts = document.createElement(<span class="string">'a'</span>)
 		pathParts.href = url
 		path = pathParts.pathname
-		path = <span class="string">'/'</span> + path <span class="keyword">if</span> path[<span class="number">0</span>] <span class="keyword">isnt</span> <span class="string">'/'</span>
+		path = <span class="string">'/'</span> + path <span class="keyword">if</span> path.charAt(<span class="number">0</span>) <span class="keyword">isnt</span> <span class="string">'/'</span>
 		<span class="keyword">return</span> <span class="keyword">if</span> path.indexOf(<span class="property">@prefix</span>) <span class="keyword">isnt</span> <span class="number">0</span>
 		path = path.replace <span class="property">@prefix</span>, <span class="string">''</span>
 		req = url: url, path: path, query: parseQuery(pathParts.search)
@@ -236,11 +218,11 @@ be used by your application. Use <code>redirect()</code> instead.</p>
         </li>
         
         
-        <li id="section-9">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>set the params on the req object first</p>
 
@@ -259,11 +241,11 @@ be used by your application. Use <code>redirect()</code> instead.</p>
         </li>
         
         
-        <li id="section-10">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <p>Calls each callback one by one until either there is an error or we call all of them.</p>
 
@@ -287,11 +269,11 @@ chip.Router = Router</pre></div></div>
         </li>
         
         
-        <li id="section-11">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <p>Defines a central routing object which handles all URL changes and routes.</p>
 
@@ -308,11 +290,11 @@ chip.Router = Router</pre></div></div>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <p>Determines whether route matches path</p>
 
@@ -337,11 +319,11 @@ chip.Route = Route</pre></div></div>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>Normalizes the given path string, returning a regular expression.</p>
 <p>An empty array should be passed, which will contain the placeholder key names. For example <code>&quot;/user/:id&quot;</code> will then
@@ -376,11 +358,11 @@ contain <code>[&quot;id&quot;]</code>.</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>Parses a location.search string into an object with key-value pairs.</p>
 

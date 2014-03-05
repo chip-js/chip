@@ -223,8 +223,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 		<span class="keyword">unless</span> controller <span class="keyword">instanceof</span> Controller
 			<span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'A Controller is required to bind a jQuery element.'</span>
 		
-		node = element.get(<span class="number">0</span>)
-		parentNode = node.parentNode
+		parentNode = element.parent().get(<span class="number">0</span>)
 		prefix = controller.app.bindingPrefix</pre></div></div>
             
         </li>
@@ -240,7 +239,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		attribs = $(node.attributes).toArray().filter (attr) =&gt;
+            <div class="content"><div class='highlight'><pre>		attribs = $(element.get(<span class="number">0</span>).attributes).toArray().filter (attr) =&gt;
 			attr.name.indexOf(prefix) <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span>
 				<span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)] <span class="keyword">and</span>
 				attr.value <span class="keyword">isnt</span> <span class="literal">undefined</span> <span class="comment"># Fix for IE7</span>
@@ -284,7 +283,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">continue</span> <span class="keyword">unless</span> node.hasAttribute attr.name</pre></div></div>
+            <div class="content"><div class='highlight'><pre>			<span class="keyword">continue</span> <span class="keyword">unless</span> element.attr(attr.name)?</pre></div></div>
             
         </li>
         
@@ -300,7 +299,7 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			node.removeAttribute(attr.name)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>			element.removeAttr(attr.name)</pre></div></div>
             
         </li>
         
@@ -331,7 +330,7 @@ This is used for chip-if and chip-each for example.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">return</span> <span class="keyword">if</span> node.parentNode <span class="keyword">isnt</span> parentNode</pre></div></div>
+            <div class="content"><div class='highlight'><pre>			<span class="keyword">return</span> <span class="keyword">if</span> element.parent().get(<span class="number">0</span>) <span class="keyword">isnt</span> parentNode</pre></div></div>
             
         </li>
         

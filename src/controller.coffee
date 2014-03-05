@@ -294,7 +294,7 @@ processProperties = (expr, options = {}) ->
 						startIndex = propExpr.lastIndex
 						endIndex = startIndex - 1
 						while endIndex++ < expr.length
-							switch expr[endIndex]
+							switch expr.charAt endIndex
 								when '(' then parenCount++
 								when ')' then parenCount--
 							break if parenCount is 0
@@ -303,7 +303,7 @@ processProperties = (expr, options = {}) ->
 						postfix = ''
 						part += '(innards)'
 						
-						if expr[endIndex + 1] is '.'
+						if expr.charAt(endIndex + 1) is '.'
 							newChain += processPart(options, part, partIndex, continuation)
 						else if partIndex is 0
 							newChain += processPart(options, part, partIndex, continuation)

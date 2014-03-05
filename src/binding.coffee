@@ -137,12 +137,11 @@ class Binding
 		unless controller instanceof Controller
 			throw new Error 'A Controller is required to bind a jQuery element.'
 		
-		node = element.get(0)
-		parentNode = node.parentNode
+		parentNode = element.parent().get(0)
 		prefix = controller.app.bindingPrefix
 		
 		# Finds binding attributes and sorts by priority.
-		attribs = $(node.attributes).toArray().filter (attr) =>
+		attribs = $(element.get(0).attributes).toArray().filter (attr) =>
 			attr.name.indexOf(prefix) is 0 and
 				@bindings[attr.name.replace(prefix, '')] and
 				attr.value isnt undefined # Fix for IE7
@@ -162,18 +161,18 @@ class Binding
 			attr = attribs.shift()
 			
 			# Don't re-process if it has been removed. Could happen if one handler uses another and removes it.
-			continue unless node.hasAttribute attr.name
+			continue unless element.attr(attr.name)?
 			
 			# Remove the binding handlers so they only get processed once. This simplifies our code, but it also
 			# makes the DOM cleaner.
-			node.removeAttribute(attr.name)
+			element.removeAttr(attr.name)
 			
 			# Calls the handler function allowing the handler to set up the binding.
 			newController = attr.handler element, attr.value, controller
 			
 			# Stops processing of this element and its children if the element was removed from the DOM.
 			# This is used for chip-if and chip-each for example.
-			return if node.parentNode isnt parentNode
+			return if element.parent().get(0) isnt parentNode
 			
 			# Sets controller to new controller if a new controller has been defined by a handler.
 			if newController instanceof Controller and newController isnt controller

@@ -601,7 +601,7 @@ if (!Date.prototype.toISOString) {
       if (typeof callback !== 'function') {
         throw new Error('route must have a callback of type "function". Got ' + callback + '.');
       }
-      if (path[0] !== '/') {
+      if (path.charAt(0) !== '/') {
         path = '/' + path;
       }
       this.routes.push(new Route(path, callback));
@@ -610,7 +610,7 @@ if (!Date.prototype.toISOString) {
 
     Router.prototype.redirect = function(url) {
       var errHandler, notFound, pathParts;
-      if (url[0] === '.') {
+      if (url.charAt(0) === '.') {
         pathParts = document.createElement('a');
         pathParts.href = url;
         url = pathParts.pathname;
@@ -637,7 +637,7 @@ if (!Date.prototype.toISOString) {
       } else {
         if (!this.hashOnly) {
           url = url.replace(this.root, '');
-          if (url[0] !== '/') {
+          if (url.charAt(0) !== '/') {
             url = '/' + url;
           }
         }
@@ -695,12 +695,8 @@ if (!Date.prototype.toISOString) {
         };
         $(window).on('popstate', this._handleChange);
       } else {
-        if (!(this.hashOnly || location.pathname === this.root)) {
-          location.href = this.root + '#' + location.pathname;
-          return;
-        }
         getUrl = function() {
-          return (_this.hashOnly ? '' : location.pathname.replace(/\/$/, '')) + location.hash.replace(/^#?\/?/, '/');
+          return (_this.hashOnly ? '' : location.pathname.replace(/\/$/, '')) + location.hash.replace(/^#\/?/, '/');
         };
         $(window).on('hashchange', this._handleChange);
       }
@@ -714,7 +710,7 @@ if (!Date.prototype.toISOString) {
       pathParts = document.createElement('a');
       pathParts.href = url;
       path = pathParts.pathname;
-      if (path[0] !== '/') {
+      if (path.charAt(0) !== '/') {
         path = '/' + path;
       }
       if (path.indexOf(this.prefix) !== 0) {
@@ -1266,7 +1262,7 @@ if (!Date.prototype.toISOString) {
               startIndex = propExpr.lastIndex;
               endIndex = startIndex - 1;
               while (endIndex++ < expr.length) {
-                switch (expr[endIndex]) {
+                switch (expr.charAt(endIndex)) {
                   case '(':
                     parenCount++;
                     break;
@@ -1280,7 +1276,7 @@ if (!Date.prototype.toISOString) {
               propExpr.lastIndex = endIndex + 1;
               postfix = '';
               part += '(innards)';
-              if (expr[endIndex + 1] === '.') {
+              if (expr.charAt(endIndex + 1) === '.') {
                 newChain += processPart(options, part, partIndex, continuation);
               } else if (partIndex === 0) {
                 newChain += processPart(options, part, partIndex, continuation);
@@ -1704,15 +1700,14 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.process = function(element, controller) {
-      var attr, attribs, newController, node, parentNode, prefix,
+      var attr, attribs, newController, parentNode, prefix,
         _this = this;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
       }
-      node = element.get(0);
-      parentNode = node.parentNode;
+      parentNode = element.parent().get(0);
       prefix = controller.app.bindingPrefix;
-      attribs = $(node.attributes).toArray().filter(function(attr) {
+      attribs = $(element.get(0).attributes).toArray().filter(function(attr) {
         return attr.name.indexOf(prefix) === 0 && _this.bindings[attr.name.replace(prefix, '')] && attr.value !== void 0;
       });
       attribs = attribs.map(function(attr) {
@@ -1730,12 +1725,12 @@ if (!Date.prototype.toISOString) {
       });
       while (attribs.length) {
         attr = attribs.shift();
-        if (!node.hasAttribute(attr.name)) {
+        if (element.attr(attr.name) == null) {
           continue;
         }
-        node.removeAttribute(attr.name);
+        element.removeAttr(attr.name);
         newController = attr.handler(element, attr.value, controller);
-        if (node.parentNode !== parentNode) {
+        if (element.parent().get(0) !== parentNode) {
           return;
         }
         if (newController instanceof Controller && newController !== controller) {
@@ -2435,7 +2430,7 @@ if (!Date.prototype.toISOString) {
   chip.filter('autolink', function(controller, value, target) {
     target = target ? ' target="_blank"' : '';
     return ('' + value).replace(/<[^>]+>|[^<]+/g, function(match) {
-      if (match[0] === '<') {
+      if (match.charAt(0) === '<') {
         return match;
       }
       return match.replace(urlExp, '$1<a href="$2"' + target + '>$2</a>');

@@ -27,13 +27,13 @@ class Router
 		unless typeof callback is 'function'
 			throw new Error 'route must have a callback of type "function". Got ' + callback + '.'
 		
-		path = '/' + path unless path[0] is '/'
+		path = '/' + path unless path.charAt(0) is '/'
 		@routes.push new Route path, callback
 		this
 	
 	
 	redirect: (url) ->
-		if url[0] is '.'
+		if url.charAt(0) is '.'
 			pathParts = document.createElement('a')
 			pathParts.href = url
 			url = pathParts.pathname
@@ -59,7 +59,7 @@ class Router
 		else
 			if not @hashOnly
 				url = url.replace @root, ''
-				url = '/' + url if url[0] isnt '/'
+				url = '/' + url if url.charAt(0) isnt '/'
 			location.hash = if url is '/' then '' else '#' + url
 		
 		@off 'error', errHandler
@@ -94,12 +94,7 @@ class Router
 			getUrl = -> location.pathname + location.search
 			$(window).on 'popstate', @_handleChange
 		else
-			# If we aren't just using hashes and the page isn't at the root url, redirect to the roote page now
-			unless @hashOnly or location.pathname is @root
-				location.href = @root + '#' + location.pathname
-				return # Reloading page, no need to continue executing script
-			
-			getUrl = => (if @hashOnly then '' else location.pathname.replace /\/$/, '') + location.hash.replace(/^#?\/?/, '/')
+			getUrl = => (if @hashOnly then '' else location.pathname.replace /\/$/, '') + location.hash.replace(/^#\/?/, '/')
 			$(window).on 'hashchange', @_handleChange
 		
 		@_handleChange()
@@ -112,7 +107,7 @@ class Router
 		pathParts = document.createElement('a')
 		pathParts.href = url
 		path = pathParts.pathname
-		path = '/' + path if path[0] isnt '/'
+		path = '/' + path if path.charAt(0) isnt '/'
 		return if path.indexOf(@prefix) isnt 0
 		path = path.replace @prefix, ''
 		req = url: url, path: path, query: parseQuery(pathParts.search)

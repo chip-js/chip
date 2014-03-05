@@ -163,7 +163,7 @@ urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z
 chip.filter 'autolink', (controller, value, target) ->
 	target = if target then ' target="_blank"' else ''
 	('' + value).replace /<[^>]+>|[^<]+/g, (match) ->
-		return match if match[0] is '<'
+		return match if match.charAt(0) is '<'
 		match.replace(urlExp, '$1<a href="$2"' + target + '>$2</a>')
 
 

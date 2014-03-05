@@ -299,7 +299,7 @@ will skip URLs within HTML tags. Passing true in the second parameter will set t
 chip.filter <span class="string">'autolink'</span>, (controller, value, target) -&gt;
 	target = <span class="keyword">if</span> target <span class="keyword">then</span> <span class="string">' target="_blank"'</span> <span class="keyword">else</span> <span class="string">''</span>
 	(<span class="string">''</span> + value).replace <span class="regexp">/&lt;[^&gt;]+&gt;|[^&lt;]+/g</span>, (match) -&gt;
-		<span class="keyword">return</span> match <span class="keyword">if</span> match[<span class="number">0</span>] <span class="keyword">is</span> <span class="string">'&lt;'</span>
+		<span class="keyword">return</span> match <span class="keyword">if</span> match.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'&lt;'</span>
 		match.replace(urlExp, <span class="string">'$1&lt;a href="$2"'</span> + target + <span class="string">'&gt;$2&lt;/a&gt;'</span>)
 
 

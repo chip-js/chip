@@ -706,7 +706,7 @@ Finds the end of the function and processes the arguments</p>
 						startIndex = propExpr.lastIndex
 						endIndex = startIndex - <span class="number">1</span>
 						<span class="keyword">while</span> endIndex++ &lt; expr.length
-							<span class="keyword">switch</span> expr[endIndex]
+							<span class="keyword">switch</span> expr.charAt endIndex
 								<span class="keyword">when</span> <span class="string">'('</span> <span class="keyword">then</span> parenCount++
 								<span class="keyword">when</span> <span class="string">')'</span> <span class="keyword">then</span> parenCount--
 							<span class="keyword">break</span> <span class="keyword">if</span> parenCount <span class="keyword">is</span> <span class="number">0</span>
@@ -715,7 +715,7 @@ Finds the end of the function and processes the arguments</p>
 						postfix = <span class="string">''</span>
 						part += <span class="string">'(innards)'</span>
 						
-						<span class="keyword">if</span> expr[endIndex + <span class="number">1</span>] <span class="keyword">is</span> <span class="string">'.'</span>
+						<span class="keyword">if</span> expr.charAt(endIndex + <span class="number">1</span>) <span class="keyword">is</span> <span class="string">'.'</span>
 							newChain += processPart(options, part, partIndex, continuation)
 						<span class="keyword">else</span> <span class="keyword">if</span> partIndex <span class="keyword">is</span> <span class="number">0</span>
 							newChain += processPart(options, part, partIndex, continuation)
