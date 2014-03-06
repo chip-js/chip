@@ -268,6 +268,7 @@ class App
 			@_clickHandler = (event) ->
 				return if event.isDefaultPrevented() # if something else already handled this, we won't
 				return if this.host isnt location.host or this.href is location.href + '#'
+				return if event.metaKey or event.ctrlKey or $(event.target).attr('target')
 				event.preventDefault()
 				unless $(this).attr('disabled')
 					app.redirect $(this).attr('href').replace(/^#/, '')

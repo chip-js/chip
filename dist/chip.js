@@ -1596,6 +1596,9 @@ if (!Date.prototype.toISOString) {
           if (this.host !== location.host || this.href === location.href + '#') {
             return;
           }
+          if (event.metaKey || event.ctrlKey || $(event.target).attr('target')) {
+            return;
+          }
           event.preventDefault();
           if (!$(this).attr('disabled')) {
             return app.redirect($(this).attr('href').replace(/^#/, ''));
