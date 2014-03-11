@@ -440,9 +440,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 	<span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">':text'</span>
 		element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
 			<span class="keyword">if</span> event.keyCode <span class="keyword">is</span> <span class="number">13</span>
-				element.blur()
-				setTimeout -&gt;
-					element.closest(<span class="string">'form'</span>).submit()
+				element.trigger <span class="string">'change'</span>
 	
 	element.<span class="literal">on</span> events, -&gt;
 		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue

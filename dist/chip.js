@@ -2009,10 +2009,7 @@ if (!Date.prototype.toISOString) {
     if (element.is(':text')) {
       element.on('keydown', function(event) {
         if (event.keyCode === 13) {
-          element.blur();
-          return setTimeout(function() {
-            return element.closest('form').submit();
-          });
+          return element.trigger('change');
         }
       });
     }

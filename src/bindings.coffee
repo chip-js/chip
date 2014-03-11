@@ -303,9 +303,7 @@ chip.binding 'value', (element, expr, controller) ->
 	if element.is ':text'
 		element.on 'keydown', (event) ->
 			if event.keyCode is 13
-				element.blur()
-				setTimeout ->
-					element.closest('form').submit()
+				element.trigger 'change'
 	
 	element.on events, ->
 		if getValue() isnt observer.oldValue
