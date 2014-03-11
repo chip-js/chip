@@ -578,7 +578,7 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
 	options.references = <span class="number">0</span> <span class="keyword">unless</span> options.references
 	options.currentRef = options.references
 	options.ignore = [] <span class="keyword">unless</span> options.ignore
-	propExpr = <span class="regexp">/((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\()?)/gi</span>
+	propExpr = <span class="regexp">/((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi</span>
 	currentIndex = <span class="number">0</span>
 	newExpr = <span class="string">''</span></pre></div></div>
             
@@ -684,7 +684,7 @@ function. We use <code>colonOrParen</code> and <code>objIndicator</code> to know
             <div class="content"><div class='highlight'><pre>				<span class="keyword">if</span> partIndex <span class="keyword">isnt</span> parts.length - <span class="number">1</span>
 					newChain += processPart(options, part, partIndex, continuation)
 				<span class="keyword">else</span>
-					<span class="keyword">if</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'('</span>
+					<span class="keyword">if</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'('</span> <span class="keyword">and</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'['</span>
 						newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>)"</span>
 					<span class="keyword">else</span></pre></div></div>
             
@@ -702,18 +702,20 @@ Finds the end of the function and processes the arguments</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>						parenCount = <span class="number">1</span>
+            <div class="content"><div class='highlight'><pre>						open = colonOrParen
+						close = <span class="keyword">if</span> colonOrParen <span class="keyword">is</span> <span class="string">'('</span> <span class="keyword">then</span> <span class="string">')'</span> <span class="keyword">else</span> <span class="string">']'</span>
+						parenCount = <span class="number">1</span>
 						startIndex = propExpr.lastIndex
 						endIndex = startIndex - <span class="number">1</span>
 						<span class="keyword">while</span> endIndex++ &lt; expr.length
 							<span class="keyword">switch</span> expr.charAt endIndex
-								<span class="keyword">when</span> <span class="string">'('</span> <span class="keyword">then</span> parenCount++
-								<span class="keyword">when</span> <span class="string">')'</span> <span class="keyword">then</span> parenCount--
+								<span class="keyword">when</span> open <span class="keyword">then</span> parenCount++
+								<span class="keyword">when</span> close <span class="keyword">then</span> parenCount--
 							<span class="keyword">break</span> <span class="keyword">if</span> parenCount <span class="keyword">is</span> <span class="number">0</span>
 						
 						propExpr.lastIndex = endIndex + <span class="number">1</span>
 						postfix = <span class="string">''</span>
-						part += <span class="string">'(innards)'</span>
+						part += open + <span class="string">'~~innards~~'</span> + close
 						
 						<span class="keyword">if</span> expr.charAt(endIndex + <span class="number">1</span>) <span class="keyword">is</span> <span class="string">'.'</span>
 							newChain += processPart(options, part, partIndex, continuation)
@@ -725,7 +727,7 @@ Finds the end of the function and processes the arguments</p>
 						
 						currentRef = options.currentRef
 						innards = processProperties expr.slice(startIndex, endIndex), options
-						newChain = newChain.replace(<span class="regexp">/\(innards\)/</span>, <span class="string">'('</span> + innards + <span class="string">')'</span>)
+						newChain = newChain.replace(<span class="regexp">/~~innards~~/</span>, innards)
 						options.currentRef = currentRef
 		
 		<span class="keyword">return</span> prefix + newChain + postfix

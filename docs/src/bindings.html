@@ -632,9 +632,9 @@ $.fn.<span class="function"><span class="title">animateOut</span></span> = (dont
 		callback = dontRemove
 		dontRemove = <span class="literal">false</span>
 	
+	<span class="property">@triggerHandler</span> <span class="string">'remove'</span> <span class="keyword">unless</span> dontRemove
 	duration = <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
 	<span class="keyword">if</span> duration
-		<span class="property">@triggerHandler</span> <span class="string">'remove'</span> <span class="keyword">unless</span> dontRemove
 		<span class="property">@addClass</span> <span class="string">'animate-out'</span>
 		<span class="function"><span class="title">done</span></span> = =&gt;
 			clearTimeout timeout
@@ -822,13 +822,14 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 	properties = {}
 	value = <span class="literal">null</span>
 			
-	<span class="function"><span class="title">createElement</span></span> = (item) -&gt;
+	<span class="function"><span class="title">createElement</span></span> = (item, index) -&gt;
 		newElement = template.clone()
 		<span class="keyword">unless</span> Array.isArray(value)
 			properties[propName] = item <span class="keyword">if</span> propName
 			properties[itemName] = value[item]
 		<span class="keyword">else</span>
 			properties[itemName] = item
+			properties.index = index
 		controller.child element: newElement, name: controllerName, properties: properties
 		newElement.get(<span class="number">0</span>)
 	
@@ -845,14 +846,17 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 				newValue = Object.keys newValue
 			
 			<span class="keyword">if</span> Array.isArray(value) <span class="keyword">and</span> value.length
-				value.forEach (item) -&gt;
-					elements.push createElement item
+				value.forEach (item, index) -&gt;
+					elements.push createElement item, index
 				placeholder.after(elements).remove()
 		
 		<span class="keyword">else</span> <span class="keyword">if</span> Array.isArray(value) <span class="keyword">or</span> (value <span class="keyword">and</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'object'</span>)
 			<span class="keyword">unless</span> Array.isArray(value)
 				splices = compare.arrays Object.keys(value), Object.keys(oldValue)
 			
+			hasNew = <span class="number">0</span>
+			splices.forEach (splice) -&gt; hasNew += splice.addedCount
+
 			splices.forEach (splice) -&gt;
 				args = [splice.index, splice.removed.length]
 				
@@ -860,7 +864,7 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 				addIndex = splice.index
 				<span class="keyword">while</span> (addIndex &lt; splice.index + splice.addedCount)
 					item = value[addIndex]
-					newElements.push createElement item
+					newElements.push createElement item, addIndex
 					addIndex++
 				
 				removedElements = $ elements.splice.apply(elements, args.concat(newElements))
@@ -868,7 +872,10 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
 				<span class="keyword">if</span> removedElements.length
 					<span class="keyword">if</span> elements.length - newElements.length <span class="keyword">is</span> <span class="number">0</span> <span class="comment"># removing all existing elements</span>
 						removedElements.eq(<span class="number">0</span>).before(placeholder)
-					removedElements.animateOut()
+					<span class="keyword">if</span> hasNew
+						removedElements.remove()
+					<span class="keyword">else</span>
+						removedElements.animateOut()
 				
 				<span class="keyword">if</span> newElements.length
 					$(newElements).animateIn()

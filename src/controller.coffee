@@ -240,7 +240,7 @@ processProperties = (expr, options = {}) ->
 	options.references = 0 unless options.references
 	options.currentRef = options.references
 	options.ignore = [] unless options.ignore
-	propExpr = /((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\()?)/gi
+	propExpr = /((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi
 	currentIndex = 0
 	newExpr = ''
 	
@@ -285,23 +285,25 @@ processProperties = (expr, options = {}) ->
 				if partIndex isnt parts.length - 1
 					newChain += processPart(options, part, partIndex, continuation)
 				else
-					if colonOrParen isnt '('
+					if colonOrParen isnt '(' and colonOrParen isnt '['
 						newChain += "_ref#{options.currentRef}#{part})"
 					else
 						# Handles a function to be called in its correct scope
 						# Finds the end of the function and processes the arguments
+						open = colonOrParen
+						close = if colonOrParen is '(' then ')' else ']'
 						parenCount = 1
 						startIndex = propExpr.lastIndex
 						endIndex = startIndex - 1
 						while endIndex++ < expr.length
 							switch expr.charAt endIndex
-								when '(' then parenCount++
-								when ')' then parenCount--
+								when open then parenCount++
+								when close then parenCount--
 							break if parenCount is 0
 						
 						propExpr.lastIndex = endIndex + 1
 						postfix = ''
-						part += '(innards)'
+						part += open + '~~innards~~' + close
 						
 						if expr.charAt(endIndex + 1) is '.'
 							newChain += processPart(options, part, partIndex, continuation)
@@ -313,7 +315,7 @@ processProperties = (expr, options = {}) ->
 						
 						currentRef = options.currentRef
 						innards = processProperties expr.slice(startIndex, endIndex), options
-						newChain = newChain.replace(/\(innards\)/, '(' + innards + ')')
+						newChain = newChain.replace(/~~innards~~/, innards)
 						options.currentRef = currentRef
 		
 		return prefix + newChain + postfix

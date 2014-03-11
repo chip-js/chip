@@ -1217,7 +1217,7 @@ if (!Date.prototype.toISOString) {
     if (!options.ignore) {
       options.ignore = [];
     }
-    propExpr = /((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\()?)/gi;
+    propExpr = /((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi;
     currentIndex = 0;
     newExpr = '';
     processProperty = function(match, prefix, objIndicator, propChain, postfix, colonOrParen) {
@@ -1251,22 +1251,24 @@ if (!Date.prototype.toISOString) {
           newChain += '(';
         }
         parts.forEach(function(part, partIndex) {
-          var currentRef, endIndex, innards, parenCount, startIndex;
+          var close, currentRef, endIndex, innards, open, parenCount, startIndex;
           if (partIndex !== parts.length - 1) {
             return newChain += processPart(options, part, partIndex, continuation);
           } else {
-            if (colonOrParen !== '(') {
+            if (colonOrParen !== '(' && colonOrParen !== '[') {
               return newChain += "_ref" + options.currentRef + part + ")";
             } else {
+              open = colonOrParen;
+              close = colonOrParen === '(' ? ')' : ']';
               parenCount = 1;
               startIndex = propExpr.lastIndex;
               endIndex = startIndex - 1;
               while (endIndex++ < expr.length) {
                 switch (expr.charAt(endIndex)) {
-                  case '(':
+                  case open:
                     parenCount++;
                     break;
-                  case ')':
+                  case close:
                     parenCount--;
                 }
                 if (parenCount === 0) {
@@ -1275,7 +1277,7 @@ if (!Date.prototype.toISOString) {
               }
               propExpr.lastIndex = endIndex + 1;
               postfix = '';
-              part += '(innards)';
+              part += open + '~~innards~~' + close;
               if (expr.charAt(endIndex + 1) === '.') {
                 newChain += processPart(options, part, partIndex, continuation);
               } else if (partIndex === 0) {
@@ -1286,7 +1288,7 @@ if (!Date.prototype.toISOString) {
               }
               currentRef = options.currentRef;
               innards = processProperties(expr.slice(startIndex, endIndex), options);
-              newChain = newChain.replace(/\(innards\)/, '(' + innards + ')');
+              newChain = newChain.replace(/~~innards~~/, innards);
               return options.currentRef = currentRef;
             }
           }
@@ -1500,10 +1502,11 @@ if (!Date.prototype.toISOString) {
         if (typeof handler === 'string') {
           name = handler;
           callback = function(req, next) {
-            var container, i, isExistingRoute, isSamePath, parentController, selector, showNextPage, _i;
-            parentController = _this.rootController;
-            if (before) {
-              parentController = before(req, next);
+            var container, i, isExistingRoute, selector, showNextPage, _i;
+            if (before && !req.calledBefore) {
+              req.calledBefore = true;
+              before(req, callback);
+              return;
             }
             _this.rootController.params = req.params;
             _this.rootController.query = req.query;
@@ -1513,16 +1516,20 @@ if (!Date.prototype.toISOString) {
             }
             container = _this.rootElement.find(selector.join(' ') + ':first');
             isExistingRoute = _this.rootController.route;
-            isSamePath = req.path === _this.rootController.path;
+            if (req.isSamePath == null) {
+              req.isSamePath = req.path === _this.rootController.path;
+            }
             if (container.length) {
               showNextPage = function() {
+                var parentController;
                 container.attr("" + _this.bindingPrefix + "route", name);
                 _this.rootController.route = name;
                 _this.rootController.path = req.path;
                 _this.trigger('routeChange', [name]);
                 container.animateIn();
-                if (!isSamePath) {
+                if (!req.isSamePath) {
                   container.html(_this.template(name));
+                  parentController = container.parent().controller() || _this.rootController;
                   _this.createController({
                     element: container,
                     parent: parentController,
@@ -1530,10 +1537,13 @@ if (!Date.prototype.toISOString) {
                   });
                 }
                 _this.rootController.sync();
-                return window.scrollTo(0, 0);
+                window.scrollTo(0, 0);
+                if (subroutes) {
+                  return next(req, next);
+                }
               };
               if (isExistingRoute) {
-                return container.animateOut(isSamePath, showNextPage);
+                return container.animateOut(req.isSamePath, showNextPage);
               } else {
                 return showNextPage();
               }
@@ -2068,11 +2078,11 @@ if (!Date.prototype.toISOString) {
       callback = dontRemove;
       dontRemove = false;
     }
+    if (!dontRemove) {
+      this.triggerHandler('remove');
+    }
     duration = this.cssDuration('transition') || this.cssDuration('animation');
     if (duration) {
-      if (!dontRemove) {
-        this.triggerHandler('remove');
-      }
       this.addClass('animate-out');
       done = function() {
         clearTimeout(timeout);
@@ -2177,7 +2187,7 @@ if (!Date.prototype.toISOString) {
     elements = $();
     properties = {};
     value = null;
-    createElement = function(item) {
+    createElement = function(item, index) {
       var newElement;
       newElement = template.clone();
       if (!Array.isArray(value)) {
@@ -2187,6 +2197,7 @@ if (!Date.prototype.toISOString) {
         properties[itemName] = value[item];
       } else {
         properties[itemName] = item;
+        properties.index = index;
       }
       controller.child({
         element: newElement,
@@ -2196,6 +2207,7 @@ if (!Date.prototype.toISOString) {
       return newElement.get(0);
     };
     return controller.watch(expr, function(newValue, oldValue, splices) {
+      var hasNew;
       value = newValue;
       if (!splices) {
         if (elements.length) {
@@ -2207,8 +2219,8 @@ if (!Date.prototype.toISOString) {
           newValue = Object.keys(newValue);
         }
         if (Array.isArray(value) && value.length) {
-          value.forEach(function(item) {
-            return elements.push(createElement(item));
+          value.forEach(function(item, index) {
+            return elements.push(createElement(item, index));
           });
           return placeholder.after(elements).remove();
         }
@@ -2216,6 +2228,10 @@ if (!Date.prototype.toISOString) {
         if (!Array.isArray(value)) {
           splices = compare.arrays(Object.keys(value), Object.keys(oldValue));
         }
+        hasNew = 0;
+        splices.forEach(function(splice) {
+          return hasNew += splice.addedCount;
+        });
         return splices.forEach(function(splice) {
           var addIndex, args, item, newElements, removedElements;
           args = [splice.index, splice.removed.length];
@@ -2223,7 +2239,7 @@ if (!Date.prototype.toISOString) {
           addIndex = splice.index;
           while (addIndex < splice.index + splice.addedCount) {
             item = value[addIndex];
-            newElements.push(createElement(item));
+            newElements.push(createElement(item, addIndex));
             addIndex++;
           }
           removedElements = $(elements.splice.apply(elements, args.concat(newElements)));
@@ -2231,7 +2247,11 @@ if (!Date.prototype.toISOString) {
             if (elements.length - newElements.length === 0) {
               removedElements.eq(0).before(placeholder);
             }
-            removedElements.animateOut();
+            if (hasNew) {
+              removedElements.remove();
+            } else {
+              removedElements.animateOut();
+            }
           }
           if (newElements.length) {
             $(newElements).animateIn();
@@ -2324,6 +2344,14 @@ if (!Date.prototype.toISOString) {
     }
   });
 
+  chip.filter('slice', function(controller, value, index, endIndex) {
+    if (Array.isArray(value)) {
+      return value.slice(index, endIndex);
+    } else {
+      return value;
+    }
+  });
+
   chip.filter('date', function(controller, value) {
     if (!value) {
       return '';
@@ -2358,15 +2386,19 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.filter('sort', function(controller, value, sortFunc) {
-    var prop;
+    var dir, prop, _ref;
+    if (!sortFunc) {
+      return value;
+    }
     if (typeof sortFunc === 'string') {
-      prop = sortFunc;
+      _ref = sortFunc.split(':'), prop = _ref[0], dir = _ref[1];
+      dir = dir === 'desc' ? -1 : 1;
       sortFunc = function(a, b) {
         if (a[prop] > b[prop]) {
-          return 1;
+          return dir;
         }
         if (a[prop] < b[prop]) {
-          return -1;
+          return -dir;
         }
         return 0;
       };

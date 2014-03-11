@@ -25,6 +25,14 @@ chip.filter 'reduce', (controller, value, reduceFunc, initialValue) ->
 	else if arguments.length is 4
 		reduceFunc(initialValue, value)
 
+# ## reduce
+# Adds a filter to reduce an array or value by the given reduce function
+chip.filter 'slice', (controller, value, index, endIndex) ->
+	if Array.isArray value
+		value.slice(index, endIndex)
+	else
+		value
+
 
 # ## date
 # Adds a filter to format dates and strings
@@ -58,11 +66,13 @@ chip.filter 'limit', (controller, value, limit) ->
 # ## sort
 # Adds a filter to sort an array
 chip.filter 'sort', (controller, value, sortFunc) ->
+	return value unless sortFunc
 	if typeof sortFunc is 'string'
-		prop = sortFunc
+		[prop,dir] = sortFunc.split(':')
+		dir = if dir is 'desc' then -1 else 1
 		sortFunc = (a, b) ->
-			return 1 if a[prop] > b[prop]
-			return -1 if a[prop] < b[prop]
+			return dir if a[prop] > b[prop]
+			return -dir if a[prop] < b[prop]
 			return 0
 	
 	if Array.isArray value

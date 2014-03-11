@@ -184,7 +184,6 @@ class App
 	# template and controller by the same name. This template will be placed in the first element on page with a
 	# `chip-route` attribute.
 	route: (path, handler, subroutes) ->
-		
 		handleRoute = (path, handler, subroutes, depth, before) =>
 			if typeof handler is 'function' and handler.toString().match(/\(route\)/)
 				subroutes = handler
@@ -195,15 +194,18 @@ class App
 			if typeof handler is 'string'
 				name = handler
 				callback = (req, next) =>
-					parentController = @rootController
-					parentController = before(req, next) if before
+					if before and not req.calledBefore
+						req.calledBefore = true
+						before(req, callback)
+						return
 					@rootController.params = req.params
 					@rootController.query = req.query
 					selector = []
 					selector.push("[#{@bindingPrefix}route]") for i in [0..depth]
 					container = @rootElement.find selector.join(' ') + ':first'
 					isExistingRoute = @rootController.route
-					isSamePath = req.path is @rootController.path # handle query-string changes
+					unless req.isSamePath?
+						req.isSamePath = req.path is @rootController.path # handle query-string changes
 					if container.length
 						showNextPage = =>
 							container.attr("#{@bindingPrefix}route", name)
@@ -211,14 +213,16 @@ class App
 							@rootController.path = req.path
 							@trigger 'routeChange', [name]
 							container.animateIn()
-							unless isSamePath
+							unless req.isSamePath
 								container.html @template(name)
+								parentController = container.parent().controller() or @rootController
 								@createController element: container, parent: parentController, name: name
 							@rootController.sync()
 							window.scrollTo(0, 0)
+							next(req, next) if subroutes
 						
 						if isExistingRoute
-							container.animateOut(isSamePath, showNextPage)
+							container.animateOut(req.isSamePath, showNextPage)
 						else
 							showNextPage()
 				

@@ -450,9 +450,9 @@ $.fn.animateOut = (dontRemove, callback) ->
 		callback = dontRemove
 		dontRemove = false
 	
+	@triggerHandler 'remove' unless dontRemove
 	duration = @cssDuration('transition') or @cssDuration('animation')
 	if duration
-		@triggerHandler 'remove' unless dontRemove
 		@addClass 'animate-out'
 		done = =>
 			clearTimeout timeout
@@ -607,13 +607,14 @@ chip.binding 'each', 100, (element, expr, controller) ->
 	properties = {}
 	value = null
 			
-	createElement = (item) ->
+	createElement = (item, index) ->
 		newElement = template.clone()
 		unless Array.isArray(value)
 			properties[propName] = item if propName
 			properties[itemName] = value[item]
 		else
 			properties[itemName] = item
+			properties.index = index
 		controller.child element: newElement, name: controllerName, properties: properties
 		newElement.get(0)
 	
@@ -630,14 +631,17 @@ chip.binding 'each', 100, (element, expr, controller) ->
 				newValue = Object.keys newValue
 			
 			if Array.isArray(value) and value.length
-				value.forEach (item) ->
-					elements.push createElement item
+				value.forEach (item, index) ->
+					elements.push createElement item, index
 				placeholder.after(elements).remove()
 		
 		else if Array.isArray(value) or (value and typeof value is 'object')
 			unless Array.isArray(value)
 				splices = compare.arrays Object.keys(value), Object.keys(oldValue)
 			
+			hasNew = 0
+			splices.forEach (splice) -> hasNew += splice.addedCount
+
 			splices.forEach (splice) ->
 				args = [splice.index, splice.removed.length]
 				
@@ -645,7 +649,7 @@ chip.binding 'each', 100, (element, expr, controller) ->
 				addIndex = splice.index
 				while (addIndex < splice.index + splice.addedCount)
 					item = value[addIndex]
-					newElements.push createElement item
+					newElements.push createElement item, addIndex
 					addIndex++
 				
 				removedElements = $ elements.splice.apply(elements, args.concat(newElements))
@@ -653,7 +657,10 @@ chip.binding 'each', 100, (element, expr, controller) ->
 				if removedElements.length
 					if elements.length - newElements.length is 0 # removing all existing elements
 						removedElements.eq(0).before(placeholder)
-					removedElements.animateOut()
+					if hasNew
+						removedElements.remove()
+					else
+						removedElements.animateOut()
 				
 				if newElements.length
 					$(newElements).animateIn()
