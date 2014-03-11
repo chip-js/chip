@@ -3,7 +3,7 @@
 
 chip.binding 'debug', (element, expr, controller) ->
 	controller.watch expr, (value) ->
-		console.info 'Debug:', expr, '=', value
+		console?.info 'Debug:', expr, '=', value
 
 
 # ## chip-text
@@ -300,6 +300,12 @@ chip.binding 'value', (element, expr, controller) ->
 	
 	events = element.attr('chip-value-events') or 'change'
 	element.removeAttr('chip-value-events')
+	if element.is ':text'
+		element.on 'keydown', (event) ->
+			if event.keyCode is 13
+				element.blur()
+				setTimeout ->
+					element.closest('form').submit()
 	
 	element.on events, ->
 		if getValue() isnt observer.oldValue

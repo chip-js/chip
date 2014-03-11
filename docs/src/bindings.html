@@ -29,7 +29,7 @@
 
 chip.binding <span class="string">'debug'</span>, (element, expr, controller) -&gt;
 	controller.watch expr, (value) -&gt;
-		console.info <span class="string">'Debug:'</span>, expr, <span class="string">'='</span>, value</pre></div></div>
+		console?.info <span class="string">'Debug:'</span>, expr, <span class="string">'='</span>, value</pre></div></div>
             
         </li>
         
@@ -437,6 +437,12 @@ value of <code>&#39;Jac&#39;</code>.</p>
 	
 	events = element.attr(<span class="string">'chip-value-events'</span>) <span class="keyword">or</span> <span class="string">'change'</span>
 	element.removeAttr(<span class="string">'chip-value-events'</span>)
+	<span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">':text'</span>
+		element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
+			<span class="keyword">if</span> event.keyCode <span class="keyword">is</span> <span class="number">13</span>
+				element.blur()
+				setTimeout -&gt;
+					element.closest(<span class="string">'form'</span>).submit()
 	
 	element.<span class="literal">on</span> events, -&gt;
 		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue

@@ -1823,7 +1823,7 @@ if (!Date.prototype.toISOString) {
 
   chip.binding('debug', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
-      return console.info('Debug:', expr, '=', value);
+      return typeof console !== "undefined" && console !== null ? console.info('Debug:', expr, '=', value) : void 0;
     });
   });
 
@@ -2006,6 +2006,16 @@ if (!Date.prototype.toISOString) {
     }
     events = element.attr('chip-value-events') || 'change';
     element.removeAttr('chip-value-events');
+    if (element.is(':text')) {
+      element.on('keydown', function(event) {
+        if (event.keyCode === 13) {
+          element.blur();
+          return setTimeout(function() {
+            return element.closest('form').submit();
+          });
+        }
+      });
+    }
     return element.on(events, function() {
       if (getValue() !== observer.oldValue) {
         controller.evalSetter(expr, getValue());
