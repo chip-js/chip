@@ -967,7 +967,37 @@ if (!Date.prototype.toISOString) {
     }
 
     Controller.prototype.watch = function(expr, skipTriggerImmediately, callback) {
-      var getter, observer;
+      var calledThisRound, getter, observer, observers, origCallback,
+        _this = this;
+      if (Array.isArray(expr)) {
+        if (typeof skipTriggerImmediately === 'function') {
+          callback = skipTriggerImmediately;
+          skipTriggerImmediately = false;
+        }
+        origCallback = callback;
+        calledThisRound = false;
+        callback = function() {
+          var values;
+          if (calledThisRound) {
+            return;
+          }
+          calledThisRound = true;
+          setTimeout(function() {
+            return calledThisRound = false;
+          });
+          values = observers.map(function(observer) {
+            return observer.getter();
+          });
+          return origCallback.apply(null, values);
+        };
+        observers = expr.map(function(expr) {
+          return _this.watch(expr, true, callback);
+        });
+        if (!skipTriggerImmediately) {
+          callback();
+        }
+        return observers;
+      }
       if (typeof expr === 'function') {
         getter = expr;
       } else {
@@ -977,6 +1007,17 @@ if (!Date.prototype.toISOString) {
       observer.expr = expr;
       this._observers.push(observer);
       return observer;
+    };
+
+    Controller.prototype.unwatch = function(expr, callback) {
+      return this._observers.some(function(observer) {
+        if (observer.expr === expr && observer.callback === callback) {
+          this._observers.remove(observer);
+          return true;
+        } else {
+          return false;
+        }
+      });
     };
 
     Controller.prototype["eval"] = function(expr) {
@@ -1521,13 +1562,20 @@ if (!Date.prototype.toISOString) {
             }
             if (container.length) {
               showNextPage = function() {
-                var parentController;
+                var parentController, placholder;
                 container.attr("" + _this.bindingPrefix + "route", name);
                 _this.rootController.route = name;
                 _this.rootController.path = req.path;
                 _this.trigger('routeChange', [name]);
-                container.animateIn();
-                if (!req.isSamePath) {
+                if (req.isSamePath) {
+                  container.animateIn();
+                } else {
+                  placholder = $('<!--container-->').insertBefore(container);
+                  container.detach();
+                  setTimeout(function() {
+                    placholder.after(container).remove();
+                    return container.animateIn();
+                  });
                   container.html(_this.template(name));
                   parentController = container.parent().controller() || _this.rootController;
                   _this.createController({

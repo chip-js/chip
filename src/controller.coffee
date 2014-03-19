@@ -11,15 +11,48 @@ class Controller
 	# the value in the expression changes. An expression can be as simple as `name` or as complex as
 	# `user.firstName + ' ' + user.lastName + ' - ' + user.getPostfix()`
 	watch: (expr, skipTriggerImmediately, callback) ->
+		if Array.isArray(expr)
+			if typeof skipTriggerImmediately is 'function'
+				callback = skipTriggerImmediately
+				skipTriggerImmediately = false
+
+			origCallback = callback
+			calledThisRound = false
+			# with multiple observers, only call the original callback once on change
+			callback = ->
+				return if calledThisRound
+				calledThisRound = true
+				setTimeout -> calledThisRound = false
+				values = observers.map (observer) -> observer.getter()
+				origCallback values...
+
+			observers = expr.map (expr) =>
+				@watch(expr, true, callback)
+			
+			unless skipTriggerImmediately
+				callback()
+			
+			return observers
+		
 		if typeof expr is 'function'
 			getter = expr
 		else
 			getter = Controller.createBoundFunction(this, expr)
+		
 		# Store the observers with the controller so when it is closed we can clean up all observers as well
 		observer = Observer.add getter, skipTriggerImmediately, callback
 		observer.expr = expr
 		@_observers.push observer
 		observer
+	
+	# Stop watching an expression for changes.
+	unwatch: (expr, callback) ->
+		@_observers.some (observer) ->
+			if observer.expr is expr and observer.callback is callback
+				@_observers.remove observer
+				true
+			else
+				false
 	
 	# Evaluates an expression immediately, returning the result
 	eval: (expr) ->
