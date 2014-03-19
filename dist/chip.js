@@ -1869,7 +1869,7 @@ if (!Date.prototype.toISOString) {
 
   })();
 
-  chip.binding('debug', function(element, expr, controller) {
+  chip.binding('debug', 200, function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return typeof console !== "undefined" && console !== null ? console.info('Debug:', expr, '=', value) : void 0;
     });

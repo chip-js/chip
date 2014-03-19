@@ -1,7 +1,7 @@
 # # Default Bindings
 
 
-chip.binding 'debug', (element, expr, controller) ->
+chip.binding 'debug', 200, (element, expr, controller) ->
 	controller.watch expr, (value) ->
 		console?.info 'Debug:', expr, '=', value
 
