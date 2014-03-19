@@ -546,8 +546,14 @@ template and controller by the same name. This template will be placed in the fi
 							<span class="property">@rootController</span>.route = name
 							<span class="property">@rootController</span>.path = req.path
 							<span class="property">@trigger</span> <span class="string">'routeChange'</span>, [name]
-							container.animateIn()
-							<span class="keyword">unless</span> req.isSamePath
+							<span class="keyword">if</span> req.isSamePath
+								container.animateIn()
+							<span class="keyword">else</span>
+								placholder = $(<span class="string">'&lt;!--container--&gt;'</span>).insertBefore(container)
+								container.detach()
+								setTimeout -&gt;
+									placholder.after(container).remove()
+									container.animateIn()
 								container.html <span class="property">@template</span>(name)
 								parentController = container.parent().controller() <span class="keyword">or</span> <span class="property">@rootController</span>
 								<span class="property">@createController</span> element: container, parent: parentController, name: name
