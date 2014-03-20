@@ -1,2 +1,2 @@
-The code in equality.coffee is based on work from the Google's observe-js polyfill. You can find the project at:
+The code in compare.coffee is based on work from the Google's observe-js polyfill. You can find the project at:
 https://github.com/Polymer/observe-js

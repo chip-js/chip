@@ -32,7 +32,7 @@ class Router
 		this
 	
 	
-	redirect: (url) ->
+	redirect: (url, replace = false) ->
 		if url.charAt(0) is '.'
 			pathParts = document.createElement('a')
 			pathParts.href = url
@@ -53,7 +53,10 @@ class Router
 		)
 		
 		if @usePushState
-			history.pushState {}, '', url
+			if replace
+				history.replaceState {}, '', url
+			else
+				history.pushState {}, '', url
 			@currentUrl = url
 			@dispatch url
 		else
@@ -68,7 +71,7 @@ class Router
 	
 	listen: (options = {}) ->
 		if options.stop
-			$(window).off 'popstate hashchange', @_handleChange if @_handleChange
+			$(window).off 'popstate hashChange', @_handleChange if @_handleChange
 			return this
 		
 		@root = options.root if options.root?
@@ -94,7 +97,11 @@ class Router
 			getUrl = -> location.pathname + location.search
 			$(window).on 'popstate', @_handleChange
 		else
-			getUrl = => (if @hashOnly then '' else location.pathname.replace /\/$/, '') + location.hash.replace(/^#\/?/, '/')
+			getUrl = =>
+				if location.hash
+					location.hash.replace(/^#\/?/, '/')
+				else
+					location.pathname + location.search
 			$(window).on 'hashchange', @_handleChange
 		
 		@_handleChange()

@@ -255,8 +255,8 @@ class App
 		this
 	
 	
-	redirect: (url) ->
-		@router.redirect(url)
+	redirect: (url, replace = false) ->
+		@router.redirect(url, replace)
 	
 	
 	# Mounts an app to a URL prefix.
@@ -277,7 +277,8 @@ class App
 			
 			@_clickHandler = (event) ->
 				return if event.isDefaultPrevented() # if something else already handled this, we won't
-				return if this.host isnt location.host or this.href is location.href + '#'
+				linkHost = @host.replace(/:80$|:443$/, '')
+				return if (linkHost and linkHost isnt location.host) or @href is location.href + '#'
 				return if event.metaKey or event.ctrlKey or $(event.target).attr('target')
 				event.preventDefault()
 				unless $(this).attr('disabled')

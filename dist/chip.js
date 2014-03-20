@@ -608,8 +608,11 @@ if (!Date.prototype.toISOString) {
       return this;
     };
 
-    Router.prototype.redirect = function(url) {
+    Router.prototype.redirect = function(url, replace) {
       var errHandler, notFound, pathParts;
+      if (replace == null) {
+        replace = false;
+      }
       if (url.charAt(0) === '.') {
         pathParts = document.createElement('a');
         pathParts.href = url;
@@ -631,7 +634,11 @@ if (!Date.prototype.toISOString) {
         }
       }));
       if (this.usePushState) {
-        history.pushState({}, '', url);
+        if (replace) {
+          history.replaceState({}, '', url);
+        } else {
+          history.pushState({}, '', url);
+        }
         this.currentUrl = url;
         this.dispatch(url);
       } else {
@@ -655,7 +662,7 @@ if (!Date.prototype.toISOString) {
       }
       if (options.stop) {
         if (this._handleChange) {
-          $(window).off('popstate hashchange', this._handleChange);
+          $(window).off('popstate hashChange', this._handleChange);
         }
         return this;
       }
@@ -696,7 +703,11 @@ if (!Date.prototype.toISOString) {
         $(window).on('popstate', this._handleChange);
       } else {
         getUrl = function() {
-          return (_this.hashOnly ? '' : location.pathname.replace(/\/$/, '')) + location.hash.replace(/^#\/?/, '/');
+          if (location.hash) {
+            return location.hash.replace(/^#\/?/, '/');
+          } else {
+            return location.pathname + location.search;
+          }
         };
         $(window).on('hashchange', this._handleChange);
       }
@@ -1038,8 +1049,11 @@ if (!Date.prototype.toISOString) {
       return Controller.createBoundFunction(this, expr, extraArgNames);
     };
 
-    Controller.prototype.redirect = function(url) {
-      this.app.redirect(url);
+    Controller.prototype.redirect = function(url, replace) {
+      if (replace == null) {
+        replace = false;
+      }
+      this.app.redirect(url, replace);
       return this;
     };
 
@@ -1621,8 +1635,11 @@ if (!Date.prototype.toISOString) {
       return this;
     };
 
-    App.prototype.redirect = function(url) {
-      return this.router.redirect(url);
+    App.prototype.redirect = function(url, replace) {
+      if (replace == null) {
+        replace = false;
+      }
+      return this.router.redirect(url, replace);
     };
 
     App.prototype.mount = function(path, app) {};
@@ -1648,10 +1665,12 @@ if (!Date.prototype.toISOString) {
           return _this.trigger('urlChange', [path]);
         };
         _this._clickHandler = function(event) {
+          var linkHost;
           if (event.isDefaultPrevented()) {
             return;
           }
-          if (this.host !== location.host || this.href === location.href + '#') {
+          linkHost = this.host.replace(/:80$|:443$/, '');
+          if ((linkHost && linkHost !== location.host) || this.href === location.href + '#') {
             return;
           }
           if (event.metaKey || event.ctrlKey || $(event.target).attr('target')) {

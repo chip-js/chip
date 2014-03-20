@@ -92,7 +92,7 @@ portion of the URL.</p>
 		<span class="keyword">this</span>
 	
 	
-	redirect: (url) -&gt;
+	redirect: (url, replace = <span class="literal">false</span>) -&gt;
 		<span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'.'</span>
 			pathParts = document.createElement(<span class="string">'a'</span>)
 			pathParts.href = url
@@ -125,7 +125,10 @@ portion of the URL.</p>
 		)
 		
 		<span class="keyword">if</span> <span class="property">@usePushState</span>
-			history.pushState {}, <span class="string">''</span>, url
+			<span class="keyword">if</span> replace
+				history.replaceState {}, <span class="string">''</span>, url
+			<span class="keyword">else</span>
+				history.pushState {}, <span class="string">''</span>, url
 			<span class="property">@currentUrl</span> = url
 			<span class="property">@dispatch</span> url
 		<span class="keyword">else</span>
@@ -140,7 +143,7 @@ portion of the URL.</p>
 	
 	listen: (options = {}) -&gt;
 		<span class="keyword">if</span> options.stop
-			$(window).<span class="literal">off</span> <span class="string">'popstate hashchange'</span>, <span class="property">@_handleChange</span> <span class="keyword">if</span> <span class="property">@_handleChange</span>
+			$(window).<span class="literal">off</span> <span class="string">'popstate hashChange'</span>, <span class="property">@_handleChange</span> <span class="keyword">if</span> <span class="property">@_handleChange</span>
 			<span class="keyword">return</span> <span class="keyword">this</span>
 		
 		<span class="property">@root</span> = options.root <span class="keyword">if</span> options.root?
@@ -179,7 +182,11 @@ portion of the URL.</p>
 			getUrl = -&gt; location.pathname + location.search
 			$(window).on 'popstate', @_handleChange
 		else
-			getUrl = =&gt; (if @hashOnly then '' else location.pathname.replace /\/$/, '') + location.hash.replace(/^#\/?/, '/')
+			getUrl = =&gt;
+				if location.hash
+					location.hash.replace(/^#\/?/, '/')
+				else
+					location.pathname + location.search
 			$(window).on 'hashchange', @_handleChange
 		
 		@_handleChange()

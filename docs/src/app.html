@@ -626,8 +626,8 @@ template and controller by the same name. This template will be placed in the fi
 		<span class="keyword">this</span>
 	
 	
-	redirect: (url) -&gt;
-		<span class="property">@router</span>.redirect(url)</pre></div></div>
+	redirect: (url, replace = <span class="literal">false</span>) -&gt;
+		<span class="property">@router</span>.redirect(url, replace)</pre></div></div>
             
         </li>
         
@@ -670,7 +670,8 @@ template and controller by the same name. This template will be placed in the fi
 			
 			<span class="property">@_clickHandler</span> = (event) -&gt;
 				<span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
-				<span class="keyword">return</span> <span class="keyword">if</span> <span class="keyword">this</span>.host <span class="keyword">isnt</span> location.host <span class="keyword">or</span> <span class="keyword">this</span>.href <span class="keyword">is</span> location.href + <span class="string">'#'</span>
+				linkHost = <span class="property">@host</span>.replace(<span class="regexp">/:80$|:443$/</span>, <span class="string">''</span>)
+				<span class="keyword">return</span> <span class="keyword">if</span> (linkHost <span class="keyword">and</span> linkHost <span class="keyword">isnt</span> location.host) <span class="keyword">or</span> <span class="property">@href</span> <span class="keyword">is</span> location.href + <span class="string">'#'</span>
 				<span class="keyword">return</span> <span class="keyword">if</span> event.metaKey <span class="keyword">or</span> event.ctrlKey <span class="keyword">or</span> $(event.target).attr(<span class="string">'target'</span>)
 				event.preventDefault()
 				<span class="keyword">unless</span> $(<span class="keyword">this</span>).attr(<span class="string">'disabled'</span>)

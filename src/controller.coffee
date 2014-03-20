@@ -80,8 +80,8 @@ class Controller
 	
 	
 	# Redirects to the provided URL
-	redirect: (url) ->
-		@app.redirect(url)
+	redirect: (url, replace = false) ->
+		@app.redirect(url, replace)
 		this
 	
 	
