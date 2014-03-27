@@ -1063,6 +1063,10 @@ if (!Date.prototype.toISOString) {
 
     Controller.prototype.closeController = function() {
       var observer, _i, _len, _ref;
+      if (this._closed) {
+        return;
+      }
+      this._closed = true;
       if (this.hasOwnProperty('beforeClose')) {
         this.beforeClose();
       }
@@ -1073,6 +1077,9 @@ if (!Date.prototype.toISOString) {
           observer.close();
         }
         this._observers.length = 0;
+      }
+      if (this.hasOwnProperty('onClose')) {
+        this.onClose();
       }
     };
 

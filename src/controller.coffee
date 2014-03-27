@@ -92,11 +92,14 @@ class Controller
 	
 	# Removes and closes all observers for garbage-collection 
 	closeController: ->
+		return if @_closed
+		@_closed = true
 		@beforeClose() if @hasOwnProperty('beforeClose')
 		if @_observers
 			for observer in @_observers
 				observer.close()
 			@_observers.length = 0
+		@onClose() if @hasOwnProperty('onClose')
 		return
 	
 	

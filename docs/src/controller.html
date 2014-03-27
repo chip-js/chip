@@ -256,11 +256,14 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
             </div>
             
             <div class="content"><div class='highlight'><pre>	closeController: -&gt;
+		<span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@_closed</span>
+		<span class="property">@_closed</span> = <span class="literal">true</span>
 		<span class="property">@beforeClose</span>() <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'beforeClose'</span>)
 		<span class="keyword">if</span> <span class="property">@_observers</span>
 			<span class="keyword">for</span> observer <span class="keyword">in</span> <span class="property">@_observers</span>
 				observer.close()
 			<span class="property">@_observers</span>.length = <span class="number">0</span>
+		<span class="property">@onClose</span>() <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'onClose'</span>)
 		<span class="keyword">return</span></pre></div></div>
             
         </li>
