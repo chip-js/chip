@@ -47,9 +47,9 @@ class Controller
 	
 	# Stop watching an expression for changes.
 	unwatch: (expr, callback) ->
-		@_observers.some (observer) ->
+		@_observers.some (observer, index) =>
 			if observer.expr is expr and observer.callback is callback
-				@_observers.remove observer
+				@_observers.splice index, 1
 				true
 			else
 				false

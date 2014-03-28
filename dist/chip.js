@@ -1021,9 +1021,10 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype.unwatch = function(expr, callback) {
-      return this._observers.some(function(observer) {
+      var _this = this;
+      return this._observers.some(function(observer, index) {
         if (observer.expr === expr && observer.callback === callback) {
-          this._observers.remove(observer);
+          _this._observers.splice(index, 1);
           return true;
         } else {
           return false;

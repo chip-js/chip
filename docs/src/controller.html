@@ -146,9 +146,9 @@ the value in the expression changes. An expression can be as simple as <code>nam
             </div>
             
             <div class="content"><div class='highlight'><pre>	unwatch: (expr, callback) -&gt;
-		<span class="property">@_observers</span>.some (observer) -&gt;
+		<span class="property">@_observers</span>.some (observer, index) =&gt;
 			<span class="keyword">if</span> observer.expr <span class="keyword">is</span> expr <span class="keyword">and</span> observer.callback <span class="keyword">is</span> callback
-				<span class="property">@_observers</span>.remove observer
+				<span class="property">@_observers</span>.splice index, <span class="number">1</span>
 				<span class="literal">true</span>
 			<span class="keyword">else</span>
 				<span class="literal">false</span></pre></div></div>
