@@ -28,8 +28,8 @@
             <div class="content"><div class='highlight'><pre>
 
 chip.binding <span class="string">'debug'</span>, <span class="number">200</span>, (element, expr, controller) -&gt;
-	controller.watch expr, (value) -&gt;
-		console?.info <span class="string">'Debug:'</span>, expr, <span class="string">'='</span>, value</pre></div></div>
+  controller.watch expr, (value) -&gt;
+    console?.info <span class="string">'Debug:'</span>, expr, <span class="string">'='</span>, value</pre></div></div>
             
         </li>
         
@@ -62,8 +62,8 @@ chip.binding <span class="string">'debug'</span>, <span class="number">200</span
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'text'</span>, (element, expr, controller) -&gt;
-	controller.watch expr, (value) -&gt;
-		element.text(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
+  controller.watch expr, (value) -&gt;
+    element.text(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
             
         </li>
         
@@ -92,8 +92,8 @@ chip.binding <span class="string">'debug'</span>, <span class="number">200</span
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'html'</span>, (element, expr, controller) -&gt;
-	controller.watch expr, (value) -&gt;
-		element.html(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
+  controller.watch expr, (value) -&gt;
+    element.html(<span class="keyword">if</span> value? <span class="keyword">then</span> value <span class="keyword">else</span> <span class="string">''</span>)</pre></div></div>
             
         </li>
         
@@ -117,15 +117,15 @@ chip.binding <span class="string">'debug'</span>, <span class="number">200</span
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'trim'</span>, (element, expr, controller) -&gt;
-	node = element.get(<span class="number">0</span>).firstChild
-	<span class="keyword">while</span> node
-		next = node.nextSibling
-		<span class="keyword">if</span> node.nodeType <span class="keyword">is</span> Node.TEXT_NODE
-			<span class="keyword">if</span> node.nodeValue.match <span class="regexp">/^\s*$/</span>
-				node.parentNode.removeChild node
-			<span class="keyword">else</span>
-				node.textContent = node.textContent.trim()
-		node = next</pre></div></div>
+  node = element.get(<span class="number">0</span>).firstChild
+  <span class="keyword">while</span> node
+    next = node.nextSibling
+    <span class="keyword">if</span> node.nodeType <span class="keyword">is</span> Node.TEXT_NODE
+      <span class="keyword">if</span> node.nodeValue.match <span class="regexp">/^\s*$/</span>
+        node.parentNode.removeChild node
+      <span class="keyword">else</span>
+        node.textContent = node.textContent.trim()
+    node = next</pre></div></div>
             
         </li>
         
@@ -149,11 +149,11 @@ chip.binding <span class="string">'debug'</span>, <span class="number">200</span
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'translate'</span>, (element, expr, controller) -&gt;
-	nodes = element.get(<span class="number">0</span>).childNodes
-	text = <span class="string">''</span>
-	placeholders = []
-	<span class="keyword">for</span> node, i <span class="keyword">in</span> nodes
-		<span class="keyword">if</span> node.nodeType <span class="keyword">is</span> <span class="number">3</span></pre></div></div>
+  nodes = element.get(<span class="number">0</span>).childNodes
+  text = <span class="string">''</span>
+  placeholders = []
+  <span class="keyword">for</span> node, i <span class="keyword">in</span> nodes
+    <span class="keyword">if</span> node.nodeType <span class="keyword">is</span> <span class="number">3</span></pre></div></div>
             
         </li>
         
@@ -168,31 +168,31 @@ chip.binding <span class="string">'debug'</span>, <span class="number">200</span
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">unless</span> node.nodeValue.trim() <span class="keyword">is</span> <span class="string">''</span> <span class="keyword">and</span> (i <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">or</span> i <span class="keyword">is</span> nodes.length - <span class="number">1</span>)
-				text += node.nodeValue
-		<span class="keyword">else</span> <span class="keyword">if</span> node.nodeType <span class="keyword">is</span> <span class="number">1</span>
-			text += <span class="string">'%{'</span> + placeholders.length + <span class="string">'}'</span>
-			placeholders.push node
-	
-	<span class="function"><span class="title">refresh</span></span> = -&gt;
-		translation = controller.translations[text] <span class="keyword">or</span> text
-		exp = <span class="regexp">/%{(\d+)}/g</span>
-		nodes = []
-		lastIndex = <span class="number">0</span>
-		<span class="keyword">while</span> (match = exp.exec translation)
-			startIndex = exp.lastIndex - match[<span class="number">0</span>].length
-			<span class="keyword">if</span> lastIndex <span class="keyword">isnt</span> startIndex
-				nodes.push document.createTextNode translation.slice lastIndex, startIndex
-			nodes.push placeholders[match[<span class="number">1</span>]]
-			lastIndex = exp.lastIndex
-		
-		<span class="keyword">if</span> lastIndex <span class="keyword">isnt</span> translation.length
-			nodes.push document.createTextNode translation.slice lastIndex
-		
-		element.html nodes
-	
-	element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'translationChange'</span>, refresh
-	controller.<span class="literal">on</span> <span class="string">'translationChange'</span>, refresh</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">unless</span> node.nodeValue.trim() <span class="keyword">is</span> <span class="string">''</span> <span class="keyword">and</span> (i <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">or</span> i <span class="keyword">is</span> nodes.length - <span class="number">1</span>)
+        text += node.nodeValue
+    <span class="keyword">else</span> <span class="keyword">if</span> node.nodeType <span class="keyword">is</span> <span class="number">1</span>
+      text += <span class="string">'%{'</span> + placeholders.length + <span class="string">'}'</span>
+      placeholders.push node
+  
+  <span class="function"><span class="title">refresh</span></span> = -&gt;
+    translation = controller.translations[text] <span class="keyword">or</span> text
+    exp = <span class="regexp">/%{(\d+)}/g</span>
+    nodes = []
+    lastIndex = <span class="number">0</span>
+    <span class="keyword">while</span> (match = exp.exec translation)
+      startIndex = exp.lastIndex - match[<span class="number">0</span>].length
+      <span class="keyword">if</span> lastIndex <span class="keyword">isnt</span> startIndex
+        nodes.push document.createTextNode translation.slice lastIndex, startIndex
+      nodes.push placeholders[match[<span class="number">1</span>]]
+      lastIndex = exp.lastIndex
+    
+    <span class="keyword">if</span> lastIndex <span class="keyword">isnt</span> translation.length
+      nodes.push document.createTextNode translation.slice lastIndex
+    
+    element.html nodes
+  
+  element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'translationChange'</span>, refresh
+  controller.<span class="literal">on</span> <span class="string">'translationChange'</span>, refresh</pre></div></div>
             
         </li>
         
@@ -207,8 +207,8 @@ chip.binding <span class="string">'debug'</span>, <span class="number">200</span
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="keyword">if</span> controller.translations[text]
-		refresh()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> controller.translations[text]
+    refresh()</pre></div></div>
             
         </li>
         
@@ -236,18 +236,18 @@ the class list depending on whether the value of the property is truthy or false
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'class'</span>, (element, expr, controller) -&gt;
-	controller.watch expr, (value) -&gt;
-		<span class="keyword">if</span> Array.isArray(value)
-			value = value.join(<span class="string">' '</span>)
-		
-		<span class="keyword">if</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'string'</span>
-			element.attr(<span class="string">'class'</span>, value)
-		<span class="keyword">else</span> <span class="keyword">if</span> value <span class="keyword">and</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'object'</span>
-			<span class="keyword">for</span> own className, toggle <span class="keyword">of</span> value
-				<span class="keyword">if</span> toggle
-					element.addClass(className)
-				<span class="keyword">else</span>
-					element.removeClass(className)</pre></div></div>
+  controller.watch expr, (value) -&gt;
+    <span class="keyword">if</span> Array.isArray(value)
+      value = value.join(<span class="string">' '</span>)
+    
+    <span class="keyword">if</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'string'</span>
+      element.attr(<span class="string">'class'</span>, value)
+    <span class="keyword">else</span> <span class="keyword">if</span> value <span class="keyword">and</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'object'</span>
+      <span class="keyword">for</span> own className, toggle <span class="keyword">of</span> value
+        <span class="keyword">if</span> toggle
+          element.addClass(className)
+        <span class="keyword">else</span>
+          element.removeClass(className)</pre></div></div>
             
         </li>
         
@@ -281,27 +281,27 @@ provided it adds the “active” class if the element or it‘s first anchor ch
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'active'</span>, (element, expr, controller) -&gt;
-	<span class="keyword">if</span> expr
-		controller.watch expr, (value) -&gt;
-			<span class="keyword">if</span> value
-				element.addClass(<span class="string">'active'</span>)
-			<span class="keyword">else</span>
-				element.removeClass(<span class="string">'active'</span>)
-	<span class="keyword">else</span>
-		<span class="function"><span class="title">refresh</span></span> = -&gt;
-			<span class="keyword">if</span> link.length <span class="keyword">and</span> link.get(<span class="number">0</span>).href <span class="keyword">is</span> location.href
-				element.addClass(<span class="string">'active'</span>)
-			<span class="keyword">else</span>
-				element.removeClass(<span class="string">'active'</span>)
-		
-		link = element
-			.filter(<span class="string">'a'</span>)
-			.add(element.find(<span class="string">'a'</span>))
-			.first()
-		link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
-		controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
-		element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
-		refresh()</pre></div></div>
+  <span class="keyword">if</span> expr
+    controller.watch expr, (value) -&gt;
+      <span class="keyword">if</span> value
+        element.addClass(<span class="string">'active'</span>)
+      <span class="keyword">else</span>
+        element.removeClass(<span class="string">'active'</span>)
+  <span class="keyword">else</span>
+    <span class="function"><span class="title">refresh</span></span> = -&gt;
+      <span class="keyword">if</span> link.length <span class="keyword">and</span> link.get(<span class="number">0</span>).href <span class="keyword">is</span> location.href
+        element.addClass(<span class="string">'active'</span>)
+      <span class="keyword">else</span>
+        element.removeClass(<span class="string">'active'</span>)
+    
+    link = element
+      .filter(<span class="string">'a'</span>)
+      .add(element.find(<span class="string">'a'</span>))
+      .first()
+    link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
+    controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
+    element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
+    refresh()</pre></div></div>
             
         </li>
         
@@ -319,20 +319,20 @@ whole section.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'active-section'</span>, (element, expr, controller) -&gt;
-	<span class="function"><span class="title">refresh</span></span> = -&gt;
-		<span class="keyword">if</span> link.length <span class="keyword">and</span> location.href.indexOf(link.get(<span class="number">0</span>).href) <span class="keyword">is</span> <span class="number">0</span>
-			element.addClass(<span class="string">'active'</span>)
-		<span class="keyword">else</span>
-			element.removeClass(<span class="string">'active'</span>)
-	
-	link = element
-		.filter(<span class="string">'a'</span>)
-		.add(element.find(<span class="string">'a'</span>))
-		.first()
-	link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
-	controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
-	element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
-	refresh()</pre></div></div>
+  <span class="function"><span class="title">refresh</span></span> = -&gt;
+    <span class="keyword">if</span> link.length <span class="keyword">and</span> location.href.indexOf(link.get(<span class="number">0</span>).href) <span class="keyword">is</span> <span class="number">0</span>
+      element.addClass(<span class="string">'active'</span>)
+    <span class="keyword">else</span>
+      element.removeClass(<span class="string">'active'</span>)
+  
+  link = element
+    .filter(<span class="string">'a'</span>)
+    .add(element.find(<span class="string">'a'</span>))
+    .first()
+  link.<span class="literal">on</span> <span class="string">'hrefChanged'</span>, refresh
+  controller.<span class="literal">on</span> <span class="string">'urlChange'</span>, refresh
+  element.<span class="literal">on</span> <span class="string">'remove'</span>, -&gt; controller.<span class="literal">off</span> <span class="string">'urlChange'</span>, refresh
+  refresh()</pre></div></div>
             
         </li>
         
@@ -378,27 +378,27 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	getValue =
-		<span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span> <span class="comment"># Handles checkboxes</span>
-			-&gt; element.prop(<span class="string">'checked'</span>)
-		<span class="keyword">else</span> <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">':not(input,select,textarea,option)'</span>) <span class="comment"># Handles a group of radio inputs</span>
-			-&gt; element.find(<span class="string">'input:radio:checked'</span>).val()
-		<span class="keyword">else</span> <span class="comment"># Handles other form inputs</span>
-			-&gt; element.val()
-	
-	setValue =
-		<span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span>
-			(value) -&gt; element.prop(<span class="string">'checked'</span>, value)
-		<span class="keyword">else</span> <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">':not(input,select,textarea,option)'</span>) <span class="comment"># Handles a group of radio inputs</span>
-			(value) -&gt;
-				element.find(<span class="string">'input:radio:checked'</span>).prop(<span class="string">'checked'</span>, <span class="literal">false</span>) <span class="comment"># in case the value isn't found in radios</span>
-				element.find(<span class="string">'input:radio[value="'</span> + value + <span class="string">'"]'</span>).prop(<span class="string">'checked'</span>, <span class="literal">true</span>)
-		<span class="keyword">else</span>
-			(value) -&gt; element.val(value)
-	
-	observer = controller.watch expr, (value) -&gt;
-		<span class="keyword">if</span> `<span class="javascript">getValue() != value</span>` <span class="comment"># Allows for string/number equality</span>
-			setValue value</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  getValue =
+    <span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span> <span class="comment"># Handles checkboxes</span>
+      -&gt; element.prop(<span class="string">'checked'</span>)
+    <span class="keyword">else</span> <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">':not(input,select,textarea,option)'</span>) <span class="comment"># Handles a group of radio inputs</span>
+      -&gt; element.find(<span class="string">'input:radio:checked'</span>).val()
+    <span class="keyword">else</span> <span class="comment"># Handles other form inputs</span>
+      -&gt; element.val()
+  
+  setValue =
+    <span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span>
+      (value) -&gt; element.prop(<span class="string">'checked'</span>, value)
+    <span class="keyword">else</span> <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">':not(input,select,textarea,option)'</span>) <span class="comment"># Handles a group of radio inputs</span>
+      (value) -&gt;
+        element.find(<span class="string">'input:radio:checked'</span>).prop(<span class="string">'checked'</span>, <span class="literal">false</span>) <span class="comment"># in case the value isn't found in radios</span>
+        element.find(<span class="string">'input:radio[value="'</span> + value + <span class="string">'"]'</span>).prop(<span class="string">'checked'</span>, <span class="literal">true</span>)
+    <span class="keyword">else</span>
+      (value) -&gt; element.val(value)
+  
+  observer = controller.watch expr, (value) -&gt;
+    <span class="keyword">if</span> `<span class="javascript">getValue() != value</span>` <span class="comment"># Allows for string/number equality</span>
+      setValue value</pre></div></div>
             
         </li>
         
@@ -413,7 +413,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="keyword">return</span> <span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">'option'</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">return</span> <span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">'option'</span></pre></div></div>
             
         </li>
         
@@ -428,25 +428,25 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
-		setTimeout -&gt;
-			setValue controller.eval expr
-			controller.evalSetter expr, getValue()
-	<span class="keyword">else</span>
-		controller.evalSetter expr, getValue()
-	
-	events = element.attr(<span class="string">'chip-value-events'</span>) <span class="keyword">or</span> <span class="string">'change'</span>
-	element.removeAttr(<span class="string">'chip-value-events'</span>)
-	<span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">':text'</span>
-		element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
-			<span class="keyword">if</span> event.keyCode <span class="keyword">is</span> <span class="number">13</span>
-				element.trigger <span class="string">'change'</span>
-	
-	element.<span class="literal">on</span> events, -&gt;
-		<span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue
-			controller.evalSetter expr, getValue()
-			observer.skipNextSync() <span class="comment"># don't update this observer, user changed it</span>
-			controller.sync() <span class="comment"># update other expressions looking at this data</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
+    setTimeout -&gt;
+      setValue controller.eval expr
+      controller.evalSetter expr, getValue()
+  <span class="keyword">else</span>
+    controller.evalSetter expr, getValue()
+  
+  events = element.attr(<span class="string">'chip-value-events'</span>) <span class="keyword">or</span> <span class="string">'change'</span>
+  element.removeAttr(<span class="string">'chip-value-events'</span>)
+  <span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">':text'</span>
+    element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
+      <span class="keyword">if</span> event.keyCode <span class="keyword">is</span> <span class="number">13</span>
+        element.trigger <span class="string">'change'</span>
+  
+  element.<span class="literal">on</span> events, -&gt;
+    <span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue
+      controller.evalSetter expr, getValue()
+      observer.skipNextSync() <span class="comment"># don't update this observer, user changed it</span>
+      controller.sync() <span class="comment"># update other expressions looking at this data</span></pre></div></div>
             
         </li>
         
@@ -482,8 +482,8 @@ value of <code>&#39;Jac&#39;</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>[ <span class="string">'click'</span>, <span class="string">'dblclick'</span>, <span class="string">'submit'</span>, <span class="string">'change'</span>, <span class="string">'focus'</span>, <span class="string">'blur'</span>, <span class="string">'keydown'</span>, <span class="string">'keyup'</span>, <span class="string">'paste'</span> ]
-	.forEach (name) -&gt;
-		chip.eventBinding(name)</pre></div></div>
+  .forEach (name) -&gt;
+    chip.eventBinding(name)</pre></div></div>
             
         </li>
         
@@ -510,7 +510,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
             
             <div class="content"><div class='highlight'><pre>keyCodes = { enter: <span class="number">13</span>, esc: <span class="number">27</span> }
 <span class="keyword">for</span> own name, keyCode <span class="keyword">of</span> keyCodes
-	chip.keyEventBinding(name, keyCode)</pre></div></div>
+  chip.keyEventBinding(name, keyCode)</pre></div></div>
             
         </li>
         
@@ -563,7 +563,7 @@ pressed.</p>
             
             <div class="content"><div class='highlight'><pre>attribs = [ <span class="string">'href'</span>, <span class="string">'src'</span>, <span class="string">'id'</span> ]
 <span class="keyword">for</span> name <span class="keyword">in</span> attribs
-	chip.attributeBinding(name)</pre></div></div>
+  chip.attributeBinding(name)</pre></div></div>
             
         </li>
         
@@ -593,7 +593,7 @@ pressed.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>[ <span class="string">'checked'</span>, <span class="string">'disabled'</span> ].forEach (name) -&gt;
-	chip.attributeToggleBinding(name)</pre></div></div>
+  chip.attributeToggleBinding(name)</pre></div></div>
             
         </li>
         
@@ -611,42 +611,42 @@ is used with chip-if, chip-each, etc. to show and hide elements.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>$.fn.<span class="function"><span class="title">animateIn</span></span> = (callback) -&gt;
-	<span class="keyword">if</span> <span class="property">@parent</span>().length
-		placeholder = $(<span class="string">'&lt;!----&gt;'</span>)
-		<span class="property">@before</span>(placeholder)
-		<span class="property">@detach</span>()
-	
-	<span class="property">@addClass</span> <span class="string">'animate-in'</span>
-	
-	<span class="keyword">if</span> placeholder
-		placeholder.after(<span class="keyword">this</span>)
-		placeholder.remove()
-	
-	setTimeout =&gt;
-		<span class="property">@removeClass</span> <span class="string">'animate-in'</span>
-		<span class="keyword">if</span> callback
-			<span class="keyword">if</span> <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
-				<span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, -&gt; callback()
-			<span class="keyword">else</span>
-				callback()
-	<span class="keyword">return</span> <span class="keyword">this</span>
+  <span class="keyword">if</span> <span class="property">@parent</span>().length
+    placeholder = $(<span class="string">'&lt;!----&gt;'</span>)
+    <span class="property">@before</span>(placeholder)
+    <span class="property">@detach</span>()
+  
+  <span class="property">@addClass</span> <span class="string">'animate-in'</span>
+  
+  <span class="keyword">if</span> placeholder
+    placeholder.after(<span class="keyword">this</span>)
+    placeholder.remove()
+  
+  setTimeout =&gt;
+    <span class="property">@removeClass</span> <span class="string">'animate-in'</span>
+    <span class="keyword">if</span> callback
+      <span class="keyword">if</span> <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
+        <span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, -&gt; callback()
+      <span class="keyword">else</span>
+        callback()
+  <span class="keyword">return</span> <span class="keyword">this</span>
 
 $.fn.<span class="function"><span class="title">animateOut</span></span> = (dontRemove, callback) -&gt;
-	<span class="keyword">if</span> <span class="keyword">typeof</span> dontRemove <span class="keyword">is</span> <span class="string">'function'</span>
-		callback = dontRemove
-		dontRemove = <span class="literal">false</span>
-	
-	<span class="property">@triggerHandler</span> <span class="string">'remove'</span> <span class="keyword">unless</span> dontRemove
-	duration = <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
-	<span class="keyword">if</span> duration
-		<span class="property">@addClass</span> <span class="string">'animate-out'</span>
-		<span class="function"><span class="title">done</span></span> = =&gt;
-			clearTimeout timeout
-			<span class="property">@off</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, done
-			<span class="property">@removeClass</span> <span class="string">'animate-out'</span>
-			<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="property">@remove</span>()
-		
-		<span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, done</pre></div></div>
+  <span class="keyword">if</span> <span class="keyword">typeof</span> dontRemove <span class="keyword">is</span> <span class="string">'function'</span>
+    callback = dontRemove
+    dontRemove = <span class="literal">false</span>
+  
+  <span class="property">@triggerHandler</span> <span class="string">'remove'</span> <span class="keyword">unless</span> dontRemove
+  duration = <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
+  <span class="keyword">if</span> duration
+    <span class="property">@addClass</span> <span class="string">'animate-out'</span>
+    <span class="function"><span class="title">done</span></span> = =&gt;
+      clearTimeout timeout
+      <span class="property">@off</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, done
+      <span class="property">@removeClass</span> <span class="string">'animate-out'</span>
+      <span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="property">@remove</span>()
+    
+    <span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, done</pre></div></div>
             
         </li>
         
@@ -661,17 +661,17 @@ $.fn.<span class="function"><span class="title">animateOut</span></span> = (dont
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		timeout = setTimeout done, duration + <span class="number">100</span>
-	<span class="keyword">else</span>
-		<span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="keyword">unless</span> dontRemove <span class="keyword">then</span> <span class="property">@remove</span>()
-	
-	<span class="keyword">return</span> <span class="keyword">this</span>
+            <div class="content"><div class='highlight'><pre>    timeout = setTimeout done, duration + <span class="number">100</span>
+  <span class="keyword">else</span>
+    <span class="keyword">if</span> callback <span class="keyword">then</span> callback() <span class="keyword">else</span> <span class="keyword">unless</span> dontRemove <span class="keyword">then</span> <span class="property">@remove</span>()
+  
+  <span class="keyword">return</span> <span class="keyword">this</span>
 
 $.fn.<span class="function"><span class="title">cssDuration</span></span> = (property) -&gt;
-	time = <span class="property">@css</span>(property + <span class="string">'-duration'</span>) <span class="keyword">or</span> <span class="property">@css</span>(<span class="string">'-webkit-'</span> + property + <span class="string">'-duration'</span>)
-	millis = parseFloat time
-	millis *= <span class="number">1000</span> <span class="keyword">if</span> <span class="regexp">/\ds/</span>.test time
-	millis <span class="keyword">or</span> <span class="number">0</span></pre></div></div>
+  time = <span class="property">@css</span>(property + <span class="string">'-duration'</span>) <span class="keyword">or</span> <span class="property">@css</span>(<span class="string">'-webkit-'</span> + property + <span class="string">'-duration'</span>)
+  millis = parseFloat time
+  millis *= <span class="number">1000</span> <span class="keyword">if</span> <span class="regexp">/\ds/</span>.test time
+  millis <span class="keyword">or</span> <span class="number">0</span></pre></div></div>
             
         </li>
         
@@ -701,22 +701,22 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'if'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
-	prefix = controller.app.bindingPrefix
-	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>if=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
-	controllerName = element.attr(prefix + <span class="string">'controller'</span>)
-	element.removeAttr(prefix + <span class="string">'controller'</span>)
-	
-	controller.watch expr, (value) -&gt;
-		<span class="keyword">if</span> value
-			<span class="keyword">if</span> placeholder.parent().length
-				element = template.clone().animateIn()
-				controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
-				placeholder.replaceWith(element)
-		<span class="keyword">else</span>
-			<span class="keyword">unless</span> placeholder.parent().length
-				element.animateOut -&gt;
-					element.replaceWith placeholder</pre></div></div>
+  prefix = controller.app.bindingPrefix
+  template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
+  placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>if=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
+  controllerName = element.attr(prefix + <span class="string">'controller'</span>)
+  element.removeAttr(prefix + <span class="string">'controller'</span>)
+  
+  controller.watch expr, (value) -&gt;
+    <span class="keyword">if</span> value
+      <span class="keyword">if</span> placeholder.parent().length
+        element = template.clone().animateIn()
+        controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
+        placeholder.replaceWith(element)
+    <span class="keyword">else</span>
+      <span class="keyword">unless</span> placeholder.parent().length
+        element.animateOut -&gt;
+          element.replaceWith placeholder</pre></div></div>
             
         </li>
         
@@ -746,22 +746,22 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'unless'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
-	prefix = controller.app.bindingPrefix
-	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>unless=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
-	controllerName = element.attr(prefix + <span class="string">'controller'</span>)
-	element.removeAttr(prefix + <span class="string">'controller'</span>)
-	
-	controller.watch expr, (value) -&gt;
-		<span class="keyword">unless</span> value
-			<span class="keyword">if</span> placeholder.parent().length
-				element = template.clone().animateIn()
-				controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
-				placeholder.replaceWith(element)
-		<span class="keyword">else</span>
-			<span class="keyword">unless</span> placeholder.parent().length
-				element.before placeholder
-				element.animateOut()</pre></div></div>
+  prefix = controller.app.bindingPrefix
+  template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
+  placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>unless=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
+  controllerName = element.attr(prefix + <span class="string">'controller'</span>)
+  element.removeAttr(prefix + <span class="string">'controller'</span>)
+  
+  controller.watch expr, (value) -&gt;
+    <span class="keyword">unless</span> value
+      <span class="keyword">if</span> placeholder.parent().length
+        element = template.clone().animateIn()
+        controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
+        placeholder.replaceWith(element)
+    <span class="keyword">else</span>
+      <span class="keyword">unless</span> placeholder.parent().length
+        element.before placeholder
+        element.animateOut()</pre></div></div>
             
         </li>
         
@@ -807,89 +807,89 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'each'</span>, <span class="number">100</span>, (element, expr, controller) -&gt;
-	prefix = controller.app.bindingPrefix
-	orig = expr
-	[ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
-	<span class="keyword">unless</span> itemName <span class="keyword">and</span> expr
-		<span class="keyword">throw</span> <span class="string">"Invalid <span class="subst">#{prefix}</span>each=\""</span> +
-			orig +
-			<span class="string">'". Requires the format "item in list"'</span> +
-			<span class="string">' or "key, propery in object".'</span>
-	
-	controllerName = element.attr(prefix + <span class="string">'controller'</span>)
-	element.removeAttr(prefix + <span class="string">'controller'</span>)
-	[ itemName, propName ] = itemName.split <span class="regexp">/\s*,\s*/</span>
-	
-	template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-	placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>each=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
-	elements = $()
-	properties = {}
-	value = <span class="literal">null</span>
-			
-	<span class="function"><span class="title">createElement</span></span> = (item, index) -&gt;
-		newElement = template.clone()
-		<span class="keyword">unless</span> Array.isArray(value)
-			properties[propName] = item <span class="keyword">if</span> propName
-			properties[itemName] = value[item]
-		<span class="keyword">else</span>
-			properties[itemName] = item
-			properties.index = index
-		controller.child element: newElement, name: controllerName, properties: properties
-		newElement.get(<span class="number">0</span>)
-	
-	controller.watch expr, (newValue, oldValue, splices) -&gt;
-		value = newValue
-		
-		<span class="keyword">if</span> <span class="keyword">not</span> splices <span class="comment"># first time setup (or changing from/to an array value)</span>
-			<span class="keyword">if</span> elements.length
-				elements.eq(<span class="number">0</span>).replaceWith(placeholder)
-				elements.remove()
-				elements = $()
-			
-			<span class="keyword">if</span> newValue <span class="keyword">and</span> <span class="keyword">not</span> Array.isArray(newValue) <span class="keyword">and</span> <span class="keyword">typeof</span> newValue <span class="keyword">is</span> <span class="string">'object'</span>
-				newValue = Object.keys newValue
-			
-			<span class="keyword">if</span> Array.isArray(value) <span class="keyword">and</span> value.length
-				value.forEach (item, index) -&gt;
-					elements.push createElement item, index
-				placeholder.after(elements).remove()
-		
-		<span class="keyword">else</span> <span class="keyword">if</span> Array.isArray(value) <span class="keyword">or</span> (value <span class="keyword">and</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'object'</span>)
-			<span class="keyword">unless</span> Array.isArray(value)
-				splices = compare.arrays Object.keys(value), Object.keys(oldValue)
-			
-			hasNew = <span class="number">0</span>
-			splices.forEach (splice) -&gt; hasNew += splice.addedCount
+  prefix = controller.app.bindingPrefix
+  orig = expr
+  [ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
+  <span class="keyword">unless</span> itemName <span class="keyword">and</span> expr
+    <span class="keyword">throw</span> <span class="string">"Invalid <span class="subst">#{prefix}</span>each=\""</span> +
+      orig +
+      <span class="string">'". Requires the format "item in list"'</span> +
+      <span class="string">' or "key, propery in object".'</span>
+  
+  controllerName = element.attr(prefix + <span class="string">'controller'</span>)
+  element.removeAttr(prefix + <span class="string">'controller'</span>)
+  [ itemName, propName ] = itemName.split <span class="regexp">/\s*,\s*/</span>
+  
+  template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
+  placeholder = $(<span class="string">"&lt;!--<span class="subst">#{prefix}</span>each=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
+  elements = $()
+  properties = {}
+  value = <span class="literal">null</span>
+      
+  <span class="function"><span class="title">createElement</span></span> = (item, index) -&gt;
+    newElement = template.clone()
+    <span class="keyword">unless</span> Array.isArray(value)
+      properties[propName] = item <span class="keyword">if</span> propName
+      properties[itemName] = value[item]
+    <span class="keyword">else</span>
+      properties[itemName] = item
+      properties.index = index
+    controller.child element: newElement, name: controllerName, properties: properties
+    newElement.get(<span class="number">0</span>)
+  
+  controller.watch expr, (newValue, oldValue, splices) -&gt;
+    value = newValue
+    
+    <span class="keyword">if</span> <span class="keyword">not</span> splices <span class="comment"># first time setup (or changing from/to an array value)</span>
+      <span class="keyword">if</span> elements.length
+        elements.eq(<span class="number">0</span>).replaceWith(placeholder)
+        elements.remove()
+        elements = $()
+      
+      <span class="keyword">if</span> newValue <span class="keyword">and</span> <span class="keyword">not</span> Array.isArray(newValue) <span class="keyword">and</span> <span class="keyword">typeof</span> newValue <span class="keyword">is</span> <span class="string">'object'</span>
+        newValue = Object.keys newValue
+      
+      <span class="keyword">if</span> Array.isArray(value) <span class="keyword">and</span> value.length
+        value.forEach (item, index) -&gt;
+          elements.push createElement item, index
+        placeholder.after(elements).remove()
+    
+    <span class="keyword">else</span> <span class="keyword">if</span> Array.isArray(value) <span class="keyword">or</span> (value <span class="keyword">and</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'object'</span>)
+      <span class="keyword">unless</span> Array.isArray(value)
+        splices = compare.arrays Object.keys(value), Object.keys(oldValue)
+      
+      hasNew = <span class="number">0</span>
+      splices.forEach (splice) -&gt; hasNew += splice.addedCount
 
-			splices.forEach (splice) -&gt;
-				args = [splice.index, splice.removed.length]
-				
-				newElements = []
-				addIndex = splice.index
-				<span class="keyword">while</span> (addIndex &lt; splice.index + splice.addedCount)
-					item = value[addIndex]
-					newElements.push createElement item, addIndex
-					addIndex++
-				
-				removedElements = $ elements.splice.apply(elements, args.concat(newElements))
-				
-				<span class="keyword">if</span> removedElements.length
-					<span class="keyword">if</span> elements.length - newElements.length <span class="keyword">is</span> <span class="number">0</span> <span class="comment"># removing all existing elements</span>
-						removedElements.eq(<span class="number">0</span>).before(placeholder)
-					<span class="keyword">if</span> hasNew
-						removedElements.remove()
-					<span class="keyword">else</span>
-						removedElements.animateOut()
-				
-				<span class="keyword">if</span> newElements.length
-					$(newElements).animateIn()
-					<span class="keyword">if</span> splice.index <span class="keyword">is</span> <span class="number">0</span>
-						<span class="keyword">if</span> placeholder.parent().length
-							placeholder.after(newElements).remove()
-						<span class="keyword">else</span>
-							elements.eq(newElements.length).before(newElements)
-					<span class="keyword">else</span>
-						elements.eq(splice.index - <span class="number">1</span>).after(newElements)</pre></div></div>
+      splices.forEach (splice) -&gt;
+        args = [splice.index, splice.removed.length]
+        
+        newElements = []
+        addIndex = splice.index
+        <span class="keyword">while</span> (addIndex &lt; splice.index + splice.addedCount)
+          item = value[addIndex]
+          newElements.push createElement item, addIndex
+          addIndex++
+        
+        removedElements = $ elements.splice.apply(elements, args.concat(newElements))
+        
+        <span class="keyword">if</span> removedElements.length
+          <span class="keyword">if</span> elements.length - newElements.length <span class="keyword">is</span> <span class="number">0</span> <span class="comment"># removing all existing elements</span>
+            removedElements.eq(<span class="number">0</span>).before(placeholder)
+          <span class="keyword">if</span> hasNew
+            removedElements.remove()
+          <span class="keyword">else</span>
+            removedElements.animateOut()
+        
+        <span class="keyword">if</span> newElements.length
+          $(newElements).animateIn()
+          <span class="keyword">if</span> splice.index <span class="keyword">is</span> <span class="number">0</span>
+            <span class="keyword">if</span> placeholder.parent().length
+              placeholder.after(newElements).remove()
+            <span class="keyword">else</span>
+              elements.eq(newElements.length).before(newElements)
+          <span class="keyword">else</span>
+            elements.eq(splice.index - <span class="number">1</span>).after(newElements)</pre></div></div>
             
         </li>
         
@@ -921,24 +921,24 @@ attributes which appear after <code>chip-partial</code> will have the new value 
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'partial'</span>, <span class="number">50</span>, (element, expr, controller) -&gt;
-	parts = expr.split <span class="regexp">/\s+as\s+|\s+with\s+/</span>
-	nameExpr = parts.pop()
-	[ itemExpr, itemName ] = parts
-	childController = <span class="literal">null</span>
-	properties = {}
-	
-	<span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
-		controller.watch itemExpr, <span class="literal">true</span>, (value) -&gt;
-			childController[itemName] = value
-	
-	controller.watch nameExpr, (name) -&gt;
-		<span class="keyword">return</span> <span class="keyword">unless</span> name?
-		element.animateOut -&gt;
-			element.html controller.template(name)
-			<span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
-				properties[itemName] = controller.eval itemExpr
-			element.animateIn()
-			childController = controller.child element: element, name: name, properties: properties</pre></div></div>
+  parts = expr.split <span class="regexp">/\s+as\s+|\s+with\s+/</span>
+  nameExpr = parts.pop()
+  [ itemExpr, itemName ] = parts
+  childController = <span class="literal">null</span>
+  properties = {}
+  
+  <span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
+    controller.watch itemExpr, <span class="literal">true</span>, (value) -&gt;
+      childController[itemName] = value
+  
+  controller.watch nameExpr, (name) -&gt;
+    <span class="keyword">return</span> <span class="keyword">unless</span> name?
+    element.animateOut -&gt;
+      element.html controller.template(name)
+      <span class="keyword">if</span> itemExpr <span class="keyword">and</span> itemName
+        properties[itemName] = controller.eval itemExpr
+      element.animateIn()
+      childController = controller.child element: element, name: name, properties: properties</pre></div></div>
             
         </li>
         
@@ -963,7 +963,7 @@ as a form) or provide functionality provided by that controller to the element.<
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'controller'</span>, <span class="number">30</span>, (element, controllerName, controller) -&gt;
-	controller.child element: element, name: controllerName</pre></div></div>
+  controller.child element: element, name: controllerName</pre></div></div>
             
         </li>
         

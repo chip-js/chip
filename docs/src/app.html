@@ -54,16 +54,16 @@ another app allowing for modules. An App is created automatically if none are cr
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	constructor: (appName) -&gt;
-		<span class="property">@name</span> = appName
-		<span class="property">@bindingPrefix</span> = <span class="string">'chip-'</span>
-		<span class="property">@controllers</span> = {}
-		<span class="property">@templates</span> = {}
-		<span class="property">@router</span> = <span class="keyword">new</span> Router()
-		<span class="property">@rootElement</span> = $(<span class="string">'html'</span>)
-		<span class="property">@translations</span> = {}
-		<span class="property">@_emitter</span> = makeEventEmitter(<span class="keyword">this</span>)
-		<span class="property">@router</span>.<span class="literal">on</span> <span class="string">'error'</span>, (event, err) =&gt; <span class="property">@trigger</span> <span class="string">'routeError'</span>, [err]</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  constructor: (appName) -&gt;
+    <span class="property">@name</span> = appName
+    <span class="property">@bindingPrefix</span> = <span class="string">'chip-'</span>
+    <span class="property">@controllers</span> = {}
+    <span class="property">@templates</span> = {}
+    <span class="property">@router</span> = <span class="keyword">new</span> Router()
+    <span class="property">@rootElement</span> = $(<span class="string">'html'</span>)
+    <span class="property">@translations</span> = {}
+    <span class="property">@_emitter</span> = makeEventEmitter(<span class="keyword">this</span>)
+    <span class="property">@router</span>.<span class="literal">on</span> <span class="string">'error'</span>, (event, err) =&gt; <span class="property">@trigger</span> <span class="string">'routeError'</span>, [err]</pre></div></div>
             
         </li>
         
@@ -78,26 +78,26 @@ another app allowing for modules. An App is created automatically if none are cr
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	init: (root) -&gt;
-		<span class="keyword">return</span> <span class="property">@rootController</span> <span class="keyword">if</span> <span class="property">@inited</span>
-		<span class="property">@inited</span> = <span class="literal">true</span>
-		<span class="property">@rootElement</span> = root <span class="keyword">if</span> root
-		<span class="property">@rootController</span> = <span class="property">@createController</span> element: <span class="property">@rootElement</span>, name: <span class="string">'application'</span>
-		app = <span class="keyword">this</span>
-		
-		<span class="property">@rootElement</span>.find(<span class="string">'script[type="text/html"]'</span>).each -&gt;
-			$<span class="keyword">this</span> = $(<span class="keyword">this</span>)
-			name = $<span class="keyword">this</span>.attr(<span class="string">'name'</span>) <span class="keyword">or</span> $<span class="keyword">this</span>.attr(<span class="string">'id'</span>)
-			<span class="keyword">if</span> name
-				app.template name, $<span class="keyword">this</span>.html()
-				$<span class="keyword">this</span>.remove()
-		
-		<span class="keyword">while</span> (element = <span class="property">@rootElement</span>.find(<span class="string">"[<span class="subst">#{@bindingPrefix}</span>controller]:first"</span>)).length
-			name = element.attr <span class="string">"<span class="subst">#{@bindingPrefix}</span>controller"</span>
-			element.removeAttr <span class="string">"<span class="subst">#{@bindingPrefix}</span>controller"</span>
-			<span class="property">@createController</span> element: element, name: name, parent: <span class="property">@rootController</span>
+            <div class="content"><div class='highlight'><pre>  init: (root) -&gt;
+    <span class="keyword">return</span> <span class="property">@rootController</span> <span class="keyword">if</span> <span class="property">@inited</span>
+    <span class="property">@inited</span> = <span class="literal">true</span>
+    <span class="property">@rootElement</span> = root <span class="keyword">if</span> root
+    <span class="property">@rootController</span> = <span class="property">@createController</span> element: <span class="property">@rootElement</span>, name: <span class="string">'application'</span>
+    app = <span class="keyword">this</span>
+    
+    <span class="property">@rootElement</span>.find(<span class="string">'script[type="text/html"]'</span>).each -&gt;
+      $<span class="keyword">this</span> = $(<span class="keyword">this</span>)
+      name = $<span class="keyword">this</span>.attr(<span class="string">'name'</span>) <span class="keyword">or</span> $<span class="keyword">this</span>.attr(<span class="string">'id'</span>)
+      <span class="keyword">if</span> name
+        app.template name, $<span class="keyword">this</span>.html()
+        $<span class="keyword">this</span>.remove()
+    
+    <span class="keyword">while</span> (element = <span class="property">@rootElement</span>.find(<span class="string">"[<span class="subst">#{@bindingPrefix}</span>controller]:first"</span>)).length
+      name = element.attr <span class="string">"<span class="subst">#{@bindingPrefix}</span>controller"</span>
+      element.removeAttr <span class="string">"<span class="subst">#{@bindingPrefix}</span>controller"</span>
+      <span class="property">@createController</span> element: element, name: name, parent: <span class="property">@rootController</span>
 
-		<span class="property">@rootController</span></pre></div></div>
+    <span class="property">@rootController</span></pre></div></div>
             
         </li>
         
@@ -138,14 +138,14 @@ instance of a defined template. This instance is a jQuery element.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	template: (name, content) -&gt;
-		<span class="keyword">if</span> arguments.length &gt; <span class="number">1</span>
-			<span class="property">@templates</span>[name] = content
-			<span class="keyword">this</span>
-		<span class="keyword">else</span>
-			<span class="keyword">unless</span> <span class="property">@templates</span>.hasOwnProperty name
-				<span class="keyword">throw</span> <span class="string">'Template "'</span> + name + <span class="string">'" does not exist'</span>
-			$ <span class="property">@templates</span>[name].trim()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  template: (name, content) -&gt;
+    <span class="keyword">if</span> arguments.length &gt; <span class="number">1</span>
+      <span class="property">@templates</span>[name] = content
+      <span class="keyword">this</span>
+    <span class="keyword">else</span>
+      <span class="keyword">unless</span> <span class="property">@templates</span>.hasOwnProperty name
+        <span class="keyword">throw</span> <span class="string">'Template "'</span> + name + <span class="string">'" does not exist'</span>
+      $ <span class="property">@templates</span>[name].trim()</pre></div></div>
             
         </li>
         
@@ -186,8 +186,8 @@ replacing all of them with new ones.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	translate: (translations, merge) -&gt;
-		<span class="keyword">unless</span> merge</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  translate: (translations, merge) -&gt;
+    <span class="keyword">unless</span> merge</pre></div></div>
             
         </li>
         
@@ -202,13 +202,13 @@ replacing all of them with new ones.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">for</span> key, value <span class="keyword">of</span> <span class="property">@translations</span>
-				<span class="keyword">delete</span> <span class="property">@translations</span>[key]
-		
-		<span class="keyword">for</span> key, value <span class="keyword">of</span> translations
-			<span class="property">@translations</span>[key] = value
-		
-		<span class="property">@trigger</span> <span class="string">'translationChange'</span>, [<span class="property">@translations</span>]</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">for</span> key, value <span class="keyword">of</span> <span class="property">@translations</span>
+        <span class="keyword">delete</span> <span class="property">@translations</span>[key]
+    
+    <span class="keyword">for</span> key, value <span class="keyword">of</span> translations
+      <span class="property">@translations</span>[key] = value
+    
+    <span class="property">@trigger</span> <span class="string">'translationChange'</span>, [<span class="property">@translations</span>]</pre></div></div>
             
         </li>
         
@@ -268,12 +268,12 @@ a function on the global scope with the name <code>name + &#39;Controller&#39;</
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	controller: (name, initFunction) -&gt;
-		<span class="keyword">if</span> arguments.length &gt; <span class="number">1</span>
-			<span class="property">@controllers</span>[name] = initFunction
-			<span class="keyword">this</span>
-		<span class="keyword">else</span>
-			<span class="property">@controllers</span>[name] <span class="keyword">or</span> window[name + <span class="string">'Controller'</span>]</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  controller: (name, initFunction) -&gt;
+    <span class="keyword">if</span> arguments.length &gt; <span class="number">1</span>
+      <span class="property">@controllers</span>[name] = initFunction
+      <span class="keyword">this</span>
+    <span class="keyword">else</span>
+      <span class="property">@controllers</span>[name] <span class="keyword">or</span> window[name + <span class="string">'Controller'</span>]</pre></div></div>
             
         </li>
         
@@ -291,7 +291,7 @@ updates HTML as data updates. Initializes the new controller with the <code>opti
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	createController: (options = {}) -&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  createController: (options = {}) -&gt;</pre></div></div>
             
         </li>
         
@@ -309,16 +309,16 @@ the parent, only read it or call methods on it.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> options.parent <span class="keyword">instanceof</span> Controller
-			<span class="function"><span class="title">NewController</span></span> = -&gt; Controller.call(<span class="keyword">this</span>)
-			NewController.prototype = options.parent <span class="keyword">if</span> options.parent
-			controller = <span class="keyword">new</span> NewController()
-			controller.parent = options.parent
-			<span class="keyword">if</span> options.passthrough
-				controller.passthrough options.parent.passthrough()
-		<span class="keyword">else</span>
-			controller = <span class="keyword">new</span> Controller()
-			makeEventEmitter(controller, <span class="property">@_emitter</span>) <span class="comment"># this will emit the same events as app, and visa-versa</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> options.parent <span class="keyword">instanceof</span> Controller
+      <span class="function"><span class="title">NewController</span></span> = -&gt; Controller.call(<span class="keyword">this</span>)
+      NewController.prototype = options.parent <span class="keyword">if</span> options.parent
+      controller = <span class="keyword">new</span> NewController()
+      controller.parent = options.parent
+      <span class="keyword">if</span> options.passthrough
+        controller.passthrough options.parent.passthrough()
+    <span class="keyword">else</span>
+      controller = <span class="keyword">new</span> Controller()
+      makeEventEmitter(controller, <span class="property">@_emitter</span>) <span class="comment"># this will emit the same events as app, and visa-versa</span></pre></div></div>
             
         </li>
         
@@ -333,8 +333,8 @@ the parent, only read it or call methods on it.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			controller.app = <span class="keyword">this</span>
-			controller.translations = <span class="property">@translations</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>      controller.app = <span class="keyword">this</span>
+      controller.translations = <span class="property">@translations</span></pre></div></div>
             
         </li>
         
@@ -350,8 +350,8 @@ initialized by its definition or bound to its element.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> options.properties
-			controller[key] = value <span class="keyword">for</span> own key, value <span class="keyword">of</span> options.properties</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> options.properties
+      controller[key] = value <span class="keyword">for</span> own key, value <span class="keyword">of</span> options.properties</pre></div></div>
             
         </li>
         
@@ -366,9 +366,9 @@ initialized by its definition or bound to its element.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		controller.<span class="function"><span class="title">child</span></span> = (options = {}) =&gt;
-			options.parent = controller
-			<span class="property">@createController</span>(options)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    controller.<span class="function"><span class="title">child</span></span> = (options = {}) =&gt;
+      options.parent = controller
+      <span class="property">@createController</span>(options)</pre></div></div>
             
         </li>
         
@@ -383,10 +383,10 @@ initialized by its definition or bound to its element.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		controller.<span class="function"><span class="title">template</span></span> = (name) =&gt;
-			<span class="property">@template</span>(name)
-		
-		<span class="keyword">if</span> options.element</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    controller.<span class="function"><span class="title">template</span></span> = (name) =&gt;
+      <span class="property">@template</span>(name)
+    
+    <span class="keyword">if</span> options.element</pre></div></div>
             
         </li>
         
@@ -401,9 +401,9 @@ initialized by its definition or bound to its element.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">if</span> (old = options.element.data <span class="string">'controller'</span>)
-				options.element.<span class="literal">off</span> <span class="string">'remove.controller'</span>
-				old.closeController()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">if</span> (old = options.element.data <span class="string">'controller'</span>)
+        options.element.<span class="literal">off</span> <span class="string">'remove.controller'</span>
+        old.closeController()</pre></div></div>
             
         </li>
         
@@ -418,9 +418,9 @@ initialized by its definition or bound to its element.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			options.element.one <span class="string">'remove.controller'</span>, -&gt; controller.closeController()
-			controller.element = options.element
-			options.element.data <span class="string">'controller'</span>, controller</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      options.element.one <span class="string">'remove.controller'</span>, -&gt; controller.closeController()
+      controller.element = options.element
+      options.element.data <span class="string">'controller'</span>, controller</pre></div></div>
             
         </li>
         
@@ -436,7 +436,7 @@ before the bindings are set up.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="property">@controller</span>(options.name)?(controller) <span class="keyword">if</span> options.name</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="property">@controller</span>(options.name)?(controller) <span class="keyword">if</span> options.name</pre></div></div>
             
         </li>
         
@@ -451,10 +451,10 @@ before the bindings are set up.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> options.element
-			options.element.bindTo controller
-		
-		controller</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> options.element
+      options.element.bindTo controller
+    
+    controller</pre></div></div>
             
         </li>
         
@@ -494,13 +494,13 @@ before the bindings are set up.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	param: (name, callback) -&gt;
-		<span class="function"><span class="title">wrappedCallback</span></span> = (req, next) =&gt;
-			<span class="property">@rootController</span>.params = req.params
-			<span class="property">@rootController</span>.query = req.query
-			callback <span class="property">@rootController</span>, next
-		<span class="property">@router</span>.param name, wrappedCallback
-		<span class="keyword">this</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  param: (name, callback) -&gt;
+    <span class="function"><span class="title">wrappedCallback</span></span> = (req, next) =&gt;
+      <span class="property">@rootController</span>.params = req.params
+      <span class="property">@rootController</span>.query = req.query
+      callback <span class="property">@rootController</span>, next
+    <span class="property">@router</span>.param name, wrappedCallback
+    <span class="keyword">this</span></pre></div></div>
             
         </li>
         
@@ -517,54 +517,54 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	route: (path, handler, subroutes) -&gt;
-		<span class="function"><span class="title">handleRoute</span></span> = (path, handler, subroutes, depth, before) =&gt;
-			<span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'function'</span> <span class="keyword">and</span> handler.toString().match(<span class="regexp">/\(route\)/</span>)
-				subroutes = handler
-				handler = <span class="literal">null</span>
-			
-			handler = path.replace <span class="regexp">/^\//</span>, <span class="string">''</span> <span class="keyword">unless</span> handler
-			
-			<span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'string'</span>
-				name = handler
-				<span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
-					<span class="keyword">if</span> before <span class="keyword">and</span> <span class="keyword">not</span> req.calledBefore
-						req.calledBefore = <span class="literal">true</span>
-						before(req, callback)
-						<span class="keyword">return</span>
-					<span class="property">@rootController</span>.params = req.params
-					<span class="property">@rootController</span>.query = req.query
-					selector = []
-					selector.push(<span class="string">"[<span class="subst">#{@bindingPrefix}</span>route]"</span>) <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">0.</span>.depth]
-					container = <span class="property">@rootElement</span>.find selector.join(<span class="string">' '</span>) + <span class="string">':first'</span>
-					isExistingRoute = <span class="property">@rootController</span>.route
-					<span class="keyword">unless</span> req.isSamePath?
-						req.isSamePath = req.path <span class="keyword">is</span> <span class="property">@rootController</span>.path <span class="comment"># handle query-string changes</span>
-					<span class="keyword">if</span> container.length
-						<span class="function"><span class="title">showNextPage</span></span> = =&gt;
-							container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>, name)
-							<span class="property">@rootController</span>.route = name
-							<span class="property">@rootController</span>.path = req.path
-							<span class="property">@trigger</span> <span class="string">'routeChange'</span>, [name]
-							<span class="keyword">if</span> req.isSamePath
-								container.animateIn()
-							<span class="keyword">else</span>
-								placholder = $(<span class="string">'&lt;!--container--&gt;'</span>).insertBefore(container)
-								container.detach()
-								setTimeout -&gt;
-									placholder.after(container).remove()
-									container.animateIn()
-								container.html <span class="property">@template</span>(name)
-								parentController = container.parent().controller() <span class="keyword">or</span> <span class="property">@rootController</span>
-								<span class="property">@createController</span> element: container, parent: parentController, name: name
-							<span class="property">@rootController</span>.sync()
-							window.scrollTo(<span class="number">0</span>, <span class="number">0</span>)
-							next(req, next) <span class="keyword">if</span> subroutes
-						
-						<span class="keyword">if</span> isExistingRoute
-							container.animateOut(req.isSamePath, showNextPage)
-						<span class="keyword">else</span>
-							showNextPage()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  route: (path, handler, subroutes) -&gt;
+    <span class="function"><span class="title">handleRoute</span></span> = (path, handler, subroutes, depth, before) =&gt;
+      <span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'function'</span> <span class="keyword">and</span> handler.toString().match(<span class="regexp">/\(route\)/</span>)
+        subroutes = handler
+        handler = <span class="literal">null</span>
+      
+      handler = path.replace <span class="regexp">/^\//</span>, <span class="string">''</span> <span class="keyword">unless</span> handler
+      
+      <span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'string'</span>
+        name = handler
+        <span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
+          <span class="keyword">if</span> before <span class="keyword">and</span> <span class="keyword">not</span> req.calledBefore
+            req.calledBefore = <span class="literal">true</span>
+            before(req, callback)
+            <span class="keyword">return</span>
+          <span class="property">@rootController</span>.params = req.params
+          <span class="property">@rootController</span>.query = req.query
+          selector = []
+          selector.push(<span class="string">"[<span class="subst">#{@bindingPrefix}</span>route]"</span>) <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">0.</span>.depth]
+          container = <span class="property">@rootElement</span>.find selector.join(<span class="string">' '</span>) + <span class="string">':first'</span>
+          isExistingRoute = <span class="property">@rootController</span>.route
+          <span class="keyword">unless</span> req.isSamePath?
+            req.isSamePath = req.path <span class="keyword">is</span> <span class="property">@rootController</span>.path <span class="comment"># handle query-string changes</span>
+          <span class="keyword">if</span> container.length
+            <span class="function"><span class="title">showNextPage</span></span> = =&gt;
+              container.attr(<span class="string">"<span class="subst">#{@bindingPrefix}</span>route"</span>, name)
+              <span class="property">@rootController</span>.route = name
+              <span class="property">@rootController</span>.path = req.path
+              <span class="property">@trigger</span> <span class="string">'routeChange'</span>, [name]
+              <span class="keyword">if</span> req.isSamePath
+                container.animateIn()
+              <span class="keyword">else</span>
+                placholder = $(<span class="string">'&lt;!--container--&gt;'</span>).insertBefore(container)
+                container.detach()
+                setTimeout -&gt;
+                  placholder.after(container).remove()
+                  container.animateIn()
+                container.html <span class="property">@template</span>(name)
+                parentController = container.parent().controller() <span class="keyword">or</span> <span class="property">@rootController</span>
+                <span class="property">@createController</span> element: container, parent: parentController, name: name
+              <span class="property">@rootController</span>.sync()
+              window.scrollTo(<span class="number">0</span>, <span class="number">0</span>)
+              next(req, next) <span class="keyword">if</span> subroutes
+            
+            <span class="keyword">if</span> isExistingRoute
+              container.animateOut(req.isSamePath, showNextPage)
+            <span class="keyword">else</span>
+              showNextPage()</pre></div></div>
             
         </li>
         
@@ -579,13 +579,13 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>				<span class="keyword">if</span> <span class="keyword">typeof</span> subroutes <span class="keyword">is</span> <span class="string">'function'</span>
-					subroutes (subpath, handler, subroutes) =&gt;
-						subpath = <span class="string">''</span> <span class="keyword">if</span> subpath <span class="keyword">is</span> <span class="string">'/'</span>
-						handleRoute path + subpath, handler, subroutes, depth + <span class="number">1</span>, callback
-					<span class="keyword">return</span>
-				
-			<span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'function'</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> <span class="keyword">typeof</span> subroutes <span class="keyword">is</span> <span class="string">'function'</span>
+          subroutes (subpath, handler, subroutes) =&gt;
+            subpath = <span class="string">''</span> <span class="keyword">if</span> subpath <span class="keyword">is</span> <span class="string">'/'</span>
+            handleRoute path + subpath, handler, subroutes, depth + <span class="number">1</span>, callback
+          <span class="keyword">return</span>
+        
+      <span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> handler <span class="keyword">is</span> <span class="string">'function'</span></pre></div></div>
             
         </li>
         
@@ -600,12 +600,12 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>				<span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
-					<span class="property">@rootController</span>.params = req.params
-					<span class="property">@rootController</span>.query = req.query
-					handler <span class="property">@rootController</span>, next
-			<span class="keyword">else</span>
-				<span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">'route handler must be a string path or a function'</span>)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
+          <span class="property">@rootController</span>.params = req.params
+          <span class="property">@rootController</span>.query = req.query
+          handler <span class="property">@rootController</span>, next
+      <span class="keyword">else</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">'route handler must be a string path or a function'</span>)</pre></div></div>
             
         </li>
         
@@ -620,14 +620,14 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="property">@router</span>.route path, callback
-		
-		handleRoute(path, handler, subroutes, <span class="number">0</span>)
-		<span class="keyword">this</span>
-	
-	
-	redirect: (url, replace = <span class="literal">false</span>) -&gt;
-		<span class="property">@router</span>.redirect(url, replace)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="property">@router</span>.route path, callback
+    
+    handleRoute(path, handler, subroutes, <span class="number">0</span>)
+    <span class="keyword">this</span>
+  
+  
+  redirect: (url, replace = <span class="literal">false</span>) -&gt;
+    <span class="property">@router</span>.redirect(url, replace)</pre></div></div>
             
         </li>
         
@@ -642,7 +642,7 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	mount: (path, app) -&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  mount: (path, app) -&gt;</pre></div></div>
             
         </li>
         
@@ -657,30 +657,30 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	listen: (options = {}) -&gt;
-		$ =&gt;
-			<span class="keyword">if</span> options.stop
-				<span class="property">@router</span>.<span class="literal">off</span> <span class="string">'change'</span>, <span class="property">@_routeHandler</span> <span class="keyword">if</span> <span class="property">@_routeHandler</span>
-				<span class="property">@rootElement</span>.<span class="literal">off</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, <span class="property">@_clickHandler</span> <span class="keyword">if</span> <span class="property">@_clickHandler</span>
-				<span class="keyword">return</span> <span class="property">@router</span>.listen options
-			
-			app = <span class="keyword">this</span>
-			<span class="property">@_routeHandler</span> = (event, path) =&gt;
-				<span class="property">@trigger</span> <span class="string">'urlChange'</span>, [path]
-			
-			<span class="property">@_clickHandler</span> = (event) -&gt;
-				<span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
-				linkHost = <span class="property">@host</span>.replace(<span class="regexp">/:80$|:443$/</span>, <span class="string">''</span>)
-				<span class="keyword">return</span> <span class="keyword">if</span> (linkHost <span class="keyword">and</span> linkHost <span class="keyword">isnt</span> location.host) <span class="keyword">or</span> <span class="property">@href</span> <span class="keyword">is</span> location.href + <span class="string">'#'</span>
-				<span class="keyword">return</span> <span class="keyword">if</span> event.metaKey <span class="keyword">or</span> event.ctrlKey <span class="keyword">or</span> $(event.target).attr(<span class="string">'target'</span>)
-				event.preventDefault()
-				<span class="keyword">unless</span> $(<span class="keyword">this</span>).attr(<span class="string">'disabled'</span>)
-					app.redirect $(<span class="keyword">this</span>).attr(<span class="string">'href'</span>).replace(<span class="regexp">/^#/</span>, <span class="string">''</span>)
-			
-			<span class="property">@router</span>.<span class="literal">on</span> <span class="string">'change'</span>, <span class="property">@_routeHandler</span>
-			<span class="property">@rootElement</span>.<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, <span class="property">@_clickHandler</span>
-			<span class="property">@router</span>.listen options
-		<span class="keyword">this</span>
+            <div class="content"><div class='highlight'><pre>  listen: (options = {}) -&gt;
+    $ =&gt;
+      <span class="keyword">if</span> options.stop
+        <span class="property">@router</span>.<span class="literal">off</span> <span class="string">'change'</span>, <span class="property">@_routeHandler</span> <span class="keyword">if</span> <span class="property">@_routeHandler</span>
+        <span class="property">@rootElement</span>.<span class="literal">off</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, <span class="property">@_clickHandler</span> <span class="keyword">if</span> <span class="property">@_clickHandler</span>
+        <span class="keyword">return</span> <span class="property">@router</span>.listen options
+      
+      app = <span class="keyword">this</span>
+      <span class="property">@_routeHandler</span> = (event, path) =&gt;
+        <span class="property">@trigger</span> <span class="string">'urlChange'</span>, [path]
+      
+      <span class="property">@_clickHandler</span> = (event) -&gt;
+        <span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
+        linkHost = <span class="property">@host</span>.replace(<span class="regexp">/:80$|:443$/</span>, <span class="string">''</span>)
+        <span class="keyword">return</span> <span class="keyword">if</span> (linkHost <span class="keyword">and</span> linkHost <span class="keyword">isnt</span> location.host) <span class="keyword">or</span> <span class="property">@href</span> <span class="keyword">is</span> location.href + <span class="string">'#'</span>
+        <span class="keyword">return</span> <span class="keyword">if</span> event.metaKey <span class="keyword">or</span> event.ctrlKey <span class="keyword">or</span> $(event.target).attr(<span class="string">'target'</span>)
+        event.preventDefault()
+        <span class="keyword">unless</span> $(<span class="keyword">this</span>).attr(<span class="string">'disabled'</span>)
+          app.redirect $(<span class="keyword">this</span>).attr(<span class="string">'href'</span>).replace(<span class="regexp">/^#/</span>, <span class="string">''</span>)
+      
+      <span class="property">@router</span>.<span class="literal">on</span> <span class="string">'change'</span>, <span class="property">@_routeHandler</span>
+      <span class="property">@rootElement</span>.<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, <span class="property">@_clickHandler</span>
+      <span class="property">@router</span>.listen options
+    <span class="keyword">this</span>
 
 
 chip.App = App</pre></div></div>

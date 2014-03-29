@@ -57,7 +57,7 @@ format that <code>Array.observe</code> and <code>Object.observe</code> return <a
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	constructor: (<span class="property">@getter</span>, <span class="property">@callback</span>, <span class="property">@oldValue</span>) -&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  constructor: (<span class="property">@getter</span>, <span class="property">@callback</span>, <span class="property">@oldValue</span>) -&gt;</pre></div></div>
             
         </li>
         
@@ -72,8 +72,8 @@ format that <code>Array.observe</code> and <code>Object.observe</code> return <a
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	skipNextSync: -&gt;
-		<span class="property">@skip</span> = <span class="literal">true</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  skipNextSync: -&gt;
+    <span class="property">@skip</span> = <span class="literal">true</span></pre></div></div>
             
         </li>
         
@@ -88,8 +88,8 @@ format that <code>Array.observe</code> and <code>Object.observe</code> return <a
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	sync: -&gt;
-		value = <span class="property">@getter</span>()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  sync: -&gt;
+    value = <span class="property">@getter</span>()</pre></div></div>
             
         </li>
         
@@ -104,8 +104,8 @@ format that <code>Array.observe</code> and <code>Object.observe</code> return <a
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> <span class="property">@skip</span>
-			<span class="keyword">delete</span> <span class="property">@skip</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> <span class="property">@skip</span>
+      <span class="keyword">delete</span> <span class="property">@skip</span></pre></div></div>
             
         </li>
         
@@ -120,13 +120,13 @@ format that <code>Array.observe</code> and <code>Object.observe</code> return <a
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">else</span>
-			changed = compare.values value, <span class="property">@oldValue</span>
-			<span class="keyword">return</span> <span class="keyword">unless</span> changed
-			<span class="keyword">if</span> Array.isArray changed
-				<span class="property">@callback</span>(value, <span class="property">@oldValue</span>, changed)
-			<span class="keyword">else</span>
-				<span class="property">@callback</span>(value, <span class="property">@oldValue</span>)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">else</span>
+      changed = compare.values value, <span class="property">@oldValue</span>
+      <span class="keyword">return</span> <span class="keyword">unless</span> changed
+      <span class="keyword">if</span> Array.isArray changed
+        <span class="property">@callback</span>(value, <span class="property">@oldValue</span>, changed)
+      <span class="keyword">else</span>
+        <span class="property">@callback</span>(value, <span class="property">@oldValue</span>)</pre></div></div>
             
         </li>
         
@@ -143,7 +143,7 @@ using array filters in chip-each)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="property">@oldValue</span> = compare.clone value</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="property">@oldValue</span> = compare.clone value</pre></div></div>
             
         </li>
         
@@ -158,8 +158,8 @@ using array filters in chip-each)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	close: -&gt;
-		Observer.remove <span class="keyword">this</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  close: -&gt;
+    Observer.remove <span class="keyword">this</span></pre></div></div>
             
         </li>
         
@@ -174,7 +174,7 @@ using array filters in chip-each)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@observers</span>: []</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@observers</span>: []</pre></div></div>
             
         </li>
         
@@ -200,16 +200,16 @@ var getter = function() {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@add</span>: (getter, skipTriggerImmediately, callback) -&gt;
-		<span class="keyword">if</span> <span class="keyword">typeof</span> skipTriggerImmediately <span class="keyword">is</span> <span class="string">'function'</span>
-			callback = skipTriggerImmediately
-			skipTriggerImmediately = <span class="literal">false</span>
-		
-		value = getter()
-		observer = <span class="keyword">new</span> Observer getter, callback, compare.clone(value)
-		<span class="property">@observers</span>.push observer
-		callback(value) <span class="keyword">unless</span> skipTriggerImmediately
-		observer</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@add</span>: (getter, skipTriggerImmediately, callback) -&gt;
+    <span class="keyword">if</span> <span class="keyword">typeof</span> skipTriggerImmediately <span class="keyword">is</span> <span class="string">'function'</span>
+      callback = skipTriggerImmediately
+      skipTriggerImmediately = <span class="literal">false</span>
+    
+    value = getter()
+    observer = <span class="keyword">new</span> Observer getter, callback, compare.clone(value)
+    <span class="property">@observers</span>.push observer
+    callback(value) <span class="keyword">unless</span> skipTriggerImmediately
+    observer</pre></div></div>
             
         </li>
         
@@ -224,13 +224,13 @@ var getter = function() {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@remove</span>: (observer) -&gt;
-		index = <span class="property">@observers</span>.indexOf(observer)
-		<span class="keyword">if</span> index <span class="keyword">isnt</span> -<span class="number">1</span>
-			<span class="property">@observers</span>.splice(index, <span class="number">1</span>)
-			<span class="literal">true</span>
-		<span class="keyword">else</span>
-			<span class="literal">false</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@remove</span>: (observer) -&gt;
+    index = <span class="property">@observers</span>.indexOf(observer)
+    <span class="keyword">if</span> index <span class="keyword">isnt</span> -<span class="number">1</span>
+      <span class="property">@observers</span>.splice(index, <span class="number">1</span>)
+      <span class="literal">true</span>
+    <span class="keyword">else</span>
+      <span class="literal">false</span></pre></div></div>
             
         </li>
         
@@ -245,11 +245,11 @@ var getter = function() {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@syncing</span>: <span class="literal">false</span>
-	<span class="property">@rerun</span>: <span class="literal">false</span>
-	<span class="property">@cycles</span>: <span class="number">0</span>
-	<span class="property">@max</span>: <span class="number">10</span>
-	<span class="property">@timeout</span>: <span class="literal">null</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@syncing</span>: <span class="literal">false</span>
+  <span class="property">@rerun</span>: <span class="literal">false</span>
+  <span class="property">@cycles</span>: <span class="number">0</span>
+  <span class="property">@max</span>: <span class="number">10</span>
+  <span class="property">@timeout</span>: <span class="literal">null</span></pre></div></div>
             
         </li>
         
@@ -265,25 +265,25 @@ var getter = function() {
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@sync</span>: (asynchronous) -&gt;
-		<span class="keyword">if</span> <span class="property">@syncing</span>
-			<span class="property">@rerun</span> = <span class="literal">true</span>
-			<span class="keyword">return</span> <span class="literal">false</span>
-		
-		<span class="keyword">if</span> asynchronous
-			<span class="keyword">unless</span> <span class="property">@timeout</span>
-				<span class="property">@timeout</span> = setTimeout =&gt;
-					<span class="property">@timeout</span> = <span class="literal">null</span>
-					<span class="property">@sync</span>()
-				, <span class="number">0</span>
-				<span class="keyword">return</span> <span class="literal">true</span>
-			<span class="keyword">else</span>
-				<span class="keyword">return</span> <span class="literal">false</span>
-				
-		
-		<span class="property">@syncing</span> = <span class="literal">true</span>
-		<span class="property">@rerun</span> = <span class="literal">true</span>
-		<span class="property">@cycles</span> = <span class="number">0</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@sync</span>: (asynchronous) -&gt;
+    <span class="keyword">if</span> <span class="property">@syncing</span>
+      <span class="property">@rerun</span> = <span class="literal">true</span>
+      <span class="keyword">return</span> <span class="literal">false</span>
+    
+    <span class="keyword">if</span> asynchronous
+      <span class="keyword">unless</span> <span class="property">@timeout</span>
+        <span class="property">@timeout</span> = setTimeout =&gt;
+          <span class="property">@timeout</span> = <span class="literal">null</span>
+          <span class="property">@sync</span>()
+        , <span class="number">0</span>
+        <span class="keyword">return</span> <span class="literal">true</span>
+      <span class="keyword">else</span>
+        <span class="keyword">return</span> <span class="literal">false</span>
+        
+    
+    <span class="property">@syncing</span> = <span class="literal">true</span>
+    <span class="property">@rerun</span> = <span class="literal">true</span>
+    <span class="property">@cycles</span> = <span class="number">0</span></pre></div></div>
             
         </li>
         
@@ -299,9 +299,9 @@ run infinite loops</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">while</span> <span class="property">@rerun</span>
-			<span class="keyword">throw</span> <span class="string">'Infinite observer syncing, an observer is calling Observer.sync() too many times'</span> <span class="keyword">if</span> ++<span class="property">@cycles</span> <span class="keyword">is</span> <span class="property">@max</span>
-			<span class="property">@rerun</span> = <span class="literal">false</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">while</span> <span class="property">@rerun</span>
+      <span class="keyword">throw</span> <span class="string">'Infinite observer syncing, an observer is calling Observer.sync() too many times'</span> <span class="keyword">if</span> ++<span class="property">@cycles</span> <span class="keyword">is</span> <span class="property">@max</span>
+      <span class="property">@rerun</span> = <span class="literal">false</span></pre></div></div>
             
         </li>
         
@@ -316,13 +316,13 @@ run infinite loops</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			`<span class="javascript"><span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.observers.length; i++) {
-				<span class="keyword">this</span>.observers[i].sync()
-			}</span>`
-		
-		<span class="property">@syncing</span> = <span class="literal">false</span>
-		<span class="property">@cycles</span> = <span class="number">0</span>
-		<span class="keyword">return</span> <span class="literal">true</span>
+            <div class="content"><div class='highlight'><pre>      `<span class="javascript"><span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.observers.length; i++) {
+        <span class="keyword">this</span>.observers[i].sync()
+      }</span>`
+    
+    <span class="property">@syncing</span> = <span class="literal">false</span>
+    <span class="property">@cycles</span> = <span class="number">0</span>
+    <span class="keyword">return</span> <span class="literal">true</span>
 
 
 chip.Observer = Observer</pre></div></div>

@@ -74,38 +74,38 @@
 # </select>
 # ```
 class Filter
-	constructor: (@name, @filter) ->
-	
-	@filters: {}
-	@valueFilters: {}
-	
-	@addFilter: (name, filter, valueFilter) ->
-		@filters[name] = new Filter name, filter if filter?
-		@valueFilters[name] = new Filter name, valueFilter if valueFilter?
-		this
-	
-	
-	@getFilter: (name) ->
-		@filters[name]
-	
-	
-	@getValueFilter: (name) ->
-		@valueFilters[name]
-	
-	
-	@runFilter: (controller, name, value, args...) ->
-		filter = @filters[name]?.filter
-		if filter
-			return filter.apply(null, [controller, value, args...])
-		else
-			return value
-	
-	
-	@runValueFilter: (controller, name, value, currentValue, args...) ->
-		filter = @valueFilters[name]?.filter
-		if filter
-			return filter.apply(null, [controller, value, currentValue, args...])
-		else
-			return value
+  constructor: (@name, @filter) ->
+  
+  @filters: {}
+  @valueFilters: {}
+  
+  @addFilter: (name, filter, valueFilter) ->
+    @filters[name] = new Filter name, filter if filter?
+    @valueFilters[name] = new Filter name, valueFilter if valueFilter?
+    this
+  
+  
+  @getFilter: (name) ->
+    @filters[name]
+  
+  
+  @getValueFilter: (name) ->
+    @valueFilters[name]
+  
+  
+  @runFilter: (controller, name, value, args...) ->
+    filter = @filters[name]?.filter
+    if filter
+      return filter.apply(null, [controller, value, args...])
+    else
+      return value
+  
+  
+  @runValueFilter: (controller, name, value, currentValue, args...) ->
+    filter = @valueFilters[name]?.filter
+    if filter
+      return filter.apply(null, [controller, value, currentValue, args...])
+    else
+      return value
 
 

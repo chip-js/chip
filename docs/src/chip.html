@@ -121,10 +121,10 @@ For all details and documentation:
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	init: -&gt;
-		<span class="keyword">unless</span> chip.rootApp
-			chip.rootApp = chip.app()
-		chip.rootApp.init()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  init: -&gt;
+    <span class="keyword">unless</span> chip.rootApp
+      chip.rootApp = chip.app()
+    chip.rootApp.init()</pre></div></div>
             
         </li>
         
@@ -139,10 +139,10 @@ For all details and documentation:
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	app: (appName) -&gt;
-		app = <span class="keyword">new</span> App(appName)
-		chip.rootApp = app <span class="keyword">if</span> <span class="keyword">not</span> appName
-		app</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  app: (appName) -&gt;
+    app = <span class="keyword">new</span> App(appName)
+    chip.rootApp = app <span class="keyword">if</span> <span class="keyword">not</span> appName
+    app</pre></div></div>
             
         </li>
         
@@ -204,11 +204,11 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	binding: (name, priority, handler) -&gt;
-		<span class="keyword">if</span> priority <span class="keyword">or</span> handler
-			Binding.addBinding(name, priority, handler)
-		<span class="keyword">else</span>
-			Binding.bindings[name]?.handler</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  binding: (name, priority, handler) -&gt;
+    <span class="keyword">if</span> priority <span class="keyword">or</span> handler
+      Binding.addBinding(name, priority, handler)
+    <span class="keyword">else</span>
+      Binding.bindings[name]?.handler</pre></div></div>
             
         </li>
         
@@ -226,8 +226,8 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	eventBinding: (eventName) -&gt;
-		Binding.addEventBinding(eventName)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  eventBinding: (eventName) -&gt;
+    Binding.addEventBinding(eventName)</pre></div></div>
             
         </li>
         
@@ -242,8 +242,8 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	keyEventBinding: (name, keyCode, ctrlKey) -&gt;
-		Binding.addKeyEventBinding(name, keyCode, ctrlKey)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  keyEventBinding: (name, keyCode, ctrlKey) -&gt;
+    Binding.addKeyEventBinding(name, keyCode, ctrlKey)</pre></div></div>
             
         </li>
         
@@ -264,8 +264,8 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	attributeBinding: (name) -&gt;
-		Binding.addAttributeBinding(name)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  attributeBinding: (name) -&gt;
+    Binding.addAttributeBinding(name)</pre></div></div>
             
         </li>
         
@@ -281,8 +281,8 @@ e.g. <code>chip.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	attributeToggleBinding: (name) -&gt;
-		Binding.addAttributeToggleBinding(name)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  attributeToggleBinding: (name) -&gt;
+    Binding.addAttributeToggleBinding(name)</pre></div></div>
             
         </li>
         
@@ -309,15 +309,15 @@ e.g. <code>chip.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
               
             </div>
             
-            <div class="content"><div class='highlight'><pre>	
-	filter: (name, filter, valueFilter) -&gt;
-		<span class="keyword">if</span> <span class="keyword">typeof</span> filter <span class="keyword">is</span> <span class="string">'function'</span> <span class="keyword">or</span> <span class="keyword">typeof</span> valueFilter <span class="keyword">is</span> <span class="string">'function'</span>
-			Filter.addFilter(name, filter, valueFilter)
-			<span class="keyword">this</span>
-		<span class="keyword">else</span> <span class="keyword">if</span> filter <span class="comment"># return both if true is passed, othewise just return the filter</span>
-			[ Filter.getFilter(name), Filter.getValueFilter(name) ]
-		<span class="keyword">else</span>
-			Filter.getFilter(name)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  
+  filter: (name, filter, valueFilter) -&gt;
+    <span class="keyword">if</span> <span class="keyword">typeof</span> filter <span class="keyword">is</span> <span class="string">'function'</span> <span class="keyword">or</span> <span class="keyword">typeof</span> valueFilter <span class="keyword">is</span> <span class="string">'function'</span>
+      Filter.addFilter(name, filter, valueFilter)
+      <span class="keyword">this</span>
+    <span class="keyword">else</span> <span class="keyword">if</span> filter <span class="comment"># return both if true is passed, othewise just return the filter</span>
+      [ Filter.getFilter(name), Filter.getValueFilter(name) ]
+    <span class="keyword">else</span>
+      Filter.getFilter(name)</pre></div></div>
             
         </li>
         
@@ -345,16 +345,16 @@ e.g. <code>chip.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
               </div>
               <p>Set up the listeners for path changes. Chip uses the Path.js library for routing.
 chip.listen = (element) -&gt;
-unless chip.appController
-    chip.createAppController()
-Path.history.listen()
-if Path.history.supported and element isnt false</p>
-<pre><code><span class="comment"># Set listeners on links to catch their clicks and use pushState instead</span>
-$(element <span class="keyword">or</span> document).<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, (event) -&gt;
-    <span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
-    <span class="keyword">return</span> <span class="keyword">if</span> <span class="keyword">this</span>.host <span class="keyword">isnt</span> location.host <span class="keyword">or</span> <span class="keyword">this</span>.href <span class="keyword">is</span> location.href + <span class="string">'#'</span>
-    event.preventDefault()
-    chip.redirect $(<span class="keyword">this</span>).attr(<span class="string">"href"</span>)</code></pre>
+ unless chip.appController
+   chip.createAppController()
+ Path.history.listen()
+ if Path.history.supported and element isnt false</p>
+<h1>Set listeners on links to catch their clicks and use pushState instead</h1>
+<p>   $(element or document).on ‘click’, &#39;a[href]‘, (event) -&gt;
+     return if event.isDefaultPrevented() # if something else already handled this, we won’t
+     return if this.host isnt location.host or this.href is location.href + ‘#’
+     event.preventDefault()
+     chip.redirect $(this).attr(“href”)</p>
 
             </div>
             

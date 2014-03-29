@@ -2,8 +2,8 @@
 
 
 chip.binding 'debug', 200, (element, expr, controller) ->
-	controller.watch expr, (value) ->
-		console?.info 'Debug:', expr, '=', value
+  controller.watch expr, (value) ->
+    console?.info 'Debug:', expr, '=', value
 
 
 # ## chip-text
@@ -30,8 +30,8 @@ chip.binding 'debug', 200, (element, expr, controller) ->
 # </div>
 # ```
 chip.binding 'text', (element, expr, controller) ->
-	controller.watch expr, (value) ->
-		element.text(if value? then value else '')
+  controller.watch expr, (value) ->
+    element.text(if value? then value else '')
 
 
 # ## chip-html
@@ -54,8 +54,8 @@ chip.binding 'text', (element, expr, controller) ->
 # </div>
 # ```
 chip.binding 'html', (element, expr, controller) ->
-	controller.watch expr, (value) ->
-		element.html(if value? then value else '')
+  controller.watch expr, (value) ->
+    element.html(if value? then value else '')
 
 
 # ## chip-trim
@@ -73,15 +73,15 @@ chip.binding 'html', (element, expr, controller) ->
 # <div class="info"><span>Jacob Wright</span><span>10/16/2013</span></div>
 # ```
 chip.binding 'trim', (element, expr, controller) ->
-	node = element.get(0).firstChild
-	while node
-		next = node.nextSibling
-		if node.nodeType is Node.TEXT_NODE
-			if node.nodeValue.match /^\s*$/
-				node.parentNode.removeChild node
-			else
-				node.textContent = node.textContent.trim()
-		node = next
+  node = element.get(0).firstChild
+  while node
+    next = node.nextSibling
+    if node.nodeType is Node.TEXT_NODE
+      if node.nodeValue.match /^\s*$/
+        node.parentNode.removeChild node
+      else
+        node.textContent = node.textContent.trim()
+    node = next
 
 
 # ## chip-translate
@@ -103,41 +103,41 @@ chip.binding 'trim', (element, expr, controller) ->
 # <h1>Sup <span>Jacob</span> Yo!</h1>
 # ```
 chip.binding 'translate', (element, expr, controller) ->
-	nodes = element.get(0).childNodes
-	text = ''
-	placeholders = []
-	for node, i in nodes
-		if node.nodeType is 3
-			# Don't include whitespace at the beginning and end of the translated string
-			unless node.nodeValue.trim() is '' and (i is 0 or i is nodes.length - 1)
-				text += node.nodeValue
-		else if node.nodeType is 1
-			text += '%{' + placeholders.length + '}'
-			placeholders.push node
-	
-	refresh = ->
-		translation = controller.translations[text] or text
-		exp = /%{(\d+)}/g
-		nodes = []
-		lastIndex = 0
-		while (match = exp.exec translation)
-			startIndex = exp.lastIndex - match[0].length
-			if lastIndex isnt startIndex
-				nodes.push document.createTextNode translation.slice lastIndex, startIndex
-			nodes.push placeholders[match[1]]
-			lastIndex = exp.lastIndex
-		
-		if lastIndex isnt translation.length
-			nodes.push document.createTextNode translation.slice lastIndex
-		
-		element.html nodes
-	
-	element.on 'remove', -> controller.off 'translationChange', refresh
-	controller.on 'translationChange', refresh
-	
-	# don't process if no translation is loaded
-	if controller.translations[text]
-		refresh()
+  nodes = element.get(0).childNodes
+  text = ''
+  placeholders = []
+  for node, i in nodes
+    if node.nodeType is 3
+      # Don't include whitespace at the beginning and end of the translated string
+      unless node.nodeValue.trim() is '' and (i is 0 or i is nodes.length - 1)
+        text += node.nodeValue
+    else if node.nodeType is 1
+      text += '%{' + placeholders.length + '}'
+      placeholders.push node
+  
+  refresh = ->
+    translation = controller.translations[text] or text
+    exp = /%{(\d+)}/g
+    nodes = []
+    lastIndex = 0
+    while (match = exp.exec translation)
+      startIndex = exp.lastIndex - match[0].length
+      if lastIndex isnt startIndex
+        nodes.push document.createTextNode translation.slice lastIndex, startIndex
+      nodes.push placeholders[match[1]]
+      lastIndex = exp.lastIndex
+    
+    if lastIndex isnt translation.length
+      nodes.push document.createTextNode translation.slice lastIndex
+    
+    element.html nodes
+  
+  element.on 'remove', -> controller.off 'translationChange', refresh
+  controller.on 'translationChange', refresh
+  
+  # don't process if no translation is loaded
+  if controller.translations[text]
+    refresh()
 
 
 # ## chip-class
@@ -159,18 +159,18 @@ chip.binding 'translate', (element, expr, controller) ->
 # </div>
 # ```
 chip.binding 'class', (element, expr, controller) ->
-	controller.watch expr, (value) ->
-		if Array.isArray(value)
-			value = value.join(' ')
-		
-		if typeof value is 'string'
-			element.attr('class', value)
-		else if value and typeof value is 'object'
-			for own className, toggle of value
-				if toggle
-					element.addClass(className)
-				else
-					element.removeClass(className)
+  controller.watch expr, (value) ->
+    if Array.isArray(value)
+      value = value.join(' ')
+    
+    if typeof value is 'string'
+      element.attr('class', value)
+    else if value and typeof value is 'object'
+      for own className, toggle of value
+        if toggle
+          element.addClass(className)
+        else
+          element.removeClass(className)
 
 
 # ## chip-active
@@ -198,47 +198,47 @@ chip.binding 'class', (element, expr, controller) ->
 # </ul>
 # ```
 chip.binding 'active', (element, expr, controller) ->
-	if expr
-		controller.watch expr, (value) ->
-			if value
-				element.addClass('active')
-			else
-				element.removeClass('active')
-	else
-		refresh = ->
-			if link.length and link.get(0).href is location.href
-				element.addClass('active')
-			else
-				element.removeClass('active')
-		
-		link = element
-			.filter('a')
-			.add(element.find('a'))
-			.first()
-		link.on 'hrefChanged', refresh
-		controller.on 'urlChange', refresh
-		element.on 'remove', -> controller.off 'urlChange', refresh
-		refresh()
+  if expr
+    controller.watch expr, (value) ->
+      if value
+        element.addClass('active')
+      else
+        element.removeClass('active')
+  else
+    refresh = ->
+      if link.length and link.get(0).href is location.href
+        element.addClass('active')
+      else
+        element.removeClass('active')
+    
+    link = element
+      .filter('a')
+      .add(element.find('a'))
+      .first()
+    link.on 'hrefChanged', refresh
+    controller.on 'urlChange', refresh
+    element.on 'remove', -> controller.off 'urlChange', refresh
+    refresh()
 
 
 # ## chip-active-section
 # The same as active except that the active class is added for any URL which starts with the link (marks active for the
 # whole section.
 chip.binding 'active-section', (element, expr, controller) ->
-	refresh = ->
-		if link.length and location.href.indexOf(link.get(0).href) is 0
-			element.addClass('active')
-		else
-			element.removeClass('active')
-	
-	link = element
-		.filter('a')
-		.add(element.find('a'))
-		.first()
-	link.on 'hrefChanged', refresh
-	controller.on 'urlChange', refresh
-	element.on 'remove', -> controller.off 'urlChange', refresh
-	refresh()
+  refresh = ->
+    if link.length and location.href.indexOf(link.get(0).href) is 0
+      element.addClass('active')
+    else
+      element.removeClass('active')
+  
+  link = element
+    .filter('a')
+    .add(element.find('a'))
+    .first()
+  link.on 'hrefChanged', refresh
+  controller.on 'urlChange', refresh
+  element.on 'remove', -> controller.off 'urlChange', refresh
+  refresh()
 
 
 # ## chip-value
@@ -264,52 +264,52 @@ chip.binding 'active-section', (element, expr, controller) ->
 # And when the user changes the text in the first input to "Jac", `user.firstName` will be updated immediately with the
 # value of `'Jac'`.
 chip.binding 'value', (element, expr, controller) ->
-	# Handles input (checkboxes, radios), select, textarea, option
-	getValue =
-		if element.attr('type') is 'checkbox' # Handles checkboxes
-			-> element.prop('checked')
-		else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
-			-> element.find('input:radio:checked').val()
-		else # Handles other form inputs
-			-> element.val()
-	
-	setValue =
-		if element.attr('type') is 'checkbox'
-			(value) -> element.prop('checked', value)
-		else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
-			(value) ->
-				element.find('input:radio:checked').prop('checked', false) # in case the value isn't found in radios
-				element.find('input:radio[value="' + value + '"]').prop('checked', true)
-		else
-			(value) -> element.val(value)
-	
-	observer = controller.watch expr, (value) ->
-		if `getValue() != value` # Allows for string/number equality
-			setValue value
-	
-	# Skips setting values on option elements since the user cannot change these with user input
-	return if element.is 'option'
-	
-	# Sets initial element value. For SELECT elements allows child option element values to be set first.
-	if element.is('select')
-		setTimeout ->
-			setValue controller.eval expr
-			controller.evalSetter expr, getValue()
-	else
-		controller.evalSetter expr, getValue()
-	
-	events = element.attr('chip-value-events') or 'change'
-	element.removeAttr('chip-value-events')
-	if element.is ':text'
-		element.on 'keydown', (event) ->
-			if event.keyCode is 13
-				element.trigger 'change'
-	
-	element.on events, ->
-		if getValue() isnt observer.oldValue
-			controller.evalSetter expr, getValue()
-			observer.skipNextSync() # don't update this observer, user changed it
-			controller.sync() # update other expressions looking at this data
+  # Handles input (checkboxes, radios), select, textarea, option
+  getValue =
+    if element.attr('type') is 'checkbox' # Handles checkboxes
+      -> element.prop('checked')
+    else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
+      -> element.find('input:radio:checked').val()
+    else # Handles other form inputs
+      -> element.val()
+  
+  setValue =
+    if element.attr('type') is 'checkbox'
+      (value) -> element.prop('checked', value)
+    else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
+      (value) ->
+        element.find('input:radio:checked').prop('checked', false) # in case the value isn't found in radios
+        element.find('input:radio[value="' + value + '"]').prop('checked', true)
+    else
+      (value) -> element.val(value)
+  
+  observer = controller.watch expr, (value) ->
+    if `getValue() != value` # Allows for string/number equality
+      setValue value
+  
+  # Skips setting values on option elements since the user cannot change these with user input
+  return if element.is 'option'
+  
+  # Sets initial element value. For SELECT elements allows child option element values to be set first.
+  if element.is('select')
+    setTimeout ->
+      setValue controller.eval expr
+      controller.evalSetter expr, getValue()
+  else
+    controller.evalSetter expr, getValue()
+  
+  events = element.attr('chip-value-events') or 'change'
+  element.removeAttr('chip-value-events')
+  if element.is ':text'
+    element.on 'keydown', (event) ->
+      if event.keyCode is 13
+        element.trigger 'change'
+  
+  element.on events, ->
+    if getValue() isnt observer.oldValue
+      controller.evalSetter expr, getValue()
+      observer.skipNextSync() # don't update this observer, user changed it
+      controller.sync() # update other expressions looking at this data
 
 
 # ## chip-[event]
@@ -339,8 +339,8 @@ chip.binding 'value', (element, expr, controller) ->
 # </form>
 # ```
 [ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste' ]
-	.forEach (name) ->
-		chip.eventBinding(name)
+  .forEach (name) ->
+    chip.eventBinding(name)
 
 # ## chip-[key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches.
@@ -360,7 +360,7 @@ chip.binding 'value', (element, expr, controller) ->
 # ```
 keyCodes = { enter: 13, esc: 27 }
 for own name, keyCode of keyCodes
-	chip.keyEventBinding(name, keyCode)
+  chip.keyEventBinding(name, keyCode)
 
 # ## chip-[control key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches and the ctrlKey or metaKey is
@@ -399,7 +399,7 @@ chip.keyEventBinding('ctrl-enter', keyCodes.enter, true)
 # ```
 attribs = [ 'href', 'src', 'id' ]
 for name in attribs
-	chip.attributeBinding(name)
+  chip.attributeBinding(name)
 
 # ## chip-[toggle attribute]
 # Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.
@@ -422,61 +422,61 @@ for name in attribs
 # <button disabled>Submit</button>
 # ```
 [ 'checked', 'disabled' ].forEach (name) ->
-	chip.attributeToggleBinding(name)
+  chip.attributeToggleBinding(name)
 
 
 # ## animateIn/animateOut
 # Adds a jquery plugin to allow an element to use CSS3 transitions or animations to animate in or out of the page. This
 # is used with chip-if, chip-each, etc. to show and hide elements.
 $.fn.animateIn = (callback) ->
-	if @parent().length
-		placeholder = $('<!---->')
-		@before(placeholder)
-		@detach()
-	
-	@addClass 'animate-in'
-	
-	if placeholder
-		placeholder.after(this)
-		placeholder.remove()
-	
-	setTimeout =>
-		@removeClass 'animate-in'
-		if callback
-			if @cssDuration('transition') or @cssDuration('animation')
-				@one 'webkittransitionend transitionend webkitanimationend animationend', -> callback()
-			else
-				callback()
-	return this
+  if @parent().length
+    placeholder = $('<!---->')
+    @before(placeholder)
+    @detach()
+  
+  @addClass 'animate-in'
+  
+  if placeholder
+    placeholder.after(this)
+    placeholder.remove()
+  
+  setTimeout =>
+    @removeClass 'animate-in'
+    if callback
+      if @cssDuration('transition') or @cssDuration('animation')
+        @one 'webkittransitionend transitionend webkitanimationend animationend', -> callback()
+      else
+        callback()
+  return this
 
 $.fn.animateOut = (dontRemove, callback) ->
-	if typeof dontRemove is 'function'
-		callback = dontRemove
-		dontRemove = false
-	
-	@triggerHandler 'remove' unless dontRemove
-	duration = @cssDuration('transition') or @cssDuration('animation')
-	if duration
-		@addClass 'animate-out'
-		done = =>
-			clearTimeout timeout
-			@off 'webkittransitionend transitionend webkitanimationend animationend', done
-			@removeClass 'animate-out'
-			if callback then callback() else @remove()
-		
-		@one 'webkittransitionend transitionend webkitanimationend animationend', done
-		# backup to ensure it "finishes"
-		timeout = setTimeout done, duration + 100
-	else
-		if callback then callback() else unless dontRemove then @remove()
-	
-	return this
+  if typeof dontRemove is 'function'
+    callback = dontRemove
+    dontRemove = false
+  
+  @triggerHandler 'remove' unless dontRemove
+  duration = @cssDuration('transition') or @cssDuration('animation')
+  if duration
+    @addClass 'animate-out'
+    done = =>
+      clearTimeout timeout
+      @off 'webkittransitionend transitionend webkitanimationend animationend', done
+      @removeClass 'animate-out'
+      if callback then callback() else @remove()
+    
+    @one 'webkittransitionend transitionend webkitanimationend animationend', done
+    # backup to ensure it "finishes"
+    timeout = setTimeout done, duration + 100
+  else
+    if callback then callback() else unless dontRemove then @remove()
+  
+  return this
 
 $.fn.cssDuration = (property) ->
-	time = @css(property + '-duration') or @css('-webkit-' + property + '-duration')
-	millis = parseFloat time
-	millis *= 1000 if /\ds/.test time
-	millis or 0
+  time = @css(property + '-duration') or @css('-webkit-' + property + '-duration')
+  millis = parseFloat time
+  millis *= 1000 if /\ds/.test time
+  millis or 0
 
 # ## chip-if
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -499,22 +499,22 @@ $.fn.cssDuration = (property) ->
 # </ul>
 # ```
 chip.binding 'if', 50, (element, expr, controller) ->
-	prefix = controller.app.bindingPrefix
-	template = element # use a placeholder for the element and the element as a template
-	placeholder = $("<!--#{prefix}if=\"#{expr}\"-->").replaceAll(template)
-	controllerName = element.attr(prefix + 'controller')
-	element.removeAttr(prefix + 'controller')
-	
-	controller.watch expr, (value) ->
-		if value
-			if placeholder.parent().length
-				element = template.clone().animateIn()
-				controller.child element: element, name: controllerName, passthrough: true
-				placeholder.replaceWith(element)
-		else
-			unless placeholder.parent().length
-				element.animateOut ->
-					element.replaceWith placeholder
+  prefix = controller.app.bindingPrefix
+  template = element # use a placeholder for the element and the element as a template
+  placeholder = $("<!--#{prefix}if=\"#{expr}\"-->").replaceAll(template)
+  controllerName = element.attr(prefix + 'controller')
+  element.removeAttr(prefix + 'controller')
+  
+  controller.watch expr, (value) ->
+    if value
+      if placeholder.parent().length
+        element = template.clone().animateIn()
+        controller.child element: element, name: controllerName, passthrough: true
+        placeholder.replaceWith(element)
+    else
+      unless placeholder.parent().length
+        element.animateOut ->
+          element.replaceWith placeholder
 
 # ## chip-unless
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -537,22 +537,22 @@ chip.binding 'if', 50, (element, expr, controller) ->
 # </ul>
 # ```
 chip.binding 'unless', 50, (element, expr, controller) ->
-	prefix = controller.app.bindingPrefix
-	template = element # use a placeholder for the element and the element as a template
-	placeholder = $("<!--#{prefix}unless=\"#{expr}\"-->").replaceAll(template)
-	controllerName = element.attr(prefix + 'controller')
-	element.removeAttr(prefix + 'controller')
-	
-	controller.watch expr, (value) ->
-		unless value
-			if placeholder.parent().length
-				element = template.clone().animateIn()
-				controller.child element: element, name: controllerName, passthrough: true
-				placeholder.replaceWith(element)
-		else
-			unless placeholder.parent().length
-				element.before placeholder
-				element.animateOut()
+  prefix = controller.app.bindingPrefix
+  template = element # use a placeholder for the element and the element as a template
+  placeholder = $("<!--#{prefix}unless=\"#{expr}\"-->").replaceAll(template)
+  controllerName = element.attr(prefix + 'controller')
+  element.removeAttr(prefix + 'controller')
+  
+  controller.watch expr, (value) ->
+    unless value
+      if placeholder.parent().length
+        element = template.clone().animateIn()
+        controller.child element: element, name: controllerName, passthrough: true
+        placeholder.replaceWith(element)
+    else
+      unless placeholder.parent().length
+        element.before placeholder
+        element.animateOut()
 
 
 # ## chip-each
@@ -592,89 +592,89 @@ chip.binding 'unless', 50, (element, expr, controller) ->
 # </div>
 # ```
 chip.binding 'each', 100, (element, expr, controller) ->
-	prefix = controller.app.bindingPrefix
-	orig = expr
-	[ itemName, expr ] = expr.split /\s+in\s+/
-	unless itemName and expr
-		throw "Invalid #{prefix}each=\"" +
-			orig +
-			'". Requires the format "item in list"' +
-			' or "key, propery in object".'
-	
-	controllerName = element.attr(prefix + 'controller')
-	element.removeAttr(prefix + 'controller')
-	[ itemName, propName ] = itemName.split /\s*,\s*/
-	
-	template = element # use a placeholder for the element and the element as a template
-	placeholder = $("<!--#{prefix}each=\"#{expr}\"-->").replaceAll(template)
-	elements = $()
-	properties = {}
-	value = null
-			
-	createElement = (item, index) ->
-		newElement = template.clone()
-		unless Array.isArray(value)
-			properties[propName] = item if propName
-			properties[itemName] = value[item]
-		else
-			properties[itemName] = item
-			properties.index = index
-		controller.child element: newElement, name: controllerName, properties: properties
-		newElement.get(0)
-	
-	controller.watch expr, (newValue, oldValue, splices) ->
-		value = newValue
-		
-		if not splices # first time setup (or changing from/to an array value)
-			if elements.length
-				elements.eq(0).replaceWith(placeholder)
-				elements.remove()
-				elements = $()
-			
-			if newValue and not Array.isArray(newValue) and typeof newValue is 'object'
-				newValue = Object.keys newValue
-			
-			if Array.isArray(value) and value.length
-				value.forEach (item, index) ->
-					elements.push createElement item, index
-				placeholder.after(elements).remove()
-		
-		else if Array.isArray(value) or (value and typeof value is 'object')
-			unless Array.isArray(value)
-				splices = compare.arrays Object.keys(value), Object.keys(oldValue)
-			
-			hasNew = 0
-			splices.forEach (splice) -> hasNew += splice.addedCount
+  prefix = controller.app.bindingPrefix
+  orig = expr
+  [ itemName, expr ] = expr.split /\s+in\s+/
+  unless itemName and expr
+    throw "Invalid #{prefix}each=\"" +
+      orig +
+      '". Requires the format "item in list"' +
+      ' or "key, propery in object".'
+  
+  controllerName = element.attr(prefix + 'controller')
+  element.removeAttr(prefix + 'controller')
+  [ itemName, propName ] = itemName.split /\s*,\s*/
+  
+  template = element # use a placeholder for the element and the element as a template
+  placeholder = $("<!--#{prefix}each=\"#{expr}\"-->").replaceAll(template)
+  elements = $()
+  properties = {}
+  value = null
+      
+  createElement = (item, index) ->
+    newElement = template.clone()
+    unless Array.isArray(value)
+      properties[propName] = item if propName
+      properties[itemName] = value[item]
+    else
+      properties[itemName] = item
+      properties.index = index
+    controller.child element: newElement, name: controllerName, properties: properties
+    newElement.get(0)
+  
+  controller.watch expr, (newValue, oldValue, splices) ->
+    value = newValue
+    
+    if not splices # first time setup (or changing from/to an array value)
+      if elements.length
+        elements.eq(0).replaceWith(placeholder)
+        elements.remove()
+        elements = $()
+      
+      if newValue and not Array.isArray(newValue) and typeof newValue is 'object'
+        newValue = Object.keys newValue
+      
+      if Array.isArray(value) and value.length
+        value.forEach (item, index) ->
+          elements.push createElement item, index
+        placeholder.after(elements).remove()
+    
+    else if Array.isArray(value) or (value and typeof value is 'object')
+      unless Array.isArray(value)
+        splices = compare.arrays Object.keys(value), Object.keys(oldValue)
+      
+      hasNew = 0
+      splices.forEach (splice) -> hasNew += splice.addedCount
 
-			splices.forEach (splice) ->
-				args = [splice.index, splice.removed.length]
-				
-				newElements = []
-				addIndex = splice.index
-				while (addIndex < splice.index + splice.addedCount)
-					item = value[addIndex]
-					newElements.push createElement item, addIndex
-					addIndex++
-				
-				removedElements = $ elements.splice.apply(elements, args.concat(newElements))
-				
-				if removedElements.length
-					if elements.length - newElements.length is 0 # removing all existing elements
-						removedElements.eq(0).before(placeholder)
-					if hasNew
-						removedElements.remove()
-					else
-						removedElements.animateOut()
-				
-				if newElements.length
-					$(newElements).animateIn()
-					if splice.index is 0
-						if placeholder.parent().length
-							placeholder.after(newElements).remove()
-						else
-							elements.eq(newElements.length).before(newElements)
-					else
-						elements.eq(splice.index - 1).after(newElements)
+      splices.forEach (splice) ->
+        args = [splice.index, splice.removed.length]
+        
+        newElements = []
+        addIndex = splice.index
+        while (addIndex < splice.index + splice.addedCount)
+          item = value[addIndex]
+          newElements.push createElement item, addIndex
+          addIndex++
+        
+        removedElements = $ elements.splice.apply(elements, args.concat(newElements))
+        
+        if removedElements.length
+          if elements.length - newElements.length is 0 # removing all existing elements
+            removedElements.eq(0).before(placeholder)
+          if hasNew
+            removedElements.remove()
+          else
+            removedElements.animateOut()
+        
+        if newElements.length
+          $(newElements).animateIn()
+          if splice.index is 0
+            if placeholder.parent().length
+              placeholder.after(newElements).remove()
+            else
+              elements.eq(newElements.length).before(newElements)
+          else
+            elements.eq(splice.index - 1).after(newElements)
 
 
 # ## chip-partial
@@ -700,24 +700,24 @@ chip.binding 'each', 100, (element, expr, controller) ->
 # </div>
 # ```
 chip.binding 'partial', 50, (element, expr, controller) ->
-	parts = expr.split /\s+as\s+|\s+with\s+/
-	nameExpr = parts.pop()
-	[ itemExpr, itemName ] = parts
-	childController = null
-	properties = {}
-	
-	if itemExpr and itemName
-		controller.watch itemExpr, true, (value) ->
-			childController[itemName] = value
-	
-	controller.watch nameExpr, (name) ->
-		return unless name?
-		element.animateOut ->
-			element.html controller.template(name)
-			if itemExpr and itemName
-				properties[itemName] = controller.eval itemExpr
-			element.animateIn()
-			childController = controller.child element: element, name: name, properties: properties
+  parts = expr.split /\s+as\s+|\s+with\s+/
+  nameExpr = parts.pop()
+  [ itemExpr, itemName ] = parts
+  childController = null
+  properties = {}
+  
+  if itemExpr and itemName
+    controller.watch itemExpr, true, (value) ->
+      childController[itemName] = value
+  
+  controller.watch nameExpr, (name) ->
+    return unless name?
+    element.animateOut ->
+      element.html controller.template(name)
+      if itemExpr and itemName
+        properties[itemName] = controller.eval itemExpr
+      element.animateIn()
+      childController = controller.child element: element, name: name, properties: properties
 
 
 # ## chip-controller
@@ -736,4 +736,4 @@ chip.binding 'partial', 50, (element, expr, controller) ->
 # </form>
 # ```
 chip.binding 'controller', 30, (element, controllerName, controller) ->
-	controller.child element: element, name: controllerName
+  controller.child element: element, name: controllerName

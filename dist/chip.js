@@ -958,8 +958,8 @@ if (!Date.prototype.toISOString) {
         }
         this.rerun = false;
         for (var i = 0; i < this.observers.length; i++) {
-				this.observers[i].sync()
-			};
+        this.observers[i].sync()
+      };
       }
       this.syncing = false;
       this.cycles = 0;

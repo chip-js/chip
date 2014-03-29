@@ -40,9 +40,9 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'filter'</span>, (controller, value, filterFunc) -&gt;
-	<span class="keyword">return</span> [] <span class="keyword">unless</span> Array.isArray value
-	<span class="keyword">return</span> value <span class="keyword">unless</span> filterFunc
-	value.filter(filterFunc, controller)</pre></div></div>
+  <span class="keyword">return</span> [] <span class="keyword">unless</span> Array.isArray value
+  <span class="keyword">return</span> value <span class="keyword">unless</span> filterFunc
+  value.filter(filterFunc, controller)</pre></div></div>
             
         </li>
         
@@ -59,11 +59,11 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'map'</span>, (controller, value, mapFunc) -&gt;
-	<span class="keyword">return</span> value <span class="keyword">unless</span> value? <span class="keyword">and</span> mapFunc
-	<span class="keyword">if</span> Array.isArray value
-		value.map(mapFunc, controller)
-	<span class="keyword">else</span>
-		mapFunc.call(controller, value)</pre></div></div>
+  <span class="keyword">return</span> value <span class="keyword">unless</span> value? <span class="keyword">and</span> mapFunc
+  <span class="keyword">if</span> Array.isArray value
+    value.map(mapFunc, controller)
+  <span class="keyword">else</span>
+    mapFunc.call(controller, value)</pre></div></div>
             
         </li>
         
@@ -80,11 +80,11 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'reduce'</span>, (controller, value, reduceFunc, initialValue) -&gt;
-	<span class="keyword">return</span> value <span class="keyword">unless</span> value? <span class="keyword">and</span> reduceFunc
-	<span class="keyword">if</span> Array.isArray value
-		<span class="keyword">if</span> arguments.length <span class="keyword">is</span> <span class="number">4</span> <span class="keyword">then</span> value.reduce(reduceFunc, initialValue) <span class="keyword">else</span> value.reduce(reduceFunc)
-	<span class="keyword">else</span> <span class="keyword">if</span> arguments.length <span class="keyword">is</span> <span class="number">4</span>
-		reduceFunc(initialValue, value)</pre></div></div>
+  <span class="keyword">return</span> value <span class="keyword">unless</span> value? <span class="keyword">and</span> reduceFunc
+  <span class="keyword">if</span> Array.isArray value
+    <span class="keyword">if</span> arguments.length <span class="keyword">is</span> <span class="number">4</span> <span class="keyword">then</span> value.reduce(reduceFunc, initialValue) <span class="keyword">else</span> value.reduce(reduceFunc)
+  <span class="keyword">else</span> <span class="keyword">if</span> arguments.length <span class="keyword">is</span> <span class="number">4</span>
+    reduceFunc(initialValue, value)</pre></div></div>
             
         </li>
         
@@ -101,10 +101,10 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'slice'</span>, (controller, value, index, endIndex) -&gt;
-	<span class="keyword">if</span> Array.isArray value
-		value.slice(index, endIndex)
-	<span class="keyword">else</span>
-		value</pre></div></div>
+  <span class="keyword">if</span> Array.isArray value
+    value.slice(index, endIndex)
+  <span class="keyword">else</span>
+    value</pre></div></div>
             
         </li>
         
@@ -121,11 +121,11 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'date'</span>, (controller, value) -&gt;
-	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">unless</span> value
-	<span class="keyword">unless</span> value <span class="keyword">instanceof</span> Date
-		value = <span class="keyword">new</span> Date(controller, value)
-	<span class="keyword">return</span> <span class="string">''</span> <span class="keyword">if</span> isNaN value.getTime()
-	value.toLocaleString()</pre></div></div>
+  <span class="keyword">return</span> <span class="string">''</span> <span class="keyword">unless</span> value
+  <span class="keyword">unless</span> value <span class="keyword">instanceof</span> Date
+    value = <span class="keyword">new</span> Date(controller, value)
+  <span class="keyword">return</span> <span class="string">''</span> <span class="keyword">if</span> isNaN value.getTime()
+  value.toLocaleString()</pre></div></div>
             
         </li>
         
@@ -142,8 +142,8 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'log'</span>, (controller, value, prefix = <span class="string">'Log'</span>) -&gt;
-	console.log prefix + <span class="string">':'</span>, value
-	<span class="keyword">return</span> value</pre></div></div>
+  console.log prefix + <span class="string">':'</span>, value
+  <span class="keyword">return</span> value</pre></div></div>
             
         </li>
         
@@ -160,13 +160,13 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'limit'</span>, (controller, value, limit) -&gt;
-	<span class="keyword">if</span> value <span class="keyword">and</span> <span class="keyword">typeof</span> value.slice <span class="keyword">is</span> <span class="string">'function'</span>
-		<span class="keyword">if</span> limit &lt; <span class="number">0</span>
-			value.slice limit
-		<span class="keyword">else</span>
-			value.slice <span class="number">0</span>, limit
-	<span class="keyword">else</span>
-		value</pre></div></div>
+  <span class="keyword">if</span> value <span class="keyword">and</span> <span class="keyword">typeof</span> value.slice <span class="keyword">is</span> <span class="string">'function'</span>
+    <span class="keyword">if</span> limit &lt; <span class="number">0</span>
+      value.slice limit
+    <span class="keyword">else</span>
+      value.slice <span class="number">0</span>, limit
+  <span class="keyword">else</span>
+    value</pre></div></div>
             
         </li>
         
@@ -183,19 +183,19 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'sort'</span>, (controller, value, sortFunc) -&gt;
-	<span class="keyword">return</span> value <span class="keyword">unless</span> sortFunc
-	<span class="keyword">if</span> <span class="keyword">typeof</span> sortFunc <span class="keyword">is</span> <span class="string">'string'</span>
-		[prop,dir] = sortFunc.split(<span class="string">':'</span>)
-		dir = <span class="keyword">if</span> dir <span class="keyword">is</span> <span class="string">'desc'</span> <span class="keyword">then</span> -<span class="number">1</span> <span class="keyword">else</span> <span class="number">1</span>
-		<span class="function"><span class="title">sortFunc</span></span> = (a, b) -&gt;
-			<span class="keyword">return</span> dir <span class="keyword">if</span> a[prop] &gt; b[prop]
-			<span class="keyword">return</span> -dir <span class="keyword">if</span> a[prop] &lt; b[prop]
-			<span class="keyword">return</span> <span class="number">0</span>
-	
-	<span class="keyword">if</span> Array.isArray value
-		value.slice().sort(sortFunc)
-	<span class="keyword">else</span>
-		value</pre></div></div>
+  <span class="keyword">return</span> value <span class="keyword">unless</span> sortFunc
+  <span class="keyword">if</span> <span class="keyword">typeof</span> sortFunc <span class="keyword">is</span> <span class="string">'string'</span>
+    [prop,dir] = sortFunc.split(<span class="string">':'</span>)
+    dir = <span class="keyword">if</span> dir <span class="keyword">is</span> <span class="string">'desc'</span> <span class="keyword">then</span> -<span class="number">1</span> <span class="keyword">else</span> <span class="number">1</span>
+    <span class="function"><span class="title">sortFunc</span></span> = (a, b) -&gt;
+      <span class="keyword">return</span> dir <span class="keyword">if</span> a[prop] &gt; b[prop]
+      <span class="keyword">return</span> -dir <span class="keyword">if</span> a[prop] &lt; b[prop]
+      <span class="keyword">return</span> <span class="number">0</span>
+  
+  <span class="keyword">if</span> Array.isArray value
+    value.slice().sort(sortFunc)
+  <span class="keyword">else</span>
+    value</pre></div></div>
             
         </li>
         
@@ -217,8 +217,8 @@
             
             <div class="content"><div class='highlight'><pre>div = <span class="literal">null</span>
 chip.filter <span class="string">'escape'</span>, (controller, value) -&gt;
-	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
-	div.text(controller, value <span class="keyword">or</span> <span class="string">''</span>).text()</pre></div></div>
+  div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
+  div.text(controller, value <span class="keyword">or</span> <span class="string">''</span>).text()</pre></div></div>
             
         </li>
         
@@ -240,10 +240,10 @@ chip.filter <span class="string">'escape'</span>, (controller, value) -&gt;
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'p'</span>, (controller, value) -&gt;
-	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
-	lines = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
-	escaped = lines.map (line) -&gt; div.text(line).text() <span class="keyword">or</span> <span class="string">'&lt;br&gt;'</span>
-	<span class="string">'&lt;p&gt;'</span> + escaped.join(<span class="string">'&lt;/p&gt;&lt;p&gt;'</span>) + <span class="string">'&lt;/p&gt;'</span></pre></div></div>
+  div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
+  lines = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
+  escaped = lines.map (line) -&gt; div.text(line).text() <span class="keyword">or</span> <span class="string">'&lt;br&gt;'</span>
+  <span class="string">'&lt;p&gt;'</span> + escaped.join(<span class="string">'&lt;/p&gt;&lt;p&gt;'</span>) + <span class="string">'&lt;/p&gt;'</span></pre></div></div>
             
         </li>
         
@@ -265,10 +265,10 @@ It's great<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'br'</span>, (controller, value) -&gt;
-	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
-	lines = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
-	escaped = lines.map (line) -&gt; div.text(line).text()
-	escaped.join(<span class="string">'&lt;br&gt;'</span>)</pre></div></div>
+  div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
+  lines = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n/</span>)
+  escaped = lines.map (line) -&gt; div.text(line).text()
+  escaped.join(<span class="string">'&lt;br&gt;'</span>)</pre></div></div>
             
         </li>
         
@@ -290,13 +290,13 @@ It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span cl
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'newline'</span>, (controller, value) -&gt;
-	div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
-	paragraphs = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n\s*\r?\n/</span>)
-	escaped = paragraphs.map (paragraph) -&gt;
-		lines = paragraph.split(<span class="regexp">/\r?\n/</span>)
-		escaped = lines.map (line) -&gt; div.text(line).text()
-		escaped.join(<span class="string">'&lt;br&gt;'</span>)
-	<span class="string">'&lt;p&gt;'</span> + escaped.join(<span class="string">'&lt;/p&gt;&lt;p&gt;'</span>) + <span class="string">'&lt;/p&gt;'</span></pre></div></div>
+  div = $(<span class="string">'&lt;div&gt;&lt;/div&gt;'</span>) <span class="keyword">unless</span> div
+  paragraphs = (value <span class="keyword">or</span> <span class="string">''</span>).split(<span class="regexp">/\r?\n\s*\r?\n/</span>)
+  escaped = paragraphs.map (paragraph) -&gt;
+    lines = paragraph.split(<span class="regexp">/\r?\n/</span>)
+    escaped = lines.map (line) -&gt; div.text(line).text()
+    escaped.join(<span class="string">'&lt;br&gt;'</span>)
+  <span class="string">'&lt;p&gt;'</span> + escaped.join(<span class="string">'&lt;/p&gt;&lt;p&gt;'</span>) + <span class="string">'&lt;/p&gt;'</span></pre></div></div>
             
         </li>
         
@@ -319,26 +319,26 @@ will skip URLs within HTML tags. Passing true in the second parameter will set t
             
             <div class="content"><div class='highlight'><pre>urlExp = <span class="regexp">/(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi</span>
 chip.filter <span class="string">'autolink'</span>, (controller, value, target) -&gt;
-	target = <span class="keyword">if</span> target <span class="keyword">then</span> <span class="string">' target="_blank"'</span> <span class="keyword">else</span> <span class="string">''</span>
-	(<span class="string">''</span> + value).replace <span class="regexp">/&lt;[^&gt;]+&gt;|[^&lt;]+/g</span>, (match) -&gt;
-		<span class="keyword">return</span> match <span class="keyword">if</span> match.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'&lt;'</span>
-		match.replace(urlExp, <span class="string">'$1&lt;a href="$2"'</span> + target + <span class="string">'&gt;$2&lt;/a&gt;'</span>)
+  target = <span class="keyword">if</span> target <span class="keyword">then</span> <span class="string">' target="_blank"'</span> <span class="keyword">else</span> <span class="string">''</span>
+  (<span class="string">''</span> + value).replace <span class="regexp">/&lt;[^&gt;]+&gt;|[^&lt;]+/g</span>, (match) -&gt;
+    <span class="keyword">return</span> match <span class="keyword">if</span> match.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'&lt;'</span>
+    match.replace(urlExp, <span class="string">'$1&lt;a href="$2"'</span> + target + <span class="string">'&gt;$2&lt;/a&gt;'</span>)
 
 
 chip.filter <span class="string">'int'</span>, (controller, value) -&gt;
-	value = parseInt value
-	<span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
+  value = parseInt value
+  <span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
 , (controller, value) -&gt;
-	value = parseInt value
-	<span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
+  value = parseInt value
+  <span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
 
 
 chip.filter <span class="string">'float'</span>, (controller, value) -&gt;
-	value = parseFloat value
-	<span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
+  value = parseFloat value
+  <span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
 , (controller, value) -&gt;
-	value = parseInt value
-	<span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value</pre></div></div>
+  value = parseInt value
+  <span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value</pre></div></div>
             
         </li>
         

@@ -41,11 +41,11 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	constructor: -&gt;
-		<span class="property">@routes</span> = []
-		<span class="property">@params</span> = {}
-		<span class="property">@prefix</span> = <span class="string">''</span>
-		makeEventEmitter <span class="keyword">this</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  constructor: -&gt;
+    <span class="property">@routes</span> = []
+    <span class="property">@params</span> = {}
+    <span class="property">@prefix</span> = <span class="string">''</span>
+    makeEventEmitter <span class="keyword">this</span></pre></div></div>
             
         </li>
         
@@ -60,11 +60,11 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	param: (name, callback) -&gt;
-		<span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
-			<span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'param must have a callback of type "function". Got '</span> + callback + <span class="string">'.'</span>
-		(<span class="property">@params</span>[name] <span class="keyword">or</span> <span class="property">@params</span>[name] = []).push(callback)
-		<span class="keyword">this</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  param: (name, callback) -&gt;
+    <span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
+      <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'param must have a callback of type "function". Got '</span> + callback + <span class="string">'.'</span>
+    (<span class="property">@params</span>[name] <span class="keyword">or</span> <span class="property">@params</span>[name] = []).push(callback)
+    <span class="keyword">this</span></pre></div></div>
             
         </li>
         
@@ -83,24 +83,24 @@ portion of the URL.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	route: (path, callback) -&gt;
-		<span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
-			<span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'route must have a callback of type "function". Got '</span> + callback + <span class="string">'.'</span>
-		
-		path = <span class="string">'/'</span> + path <span class="keyword">unless</span> path.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'/'</span>
-		<span class="property">@routes</span>.push <span class="keyword">new</span> Route path, callback
-		<span class="keyword">this</span>
-	
-	
-	redirect: (url, replace = <span class="literal">false</span>) -&gt;
-		<span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'.'</span>
-			pathParts = document.createElement(<span class="string">'a'</span>)
-			pathParts.href = url
-			url = pathParts.pathname
-		<span class="keyword">else</span>
-			url = <span class="property">@prefix</span> + url
-		
-		<span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@currentUrl</span> <span class="keyword">is</span> url</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  route: (path, callback) -&gt;
+    <span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
+      <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'route must have a callback of type "function". Got '</span> + callback + <span class="string">'.'</span>
+    
+    path = <span class="string">'/'</span> + path <span class="keyword">unless</span> path.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'/'</span>
+    <span class="property">@routes</span>.push <span class="keyword">new</span> Route path, callback
+    <span class="keyword">this</span>
+  
+  
+  redirect: (url, replace = <span class="literal">false</span>) -&gt;
+    <span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'.'</span>
+      pathParts = document.createElement(<span class="string">'a'</span>)
+      pathParts.href = url
+      url = pathParts.pathname
+    <span class="keyword">else</span>
+      url = <span class="property">@prefix</span> + url
+    
+    <span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@currentUrl</span> <span class="keyword">is</span> url</pre></div></div>
             
         </li>
         
@@ -115,52 +115,52 @@ portion of the URL.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> <span class="keyword">not</span> <span class="property">@hashOnly</span> <span class="keyword">and</span> <span class="property">@root</span> <span class="keyword">and</span> url.indexOf(<span class="property">@root</span>) <span class="keyword">isnt</span> <span class="number">0</span>
-			location.href = url
-			<span class="keyword">return</span>
-		
-		notFound = <span class="literal">false</span>
-		<span class="property">@on</span> <span class="string">'error'</span>, (<span class="function"><span class="title">errHandler</span></span> = (err) -&gt;
-			notFound = <span class="literal">true</span> <span class="keyword">if</span> err <span class="keyword">is</span> <span class="string">'notFound'</span>
-		)
-		
-		<span class="keyword">if</span> <span class="property">@usePushState</span>
-			<span class="keyword">if</span> replace
-				history.replaceState {}, <span class="string">''</span>, url
-			<span class="keyword">else</span>
-				history.pushState {}, <span class="string">''</span>, url
-			<span class="property">@currentUrl</span> = url
-			<span class="property">@dispatch</span> url
-		<span class="keyword">else</span>
-			<span class="keyword">if</span> <span class="keyword">not</span> <span class="property">@hashOnly</span>
-				url = url.replace <span class="property">@root</span>, <span class="string">''</span>
-				url = <span class="string">'/'</span> + url <span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">isnt</span> <span class="string">'/'</span>
-			location.hash = <span class="keyword">if</span> url <span class="keyword">is</span> <span class="string">'/'</span> <span class="keyword">then</span> <span class="string">''</span> <span class="keyword">else</span> <span class="string">'#'</span> + url
-		
-		<span class="property">@off</span> <span class="string">'error'</span>, errHandler
-		<span class="keyword">return</span> <span class="keyword">not</span> notFound
-	
-	
-	listen: (options = {}) -&gt;
-		<span class="keyword">if</span> options.stop
-			$(window).<span class="literal">off</span> <span class="string">'popstate hashChange'</span>, <span class="property">@_handleChange</span> <span class="keyword">if</span> <span class="property">@_handleChange</span>
-			<span class="keyword">return</span> <span class="keyword">this</span>
-		
-		<span class="property">@root</span> = options.root <span class="keyword">if</span> options.root?
-		<span class="property">@prefix</span> = options.prefix <span class="keyword">if</span> options.prefix?
-		<span class="property">@hashOnly</span> = options.hashOnly <span class="keyword">if</span> options.hashOnly?
-		<span class="property">@usePushState</span> = <span class="keyword">not</span> <span class="property">@hashOnly</span> <span class="keyword">and</span> window.history?.pushState?
-		<span class="property">@hashOnly</span> = <span class="literal">true</span> <span class="keyword">if</span> <span class="keyword">not</span> <span class="property">@root</span>? <span class="keyword">and</span> <span class="keyword">not</span> <span class="property">@usePushState</span>
-		<span class="property">@prefix</span> = <span class="string">''</span> <span class="keyword">if</span> <span class="property">@hashOnly</span>
-		getUrl = <span class="literal">null</span>
-		
-		<span class="property">@_handleChange</span> = =&gt;
-			url = getUrl()
-			<span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@currentUrl</span> <span class="keyword">is</span> url
-			<span class="property">@currentUrl</span> = url
-			<span class="property">@dispatch</span> url
-		
-		<span class="keyword">if</span> <span class="property">@usePushState</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> <span class="keyword">not</span> <span class="property">@hashOnly</span> <span class="keyword">and</span> <span class="property">@root</span> <span class="keyword">and</span> url.indexOf(<span class="property">@root</span>) <span class="keyword">isnt</span> <span class="number">0</span>
+      location.href = url
+      <span class="keyword">return</span>
+    
+    notFound = <span class="literal">false</span>
+    <span class="property">@on</span> <span class="string">'error'</span>, (<span class="function"><span class="title">errHandler</span></span> = (err) -&gt;
+      notFound = <span class="literal">true</span> <span class="keyword">if</span> err <span class="keyword">is</span> <span class="string">'notFound'</span>
+    )
+    
+    <span class="keyword">if</span> <span class="property">@usePushState</span>
+      <span class="keyword">if</span> replace
+        history.replaceState {}, <span class="string">''</span>, url
+      <span class="keyword">else</span>
+        history.pushState {}, <span class="string">''</span>, url
+      <span class="property">@currentUrl</span> = url
+      <span class="property">@dispatch</span> url
+    <span class="keyword">else</span>
+      <span class="keyword">if</span> <span class="keyword">not</span> <span class="property">@hashOnly</span>
+        url = url.replace <span class="property">@root</span>, <span class="string">''</span>
+        url = <span class="string">'/'</span> + url <span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">isnt</span> <span class="string">'/'</span>
+      location.hash = <span class="keyword">if</span> url <span class="keyword">is</span> <span class="string">'/'</span> <span class="keyword">then</span> <span class="string">''</span> <span class="keyword">else</span> <span class="string">'#'</span> + url
+    
+    <span class="property">@off</span> <span class="string">'error'</span>, errHandler
+    <span class="keyword">return</span> <span class="keyword">not</span> notFound
+  
+  
+  listen: (options = {}) -&gt;
+    <span class="keyword">if</span> options.stop
+      $(window).<span class="literal">off</span> <span class="string">'popstate hashChange'</span>, <span class="property">@_handleChange</span> <span class="keyword">if</span> <span class="property">@_handleChange</span>
+      <span class="keyword">return</span> <span class="keyword">this</span>
+    
+    <span class="property">@root</span> = options.root <span class="keyword">if</span> options.root?
+    <span class="property">@prefix</span> = options.prefix <span class="keyword">if</span> options.prefix?
+    <span class="property">@hashOnly</span> = options.hashOnly <span class="keyword">if</span> options.hashOnly?
+    <span class="property">@usePushState</span> = <span class="keyword">not</span> <span class="property">@hashOnly</span> <span class="keyword">and</span> window.history?.pushState?
+    <span class="property">@hashOnly</span> = <span class="literal">true</span> <span class="keyword">if</span> <span class="keyword">not</span> <span class="property">@root</span>? <span class="keyword">and</span> <span class="keyword">not</span> <span class="property">@usePushState</span>
+    <span class="property">@prefix</span> = <span class="string">''</span> <span class="keyword">if</span> <span class="property">@hashOnly</span>
+    getUrl = <span class="literal">null</span>
+    
+    <span class="property">@_handleChange</span> = =&gt;
+      url = getUrl()
+      <span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@currentUrl</span> <span class="keyword">is</span> url
+      <span class="property">@currentUrl</span> = url
+      <span class="property">@dispatch</span> url
+    
+    <span class="keyword">if</span> <span class="property">@usePushState</span></pre></div></div>
             
         </li>
         
@@ -175,22 +175,22 @@ portion of the URL.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			if location.hash
-				url = location.pathname.replace(/\/$/, '') + location.hash.replace /^#?\/?/, '/'
-				history.replaceState({}, '', url)
-			
-			getUrl = -&gt; location.pathname + location.search
-			$(window).on 'popstate', @_handleChange
-		else
-			getUrl = =&gt;
-				if location.hash
-					location.hash.replace(/^#\/?/, '/')
-				else
-					location.pathname + location.search
-			$(window).on 'hashchange', @_handleChange
-		
-		@_handleChange()
-		this</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      if location.hash
+        url = location.pathname.replace(/\/$/, '') + location.hash.replace /^#?\/?/, '/'
+        history.replaceState({}, '', url)
+      
+      getUrl = -&gt; location.pathname + location.search
+      $(window).on 'popstate', @_handleChange
+    else
+      getUrl = =&gt;
+        if location.hash
+          location.hash.replace(/^#\/?/, '/')
+        else
+          location.pathname + location.search
+      $(window).on 'hashchange', @_handleChange
+    
+    @_handleChange()
+    this</pre></div></div>
             
         </li>
         
@@ -206,21 +206,21 @@ be used by your application. Use <code>redirect()</code> instead.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	dispatch: (url) -&gt;
-		pathParts = document.createElement(<span class="string">'a'</span>)
-		pathParts.href = url
-		path = pathParts.pathname
-		path = <span class="string">'/'</span> + path <span class="keyword">if</span> path.charAt(<span class="number">0</span>) <span class="keyword">isnt</span> <span class="string">'/'</span>
-		<span class="keyword">return</span> <span class="keyword">if</span> path.indexOf(<span class="property">@prefix</span>) <span class="keyword">isnt</span> <span class="number">0</span>
-		path = path.replace <span class="property">@prefix</span>, <span class="string">''</span>
-		req = url: url, path: path, query: parseQuery(pathParts.search)
-		
-		<span class="property">@trigger</span> <span class="string">'change'</span>, [path]
-		
-		routes = <span class="property">@routes</span>.filter (route) -&gt; route.match path
-		callbacks = []
-		
-		routes.forEach (route) =&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  dispatch: (url) -&gt;
+    pathParts = document.createElement(<span class="string">'a'</span>)
+    pathParts.href = url
+    path = pathParts.pathname
+    path = <span class="string">'/'</span> + path <span class="keyword">if</span> path.charAt(<span class="number">0</span>) <span class="keyword">isnt</span> <span class="string">'/'</span>
+    <span class="keyword">return</span> <span class="keyword">if</span> path.indexOf(<span class="property">@prefix</span>) <span class="keyword">isnt</span> <span class="number">0</span>
+    path = path.replace <span class="property">@prefix</span>, <span class="string">''</span>
+    req = url: url, path: path, query: parseQuery(pathParts.search)
+    
+    <span class="property">@trigger</span> <span class="string">'change'</span>, [path]
+    
+    routes = <span class="property">@routes</span>.filter (route) -&gt; route.match path
+    callbacks = []
+    
+    routes.forEach (route) =&gt;</pre></div></div>
             
         </li>
         
@@ -235,15 +235,15 @@ be used by your application. Use <code>redirect()</code> instead.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			callbacks.push (req, next) -&gt;
-				req.params = route.params
-				next()
-			
-			<span class="keyword">for</span> key, value <span class="keyword">of</span> route.params
-				<span class="keyword">continue</span> <span class="keyword">unless</span> <span class="property">@params</span>[key]
-				callbacks.push <span class="property">@params</span>[key]...
-			
-			callbacks.push route.callback</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      callbacks.push (req, next) -&gt;
+        req.params = route.params
+        next()
+      
+      <span class="keyword">for</span> key, value <span class="keyword">of</span> route.params
+        <span class="keyword">continue</span> <span class="keyword">unless</span> <span class="property">@params</span>[key]
+        callbacks.push <span class="property">@params</span>[key]...
+      
+      callbacks.push route.callback</pre></div></div>
             
         </li>
         
@@ -258,18 +258,18 @@ be used by your application. Use <code>redirect()</code> instead.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="function"><span class="title">next</span></span> = (err) =&gt;
-			<span class="keyword">return</span> <span class="property">@trigger</span>(<span class="string">'error'</span>, [err]) <span class="keyword">if</span> err
-			<span class="keyword">return</span> next(<span class="string">'notFound'</span>) <span class="keyword">if</span> callbacks.length <span class="keyword">is</span> <span class="number">0</span>
-			callback = callbacks.shift()
-			callback(req, next)
-		
-		<span class="keyword">if</span> callbacks.length <span class="keyword">is</span> <span class="number">0</span>
-			next(<span class="string">'notFound'</span>)
-		<span class="keyword">else</span>
-			next()
-		<span class="keyword">this</span>
-				
+            <div class="content"><div class='highlight'><pre>    <span class="function"><span class="title">next</span></span> = (err) =&gt;
+      <span class="keyword">return</span> <span class="property">@trigger</span>(<span class="string">'error'</span>, [err]) <span class="keyword">if</span> err
+      <span class="keyword">return</span> next(<span class="string">'notFound'</span>) <span class="keyword">if</span> callbacks.length <span class="keyword">is</span> <span class="number">0</span>
+      callback = callbacks.shift()
+      callback(req, next)
+    
+    <span class="keyword">if</span> callbacks.length <span class="keyword">is</span> <span class="number">0</span>
+      next(<span class="string">'notFound'</span>)
+    <span class="keyword">else</span>
+      next()
+    <span class="keyword">this</span>
+        
 
 chip.Router = Router</pre></div></div>
             
@@ -287,12 +287,12 @@ chip.Router = Router</pre></div></div>
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Route</span></span>
-	
-	constructor: (path, callback) -&gt;
-		<span class="property">@path</span> = path
-		<span class="property">@callback</span> = callback
-		<span class="property">@keys</span> = []
-		<span class="property">@expr</span> = parsePath path, <span class="property">@keys</span></pre></div></div>
+  
+  constructor: (path, callback) -&gt;
+    <span class="property">@path</span> = path
+    <span class="property">@callback</span> = callback
+    <span class="property">@keys</span> = []
+    <span class="property">@expr</span> = parsePath path, <span class="property">@keys</span></pre></div></div>
             
         </li>
         
@@ -307,19 +307,19 @@ chip.Router = Router</pre></div></div>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	match: (path) -&gt;
-		<span class="keyword">return</span> <span class="literal">false</span> <span class="keyword">unless</span> (match = <span class="property">@expr</span>.exec path)
-		<span class="property">@params</span> = {}
-		
-		<span class="keyword">for</span> value, i <span class="keyword">in</span> match
-			<span class="keyword">continue</span> <span class="keyword">if</span> i <span class="keyword">is</span> <span class="number">0</span>
-			key = <span class="property">@keys</span>[i - <span class="number">1</span>]
-			value = decodeURIComponent(value) <span class="keyword">if</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'string'</span>
-			key = <span class="string">'*'</span> <span class="keyword">unless</span> key
-			<span class="property">@params</span>[key] = value
-			
-		<span class="literal">true</span>
-	
+            <div class="content"><div class='highlight'><pre>  match: (path) -&gt;
+    <span class="keyword">return</span> <span class="literal">false</span> <span class="keyword">unless</span> (match = <span class="property">@expr</span>.exec path)
+    <span class="property">@params</span> = {}
+    
+    <span class="keyword">for</span> value, i <span class="keyword">in</span> match
+      <span class="keyword">continue</span> <span class="keyword">if</span> i <span class="keyword">is</span> <span class="number">0</span>
+      key = <span class="property">@keys</span>[i - <span class="number">1</span>]
+      value = decodeURIComponent(value) <span class="keyword">if</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'string'</span>
+      key = <span class="string">'*'</span> <span class="keyword">unless</span> key
+      <span class="property">@params</span>[key] = value
+      
+    <span class="literal">true</span>
+  
 
 chip.Route = Route</pre></div></div>
             
@@ -339,28 +339,28 @@ contain <code>[&quot;id&quot;]</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>parsePath = (path, keys) -&gt;
-	return path if path instanceof RegExp
-	path = '(' + path.join('|') + ')' if Array.isArray path
-	
-	path = path
-		.concat('/?')
-		.replace(/\/\(/g, '(?:/')
-		.replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?(\*)?/g, (_, slash, format, key, capture, optional, star) -&gt;
-			keys.push key
-			slash = slash or ''
-			expr = ''
-			expr += slash unless optional
-			expr += '(?:'
-			expr += slash if optional
-			expr += format or ''
-			expr += capture or (format and '([^/.]+?)' or '([^/]+?)') + ')'
-			expr += optional or ''
-			expr += '(/*)?' if star
-			expr
-		)
-		.replace(/([\/.])/g, '\\$1')
-		.replace(/\*/g, '(.*)')
-	return new RegExp('^' + path + '$', 'i')</pre></div></div>
+  return path if path instanceof RegExp
+  path = '(' + path.join('|') + ')' if Array.isArray path
+  
+  path = path
+    .concat('/?')
+    .replace(/\/\(/g, '(?:/')
+    .replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?(\*)?/g, (_, slash, format, key, capture, optional, star) -&gt;
+      keys.push key
+      slash = slash or ''
+      expr = ''
+      expr += slash unless optional
+      expr += '(?:'
+      expr += slash if optional
+      expr += format or ''
+      expr += capture or (format and '([^/.]+?)' or '([^/]+?)') + ')'
+      expr += optional or ''
+      expr += '(/*)?' if star
+      expr
+    )
+    .replace(/([\/.])/g, '\\$1')
+    .replace(/\*/g, '(.*)')
+  return new RegExp('^' + path + '$', 'i')</pre></div></div>
             
         </li>
         
@@ -376,14 +376,14 @@ contain <code>[&quot;id&quot;]</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="function"><span class="title">parseQuery</span></span> = (search) -&gt;
-	query = {}
-	<span class="keyword">return</span> query <span class="keyword">if</span> search <span class="keyword">is</span> <span class="string">''</span>
-	
-	search.replace(<span class="regexp">/^\?/</span>, <span class="string">''</span>).split(<span class="string">'&amp;'</span>).forEach (keyValue) -&gt;
-		[key, value] = keyValue.split(<span class="string">'='</span>)
-		query[decodeURIComponent(key)] = decodeURIComponent(value)
-	
-	query</pre></div></div>
+  query = {}
+  <span class="keyword">return</span> query <span class="keyword">if</span> search <span class="keyword">is</span> <span class="string">''</span>
+  
+  search.replace(<span class="regexp">/^\?/</span>, <span class="string">''</span>).split(<span class="string">'&amp;'</span>).forEach (keyValue) -&gt;
+    [key, value] = keyValue.split(<span class="string">'='</span>)
+    query[decodeURIComponent(key)] = decodeURIComponent(value)
+  
+  query</pre></div></div>
             
         </li>
         

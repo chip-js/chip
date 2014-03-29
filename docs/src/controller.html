@@ -39,8 +39,8 @@
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Controller</span></span>
-	
-	constructor: -&gt;</pre></div></div>
+  
+  constructor: -&gt;</pre></div></div>
             
         </li>
         
@@ -55,7 +55,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="property">@_observers</span> = []</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="property">@_observers</span> = []</pre></div></div>
             
         </li>
         
@@ -72,14 +72,14 @@ the value in the expression changes. An expression can be as simple as <code>nam
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	watch: (expr, skipTriggerImmediately, callback) -&gt;
-		<span class="keyword">if</span> Array.isArray(expr)
-			<span class="keyword">if</span> <span class="keyword">typeof</span> skipTriggerImmediately <span class="keyword">is</span> <span class="string">'function'</span>
-				callback = skipTriggerImmediately
-				skipTriggerImmediately = <span class="literal">false</span>
+            <div class="content"><div class='highlight'><pre>  watch: (expr, skipTriggerImmediately, callback) -&gt;
+    <span class="keyword">if</span> Array.isArray(expr)
+      <span class="keyword">if</span> <span class="keyword">typeof</span> skipTriggerImmediately <span class="keyword">is</span> <span class="string">'function'</span>
+        callback = skipTriggerImmediately
+        skipTriggerImmediately = <span class="literal">false</span>
 
-			origCallback = callback
-			calledThisRound = <span class="literal">false</span></pre></div></div>
+      origCallback = callback
+      calledThisRound = <span class="literal">false</span></pre></div></div>
             
         </li>
         
@@ -94,25 +94,25 @@ the value in the expression changes. An expression can be as simple as <code>nam
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="function"><span class="title">callback</span></span> = -&gt;
-				<span class="keyword">return</span> <span class="keyword">if</span> calledThisRound
-				calledThisRound = <span class="literal">true</span>
-				setTimeout -&gt; calledThisRound = <span class="literal">false</span>
-				values = observers.map (observer) -&gt; observer.getter()
-				origCallback values...
+            <div class="content"><div class='highlight'><pre>      <span class="function"><span class="title">callback</span></span> = -&gt;
+        <span class="keyword">return</span> <span class="keyword">if</span> calledThisRound
+        calledThisRound = <span class="literal">true</span>
+        setTimeout -&gt; calledThisRound = <span class="literal">false</span>
+        values = observers.map (observer) -&gt; observer.getter()
+        origCallback values...
 
-			observers = expr.map (expr) =&gt;
-				<span class="property">@watch</span>(expr, <span class="literal">true</span>, callback)
-			
-			<span class="keyword">unless</span> skipTriggerImmediately
-				callback()
-			
-			<span class="keyword">return</span> observers
-		
-		<span class="keyword">if</span> <span class="keyword">typeof</span> expr <span class="keyword">is</span> <span class="string">'function'</span>
-			getter = expr
-		<span class="keyword">else</span>
-			getter = Controller.createBoundFunction(<span class="keyword">this</span>, expr)</pre></div></div>
+      observers = expr.map (expr) =&gt;
+        <span class="property">@watch</span>(expr, <span class="literal">true</span>, callback)
+      
+      <span class="keyword">unless</span> skipTriggerImmediately
+        callback()
+      
+      <span class="keyword">return</span> observers
+    
+    <span class="keyword">if</span> <span class="keyword">typeof</span> expr <span class="keyword">is</span> <span class="string">'function'</span>
+      getter = expr
+    <span class="keyword">else</span>
+      getter = Controller.createBoundFunction(<span class="keyword">this</span>, expr)</pre></div></div>
             
         </li>
         
@@ -127,10 +127,10 @@ the value in the expression changes. An expression can be as simple as <code>nam
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		observer = Observer.add getter, skipTriggerImmediately, callback
-		observer.expr = expr
-		<span class="property">@_observers</span>.push observer
-		observer</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    observer = Observer.add getter, skipTriggerImmediately, callback
+    observer.expr = expr
+    <span class="property">@_observers</span>.push observer
+    observer</pre></div></div>
             
         </li>
         
@@ -145,13 +145,13 @@ the value in the expression changes. An expression can be as simple as <code>nam
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	unwatch: (expr, callback) -&gt;
-		<span class="property">@_observers</span>.some (observer, index) =&gt;
-			<span class="keyword">if</span> observer.expr <span class="keyword">is</span> expr <span class="keyword">and</span> observer.callback <span class="keyword">is</span> callback
-				<span class="property">@_observers</span>.splice index, <span class="number">1</span>
-				<span class="literal">true</span>
-			<span class="keyword">else</span>
-				<span class="literal">false</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  unwatch: (expr, callback) -&gt;
+    <span class="property">@_observers</span>.some (observer, index) =&gt;
+      <span class="keyword">if</span> observer.expr <span class="keyword">is</span> expr <span class="keyword">and</span> observer.callback <span class="keyword">is</span> callback
+        <span class="property">@_observers</span>.splice index, <span class="number">1</span>
+        <span class="literal">true</span>
+      <span class="keyword">else</span>
+        <span class="literal">false</span></pre></div></div>
             
         </li>
         
@@ -166,8 +166,8 @@ the value in the expression changes. An expression can be as simple as <code>nam
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	eval: (expr) -&gt;
-		Controller.createFunction(expr).call(<span class="keyword">this</span>)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  eval: (expr) -&gt;
+    Controller.createFunction(expr).call(<span class="keyword">this</span>)</pre></div></div>
             
         </li>
         
@@ -182,10 +182,10 @@ the value in the expression changes. An expression can be as simple as <code>nam
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	evalSetter: (expr, value) -&gt;
-		<span class="keyword">return</span> <span class="property">@passthrough</span>().evalSetter(expr, value) <span class="keyword">if</span> <span class="property">@passthrough</span>() <span class="keyword">isnt</span> <span class="keyword">this</span>
-		expr = expr.replace(<span class="regexp">/(\s*\||$)/</span>, <span class="string">' = value$1'</span>)
-		Controller.createFunction(expr, [<span class="string">'value'</span>]).call(<span class="keyword">this</span>, value)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  evalSetter: (expr, value) -&gt;
+    <span class="keyword">return</span> <span class="property">@passthrough</span>().evalSetter(expr, value) <span class="keyword">if</span> <span class="property">@passthrough</span>() <span class="keyword">isnt</span> <span class="keyword">this</span>
+    expr = expr.replace(<span class="regexp">/(\s*\||$)/</span>, <span class="string">' = value$1'</span>)
+    Controller.createFunction(expr, [<span class="string">'value'</span>]).call(<span class="keyword">this</span>, value)</pre></div></div>
             
         </li>
         
@@ -206,8 +206,8 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	getBoundEval: (expr, extraArgNames...) -&gt;
-		Controller.createBoundFunction(<span class="keyword">this</span>, expr, extraArgNames)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  getBoundEval: (expr, extraArgNames...) -&gt;
+    Controller.createBoundFunction(<span class="keyword">this</span>, expr, extraArgNames)</pre></div></div>
             
         </li>
         
@@ -222,9 +222,9 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	redirect: (url, replace = <span class="literal">false</span>) -&gt;
-		<span class="property">@app</span>.redirect(url, replace)
-		<span class="keyword">this</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  redirect: (url, replace = <span class="literal">false</span>) -&gt;
+    <span class="property">@app</span>.redirect(url, replace)
+    <span class="keyword">this</span></pre></div></div>
             
         </li>
         
@@ -239,8 +239,8 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	cloneValue: (property) -&gt;
-		compare.clone @[property]</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  cloneValue: (property) -&gt;
+    compare.clone @[property]</pre></div></div>
             
         </li>
         
@@ -255,16 +255,16 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	closeController: -&gt;
-		<span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@_closed</span>
-		<span class="property">@_closed</span> = <span class="literal">true</span>
-		<span class="property">@beforeClose</span>() <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'beforeClose'</span>)
-		<span class="keyword">if</span> <span class="property">@_observers</span>
-			<span class="keyword">for</span> observer <span class="keyword">in</span> <span class="property">@_observers</span>
-				observer.close()
-			<span class="property">@_observers</span>.length = <span class="number">0</span>
-		<span class="property">@onClose</span>() <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'onClose'</span>)
-		<span class="keyword">return</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  closeController: -&gt;
+    <span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@_closed</span>
+    <span class="property">@_closed</span> = <span class="literal">true</span>
+    <span class="property">@beforeClose</span>() <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'beforeClose'</span>)
+    <span class="keyword">if</span> <span class="property">@_observers</span>
+      <span class="keyword">for</span> observer <span class="keyword">in</span> <span class="property">@_observers</span>
+        observer.close()
+      <span class="property">@_observers</span>.length = <span class="number">0</span>
+    <span class="property">@onClose</span>() <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'onClose'</span>)
+    <span class="keyword">return</span></pre></div></div>
             
         </li>
         
@@ -279,26 +279,26 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	sync: (later) -&gt;
-		Observer.sync(later)
-		<span class="keyword">if</span> <span class="keyword">typeof</span> later <span class="keyword">is</span> <span class="string">'function'</span>
-			setTimeout later
-		<span class="keyword">this</span>
-	
-	
-	runFilter: (value, filterName, args...) -&gt;
-		Filter.runFilter(<span class="keyword">this</span>, filterName, value, args...)
-	
-	
-	runValueFilter: (value, currentValue, filterName, args...) -&gt;
-		Filter.runValueFilter(<span class="keyword">this</span>, filterName, value, currentValue, args...)
-	
-	
-	passthrough: (value) -&gt;
-		<span class="keyword">if</span> arguments.length
-			<span class="property">@_passthrough</span> = value
-		<span class="keyword">else</span>
-			<span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'_passthrough'</span>) <span class="keyword">then</span> <span class="property">@_passthrough</span> <span class="keyword">else</span> <span class="keyword">this</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  sync: (later) -&gt;
+    Observer.sync(later)
+    <span class="keyword">if</span> <span class="keyword">typeof</span> later <span class="keyword">is</span> <span class="string">'function'</span>
+      setTimeout later
+    <span class="keyword">this</span>
+  
+  
+  runFilter: (value, filterName, args...) -&gt;
+    Filter.runFilter(<span class="keyword">this</span>, filterName, value, args...)
+  
+  
+  runValueFilter: (value, currentValue, filterName, args...) -&gt;
+    Filter.runValueFilter(<span class="keyword">this</span>, filterName, value, currentValue, args...)
+  
+  
+  passthrough: (value) -&gt;
+    <span class="keyword">if</span> arguments.length
+      <span class="property">@_passthrough</span> = value
+    <span class="keyword">else</span>
+      <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'_passthrough'</span>) <span class="keyword">then</span> <span class="property">@_passthrough</span> <span class="keyword">else</span> <span class="keyword">this</span></pre></div></div>
             
         </li>
         
@@ -315,10 +315,10 @@ to this array if there are global variables you wish to use in expressions. E.g.
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@keywords</span>: [<span class="string">'this'</span>, <span class="string">'window'</span>, <span class="string">'$'</span>, <span class="string">'true'</span>, <span class="string">'false'</span>]
-	
-	<span class="property">@filters</span>: {}
-	<span class="property">@exprCache</span>: {}</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@keywords</span>: [<span class="string">'this'</span>, <span class="string">'window'</span>, <span class="string">'$'</span>, <span class="string">'true'</span>, <span class="string">'false'</span>]
+  
+  <span class="property">@filters</span>: {}
+  <span class="property">@exprCache</span>: {}</pre></div></div>
             
         </li>
         
@@ -335,7 +335,7 @@ will always return a single function with the body <code>return this.name</code>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@createFunction</span>: (expr, extraArgNames = []) -&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@createFunction</span>: (expr, extraArgNames = []) -&gt;</pre></div></div>
             
         </li>
         
@@ -350,8 +350,8 @@ will always return a single function with the body <code>return this.name</code>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		func = <span class="property">@exprCache</span>[expr]
-		<span class="keyword">return</span> func <span class="keyword">if</span> func</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    func = <span class="property">@exprCache</span>[expr]
+    <span class="keyword">return</span> func <span class="keyword">if</span> func</pre></div></div>
             
         </li>
         
@@ -366,9 +366,9 @@ will always return a single function with the body <code>return this.name</code>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		normalizedExpr = normalizeExpression expr, extraArgNames
-		
-		<span class="keyword">try</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>    normalizedExpr = normalizeExpression expr, extraArgNames
+    
+    <span class="keyword">try</span></pre></div></div>
             
         </li>
         
@@ -385,8 +385,8 @@ Caches the function for later</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			func = <span class="property">@exprCache</span>[expr] = Function(extraArgNames..., normalizedExpr)
-		<span class="keyword">catch</span> e</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      func = <span class="property">@exprCache</span>[expr] = Function(extraArgNames..., normalizedExpr)
+    <span class="keyword">catch</span> e</pre></div></div>
             
         </li>
         
@@ -401,9 +401,9 @@ Caches the function for later</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">throw</span> <span class="keyword">new</span> Error e.message + <span class="string">' in observer binding:\n`'</span> + expr + <span class="string">'`\n'</span> +
-			<span class="string">'Compiled binding:\n'</span> + normalizedExpr
-		func</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">throw</span> <span class="keyword">new</span> Error e.message + <span class="string">' in observer binding:\n`'</span> + expr + <span class="string">'`\n'</span> +
+      <span class="string">'Compiled binding:\n'</span> + normalizedExpr
+    func</pre></div></div>
             
         </li>
         
@@ -419,9 +419,9 @@ Caches the function for later</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@createBoundFunction</span>: (controller, expr, extraArgNames) -&gt;
-		func = Controller.createFunction(expr, extraArgNames)
-		func.bind(controller)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@createBoundFunction</span>: (controller, expr, extraArgNames) -&gt;
+    func = Controller.createFunction(expr, extraArgNames)
+    func.bind(controller)</pre></div></div>
             
         </li>
         
@@ -437,13 +437,13 @@ Caches the function for later</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>$.fn.<span class="function"><span class="title">controller</span></span> = (passthrough) -&gt;
-	element = <span class="keyword">this</span>
-	<span class="keyword">while</span> element.length
-		controller = element.data(<span class="string">'controller'</span>)
-		<span class="keyword">if</span> controller
-			<span class="keyword">return</span> <span class="keyword">if</span> passthrough <span class="keyword">then</span> controller.passthrough() <span class="keyword">else</span> controller
-		element = element.parent()
-	<span class="literal">null</span></pre></div></div>
+  element = <span class="keyword">this</span>
+  <span class="keyword">while</span> element.length
+    controller = element.data(<span class="string">'controller'</span>)
+    <span class="keyword">if</span> controller
+      <span class="keyword">return</span> <span class="keyword">if</span> passthrough <span class="keyword">then</span> controller.passthrough() <span class="keyword">else</span> controller
+    element = element.parent()
+  <span class="literal">null</span></pre></div></div>
             
         </li>
         
@@ -460,14 +460,14 @@ called when an element with the event ‘remove’, is removed from the DOM. Man
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="keyword">unless</span> $.widget
-	$.<span class="function"><span class="title">cleanData</span></span> = ((orig) -&gt;
-		(elems) -&gt;
-			<span class="keyword">for</span> elem <span class="keyword">in</span> elems
-				<span class="keyword">try</span>
-					$(elem).triggerHandler(<span class="string">'remove'</span>)
-				<span class="keyword">catch</span> e
-			orig elems
-	)($.cleanData)</pre></div></div>
+  $.<span class="function"><span class="title">cleanData</span></span> = ((orig) -&gt;
+    (elems) -&gt;
+      <span class="keyword">for</span> elem <span class="keyword">in</span> elems
+        <span class="keyword">try</span>
+          $(elem).triggerHandler(<span class="string">'remove'</span>)
+        <span class="keyword">catch</span> e
+      orig elems
+  )($.cleanData)</pre></div></div>
             
         </li>
         
@@ -503,10 +503,10 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="function"><span class="title">normalizeExpression</span></span> = (expr, extraArgNames) -&gt;
-	orig = expr
-	options =
-		references: <span class="number">0</span>
-		ignore: Controller.keywords.concat(extraArgNames) <span class="comment"># Ignores keywords and provided argument names</span></pre></div></div>
+  orig = expr
+  options =
+    references: <span class="number">0</span>
+    ignore: Controller.keywords.concat(extraArgNames) <span class="comment"># Ignores keywords and provided argument names</span></pre></div></div>
             
         </li>
         
@@ -521,10 +521,10 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	strings = []
-	expr = expr.replace quoteExpr, (str, quote) -&gt;
-		strings.push str
-		<span class="keyword">return</span> quote + quote <span class="comment"># placeholder for the string</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  strings = []
+  expr = expr.replace quoteExpr, (str, quote) -&gt;
+    strings.push str
+    <span class="keyword">return</span> quote + quote <span class="comment"># placeholder for the string</span></pre></div></div>
             
         </li>
         
@@ -539,13 +539,13 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	expr = expr.replace pipeExpr, (match, orIndicator) -&gt;
-		<span class="keyword">if</span> orIndicator
-			<span class="keyword">return</span> match
-		<span class="keyword">return</span> <span class="string">'@@@'</span>
-	
-	filters = expr.split <span class="regexp">/\s*@@@\s*/</span>
-	expr = filters.shift()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  expr = expr.replace pipeExpr, (match, orIndicator) -&gt;
+    <span class="keyword">if</span> orIndicator
+      <span class="keyword">return</span> match
+    <span class="keyword">return</span> <span class="string">'@@@'</span>
+  
+  filters = expr.split <span class="regexp">/\s*@@@\s*/</span>
+  expr = filters.shift()</pre></div></div>
             
         </li>
         
@@ -560,40 +560,40 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="keyword">if</span> filters.length
-		<span class="keyword">if</span> setterExpr.test(expr)
-			[ setter, value ] = expr.split(<span class="string">' = '</span>)
-			setter = processProperties(setter, options).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
-			value = processProperties(value, options)
-		<span class="keyword">else</span>
-			setter = <span class="string">''</span>
-			value = processProperties(expr, options)
-		
-		strIndex = expr.match(quoteExpr)?.length <span class="keyword">or</span> <span class="number">0</span>
-		filters.forEach (filter) -&gt;
-			args = filter.split(argSeparator)
-			strings.splice strIndex++, <span class="number">0</span>, <span class="string">"'"</span> + args[<span class="number">0</span>] + <span class="string">"'"</span>
-			strIndex += filter.match(quoteExpr)?.length <span class="keyword">or</span> <span class="number">0</span>
-			args[<span class="number">0</span>] = <span class="string">"''"</span>
-			args = args.map (arg) -&gt;
-				processProperties arg, options
-			<span class="keyword">if</span> setter
-				getter = setter.split(<span class="string">' : '</span>).pop().split(<span class="string">' = '</span>).shift()
-				value = <span class="string">"this.runValueFilter(<span class="subst">#{value}</span>, <span class="subst">#{getter}</span>, <span class="subst">#{args.join(', ')}</span>)"</span>
-			<span class="keyword">else</span>
-				value = <span class="string">"this.runFilter(<span class="subst">#{value}</span>, <span class="subst">#{args.join(', ')}</span>)"</span>
-		
-		expr = setter + value
-	<span class="keyword">else</span>
-		<span class="keyword">if</span> setterExpr.test(expr)
-			[ setter, value ] = expr.split(<span class="string">' = '</span>)
-			setter = processProperties(setter, options).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
-			value = processProperties(value, options)
-			expr = setter + value
-		<span class="keyword">else</span>
-			expr = processProperties(expr, options)
-	
-	expr = <span class="string">'return '</span> + expr</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> filters.length
+    <span class="keyword">if</span> setterExpr.test(expr)
+      [ setter, value ] = expr.split(<span class="string">' = '</span>)
+      setter = processProperties(setter, options).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
+      value = processProperties(value, options)
+    <span class="keyword">else</span>
+      setter = <span class="string">''</span>
+      value = processProperties(expr, options)
+    
+    strIndex = expr.match(quoteExpr)?.length <span class="keyword">or</span> <span class="number">0</span>
+    filters.forEach (filter) -&gt;
+      args = filter.split(argSeparator)
+      strings.splice strIndex++, <span class="number">0</span>, <span class="string">"'"</span> + args[<span class="number">0</span>] + <span class="string">"'"</span>
+      strIndex += filter.match(quoteExpr)?.length <span class="keyword">or</span> <span class="number">0</span>
+      args[<span class="number">0</span>] = <span class="string">"''"</span>
+      args = args.map (arg) -&gt;
+        processProperties arg, options
+      <span class="keyword">if</span> setter
+        getter = setter.split(<span class="string">' : '</span>).pop().split(<span class="string">' = '</span>).shift()
+        value = <span class="string">"this.runValueFilter(<span class="subst">#{value}</span>, <span class="subst">#{getter}</span>, <span class="subst">#{args.join(', ')}</span>)"</span>
+      <span class="keyword">else</span>
+        value = <span class="string">"this.runFilter(<span class="subst">#{value}</span>, <span class="subst">#{args.join(', ')}</span>)"</span>
+    
+    expr = setter + value
+  <span class="keyword">else</span>
+    <span class="keyword">if</span> setterExpr.test(expr)
+      [ setter, value ] = expr.split(<span class="string">' = '</span>)
+      setter = processProperties(setter, options).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
+      value = processProperties(value, options)
+      expr = setter + value
+    <span class="keyword">else</span>
+      expr = processProperties(expr, options)
+  
+  expr = <span class="string">'return '</span> + expr</pre></div></div>
             
         </li>
         
@@ -608,8 +608,8 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	expr = expr.replace emptyQuoteExpr, -&gt;
-		<span class="keyword">return</span> strings.shift()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  expr = expr.replace emptyQuoteExpr, -&gt;
+    <span class="keyword">return</span> strings.shift()</pre></div></div>
             
         </li>
         
@@ -624,23 +624,23 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="keyword">if</span> options.references
-		refs = []
-		<span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">1.</span>.options.references]
-			refs.push <span class="string">'_ref'</span> + i
-		expr = <span class="string">'var '</span> + refs.join(<span class="string">', '</span>) + <span class="string">';\n'</span> + expr
-		
-	expr
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> options.references
+    refs = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">1.</span>.options.references]
+      refs.push <span class="string">'_ref'</span> + i
+    expr = <span class="string">'var '</span> + refs.join(<span class="string">', '</span>) + <span class="string">';\n'</span> + expr
+    
+  expr
 
 
 
 <span class="function"><span class="title">processProperties</span></span> = (expr, options = {}) -&gt;
-	options.references = <span class="number">0</span> <span class="keyword">unless</span> options.references
-	options.currentRef = options.references
-	options.ignore = [] <span class="keyword">unless</span> options.ignore
-	propExpr = <span class="regexp">/((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi</span>
-	currentIndex = <span class="number">0</span>
-	newExpr = <span class="string">''</span></pre></div></div>
+  options.references = <span class="number">0</span> <span class="keyword">unless</span> options.references
+  options.currentRef = options.references
+  options.ignore = [] <span class="keyword">unless</span> options.ignore
+  propExpr = <span class="regexp">/((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi</span>
+  currentIndex = <span class="number">0</span>
+  newExpr = <span class="string">''</span></pre></div></div>
             
         </li>
         
@@ -655,8 +655,8 @@ setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="function"><span class="title">processProperty</span></span> = (match, prefix, objIndicator, propChain, postfix, colonOrParen) -&gt;
-		index = propExpr.lastIndex - match.length</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="function"><span class="title">processProperty</span></span> = (match, prefix, objIndicator, propChain, postfix, colonOrParen) -&gt;
+    index = propExpr.lastIndex - match.length</pre></div></div>
             
         </li>
         
@@ -689,8 +689,8 @@ function. We use <code>colonOrParen</code> and <code>objIndicator</code> to know
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">if</span> objIndicator <span class="keyword">and</span> colonOrParen <span class="keyword">is</span> <span class="string">':'</span>
-			<span class="keyword">return</span> match</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> objIndicator <span class="keyword">and</span> colonOrParen <span class="keyword">is</span> <span class="string">':'</span>
+      <span class="keyword">return</span> match</pre></div></div>
             
         </li>
         
@@ -705,28 +705,28 @@ function. We use <code>colonOrParen</code> and <code>objIndicator</code> to know
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		continuation = prefix <span class="keyword">is</span> <span class="string">'.'</span>
-		<span class="keyword">if</span> continuation
-			propChain = <span class="string">'.'</span> + propChain
-			prefix = <span class="string">''</span>
-		
-		breaks = <span class="regexp">/\.|\[/g</span>
-		index = <span class="number">0</span>
-		parts = []
-		<span class="keyword">while</span> (match = breaks.exec propChain)
-			<span class="keyword">continue</span> <span class="keyword">if</span> breaks.lastIndex <span class="keyword">is</span> <span class="number">1</span>
-			parts.push propChain.slice(index, breaks.lastIndex - <span class="number">1</span>)
-			index = breaks.lastIndex - <span class="number">1</span>
-		parts.push propChain.slice(index)
-		newChain = <span class="string">''</span>
-		
-		<span class="keyword">if</span> parts.length <span class="keyword">is</span> <span class="number">1</span> <span class="keyword">and</span> <span class="keyword">not</span> continuation <span class="keyword">and</span> <span class="keyword">not</span> colonOrParen
-			part = parts[<span class="number">0</span>]
-			newChain = <span class="keyword">if</span> options.ignore.indexOf(part) <span class="keyword">is</span> -<span class="number">1</span> <span class="keyword">then</span> <span class="string">'this.'</span> + part <span class="keyword">else</span> part
-		<span class="keyword">else</span>
-			newChain += <span class="string">'('</span> <span class="keyword">unless</span> continuation
-			
-			parts.forEach (part, partIndex) -&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    continuation = prefix <span class="keyword">is</span> <span class="string">'.'</span>
+    <span class="keyword">if</span> continuation
+      propChain = <span class="string">'.'</span> + propChain
+      prefix = <span class="string">''</span>
+    
+    breaks = <span class="regexp">/\.|\[/g</span>
+    index = <span class="number">0</span>
+    parts = []
+    <span class="keyword">while</span> (match = breaks.exec propChain)
+      <span class="keyword">continue</span> <span class="keyword">if</span> breaks.lastIndex <span class="keyword">is</span> <span class="number">1</span>
+      parts.push propChain.slice(index, breaks.lastIndex - <span class="number">1</span>)
+      index = breaks.lastIndex - <span class="number">1</span>
+    parts.push propChain.slice(index)
+    newChain = <span class="string">''</span>
+    
+    <span class="keyword">if</span> parts.length <span class="keyword">is</span> <span class="number">1</span> <span class="keyword">and</span> <span class="keyword">not</span> continuation <span class="keyword">and</span> <span class="keyword">not</span> colonOrParen
+      part = parts[<span class="number">0</span>]
+      newChain = <span class="keyword">if</span> options.ignore.indexOf(part) <span class="keyword">is</span> -<span class="number">1</span> <span class="keyword">then</span> <span class="string">'this.'</span> + part <span class="keyword">else</span> part
+    <span class="keyword">else</span>
+      newChain += <span class="string">'('</span> <span class="keyword">unless</span> continuation
+      
+      parts.forEach (part, partIndex) -&gt;</pre></div></div>
             
         </li>
         
@@ -741,12 +741,12 @@ function. We use <code>colonOrParen</code> and <code>objIndicator</code> to know
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>				<span class="keyword">if</span> partIndex <span class="keyword">isnt</span> parts.length - <span class="number">1</span>
-					newChain += processPart(options, part, partIndex, continuation)
-				<span class="keyword">else</span>
-					<span class="keyword">if</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'('</span> <span class="keyword">and</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'['</span>
-						newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>)"</span>
-					<span class="keyword">else</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> partIndex <span class="keyword">isnt</span> parts.length - <span class="number">1</span>
+          newChain += processPart(options, part, partIndex, continuation)
+        <span class="keyword">else</span>
+          <span class="keyword">if</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'('</span> <span class="keyword">and</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'['</span>
+            newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>)"</span>
+          <span class="keyword">else</span></pre></div></div>
             
         </li>
         
@@ -762,44 +762,44 @@ Finds the end of the function and processes the arguments</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>						open = colonOrParen
-						close = <span class="keyword">if</span> colonOrParen <span class="keyword">is</span> <span class="string">'('</span> <span class="keyword">then</span> <span class="string">')'</span> <span class="keyword">else</span> <span class="string">']'</span>
-						parenCount = <span class="number">1</span>
-						startIndex = propExpr.lastIndex
-						endIndex = startIndex - <span class="number">1</span>
-						<span class="keyword">while</span> endIndex++ &lt; expr.length
-							<span class="keyword">switch</span> expr.charAt endIndex
-								<span class="keyword">when</span> open <span class="keyword">then</span> parenCount++
-								<span class="keyword">when</span> close <span class="keyword">then</span> parenCount--
-							<span class="keyword">break</span> <span class="keyword">if</span> parenCount <span class="keyword">is</span> <span class="number">0</span>
-						
-						propExpr.lastIndex = endIndex + <span class="number">1</span>
-						postfix = <span class="string">''</span>
-						part += open + <span class="string">'~~innards~~'</span> + close
-						
-						<span class="keyword">if</span> expr.charAt(endIndex + <span class="number">1</span>) <span class="keyword">is</span> <span class="string">'.'</span>
-							newChain += processPart(options, part, partIndex, continuation)
-						<span class="keyword">else</span> <span class="keyword">if</span> partIndex <span class="keyword">is</span> <span class="number">0</span>
-							newChain += processPart(options, part, partIndex, continuation)
-							newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span>)"</span>
-						<span class="keyword">else</span>
-							newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>)"</span>
-						
-						currentRef = options.currentRef
-						innards = processProperties expr.slice(startIndex, endIndex), options
-						newChain = newChain.replace(<span class="regexp">/~~innards~~/</span>, innards)
-						options.currentRef = currentRef
-		
-		<span class="keyword">return</span> prefix + newChain + postfix
-	
-	
-	<span class="keyword">while</span> (matchArgs = propExpr.exec expr)
-		index = propExpr.lastIndex - matchArgs[<span class="number">0</span>].length
-		newExpr += expr.slice(currentIndex, index) + processProperty matchArgs...
-		currentIndex = propExpr.lastIndex
-	newExpr += expr.slice(currentIndex)
-	
-	newExpr
+            <div class="content"><div class='highlight'><pre>            open = colonOrParen
+            close = <span class="keyword">if</span> colonOrParen <span class="keyword">is</span> <span class="string">'('</span> <span class="keyword">then</span> <span class="string">')'</span> <span class="keyword">else</span> <span class="string">']'</span>
+            parenCount = <span class="number">1</span>
+            startIndex = propExpr.lastIndex
+            endIndex = startIndex - <span class="number">1</span>
+            <span class="keyword">while</span> endIndex++ &lt; expr.length
+              <span class="keyword">switch</span> expr.charAt endIndex
+                <span class="keyword">when</span> open <span class="keyword">then</span> parenCount++
+                <span class="keyword">when</span> close <span class="keyword">then</span> parenCount--
+              <span class="keyword">break</span> <span class="keyword">if</span> parenCount <span class="keyword">is</span> <span class="number">0</span>
+            
+            propExpr.lastIndex = endIndex + <span class="number">1</span>
+            postfix = <span class="string">''</span>
+            part += open + <span class="string">'~~innards~~'</span> + close
+            
+            <span class="keyword">if</span> expr.charAt(endIndex + <span class="number">1</span>) <span class="keyword">is</span> <span class="string">'.'</span>
+              newChain += processPart(options, part, partIndex, continuation)
+            <span class="keyword">else</span> <span class="keyword">if</span> partIndex <span class="keyword">is</span> <span class="number">0</span>
+              newChain += processPart(options, part, partIndex, continuation)
+              newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span>)"</span>
+            <span class="keyword">else</span>
+              newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>)"</span>
+            
+            currentRef = options.currentRef
+            innards = processProperties expr.slice(startIndex, endIndex), options
+            newChain = newChain.replace(<span class="regexp">/~~innards~~/</span>, innards)
+            options.currentRef = currentRef
+    
+    <span class="keyword">return</span> prefix + newChain + postfix
+  
+  
+  <span class="keyword">while</span> (matchArgs = propExpr.exec expr)
+    index = propExpr.lastIndex - matchArgs[<span class="number">0</span>].length
+    newExpr += expr.slice(currentIndex, index) + processProperty matchArgs...
+    currentIndex = propExpr.lastIndex
+  newExpr += expr.slice(currentIndex)
+  
+  newExpr
 
 
 
@@ -818,17 +818,17 @@ Finds the end of the function and processes the arguments</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="keyword">if</span> index <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span> <span class="keyword">not</span> continuation
-		<span class="keyword">if</span> options.ignore.indexOf(part.split(<span class="regexp">/\.|\(/</span>).shift()) <span class="keyword">is</span> -<span class="number">1</span>
-			part = <span class="string">"this.<span class="subst">#{part}</span>"</span>
-		<span class="keyword">else</span>
-			part = <span class="string">"<span class="subst">#{part}</span>"</span>
-	<span class="keyword">else</span>
-		part = <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>"</span>
-	
-	options.currentRef = ++options.references
-	ref = <span class="string">"_ref<span class="subst">#{options.currentRef}</span>"</span>
-	<span class="string">"(<span class="subst">#{ref}</span> = <span class="subst">#{part}</span>) == null ? undefined : "</span>
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> index <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span> <span class="keyword">not</span> continuation
+    <span class="keyword">if</span> options.ignore.indexOf(part.split(<span class="regexp">/\.|\(/</span>).shift()) <span class="keyword">is</span> -<span class="number">1</span>
+      part = <span class="string">"this.<span class="subst">#{part}</span>"</span>
+    <span class="keyword">else</span>
+      part = <span class="string">"<span class="subst">#{part}</span>"</span>
+  <span class="keyword">else</span>
+    part = <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>"</span>
+  
+  options.currentRef = ++options.references
+  ref = <span class="string">"_ref<span class="subst">#{options.currentRef}</span>"</span>
+  <span class="string">"(<span class="subst">#{ref}</span> = <span class="subst">#{part}</span>) == null ? undefined : "</span>
 
 
 chip.Controller = Controller</pre></div></div>

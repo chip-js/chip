@@ -40,9 +40,9 @@ place to register new bind handlers.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Binding</span></span>
-	constructor: (<span class="property">@name</span>, <span class="property">@expr</span>) -&gt;
-	
-	<span class="property">@bindings</span>: []</pre></div></div>
+  constructor: (<span class="property">@name</span>, <span class="property">@expr</span>) -&gt;
+  
+  <span class="property">@bindings</span>: []</pre></div></div>
             
         </li>
         
@@ -78,19 +78,19 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@addBinding</span>: (name, priority, handler) -&gt;
-		<span class="keyword">if</span> <span class="keyword">typeof</span> priority <span class="keyword">is</span> <span class="string">'function'</span>
-			handler = priority
-			priority = <span class="number">0</span>
-		
-		entry =
-			name: name
-			priority: priority
-			handler: handler
-		<span class="property">@bindings</span>[name] = entry
-		<span class="property">@bindings</span>.push entry
-		
-		<span class="property">@bindings</span>.sort (a, b) -&gt; b.priority - a.priority</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addBinding</span>: (name, priority, handler) -&gt;
+    <span class="keyword">if</span> <span class="keyword">typeof</span> priority <span class="keyword">is</span> <span class="string">'function'</span>
+      handler = priority
+      priority = <span class="number">0</span>
+    
+    entry =
+      name: name
+      priority: priority
+      handler: handler
+    <span class="property">@bindings</span>[name] = entry
+    <span class="property">@bindings</span>.push entry
+    
+    <span class="property">@bindings</span>.sort (a, b) -&gt; b.priority - a.priority</pre></div></div>
             
         </li>
         
@@ -108,11 +108,11 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@removeBinding</span>: (name) -&gt;
-		entry = <span class="property">@bindings</span>[name]
-		<span class="keyword">return</span> <span class="keyword">unless</span> entry
-		<span class="keyword">delete</span> <span class="property">@bindings</span>[name]
-		<span class="property">@bindings</span>.splice <span class="property">@bindings</span>.indexOf(entry), <span class="number">1</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@removeBinding</span>: (name) -&gt;
+    entry = <span class="property">@bindings</span>[name]
+    <span class="keyword">return</span> <span class="keyword">unless</span> entry
+    <span class="keyword">delete</span> <span class="property">@bindings</span>[name]
+    <span class="property">@bindings</span>.splice <span class="property">@bindings</span>.indexOf(entry), <span class="number">1</span></pre></div></div>
             
         </li>
         
@@ -130,12 +130,12 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@addEventBinding</span>: (eventName) -&gt;
-		<span class="property">@addBinding</span> eventName, (element, expr, controller) -&gt;
-			element.<span class="literal">on</span> eventName, (event) -&gt;
-				event.preventDefault()
-				<span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
-					controller.eval expr</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addEventBinding</span>: (eventName) -&gt;
+    <span class="property">@addBinding</span> eventName, (element, expr, controller) -&gt;
+      element.<span class="literal">on</span> eventName, (event) -&gt;
+        event.preventDefault()
+        <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
+          controller.eval expr</pre></div></div>
             
         </li>
         
@@ -150,14 +150,14 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@addKeyEventBinding</span>: (name, keyCode, ctrlKey) -&gt;
-		<span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
-			element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
-				<span class="keyword">return</span> <span class="keyword">if</span> ctrlKey? <span class="keyword">and</span> (event.ctrlKey <span class="keyword">isnt</span> ctrlKey <span class="keyword">and</span> event.metaKey <span class="keyword">isnt</span> ctrlKey)
-				<span class="keyword">return</span> <span class="keyword">unless</span> event.keyCode <span class="keyword">is</span> keyCode
-				event.preventDefault()
-				<span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
-					controller.eval expr</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addKeyEventBinding</span>: (name, keyCode, ctrlKey) -&gt;
+    <span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
+      element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
+        <span class="keyword">return</span> <span class="keyword">if</span> ctrlKey? <span class="keyword">and</span> (event.ctrlKey <span class="keyword">isnt</span> ctrlKey <span class="keyword">and</span> event.metaKey <span class="keyword">isnt</span> ctrlKey)
+        <span class="keyword">return</span> <span class="keyword">unless</span> event.keyCode <span class="keyword">is</span> keyCode
+        event.preventDefault()
+        <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
+          controller.eval expr</pre></div></div>
             
         </li>
         
@@ -178,14 +178,14 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@addAttributeBinding</span>: (name) -&gt;
-		<span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
-			controller.watch expr, (value) -&gt;
-				<span class="keyword">if</span> value?
-					element.attr name, value
-					element.trigger name + <span class="string">'Changed'</span>
-				<span class="keyword">else</span>
-					element.removeAttr name</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeBinding</span>: (name) -&gt;
+    <span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
+      controller.watch expr, (value) -&gt;
+        <span class="keyword">if</span> value?
+          element.attr name, value
+          element.trigger name + <span class="string">'Changed'</span>
+        <span class="keyword">else</span>
+          element.removeAttr name</pre></div></div>
             
         </li>
         
@@ -201,10 +201,10 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@addAttributeToggleBinding</span>: (name) -&gt;
-		<span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
-			controller.watch expr, (value) -&gt;
-				element.attr name, value <span class="keyword">and</span> <span class="literal">true</span> <span class="keyword">or</span> <span class="literal">false</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeToggleBinding</span>: (name) -&gt;
+    <span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
+      controller.watch expr, (value) -&gt;
+        element.attr name, value <span class="keyword">and</span> <span class="literal">true</span> <span class="keyword">or</span> <span class="literal">false</span></pre></div></div>
             
         </li>
         
@@ -219,12 +219,12 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	<span class="property">@process</span>: (element, controller) -&gt;
-		<span class="keyword">unless</span> controller <span class="keyword">instanceof</span> Controller
-			<span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'A Controller is required to bind a jQuery element.'</span>
-		
-		parentNode = element.parent().get(<span class="number">0</span>)
-		prefix = controller.app.bindingPrefix</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@process</span>: (element, controller) -&gt;
+    <span class="keyword">unless</span> controller <span class="keyword">instanceof</span> Controller
+      <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'A Controller is required to bind a jQuery element.'</span>
+    
+    parentNode = element.parent().get(<span class="number">0</span>)
+    prefix = controller.app.bindingPrefix</pre></div></div>
             
         </li>
         
@@ -239,20 +239,20 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		attribs = $(element.get(<span class="number">0</span>).attributes).toArray().filter (attr) =&gt;
-			attr.name.indexOf(prefix) <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span>
-				<span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)] <span class="keyword">and</span>
-				attr.value <span class="keyword">isnt</span> <span class="literal">undefined</span> <span class="comment"># Fix for IE7</span>
-		
-		attribs = attribs.map (attr) =&gt;
-			entry = <span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)]
-			name: attr.name
-			value: attr.value
-			priority: entry.priority
-			handler: entry.handler
-		
-		attribs = attribs.sort (a, b) -&gt;
-			b.priority - a.priority</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    attribs = $(element.get(<span class="number">0</span>).attributes).toArray().filter (attr) =&gt;
+      attr.name.indexOf(prefix) <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span>
+        <span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)] <span class="keyword">and</span>
+        attr.value <span class="keyword">isnt</span> <span class="literal">undefined</span> <span class="comment"># Fix for IE7</span>
+    
+    attribs = attribs.map (attr) =&gt;
+      entry = <span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)]
+      name: attr.name
+      value: attr.value
+      priority: entry.priority
+      handler: entry.handler
+    
+    attribs = attribs.sort (a, b) -&gt;
+      b.priority - a.priority</pre></div></div>
             
         </li>
         
@@ -267,8 +267,8 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		<span class="keyword">while</span> attribs.length
-			attr = attribs.shift()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">while</span> attribs.length
+      attr = attribs.shift()</pre></div></div>
             
         </li>
         
@@ -283,7 +283,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">continue</span> <span class="keyword">unless</span> element.attr(attr.name)?</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">continue</span> <span class="keyword">unless</span> element.attr(attr.name)?</pre></div></div>
             
         </li>
         
@@ -299,7 +299,7 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			element.removeAttr(attr.name)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      element.removeAttr(attr.name)</pre></div></div>
             
         </li>
         
@@ -314,7 +314,7 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			newController = attr.handler element, attr.value, controller</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      newController = attr.handler element, attr.value, controller</pre></div></div>
             
         </li>
         
@@ -330,7 +330,7 @@ This is used for chip-if and chip-each for example.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">return</span> <span class="keyword">if</span> element.parent().get(<span class="number">0</span>) <span class="keyword">isnt</span> parentNode</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">return</span> <span class="keyword">if</span> element.parent().get(<span class="number">0</span>) <span class="keyword">isnt</span> parentNode</pre></div></div>
             
         </li>
         
@@ -345,8 +345,8 @@ This is used for chip-if and chip-each for example.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="keyword">if</span> newController <span class="keyword">instanceof</span> Controller <span class="keyword">and</span> newController <span class="keyword">isnt</span> controller
-				controller = newController</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">if</span> newController <span class="keyword">instanceof</span> Controller <span class="keyword">and</span> newController <span class="keyword">isnt</span> controller
+        controller = newController</pre></div></div>
             
         </li>
         
@@ -361,8 +361,8 @@ This is used for chip-if and chip-each for example.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		element.children().each (index, child) =&gt;
-			<span class="property">@process</span> $(child), controller</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    element.children().each (index, child) =&gt;
+      <span class="property">@process</span> $(child), controller</pre></div></div>
             
         </li>
         
@@ -378,8 +378,8 @@ This is used for chip-if and chip-each for example.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>jQuery.fn.<span class="function"><span class="title">bindTo</span></span> = (controller) -&gt;
-	<span class="keyword">if</span> <span class="keyword">this</span>.length <span class="keyword">isnt</span> <span class="number">0</span>
-		Binding.process(<span class="keyword">this</span>, controller)
+  <span class="keyword">if</span> <span class="keyword">this</span>.length <span class="keyword">isnt</span> <span class="number">0</span>
+    Binding.process(<span class="keyword">this</span>, controller)
 
 
 chip.Binding = Binding</pre></div></div>
