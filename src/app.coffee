@@ -122,6 +122,7 @@ class App
       NewController.prototype = options.parent if options.parent
       controller = new NewController()
       controller.parent = options.parent
+      options.parent._children.push controller
       if options.passthrough
         controller.passthrough options.parent.passthrough()
     else

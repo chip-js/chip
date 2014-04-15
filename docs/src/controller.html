@@ -55,7 +55,9 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="property">@_observers</span> = []</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="property">@_observers</span> = []
+    <span class="property">@_children</span> = []
+    <span class="property">@_closed</span> = <span class="literal">false</span></pre></div></div>
             
         </li>
         
@@ -148,6 +150,7 @@ the value in the expression changes. An expression can be as simple as <code>nam
             <div class="content"><div class='highlight'><pre>  unwatch: (expr, callback) -&gt;
     <span class="property">@_observers</span>.some (observer, index) =&gt;
       <span class="keyword">if</span> observer.expr <span class="keyword">is</span> expr <span class="keyword">and</span> observer.callback <span class="keyword">is</span> callback
+        observer.close()
         <span class="property">@_observers</span>.splice index, <span class="number">1</span>
         <span class="literal">true</span>
       <span class="keyword">else</span>
@@ -258,6 +261,13 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
             <div class="content"><div class='highlight'><pre>  closeController: -&gt;
     <span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@_closed</span>
     <span class="property">@_closed</span> = <span class="literal">true</span>
+    
+    <span class="keyword">for</span> child <span class="keyword">in</span> <span class="property">@_children</span>
+      child.parent = <span class="literal">null</span>
+      child.closeController()
+    <span class="keyword">if</span> <span class="property">@parent</span>?._children
+      <span class="property">@parent</span>._children.remove <span class="keyword">this</span>
+
     <span class="property">@beforeClose</span>() <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'beforeClose'</span>)
     <span class="keyword">if</span> <span class="property">@_observers</span>
       <span class="keyword">for</span> observer <span class="keyword">in</span> <span class="property">@_observers</span>
@@ -284,6 +294,10 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
     <span class="keyword">if</span> <span class="keyword">typeof</span> later <span class="keyword">is</span> <span class="string">'function'</span>
       setTimeout later
     <span class="keyword">this</span>
+
+  
+  afterSync: (callback) -&gt;
+    Observer.afterSync callback
   
   
   runFilter: (value, filterName, args...) -&gt;
@@ -819,7 +833,7 @@ Finds the end of the function and processes the arguments</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> index <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span> <span class="keyword">not</span> continuation
-    <span class="keyword">if</span> options.ignore.indexOf(part.split(<span class="regexp">/\.|\(/</span>).shift()) <span class="keyword">is</span> -<span class="number">1</span>
+    <span class="keyword">if</span> options.ignore.indexOf(part.split(<span class="regexp">/\.|\(|\[/</span>).shift()) <span class="keyword">is</span> -<span class="number">1</span>
       part = <span class="string">"this.<span class="subst">#{part}</span>"</span>
     <span class="keyword">else</span>
       part = <span class="string">"<span class="subst">#{part}</span>"</span>

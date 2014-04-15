@@ -896,6 +896,8 @@ if (!Date.prototype.toISOString) {
 
     Observer.observers = [];
 
+    Observer.callbacks = [];
+
     Observer.add = function(getter, skipTriggerImmediately, callback) {
       var observer, value;
       if (typeof skipTriggerImmediately === 'function') {
@@ -961,9 +963,19 @@ if (!Date.prototype.toISOString) {
         this.observers[i].sync()
       };
       }
+      while (this.callbacks.length) {
+        this.callbacks.shift()();
+      }
       this.syncing = false;
       this.cycles = 0;
       return true;
+    };
+
+    Observer.afterSync = function(callback) {
+      if (typeof callback !== 'function') {
+        throw new TypeError('callback must be a function');
+      }
+      return this.callbacks.push(callback);
     };
 
     return Observer;
@@ -975,6 +987,8 @@ if (!Date.prototype.toISOString) {
   Controller = (function() {
     function Controller() {
       this._observers = [];
+      this._children = [];
+      this._closed = false;
     }
 
     Controller.prototype.watch = function(expr, skipTriggerImmediately, callback) {
@@ -1024,6 +1038,7 @@ if (!Date.prototype.toISOString) {
       var _this = this;
       return this._observers.some(function(observer, index) {
         if (observer.expr === expr && observer.callback === callback) {
+          observer.close();
           _this._observers.splice(index, 1);
           return true;
         } else {
@@ -1063,18 +1078,27 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype.closeController = function() {
-      var observer, _i, _len, _ref;
+      var child, observer, _i, _j, _len, _len1, _ref, _ref1, _ref2;
       if (this._closed) {
         return;
       }
       this._closed = true;
+      _ref = this._children;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        child = _ref[_i];
+        child.parent = null;
+        child.closeController();
+      }
+      if ((_ref1 = this.parent) != null ? _ref1._children : void 0) {
+        this.parent._children.remove(this);
+      }
       if (this.hasOwnProperty('beforeClose')) {
         this.beforeClose();
       }
       if (this._observers) {
-        _ref = this._observers;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          observer = _ref[_i];
+        _ref2 = this._observers;
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          observer = _ref2[_j];
           observer.close();
         }
         this._observers.length = 0;
@@ -1090,6 +1114,10 @@ if (!Date.prototype.toISOString) {
         setTimeout(later);
       }
       return this;
+    };
+
+    Controller.prototype.afterSync = function(callback) {
+      return Observer.afterSync(callback);
     };
 
     Controller.prototype.runFilter = function() {
@@ -1371,7 +1399,7 @@ if (!Date.prototype.toISOString) {
   processPart = function(options, part, index, continuation) {
     var ref;
     if (index === 0 && !continuation) {
-      if (options.ignore.indexOf(part.split(/\.|\(/).shift()) === -1) {
+      if (options.ignore.indexOf(part.split(/\.|\(|\[/).shift()) === -1) {
         part = "this." + part;
       } else {
         part = "" + part;
@@ -1489,6 +1517,7 @@ if (!Date.prototype.toISOString) {
         }
         controller = new NewController();
         controller.parent = options.parent;
+        options.parent._children.push(controller);
         if (options.passthrough) {
           controller.passthrough(options.parent.passthrough());
         }
@@ -1723,9 +1752,10 @@ if (!Date.prototype.toISOString) {
       };
       this.bindings[name] = entry;
       this.bindings.push(entry);
-      return this.bindings.sort(function(a, b) {
+      this.bindings.sort(function(a, b) {
         return b.priority - a.priority;
       });
+      return entry;
     };
 
     Binding.removeBinding = function(name) {
@@ -1796,16 +1826,18 @@ if (!Date.prototype.toISOString) {
       parentNode = element.parent().get(0);
       prefix = controller.app.bindingPrefix;
       attribs = $(element.get(0).attributes).toArray().filter(function(attr) {
-        return attr.name.indexOf(prefix) === 0 && _this.bindings[attr.name.replace(prefix, '')] && attr.value !== void 0;
+        return attr.name.indexOf(prefix) === 0 && (_this.bindings[attr.name.replace(prefix, '')] || prefix) && attr.value !== void 0;
       });
       attribs = attribs.map(function(attr) {
-        var entry;
-        entry = _this.bindings[attr.name.replace(prefix, '')];
+        var bindingName, entry;
+        bindingName = attr.name.replace(prefix, '');
+        entry = _this.bindings[bindingName] || _this.addAttributeBinding(bindingName);
         return {
           name: attr.name,
           value: attr.value,
           priority: entry.priority,
-          handler: entry.handler
+          handler: entry.handler,
+          keepAttribute: entry.keepAttribute
         };
       });
       attribs = attribs.sort(function(a, b) {
@@ -1816,7 +1848,9 @@ if (!Date.prototype.toISOString) {
         if (element.attr(attr.name) == null) {
           continue;
         }
-        element.removeAttr(attr.name);
+        if (!attr.keepAttribute) {
+          element.removeAttr(attr.name);
+        }
         newController = attr.handler(element, attr.value, controller);
         if (element.parent().get(0) !== parentNode) {
           return;
@@ -1902,6 +1936,8 @@ if (!Date.prototype.toISOString) {
     });
   });
 
+  chip.binding('route', function() {}).keepAttribute = true;
+
   chip.binding('text', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.text(value != null ? value : '');
@@ -1977,13 +2013,18 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.binding('class', function(element, expr, controller) {
+    var prevClasses;
+    prevClasses = (element.attr('class') || '').split(/\s+/);
+    if (prevClasses[0] === '') {
+      prevClasses.pop();
+    }
     return controller.watch(expr, function(value) {
       var className, toggle, _results;
       if (Array.isArray(value)) {
         value = value.join(' ');
       }
       if (typeof value === 'string') {
-        return element.attr('class', value);
+        return element.attr('class', value.split(/\s+/).concat(prevClasses).join(' '));
       } else if (value && typeof value === 'object') {
         _results = [];
         for (className in value) {
@@ -2218,9 +2259,8 @@ if (!Date.prototype.toISOString) {
         }
       } else {
         if (!placeholder.parent().length) {
-          return element.animateOut(function() {
-            return element.replaceWith(placeholder);
-          });
+          element.before(placeholder);
+          return element.animateOut();
         }
       }
     });

@@ -52,6 +52,7 @@ class Binding
     @bindings.push entry
     
     @bindings.sort (a, b) -> b.priority - a.priority
+    entry
   
   
   # Removes a binding handler that was added with `addBinding()`.
@@ -143,15 +144,20 @@ class Binding
     # Finds binding attributes and sorts by priority.
     attribs = $(element.get(0).attributes).toArray().filter (attr) =>
       attr.name.indexOf(prefix) is 0 and
-        @bindings[attr.name.replace(prefix, '')] and
+        (
+          @bindings[attr.name.replace(prefix, '')] or
+          prefix
+          ) and
         attr.value isnt undefined # Fix for IE7
     
     attribs = attribs.map (attr) =>
-      entry = @bindings[attr.name.replace(prefix, '')]
+      bindingName = attr.name.replace(prefix, '')
+      entry = @bindings[bindingName] or @addAttributeBinding(bindingName)
       name: attr.name
       value: attr.value
       priority: entry.priority
       handler: entry.handler
+      keepAttribute: entry.keepAttribute
     
     attribs = attribs.sort (a, b) ->
       b.priority - a.priority
@@ -165,7 +171,8 @@ class Binding
       
       # Remove the binding handlers so they only get processed once. This simplifies our code, but it also
       # makes the DOM cleaner.
-      element.removeAttr(attr.name)
+      unless attr.keepAttribute
+        element.removeAttr(attr.name)
       
       # Calls the handler function allowing the handler to set up the binding.
       newController = attr.handler element, attr.value, controller

@@ -90,7 +90,8 @@ priority. The default is <code>0</code>.</p>
     <span class="property">@bindings</span>[name] = entry
     <span class="property">@bindings</span>.push entry
     
-    <span class="property">@bindings</span>.sort (a, b) -&gt; b.priority - a.priority</pre></div></div>
+    <span class="property">@bindings</span>.sort (a, b) -&gt; b.priority - a.priority
+    entry</pre></div></div>
             
         </li>
         
@@ -241,15 +242,20 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
             
             <div class="content"><div class='highlight'><pre>    attribs = $(element.get(<span class="number">0</span>).attributes).toArray().filter (attr) =&gt;
       attr.name.indexOf(prefix) <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span>
-        <span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)] <span class="keyword">and</span>
+        (
+          <span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)] <span class="keyword">or</span>
+          prefix
+          ) <span class="keyword">and</span>
         attr.value <span class="keyword">isnt</span> <span class="literal">undefined</span> <span class="comment"># Fix for IE7</span>
     
     attribs = attribs.map (attr) =&gt;
-      entry = <span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)]
+      bindingName = attr.name.replace(prefix, <span class="string">''</span>)
+      entry = <span class="property">@bindings</span>[bindingName] <span class="keyword">or</span> <span class="property">@addAttributeBinding</span>(bindingName)
       name: attr.name
       value: attr.value
       priority: entry.priority
       handler: entry.handler
+      keepAttribute: entry.keepAttribute
     
     attribs = attribs.sort (a, b) -&gt;
       b.priority - a.priority</pre></div></div>
@@ -299,7 +305,8 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      element.removeAttr(attr.name)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">unless</span> attr.keepAttribute
+        element.removeAttr(attr.name)</pre></div></div>
             
         </li>
         

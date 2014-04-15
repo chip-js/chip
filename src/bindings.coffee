@@ -6,6 +6,11 @@ chip.binding 'debug', 200, (element, expr, controller) ->
     console?.info 'Debug:', expr, '=', value
 
 
+# ## chip-route
+# Placeholder for routing
+chip.binding('route', ->).keepAttribute = true
+
+
 # ## chip-text
 # Adds a handler to display text inside an element.
 #
@@ -159,12 +164,15 @@ chip.binding 'translate', (element, expr, controller) ->
 # </div>
 # ```
 chip.binding 'class', (element, expr, controller) ->
+  prevClasses = (element.attr('class') or '').split(/\s+/)
+  prevClasses.pop() if prevClasses[0] is ''
+
   controller.watch expr, (value) ->
     if Array.isArray(value)
       value = value.join(' ')
     
     if typeof value is 'string'
-      element.attr('class', value)
+      element.attr 'class', value.split(/\s+/).concat(prevClasses).join(' ')
     else if value and typeof value is 'object'
       for own className, toggle of value
         if toggle
@@ -513,8 +521,8 @@ chip.binding 'if', 50, (element, expr, controller) ->
         placeholder.replaceWith(element)
     else
       unless placeholder.parent().length
-        element.animateOut ->
-          element.replaceWith placeholder
+        element.before placeholder
+        element.animateOut()
 
 # ## chip-unless
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM

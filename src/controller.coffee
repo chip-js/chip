@@ -6,6 +6,8 @@ class Controller
   constructor: ->
     # Creates the observer array so child controllers don't inherit this from parents 
     @_observers = []
+    @_children = []
+    @_closed = false
   
   # Watches an expression for changes. Calls the `callback` immediately with the initial value and then every time
   # the value in the expression changes. An expression can be as simple as `name` or as complex as
@@ -49,6 +51,7 @@ class Controller
   unwatch: (expr, callback) ->
     @_observers.some (observer, index) =>
       if observer.expr is expr and observer.callback is callback
+        observer.close()
         @_observers.splice index, 1
         true
       else
@@ -94,6 +97,13 @@ class Controller
   closeController: ->
     return if @_closed
     @_closed = true
+    
+    for child in @_children
+      child.parent = null
+      child.closeController()
+    if @parent?._children
+      @parent._children.remove this
+
     @beforeClose() if @hasOwnProperty('beforeClose')
     if @_observers
       for observer in @_observers
@@ -109,6 +119,10 @@ class Controller
     if typeof later is 'function'
       setTimeout later
     this
+
+  
+  afterSync: (callback) ->
+    Observer.afterSync callback
   
   
   runFilter: (value, filterName, args...) ->
@@ -370,7 +384,7 @@ processProperties = (expr, options = {}) ->
 processPart = (options, part, index, continuation) ->
   # if the first
   if index is 0 and not continuation
-    if options.ignore.indexOf(part.split(/\.|\(/).shift()) is -1
+    if options.ignore.indexOf(part.split(/\.|\(|\[/).shift()) is -1
       part = "this.#{part}"
     else
       part = "#{part}"
