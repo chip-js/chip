@@ -23,7 +23,7 @@ describe('Binding', function() {
 		})
 		
 		app.init()
-		Binding.process($('<div data-foo="the attr value"></div>'), app.rootController)
+		Binding.process($('<div chip-foo="the attr value"></div>'), app.rootController)
 		expect(value).to.equal('the attr value')
 	})
 	

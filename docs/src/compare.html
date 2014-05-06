@@ -155,7 +155,7 @@ returned. Otherwise  <code>true</code> will be returned.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">if</span> valueValue <span class="keyword">isnt</span> value <span class="keyword">and</span> oldValueValue <span class="keyword">isnt</span> oldValue
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">if</span> <span class="keyword">typeof</span> valueValue <span class="keyword">isnt</span> <span class="string">'object'</span> <span class="keyword">and</span> <span class="keyword">typeof</span> oldValueValue <span class="keyword">isnt</span> <span class="string">'object'</span>
         <span class="keyword">return</span> valueValue <span class="keyword">isnt</span> oldValueValue
       <span class="keyword">else</span>
         changeRecords = compare.objects value, oldValue
@@ -175,7 +175,7 @@ returned. Otherwise  <code>true</code> will be returned.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="keyword">else</span>
-      <span class="keyword">return</span> value <span class="keyword">isnt</span> oldValue</pre></div></div>
+      <span class="keyword">return</span> compare.basic value, oldValue</pre></div></div>
             
         </li>
         
@@ -185,6 +185,72 @@ returned. Otherwise  <code>true</code> will be returned.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Diffs two basic types, returning true if changed or false if not</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  compare.<span class="function"><span class="title">basic</span></span> = (value, oldValue) -&gt;
+   <span class="keyword">if</span> value <span class="keyword">and</span> oldValue <span class="keyword">and</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'object'</span> <span class="keyword">and</span> <span class="keyword">typeof</span> oldValue <span class="keyword">is</span> <span class="string">'object'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>Allow dates and Number/String objects to be compared</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      valueValue = value.valueOf()
+      oldValueValue = oldValue.valueOf()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>Allow dates and Number/String objects to be compared</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">if</span> <span class="keyword">typeof</span> valueValue <span class="keyword">isnt</span> <span class="string">'object'</span> <span class="keyword">and</span> <span class="keyword">typeof</span> oldValueValue <span class="keyword">isnt</span> <span class="string">'object'</span>
+        <span class="keyword">return</span> compare.basic valueValue, oldValueValue</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>If a value has changed call the callback</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> value <span class="keyword">is</span> <span class="string">'number'</span> <span class="keyword">and</span> <span class="keyword">typeof</span> oldValue <span class="keyword">is</span> <span class="string">'number'</span> <span class="keyword">and</span> isNaN(value) <span class="keyword">and</span> isNaN(oldValue)
+      <span class="keyword">return</span> <span class="literal">false</span>
+    <span class="keyword">else</span>
+      <span class="keyword">return</span> value <span class="keyword">isnt</span> oldValue</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p>Diffs two objects returning an array of change records. The change record looks like:</p>
 <pre><code class="lang-javascript">{
@@ -202,42 +268,42 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-11">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>Goes through the old object (should be a clone) and look for things that are now gone or changed</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="keyword">for</span> prop, oldValue <span class="keyword">of</span> oldObject
-      newValue = object[prop]</pre></div></div>
+      value = object[prop]</pre></div></div>
             
         </li>
         
         
-        <li id="section-12">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p>Allow for the case of obj.prop = undefined (which is a new property, even if it is undefined)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">continue</span> <span class="keyword">if</span> newValue <span class="keyword">isnt</span> <span class="literal">undefined</span> <span class="keyword">and</span> newValue <span class="keyword">is</span> oldValue</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">continue</span> <span class="keyword">if</span> value <span class="keyword">isnt</span> <span class="literal">undefined</span> <span class="keyword">and</span> <span class="keyword">not</span> compare.basic value, oldValue</pre></div></div>
             
         </li>
         
         
-        <li id="section-13">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>If the property is gone it was removed</p>
 
@@ -247,23 +313,23 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         changeRecords.push newChange object, <span class="string">'deleted'</span>, prop, oldValue
         <span class="keyword">continue</span>
       
-      <span class="keyword">if</span> newValue <span class="keyword">isnt</span> oldValue
+      <span class="keyword">if</span> compare.basic value, oldValue
         changeRecords.push newChange object, <span class="string">'updated'</span>, prop, oldValue</pre></div></div>
             
         </li>
         
         
-        <li id="section-14">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Goes through the old object and looks for things that are new</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">for</span> prop, newValue <span class="keyword">of</span> object
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">for</span> prop, value <span class="keyword">of</span> object
       <span class="keyword">continue</span> <span class="keyword">if</span> `<span class="javascript">prop <span class="keyword">in</span> oldObject</span>`
       
       changeRecords.push newChange object, <span class="string">'new'</span>, prop
@@ -276,11 +342,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Creates a change record for the object changes</p>
 
@@ -304,11 +370,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>Diffs two arrays returning an array of splices. A splice object looks like:</p>
 <pre><code class="lang-javascript">{
@@ -340,11 +406,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>if nothing was added, only removed from one spot</p>
 
@@ -356,11 +422,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>if nothing was removed, only added to one spot</p>
 
@@ -372,11 +438,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>a mixture of adds and removes</p>
 
@@ -423,11 +489,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>find the number of items at the beginning that are the same</p>
 
@@ -435,17 +501,17 @@ returned. Otherwise  <code>true</code> will be returned.</p>
             
             <div class="content"><div class='highlight'><pre>  <span class="function"><span class="title">sharedPrefix</span></span> = (current, old, searchLength) -&gt;
     <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">0.</span>..searchLength]
-      <span class="keyword">return</span> i <span class="keyword">unless</span> current[i] <span class="keyword">is</span> old[i]
+      <span class="keyword">return</span> i <span class="keyword">if</span> compare.basic current[i], old[i]
     <span class="keyword">return</span> searchLength</pre></div></div>
             
         </li>
         
         
-        <li id="section-21">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>find the number of items at the end that are the same</p>
 
@@ -455,7 +521,7 @@ returned. Otherwise  <code>true</code> will be returned.</p>
     index1 = current.length
     index2 = old.length
     count = <span class="number">0</span>
-    <span class="keyword">while</span> count &lt; searchLength <span class="keyword">and</span> current[--index1] <span class="keyword">is</span> old[--index2]
+    <span class="keyword">while</span> count &lt; searchLength <span class="keyword">and</span> <span class="keyword">not</span> compare.basic current[--index1], old[--index2]
       count++
     count
   
@@ -515,11 +581,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>“Deletion” columns</p>
 
@@ -532,11 +598,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>“Addition” rows. Initialize null column.</p>
 
@@ -549,11 +615,11 @@ returned. Otherwise  <code>true</code> will be returned.</p>
         </li>
         
         
-        <li id="section-24">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p>Initialize null row</p>
 
@@ -564,7 +630,7 @@ returned. Otherwise  <code>true</code> will be returned.</p>
     
     <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">1.</span>..rowCount]
       <span class="keyword">for</span> j <span class="keyword">in</span> [<span class="number">1.</span>..columnCount]
-        <span class="keyword">if</span> current[currentStart + j - <span class="number">1</span>] <span class="keyword">is</span> old[oldStart + i - <span class="number">1</span>]
+        <span class="keyword">unless</span> compare.basic current[currentStart + j - <span class="number">1</span>], old[oldStart + i - <span class="number">1</span>]
           distances[i][j] = distances[i - <span class="number">1</span>][j - <span class="number">1</span>]
         <span class="keyword">else</span>
           north = distances[i - <span class="number">1</span>][j] + <span class="number">1</span>

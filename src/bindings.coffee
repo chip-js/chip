@@ -7,7 +7,7 @@ chip.binding 'debug', 200, (element, expr, controller) ->
 
 
 # ## chip-route
-# Placeholder for routing
+# Placeholder for routing and others
 chip.binding('route', ->).keepAttribute = true
 
 
@@ -272,12 +272,30 @@ chip.binding 'active-section', (element, expr, controller) ->
 # And when the user changes the text in the first input to "Jac", `user.firstName` will be updated immediately with the
 # value of `'Jac'`.
 chip.binding 'value', (element, expr, controller) ->
+  prefix = controller.app.bindingPrefix
+  watchExpr = expr
+  if element.is('select')
+    fieldExpr = element.attr(prefix + 'value-field')
+    element.removeAttr(prefix + 'value-field')
+    selectValueField = if fieldExpr then controller.eval(fieldExpr) else null
+    chip.lastSelectValueField = selectValueField
+  
+  if element.is('option') and chip.lastSelectValueField
+    selectValueField = chip.lastSelectValueField
+    watchExpr += '.' + selectValueField
+
   # Handles input (checkboxes, radios), select, textarea, option
   getValue =
     if element.attr('type') is 'checkbox' # Handles checkboxes
       -> element.prop('checked')
     else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
       -> element.find('input:radio:checked').val()
+    else if selectValueField and element.is('select')
+      (realValue) ->
+        if realValue
+          $(element.get(0).options[element.get(0).selectedIndex]).data('value')
+        else
+          element.val()
     else # Handles other form inputs
       -> element.val()
   
@@ -289,11 +307,13 @@ chip.binding 'value', (element, expr, controller) ->
         element.find('input:radio:checked').prop('checked', false) # in case the value isn't found in radios
         element.find('input:radio[value="' + value + '"]').prop('checked', true)
     else
-      (value) -> element.val(value)
+      (value) ->
+        element.val(selectValueField and value[selectValueField] or value)
+        element.data('value', value) if selectValueField
   
-  observer = controller.watch expr, (value) ->
+  observer = controller.watch watchExpr, (value) ->
     if `getValue() != value` # Allows for string/number equality
-      setValue value
+      setValue controller.eval expr
   
   # Skips setting values on option elements since the user cannot change these with user input
   return if element.is 'option'
@@ -302,12 +322,12 @@ chip.binding 'value', (element, expr, controller) ->
   if element.is('select')
     setTimeout ->
       setValue controller.eval expr
-      controller.evalSetter expr, getValue()
+      controller.evalSetter expr, getValue(true)
   else
     controller.evalSetter expr, getValue()
   
-  events = element.attr('chip-value-events') or 'change'
-  element.removeAttr('chip-value-events')
+  events = element.attr(prefix + 'value-events') or 'change'
+  element.removeAttr(prefix + 'value-events')
   if element.is ':text'
     element.on 'keydown', (event) ->
       if event.keyCode is 13
@@ -315,9 +335,10 @@ chip.binding 'value', (element, expr, controller) ->
   
   element.on events, ->
     if getValue() isnt observer.oldValue
-      controller.evalSetter expr, getValue()
+      controller.evalSetter expr, getValue(true)
       observer.skipNextSync() # don't update this observer, user changed it
       controller.sync() # update other expressions looking at this data
+
 
 
 # ## chip-[event]

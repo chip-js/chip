@@ -2088,11 +2088,29 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.binding('value', function(element, expr, controller) {
-    var events, getValue, observer, setValue;
+    var events, fieldExpr, getValue, observer, prefix, selectValueField, setValue, watchExpr;
+    prefix = controller.app.bindingPrefix;
+    watchExpr = expr;
+    if (element.is('select')) {
+      fieldExpr = element.attr(prefix + 'value-field');
+      element.removeAttr(prefix + 'value-field');
+      selectValueField = fieldExpr ? controller["eval"](fieldExpr) : null;
+      chip.lastSelectValueField = selectValueField;
+    }
+    if (element.is('option') && chip.lastSelectValueField) {
+      selectValueField = chip.lastSelectValueField;
+      watchExpr += '.' + selectValueField;
+    }
     getValue = element.attr('type') === 'checkbox' ? function() {
       return element.prop('checked');
     } : element.is(':not(input,select,textarea,option)') ? function() {
       return element.find('input:radio:checked').val();
+    } : selectValueField && element.is('select') ? function(realValue) {
+      if (realValue) {
+        return $(element.get(0).options[element.get(0).selectedIndex]).data('value');
+      } else {
+        return element.val();
+      }
     } : function() {
       return element.val();
     };
@@ -2102,11 +2120,14 @@ if (!Date.prototype.toISOString) {
       element.find('input:radio:checked').prop('checked', false);
       return element.find('input:radio[value="' + value + '"]').prop('checked', true);
     } : function(value) {
-      return element.val(value);
+      element.val(selectValueField && value[selectValueField] || value);
+      if (selectValueField) {
+        return element.data('value', value);
+      }
     };
-    observer = controller.watch(expr, function(value) {
+    observer = controller.watch(watchExpr, function(value) {
       if (getValue() != value) {
-        return setValue(value);
+        return setValue(controller["eval"](expr));
       }
     });
     if (element.is('option')) {
@@ -2115,13 +2136,13 @@ if (!Date.prototype.toISOString) {
     if (element.is('select')) {
       setTimeout(function() {
         setValue(controller["eval"](expr));
-        return controller.evalSetter(expr, getValue());
+        return controller.evalSetter(expr, getValue(true));
       });
     } else {
       controller.evalSetter(expr, getValue());
     }
-    events = element.attr('chip-value-events') || 'change';
-    element.removeAttr('chip-value-events');
+    events = element.attr(prefix + 'value-events') || 'change';
+    element.removeAttr(prefix + 'value-events');
     if (element.is(':text')) {
       element.on('keydown', function(event) {
         if (event.keyCode === 13) {
@@ -2131,7 +2152,7 @@ if (!Date.prototype.toISOString) {
     }
     return element.on(events, function() {
       if (getValue() !== observer.oldValue) {
-        controller.evalSetter(expr, getValue());
+        controller.evalSetter(expr, getValue(true));
         observer.skipNextSync();
         return controller.sync();
       }
@@ -2670,7 +2691,7 @@ if (!Date.prototype.toISOString) {
       } else if (value && oldValue && typeof value === 'object' && typeof oldValue === 'object') {
         valueValue = value.valueOf();
         oldValueValue = oldValue.valueOf();
-        if (valueValue !== value && oldValueValue !== oldValue) {
+        if (typeof valueValue !== 'object' && typeof oldValueValue !== 'object') {
           return valueValue !== oldValueValue;
         } else {
           changeRecords = compare.objects(value, oldValue);
@@ -2681,28 +2702,42 @@ if (!Date.prototype.toISOString) {
           }
         }
       } else {
+        return compare.basic(value, oldValue);
+      }
+    };
+    compare.basic = function(value, oldValue) {
+      var oldValueValue, valueValue;
+      if (value && oldValue && typeof value === 'object' && typeof oldValue === 'object') {
+        valueValue = value.valueOf();
+        oldValueValue = oldValue.valueOf();
+        if (typeof valueValue !== 'object' && typeof oldValueValue !== 'object') {
+          return compare.basic(valueValue, oldValueValue);
+        }
+      } else if (typeof value === 'number' && typeof oldValue === 'number' && isNaN(value) && isNaN(oldValue)) {
+        return false;
+      } else {
         return value !== oldValue;
       }
     };
     compare.objects = function(object, oldObject) {
-      var changeRecords, newValue, oldValue, prop;
+      var changeRecords, oldValue, prop, value;
       changeRecords = [];
       for (prop in oldObject) {
         oldValue = oldObject[prop];
-        newValue = object[prop];
-        if (newValue !== void 0 && newValue === oldValue) {
+        value = object[prop];
+        if (value !== void 0 && !compare.basic(value, oldValue)) {
           continue;
         }
         if (!(prop in object)) {
           changeRecords.push(newChange(object, 'deleted', prop, oldValue));
           continue;
         }
-        if (newValue !== oldValue) {
+        if (compare.basic(value, oldValue)) {
           changeRecords.push(newChange(object, 'updated', prop, oldValue));
         }
       }
       for (prop in object) {
-        newValue = object[prop];
+        value = object[prop];
         if (prop in oldObject) {
           continue;
         }
@@ -2792,7 +2827,7 @@ if (!Date.prototype.toISOString) {
     sharedPrefix = function(current, old, searchLength) {
       var i, _j;
       for (i = _j = 0; 0 <= searchLength ? _j < searchLength : _j > searchLength; i = 0 <= searchLength ? ++_j : --_j) {
-        if (current[i] !== old[i]) {
+        if (compare.basic(current[i], old[i])) {
           return i;
         }
       }
@@ -2803,7 +2838,7 @@ if (!Date.prototype.toISOString) {
       index1 = current.length;
       index2 = old.length;
       count = 0;
-      while (count < searchLength && current[--index1] === old[--index2]) {
+      while (count < searchLength && !compare.basic(current[--index1], old[--index2])) {
         count++;
       }
       return count;
@@ -2876,7 +2911,7 @@ if (!Date.prototype.toISOString) {
       }
       for (i = _l = 1; 1 <= rowCount ? _l < rowCount : _l > rowCount; i = 1 <= rowCount ? ++_l : --_l) {
         for (j = _m = 1; 1 <= columnCount ? _m < columnCount : _m > columnCount; j = 1 <= columnCount ? ++_m : --_m) {
-          if (current[currentStart + j - 1] === old[oldStart + i - 1]) {
+          if (!compare.basic(current[currentStart + j - 1], old[oldStart + i - 1])) {
             distances[i][j] = distances[i - 1][j - 1];
           } else {
             north = distances[i - 1][j] + 1;

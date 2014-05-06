@@ -41,12 +41,29 @@ compare = {}
       oldValueValue = oldValue.valueOf()
       
       # Allow dates and Number/String objects to be compared
-      if valueValue isnt value and oldValueValue isnt oldValue
+      if typeof valueValue isnt 'object' and typeof oldValueValue isnt 'object'
         return valueValue isnt oldValueValue
       else
         changeRecords = compare.objects value, oldValue
         return if changeRecords.length then changeRecords else false
     # If a value has changed call the callback
+    else
+      return compare.basic value, oldValue
+  
+  
+  # Diffs two basic types, returning true if changed or false if not
+  compare.basic = (value, oldValue) ->
+   if value and oldValue and typeof value is 'object' and typeof oldValue is 'object'
+      # Allow dates and Number/String objects to be compared
+      valueValue = value.valueOf()
+      oldValueValue = oldValue.valueOf()
+      
+      # Allow dates and Number/String objects to be compared
+      if typeof valueValue isnt 'object' and typeof oldValueValue isnt 'object'
+        return compare.basic valueValue, oldValueValue
+    # If a value has changed call the callback
+    else if typeof value is 'number' and typeof oldValue is 'number' and isNaN(value) and isNaN(oldValue)
+      return false
     else
       return value isnt oldValue
   
@@ -65,21 +82,21 @@ compare = {}
   
     # Goes through the old object (should be a clone) and look for things that are now gone or changed
     for prop, oldValue of oldObject
-      newValue = object[prop]
+      value = object[prop]
       
       # Allow for the case of obj.prop = undefined (which is a new property, even if it is undefined)
-      continue if newValue isnt undefined and newValue is oldValue
+      continue if value isnt undefined and not compare.basic value, oldValue
           
       # If the property is gone it was removed
       unless `(prop in object)`
         changeRecords.push newChange object, 'deleted', prop, oldValue
         continue
       
-      if newValue isnt oldValue
+      if compare.basic value, oldValue
         changeRecords.push newChange object, 'updated', prop, oldValue
     
     # Goes through the old object and looks for things that are new
-    for prop, newValue of object
+    for prop, value of object
       continue if `prop in oldObject`
       
       changeRecords.push newChange object, 'new', prop
@@ -185,7 +202,7 @@ compare = {}
   # find the number of items at the beginning that are the same
   sharedPrefix = (current, old, searchLength) ->
     for i in [0...searchLength]
-      return i unless current[i] is old[i]
+      return i if compare.basic current[i], old[i]
     return searchLength
   
   
@@ -194,7 +211,7 @@ compare = {}
     index1 = current.length
     index2 = old.length
     count = 0
-    while count < searchLength and current[--index1] is old[--index2]
+    while count < searchLength and not compare.basic current[--index1], old[--index2]
       count++
     count
   
@@ -266,7 +283,7 @@ compare = {}
     
     for i in [1...rowCount]
       for j in [1...columnCount]
-        if current[currentStart + j - 1] is old[oldStart + i - 1]
+        unless compare.basic current[currentStart + j - 1], old[oldStart + i - 1]
           distances[i][j] = distances[i - 1][j - 1]
         else
           north = distances[i - 1][j] + 1

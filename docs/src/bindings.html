@@ -41,7 +41,7 @@ chip.binding <span class="string">'debug'</span>, <span class="number">200</span
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
               <h2>chip-route</h2>
-<p>Placeholder for routing</p>
+<p>Placeholder for routing and others</p>
 
             </div>
             
@@ -382,7 +382,18 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'value'</span>, (element, expr, controller) -&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'value'</span>, (element, expr, controller) -&gt;
+  prefix = controller.app.bindingPrefix
+  watchExpr = expr
+  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
+    fieldExpr = element.attr(prefix + <span class="string">'value-field'</span>)
+    element.removeAttr(prefix + <span class="string">'value-field'</span>)
+    selectValueField = <span class="keyword">if</span> fieldExpr <span class="keyword">then</span> controller.eval(fieldExpr) <span class="keyword">else</span> <span class="literal">null</span>
+    chip.lastSelectValueField = selectValueField
+  
+  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'option'</span>) <span class="keyword">and</span> chip.lastSelectValueField
+    selectValueField = chip.lastSelectValueField
+    watchExpr += <span class="string">'.'</span> + selectValueField</pre></div></div>
             
         </li>
         
@@ -402,6 +413,12 @@ value of <code>&#39;Jac&#39;</code>.</p>
       -&gt; element.prop(<span class="string">'checked'</span>)
     <span class="keyword">else</span> <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">':not(input,select,textarea,option)'</span>) <span class="comment"># Handles a group of radio inputs</span>
       -&gt; element.find(<span class="string">'input:radio:checked'</span>).val()
+    <span class="keyword">else</span> <span class="keyword">if</span> selectValueField <span class="keyword">and</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
+      (realValue) -&gt;
+        <span class="keyword">if</span> realValue
+          $(element.get(<span class="number">0</span>).options[element.get(<span class="number">0</span>).selectedIndex]).data(<span class="string">'value'</span>)
+        <span class="keyword">else</span>
+          element.val()
     <span class="keyword">else</span> <span class="comment"># Handles other form inputs</span>
       -&gt; element.val()
   
@@ -413,11 +430,13 @@ value of <code>&#39;Jac&#39;</code>.</p>
         element.find(<span class="string">'input:radio:checked'</span>).prop(<span class="string">'checked'</span>, <span class="literal">false</span>) <span class="comment"># in case the value isn't found in radios</span>
         element.find(<span class="string">'input:radio[value="'</span> + value + <span class="string">'"]'</span>).prop(<span class="string">'checked'</span>, <span class="literal">true</span>)
     <span class="keyword">else</span>
-      (value) -&gt; element.val(value)
+      (value) -&gt;
+        element.val(selectValueField <span class="keyword">and</span> value[selectValueField] <span class="keyword">or</span> value)
+        element.data(<span class="string">'value'</span>, value) <span class="keyword">if</span> selectValueField
   
-  observer = controller.watch expr, (value) -&gt;
+  observer = controller.watch watchExpr, (value) -&gt;
     <span class="keyword">if</span> `<span class="javascript">getValue() != value</span>` <span class="comment"># Allows for string/number equality</span>
-      setValue value</pre></div></div>
+      setValue controller.eval expr</pre></div></div>
             
         </li>
         
@@ -450,12 +469,12 @@ value of <code>&#39;Jac&#39;</code>.</p>
             <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
     setTimeout -&gt;
       setValue controller.eval expr
-      controller.evalSetter expr, getValue()
+      controller.evalSetter expr, getValue(<span class="literal">true</span>)
   <span class="keyword">else</span>
     controller.evalSetter expr, getValue()
   
-  events = element.attr(<span class="string">'chip-value-events'</span>) <span class="keyword">or</span> <span class="string">'change'</span>
-  element.removeAttr(<span class="string">'chip-value-events'</span>)
+  events = element.attr(prefix + <span class="string">'value-events'</span>) <span class="keyword">or</span> <span class="string">'change'</span>
+  element.removeAttr(prefix + <span class="string">'value-events'</span>)
   <span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">':text'</span>
     element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
       <span class="keyword">if</span> event.keyCode <span class="keyword">is</span> <span class="number">13</span>
@@ -463,7 +482,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
   
   element.<span class="literal">on</span> events, -&gt;
     <span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue
-      controller.evalSetter expr, getValue()
+      controller.evalSetter expr, getValue(<span class="literal">true</span>)
       observer.skipNextSync() <span class="comment"># don't update this observer, user changed it</span>
       controller.sync() <span class="comment"># update other expressions looking at this data</span></pre></div></div>
             
