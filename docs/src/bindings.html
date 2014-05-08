@@ -435,7 +435,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
         element.data(<span class="string">'value'</span>, value) <span class="keyword">if</span> selectValueField
   
   observer = controller.watch watchExpr, (value) -&gt;
-    <span class="keyword">if</span> `<span class="javascript">getValue() != value</span>` <span class="keyword">and</span> <span class="keyword">not</span> element.<span class="keyword">is</span>(<span class="string">'[readonly]'</span>) <span class="comment"># Allows for string/number equality</span>
+    <span class="keyword">if</span> `<span class="javascript">getValue() != value</span>` <span class="comment"># Allows for string/number equality</span>
       setValue controller.eval expr</pre></div></div>
             
         </li>
@@ -468,10 +468,10 @@ value of <code>&#39;Jac&#39;</code>.</p>
             
             <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
     setTimeout -&gt;
+      setValue controller.eval expr
       <span class="keyword">unless</span> element.<span class="keyword">is</span>(<span class="string">'[readonly]'</span>)
-        setValue controller.eval expr
-      controller.evalSetter expr, getValue(<span class="literal">true</span>)
-  <span class="keyword">else</span>
+        controller.evalSetter expr, getValue(<span class="literal">true</span>)
+  <span class="keyword">else</span> <span class="keyword">unless</span> element.<span class="keyword">is</span>(<span class="string">'[readonly]'</span>)
     controller.evalSetter expr, getValue()
   
   events = element.attr(prefix + <span class="string">'value-events'</span>) <span class="keyword">or</span> <span class="string">'change'</span>
@@ -482,7 +482,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
         element.trigger <span class="string">'change'</span>
   
   element.<span class="literal">on</span> events, -&gt;
-    <span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue
+    <span class="keyword">if</span> getValue() <span class="keyword">isnt</span> observer.oldValue <span class="keyword">and</span> <span class="keyword">not</span> element.<span class="keyword">is</span>(<span class="string">'[readonly]'</span>)
       controller.evalSetter expr, getValue(<span class="literal">true</span>)
       observer.skipNextSync() <span class="comment"># don't update this observer, user changed it</span>
       controller.sync() <span class="comment"># update other expressions looking at this data</span></pre></div></div>

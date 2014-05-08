@@ -2128,7 +2128,7 @@ if (!Date.prototype.toISOString) {
       }
     };
     observer = controller.watch(watchExpr, function(value) {
-      if (getValue() != value && !element.is('[readonly]')) {
+      if (getValue() != value) {
         return setValue(controller["eval"](expr));
       }
     });
@@ -2137,12 +2137,12 @@ if (!Date.prototype.toISOString) {
     }
     if (element.is('select')) {
       setTimeout(function() {
+        setValue(controller["eval"](expr));
         if (!element.is('[readonly]')) {
-          setValue(controller["eval"](expr));
+          return controller.evalSetter(expr, getValue(true));
         }
-        return controller.evalSetter(expr, getValue(true));
       });
-    } else {
+    } else if (!element.is('[readonly]')) {
       controller.evalSetter(expr, getValue());
     }
     events = element.attr(prefix + 'value-events') || 'change';
@@ -2155,7 +2155,7 @@ if (!Date.prototype.toISOString) {
       });
     }
     return element.on(events, function() {
-      if (getValue() !== observer.oldValue) {
+      if (getValue() !== observer.oldValue && !element.is('[readonly]')) {
         controller.evalSetter(expr, getValue(true));
         observer.skipNextSync();
         return controller.sync();

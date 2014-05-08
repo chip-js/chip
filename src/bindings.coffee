@@ -312,7 +312,7 @@ chip.binding 'value', (element, expr, controller) ->
         element.data('value', value) if selectValueField
   
   observer = controller.watch watchExpr, (value) ->
-    if `getValue() != value` and not element.is('[readonly]') # Allows for string/number equality
+    if `getValue() != value` # Allows for string/number equality
       setValue controller.eval expr
   
   # Skips setting values on option elements since the user cannot change these with user input
@@ -321,10 +321,10 @@ chip.binding 'value', (element, expr, controller) ->
   # Sets initial element value. For SELECT elements allows child option element values to be set first.
   if element.is('select')
     setTimeout ->
+      setValue controller.eval expr
       unless element.is('[readonly]')
-        setValue controller.eval expr
-      controller.evalSetter expr, getValue(true)
-  else
+        controller.evalSetter expr, getValue(true)
+  else unless element.is('[readonly]')
     controller.evalSetter expr, getValue()
   
   events = element.attr(prefix + 'value-events') or 'change'
@@ -335,7 +335,7 @@ chip.binding 'value', (element, expr, controller) ->
         element.trigger 'change'
   
   element.on events, ->
-    if getValue() isnt observer.oldValue
+    if getValue() isnt observer.oldValue and not element.is('[readonly]')
       controller.evalSetter expr, getValue(true)
       observer.skipNextSync() # don't update this observer, user changed it
       controller.sync() # update other expressions looking at this data
