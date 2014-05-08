@@ -61,8 +61,9 @@ compare = {}
       # Allow dates and Number/String objects to be compared
       if typeof valueValue isnt 'object' and typeof oldValueValue isnt 'object'
         return compare.basic valueValue, oldValueValue
+    
     # If a value has changed call the callback
-    else if typeof value is 'number' and typeof oldValue is 'number' and isNaN(value) and isNaN(oldValue)
+    if typeof value is 'number' and typeof oldValue is 'number' and isNaN(value) and isNaN(oldValue)
       return false
     else
       return value isnt oldValue

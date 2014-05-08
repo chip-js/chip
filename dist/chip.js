@@ -2721,7 +2721,8 @@ if (!Date.prototype.toISOString) {
         if (typeof valueValue !== 'object' && typeof oldValueValue !== 'object') {
           return compare.basic(valueValue, oldValueValue);
         }
-      } else if (typeof value === 'number' && typeof oldValue === 'number' && isNaN(value) && isNaN(oldValue)) {
+      }
+      if (typeof value === 'number' && typeof oldValue === 'number' && isNaN(value) && isNaN(oldValue)) {
         return false;
       } else {
         return value !== oldValue;
