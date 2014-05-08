@@ -2128,16 +2128,18 @@ if (!Date.prototype.toISOString) {
       }
     };
     observer = controller.watch(watchExpr, function(value) {
-      if (getValue() != value) {
+      if (getValue() != value && !element.is('[readonly]')) {
         return setValue(controller["eval"](expr));
       }
     });
-    if (element.is('option,[readonly]')) {
+    if (element.is('option')) {
       return;
     }
     if (element.is('select')) {
       setTimeout(function() {
-        setValue(controller["eval"](expr));
+        if (!element.is('[readonly]')) {
+          setValue(controller["eval"](expr));
+        }
         return controller.evalSetter(expr, getValue(true));
       });
     } else {
