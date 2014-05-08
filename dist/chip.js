@@ -1621,12 +1621,14 @@ if (!Date.prototype.toISOString) {
                 if (req.isSamePath) {
                   container.animateIn();
                 } else {
-                  placholder = $('<!--container-->').insertBefore(container);
-                  container.detach();
-                  setTimeout(function() {
-                    placholder.after(container).remove();
-                    return container.animateIn();
-                  });
+                  if (container.willAnimate()) {
+                    placholder = $('<!--container-->').insertBefore(container);
+                    container.detach();
+                    setTimeout(function() {
+                      placholder.after(container).remove();
+                      return container.animateIn();
+                    });
+                  }
                   container.html(_this.template(name));
                   parentController = container.parent().controller() || _this.rootController;
                   _this.createController({
@@ -2130,7 +2132,7 @@ if (!Date.prototype.toISOString) {
         return setValue(controller["eval"](expr));
       }
     });
-    if (element.is('option')) {
+    if (element.is('option,[readonly]')) {
       return;
     }
     if (element.is('select')) {
@@ -2203,7 +2205,7 @@ if (!Date.prototype.toISOString) {
     setTimeout(function() {
       _this.removeClass('animate-in');
       if (callback) {
-        if (_this.cssDuration('transition') || _this.cssDuration('animation')) {
+        if (_this.willAnimate()) {
           return _this.one('webkittransitionend transitionend webkitanimationend animationend', function() {
             return callback();
           });
@@ -2258,6 +2260,10 @@ if (!Date.prototype.toISOString) {
       millis *= 1000;
     }
     return millis || 0;
+  };
+
+  $.fn.willAnimate = function() {
+    return (this.cssDuration('transition' || this.cssDuration('animation'))) && true;
   };
 
   chip.binding('if', 50, function(element, expr, controller) {

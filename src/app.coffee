@@ -216,11 +216,12 @@ class App
               if req.isSamePath
                 container.animateIn()
               else
-                placholder = $('<!--container-->').insertBefore(container)
-                container.detach()
-                setTimeout ->
-                  placholder.after(container).remove()
-                  container.animateIn()
+                if container.willAnimate()
+                  placholder = $('<!--container-->').insertBefore(container)
+                  container.detach()
+                  setTimeout ->
+                    placholder.after(container).remove()
+                    container.animateIn()
                 container.html @template(name)
                 parentController = container.parent().controller() or @rootController
                 @createController element: container, parent: parentController, name: name

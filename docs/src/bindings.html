@@ -451,7 +451,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="keyword">return</span> <span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">'option'</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">return</span> <span class="keyword">if</span> element.<span class="keyword">is</span> <span class="string">'option,[readonly]'</span></pre></div></div>
             
         </li>
         
@@ -663,7 +663,7 @@ is used with chip-if, chip-each, etc. to show and hide elements.</p>
   setTimeout =&gt;
     <span class="property">@removeClass</span> <span class="string">'animate-in'</span>
     <span class="keyword">if</span> callback
-      <span class="keyword">if</span> <span class="property">@cssDuration</span>(<span class="string">'transition'</span>) <span class="keyword">or</span> <span class="property">@cssDuration</span>(<span class="string">'animation'</span>)
+      <span class="keyword">if</span> <span class="property">@willAnimate</span>()
         <span class="property">@one</span> <span class="string">'webkittransitionend transitionend webkitanimationend animationend'</span>, -&gt; callback()
       <span class="keyword">else</span>
         callback()
@@ -709,7 +709,10 @@ $.fn.<span class="function"><span class="title">cssDuration</span></span> = (pro
   time = <span class="property">@css</span>(property + <span class="string">'-duration'</span>) <span class="keyword">or</span> <span class="property">@css</span>(<span class="string">'-webkit-'</span> + property + <span class="string">'-duration'</span>)
   millis = parseFloat time
   millis *= <span class="number">1000</span> <span class="keyword">if</span> <span class="regexp">/\ds/</span>.test time
-  millis <span class="keyword">or</span> <span class="number">0</span></pre></div></div>
+  millis <span class="keyword">or</span> <span class="number">0</span>
+
+$.fn.<span class="function"><span class="title">willAnimate</span></span> = -&gt;
+  (<span class="property">@cssDuration</span> <span class="string">'transition'</span> <span class="keyword">or</span> <span class="property">@cssDuration</span> <span class="string">'animation'</span>) <span class="keyword">and</span> <span class="literal">true</span></pre></div></div>
             
         </li>
         

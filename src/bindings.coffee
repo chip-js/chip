@@ -316,7 +316,7 @@ chip.binding 'value', (element, expr, controller) ->
       setValue controller.eval expr
   
   # Skips setting values on option elements since the user cannot change these with user input
-  return if element.is 'option'
+  return if element.is 'option,[readonly]'
   
   # Sets initial element value. For SELECT elements allows child option element values to be set first.
   if element.is('select')
@@ -472,7 +472,7 @@ $.fn.animateIn = (callback) ->
   setTimeout =>
     @removeClass 'animate-in'
     if callback
-      if @cssDuration('transition') or @cssDuration('animation')
+      if @willAnimate()
         @one 'webkittransitionend transitionend webkitanimationend animationend', -> callback()
       else
         callback()
@@ -506,6 +506,9 @@ $.fn.cssDuration = (property) ->
   millis = parseFloat time
   millis *= 1000 if /\ds/.test time
   millis or 0
+
+$.fn.willAnimate = ->
+  (@cssDuration 'transition' or @cssDuration 'animation') and true
 
 # ## chip-if
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
