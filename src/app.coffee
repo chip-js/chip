@@ -261,6 +261,10 @@ class App
     @router.redirect(url, replace)
   
   
+  hasMatchingRoutes: (url) ->
+    @router.getRoutesMatchingPath(url).length > 0
+  
+  
   # Mounts an app to a URL prefix.
   mount: (path, app) ->
     
@@ -280,11 +284,13 @@ class App
       @_clickHandler = (event) ->
         return if event.isDefaultPrevented() # if something else already handled this, we won't
         linkHost = @host.replace(/:80$|:443$/, '')
+        url = $(this).attr('href').replace(/^#/, '')
         return if (linkHost and linkHost isnt location.host) or @href is location.href + '#'
         return if event.metaKey or event.ctrlKey or $(event.target).attr('target')
+        return if options.dontHandle404s and not app.hasMatchingRoutes(url)
         event.preventDefault()
         unless $(this).attr('disabled')
-          app.redirect $(this).attr('href').replace(/^#/, '')
+          app.redirect url
       
       @router.on 'change', @_routeHandler
       @rootElement.on 'click', 'a[href]', @_clickHandler

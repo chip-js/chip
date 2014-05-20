@@ -190,7 +190,23 @@ portion of the URL.</p>
       $(window).on 'hashchange', @_handleChange
     
     @_handleChange()
-    this</pre></div></div>
+    this
+
+
+  getUrlParts: (url) -&gt;
+    urlParts = document.createElement('a')
+    urlParts.href = url
+    path = urlParts.pathname
+    path = '/' + path if path.charAt(0) isnt '/'
+    return null if path.indexOf(@prefix) isnt 0
+    path.replace @prefix, ''
+    path: path, query: urlParts.search
+
+
+  getRoutesMatchingPath: (path) -&gt;
+    path = @getUrlParts(path)?.path if path.charAt(0) isnt '/'
+    return [] unless path?
+    @routes.filter (route) -&gt; route.match path</pre></div></div>
             
         </li>
         
@@ -207,17 +223,13 @@ be used by your application. Use <code>redirect()</code> instead.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  dispatch: (url) -&gt;
-    pathParts = document.createElement(<span class="string">'a'</span>)
-    pathParts.href = url
-    path = pathParts.pathname
-    path = <span class="string">'/'</span> + path <span class="keyword">if</span> path.charAt(<span class="number">0</span>) <span class="keyword">isnt</span> <span class="string">'/'</span>
-    <span class="keyword">return</span> <span class="keyword">if</span> path.indexOf(<span class="property">@prefix</span>) <span class="keyword">isnt</span> <span class="number">0</span>
-    path = path.replace <span class="property">@prefix</span>, <span class="string">''</span>
-    req = url: url, path: path, query: parseQuery(pathParts.search)
-    
+    urlParts = <span class="property">@getUrlParts</span>(url)
+    <span class="keyword">return</span> <span class="keyword">unless</span> urlParts
+    path = urlParts.path
+    req = url: url, path: path, query: parseQuery(urlParts.query)
     <span class="property">@trigger</span> <span class="string">'change'</span>, [path]
-    
-    routes = <span class="property">@routes</span>.filter (route) -&gt; route.match path
+
+    routes = <span class="property">@getRoutesMatchingPath</span>(path)
     callbacks = []
     
     routes.forEach (route) =&gt;</pre></div></div>

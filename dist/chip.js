@@ -715,28 +715,52 @@ if (!Date.prototype.toISOString) {
       return this;
     };
 
-    Router.prototype.dispatch = function(url) {
-      var callbacks, next, path, pathParts, req, routes,
-        _this = this;
-      pathParts = document.createElement('a');
-      pathParts.href = url;
-      path = pathParts.pathname;
+    Router.prototype.getUrlParts = function(url) {
+      var path, urlParts;
+      urlParts = document.createElement('a');
+      urlParts.href = url;
+      path = urlParts.pathname;
       if (path.charAt(0) !== '/') {
         path = '/' + path;
       }
       if (path.indexOf(this.prefix) !== 0) {
+        return null;
+      }
+      path.replace(this.prefix, '');
+      return {
+        path: path,
+        query: urlParts.search
+      };
+    };
+
+    Router.prototype.getRoutesMatchingPath = function(path) {
+      var _ref;
+      if (path.charAt(0) !== '/') {
+        path = (_ref = this.getUrlParts(path)) != null ? _ref.path : void 0;
+      }
+      if (path == null) {
+        return [];
+      }
+      return this.routes.filter(function(route) {
+        return route.match(path);
+      });
+    };
+
+    Router.prototype.dispatch = function(url) {
+      var callbacks, next, path, req, routes, urlParts,
+        _this = this;
+      urlParts = this.getUrlParts(url);
+      if (!urlParts) {
         return;
       }
-      path = path.replace(this.prefix, '');
+      path = urlParts.path;
       req = {
         url: url,
         path: path,
-        query: parseQuery(pathParts.search)
+        query: parseQuery(urlParts.query)
       };
       this.trigger('change', [path]);
-      routes = this.routes.filter(function(route) {
-        return route.match(path);
-      });
+      routes = this.getRoutesMatchingPath(path);
       callbacks = [];
       routes.forEach(function(route) {
         var key, value, _ref;
@@ -1681,6 +1705,10 @@ if (!Date.prototype.toISOString) {
       return this.router.redirect(url, replace);
     };
 
+    App.prototype.hasMatchingRoutes = function(url) {
+      return this.router.getRoutesMatchingPath(url).length > 0;
+    };
+
     App.prototype.mount = function(path, app) {};
 
     App.prototype.listen = function(options) {
@@ -1704,20 +1732,24 @@ if (!Date.prototype.toISOString) {
           return _this.trigger('urlChange', [path]);
         };
         _this._clickHandler = function(event) {
-          var linkHost;
+          var linkHost, url;
           if (event.isDefaultPrevented()) {
             return;
           }
           linkHost = this.host.replace(/:80$|:443$/, '');
+          url = $(this).attr('href').replace(/^#/, '');
           if ((linkHost && linkHost !== location.host) || this.href === location.href + '#') {
             return;
           }
           if (event.metaKey || event.ctrlKey || $(event.target).attr('target')) {
             return;
           }
+          if (options.dontHandle404s && !app.hasMatchingRoutes(url)) {
+            return;
+          }
           event.preventDefault();
           if (!$(this).attr('disabled')) {
-            return app.redirect($(this).attr('href').replace(/^#/, ''));
+            return app.redirect(url);
           }
         };
         _this.router.on('change', _this._routeHandler);

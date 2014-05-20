@@ -106,22 +106,34 @@ class Router
     
     @_handleChange()
     this
+
+
+  getUrlParts: (url) ->
+    urlParts = document.createElement('a')
+    urlParts.href = url
+    path = urlParts.pathname
+    path = '/' + path if path.charAt(0) isnt '/'
+    return null if path.indexOf(@prefix) isnt 0
+    path.replace @prefix, ''
+    path: path, query: urlParts.search
+
+
+  getRoutesMatchingPath: (path) ->
+    path = @getUrlParts(path)?.path if path.charAt(0) isnt '/'
+    return [] unless path?
+    @routes.filter (route) -> route.match path
   
   
   # Dispatches all callbacks which match the `url`. `url` should be the full pathname of the location and should not
   # be used by your application. Use `redirect()` instead.
   dispatch: (url) ->
-    pathParts = document.createElement('a')
-    pathParts.href = url
-    path = pathParts.pathname
-    path = '/' + path if path.charAt(0) isnt '/'
-    return if path.indexOf(@prefix) isnt 0
-    path = path.replace @prefix, ''
-    req = url: url, path: path, query: parseQuery(pathParts.search)
-    
+    urlParts = @getUrlParts(url)
+    return unless urlParts
+    path = urlParts.path
+    req = url: url, path: path, query: parseQuery(urlParts.query)
     @trigger 'change', [path]
-    
-    routes = @routes.filter (route) -> route.match path
+
+    routes = @getRoutesMatchingPath(path)
     callbacks = []
     
     routes.forEach (route) =>
