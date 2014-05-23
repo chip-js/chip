@@ -308,7 +308,9 @@ chip.binding 'value', (element, expr, controller) ->
         element.find('input:radio[value="' + value + '"]').prop('checked', true)
     else
       (value) ->
-        element.val(selectValueField and value[selectValueField] or value)
+        strValue = selectValueField and value[selectValueField] or value
+        strValue = '' + strValue if strValue?
+        element.val(strValue)
         element.data('value', value) if selectValueField
   
   observer = controller.watch watchExpr, (value) ->
@@ -320,7 +322,7 @@ chip.binding 'value', (element, expr, controller) ->
   
   # Sets initial element value. For SELECT elements allows child option element values to be set first.
   if element.is('select')
-    setTimeout ->
+    controller.afterSync ->
       setValue controller.eval expr
       unless element.is('[readonly]')
         controller.evalSetter expr, getValue(true)
