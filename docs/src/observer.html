@@ -121,7 +121,7 @@ format that <code>Array.observe</code> and <code>Object.observe</code> return <a
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="keyword">else</span>
-      changed = compare.values value, <span class="property">@oldValue</span>
+      changed = diff.values value, <span class="property">@oldValue</span>
       <span class="keyword">return</span> <span class="keyword">unless</span> changed
       <span class="keyword">if</span> Array.isArray changed
         <span class="property">@callback</span>(value, <span class="property">@oldValue</span>, changed)
@@ -143,7 +143,7 @@ using array filters in chip-each)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="property">@oldValue</span> = compare.clone value</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="property">@oldValue</span> = diff.clone value</pre></div></div>
             
         </li>
         
@@ -222,7 +222,7 @@ var getter = function() {
       skipTriggerImmediately = <span class="literal">false</span>
     
     value = getter()
-    observer = <span class="keyword">new</span> Observer getter, callback, compare.clone(value)
+    observer = <span class="keyword">new</span> Observer getter, callback, diff.clone(value)
     <span class="property">@observers</span>.push observer
     callback(value) <span class="keyword">unless</span> skipTriggerImmediately
     observer</pre></div></div>

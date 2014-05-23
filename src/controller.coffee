@@ -90,7 +90,7 @@ class Controller
   
   # Clones the object at the given property name for processing forms
   cloneValue: (property) ->
-    compare.clone @[property]
+    diff.clone @[property]
   
   
   # Removes and closes all observers for garbage-collection 
@@ -109,7 +109,7 @@ class Controller
       for listener in @_syncListeners
         Observer.removeOnSync listener
       delete @_syncListeners
-    
+
     for observer in @_observers
       observer.close()
     @_observers.length = 0

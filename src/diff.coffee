@@ -1,16 +1,16 @@
-# # Chip Compare
+# # Chip Diff
 # > Based on work from Google's observe-js polyfill: https://github.com/Polymer/observe-js
 
 # A namespace to store the functions on
-compare = {}
+diff = {}
 
 (->
   # Creates a clone or copy of an array or object (or simply returns a string/number/boolean which are immutable)
   # Does not provide deep copies.
-  compare.clone = (value, deep) ->
+  diff.clone = (value, deep) ->
     if Array.isArray(value)
       if deep
-        return value.map (value) -> compare.clone value, deep
+        return value.map (value) -> diff.clone value, deep
       else
         return value.slice()
     else if value and typeof value is 'object'
@@ -19,7 +19,7 @@ compare = {}
       else
         copy = {}
         for key, objValue of value
-          objValue = compare.clone objValue, deep if deep
+          objValue = diff.clone objValue, deep if deep
           copy[key] = objValue
         return copy
     else
@@ -29,10 +29,10 @@ compare = {}
   # Diffs two values, returning a truthy value if there are changes or `false` if there are no changes. If the two
   # values are both arrays or both objects, an array of changes (splices or change records) between the two will be
   # returned. Otherwise  `true` will be returned.
-  compare.values = (value, oldValue) ->
+  diff.values = (value, oldValue) ->
     # If an array has changed calculate the splices
     if Array.isArray(value) and Array.isArray(oldValue)
-      splices = compare.arrays value, oldValue
+      splices = diff.arrays value, oldValue
       return if splices.length then splices else false
     # If an object has changed calculate the chnages and call the callback
     else if value and oldValue and typeof value is 'object' and typeof oldValue is 'object'
@@ -44,15 +44,15 @@ compare = {}
       if typeof valueValue isnt 'object' and typeof oldValueValue isnt 'object'
         return valueValue isnt oldValueValue
       else
-        changeRecords = compare.objects value, oldValue
+        changeRecords = diff.objects value, oldValue
         return if changeRecords.length then changeRecords else false
     # If a value has changed call the callback
     else
-      return compare.basic value, oldValue
+      return diff.basic value, oldValue
   
   
   # Diffs two basic types, returning true if changed or false if not
-  compare.basic = (value, oldValue) ->
+  diff.basic = (value, oldValue) ->
    if value and oldValue and typeof value is 'object' and typeof oldValue is 'object'
       # Allow dates and Number/String objects to be compared
       valueValue = value.valueOf()
@@ -60,7 +60,7 @@ compare = {}
       
       # Allow dates and Number/String objects to be compared
       if typeof valueValue isnt 'object' and typeof oldValueValue isnt 'object'
-        return compare.basic valueValue, oldValueValue
+        return diff.basic valueValue, oldValueValue
     
     # If a value has changed call the callback
     if typeof value is 'number' and typeof oldValue is 'number' and isNaN(value) and isNaN(oldValue)
@@ -78,7 +78,7 @@ compare = {}
   #   oldValue: oldValue
   # }
   # ```
-  compare.objects = (object, oldObject) ->
+  diff.objects = (object, oldObject) ->
     changeRecords = []
   
     # Goes through the old object (should be a clone) and look for things that are now gone or changed
@@ -86,14 +86,14 @@ compare = {}
       value = object[prop]
       
       # Allow for the case of obj.prop = undefined (which is a new property, even if it is undefined)
-      continue if value isnt undefined and not compare.basic value, oldValue
+      continue if value isnt undefined and not diff.basic value, oldValue
           
       # If the property is gone it was removed
       unless `(prop in object)`
         changeRecords.push newChange object, 'deleted', prop, oldValue
         continue
       
-      if compare.basic value, oldValue
+      if diff.basic value, oldValue
         changeRecords.push newChange object, 'updated', prop, oldValue
     
     # Goes through the old object and looks for things that are new
@@ -133,7 +133,7 @@ compare = {}
   #   addedCount: 0
   # }
   # ```
-  compare.arrays = (value, oldValue) ->
+  diff.arrays = (value, oldValue) ->
     currentStart = 0
     currentEnd = value.length
     oldStart = 0
@@ -203,7 +203,7 @@ compare = {}
   # find the number of items at the beginning that are the same
   sharedPrefix = (current, old, searchLength) ->
     for i in [0...searchLength]
-      return i if compare.basic current[i], old[i]
+      return i if diff.basic current[i], old[i]
     return searchLength
   
   
@@ -212,7 +212,7 @@ compare = {}
     index1 = current.length
     index2 = old.length
     count = 0
-    while count < searchLength and not compare.basic current[--index1], old[--index2]
+    while count < searchLength and not diff.basic current[--index1], old[--index2]
       count++
     count
   
@@ -284,7 +284,7 @@ compare = {}
     
     for i in [1...rowCount]
       for j in [1...columnCount]
-        unless compare.basic current[currentStart + j - 1], old[oldStart + i - 1]
+        unless diff.basic current[currentStart + j - 1], old[oldStart + i - 1]
           distances[i][j] = distances[i - 1][j - 1]
         else
           north = distances[i - 1][j] + 1
@@ -295,4 +295,4 @@ compare = {}
     
 ).call(this)
 
-chip.compare = compare
+chip.diff = diff

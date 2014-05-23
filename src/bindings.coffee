@@ -676,7 +676,7 @@ chip.binding 'each', 100, (element, expr, controller) ->
     
     else if Array.isArray(value) or (value and typeof value is 'object')
       unless Array.isArray(value)
-        splices = compare.arrays Object.keys(value), Object.keys(oldValue)
+        splices = diff.arrays Object.keys(value), Object.keys(oldValue)
       
       hasNew = 0
       splices.forEach (splice) -> hasNew += splice.addedCount

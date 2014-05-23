@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, compare, div, emptyQuoteExpr, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, urlExp, varExpr, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, diff, div, emptyQuoteExpr, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, urlExp, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -901,7 +901,7 @@ if (!Date.prototype.toISOString) {
       if (this.skip) {
         delete this.skip;
       } else {
-        changed = compare.values(value, this.oldValue);
+        changed = diff.values(value, this.oldValue);
         if (!changed) {
           return;
         }
@@ -911,7 +911,7 @@ if (!Date.prototype.toISOString) {
           this.callback(value, this.oldValue);
         }
       }
-      return this.oldValue = compare.clone(value);
+      return this.oldValue = diff.clone(value);
     };
 
     Observer.prototype.close = function() {
@@ -931,7 +931,7 @@ if (!Date.prototype.toISOString) {
         skipTriggerImmediately = false;
       }
       value = getter();
-      observer = new Observer(getter, callback, compare.clone(value));
+      observer = new Observer(getter, callback, diff.clone(value));
       this.observers.push(observer);
       if (!skipTriggerImmediately) {
         callback(value);
@@ -1128,7 +1128,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype.cloneValue = function(property) {
-      return compare.clone(this[property]);
+      return diff.clone(this[property]);
     };
 
     Controller.prototype.closeController = function() {
@@ -2472,7 +2472,7 @@ if (!Date.prototype.toISOString) {
         }
       } else if (Array.isArray(value) || (value && typeof value === 'object')) {
         if (!Array.isArray(value)) {
-          splices = compare.arrays(Object.keys(value), Object.keys(oldValue));
+          splices = diff.arrays(Object.keys(value), Object.keys(oldValue));
         }
         hasNew = 0;
         splices.forEach(function(splice) {
@@ -2740,16 +2740,16 @@ if (!Date.prototype.toISOString) {
     return value && value !== '0' && value !== 'false';
   });
 
-  compare = {};
+  diff = {};
 
   (function() {
     var EDIT_ADD, EDIT_DELETE, EDIT_LEAVE, EDIT_UPDATE, calcEditDistances, newChange, newSplice, sharedPrefix, sharedSuffix, spliceOperationsFromEditDistances;
-    compare.clone = function(value, deep) {
+    diff.clone = function(value, deep) {
       var copy, key, objValue;
       if (Array.isArray(value)) {
         if (deep) {
           return value.map(function(value) {
-            return compare.clone(value, deep);
+            return diff.clone(value, deep);
           });
         } else {
           return value.slice();
@@ -2762,7 +2762,7 @@ if (!Date.prototype.toISOString) {
           for (key in value) {
             objValue = value[key];
             if (deep) {
-              objValue = compare.clone(objValue, deep);
+              objValue = diff.clone(objValue, deep);
             }
             copy[key] = objValue;
           }
@@ -2772,10 +2772,10 @@ if (!Date.prototype.toISOString) {
         return value;
       }
     };
-    compare.values = function(value, oldValue) {
+    diff.values = function(value, oldValue) {
       var changeRecords, oldValueValue, splices, valueValue;
       if (Array.isArray(value) && Array.isArray(oldValue)) {
-        splices = compare.arrays(value, oldValue);
+        splices = diff.arrays(value, oldValue);
         if (splices.length) {
           return splices;
         } else {
@@ -2787,7 +2787,7 @@ if (!Date.prototype.toISOString) {
         if (typeof valueValue !== 'object' && typeof oldValueValue !== 'object') {
           return valueValue !== oldValueValue;
         } else {
-          changeRecords = compare.objects(value, oldValue);
+          changeRecords = diff.objects(value, oldValue);
           if (changeRecords.length) {
             return changeRecords;
           } else {
@@ -2795,16 +2795,16 @@ if (!Date.prototype.toISOString) {
           }
         }
       } else {
-        return compare.basic(value, oldValue);
+        return diff.basic(value, oldValue);
       }
     };
-    compare.basic = function(value, oldValue) {
+    diff.basic = function(value, oldValue) {
       var oldValueValue, valueValue;
       if (value && oldValue && typeof value === 'object' && typeof oldValue === 'object') {
         valueValue = value.valueOf();
         oldValueValue = oldValue.valueOf();
         if (typeof valueValue !== 'object' && typeof oldValueValue !== 'object') {
-          return compare.basic(valueValue, oldValueValue);
+          return diff.basic(valueValue, oldValueValue);
         }
       }
       if (typeof value === 'number' && typeof oldValue === 'number' && isNaN(value) && isNaN(oldValue)) {
@@ -2813,20 +2813,20 @@ if (!Date.prototype.toISOString) {
         return value !== oldValue;
       }
     };
-    compare.objects = function(object, oldObject) {
+    diff.objects = function(object, oldObject) {
       var changeRecords, oldValue, prop, value;
       changeRecords = [];
       for (prop in oldObject) {
         oldValue = oldObject[prop];
         value = object[prop];
-        if (value !== void 0 && !compare.basic(value, oldValue)) {
+        if (value !== void 0 && !diff.basic(value, oldValue)) {
           continue;
         }
         if (!(prop in object)) {
           changeRecords.push(newChange(object, 'deleted', prop, oldValue));
           continue;
         }
-        if (compare.basic(value, oldValue)) {
+        if (diff.basic(value, oldValue)) {
           changeRecords.push(newChange(object, 'updated', prop, oldValue));
         }
       }
@@ -2854,7 +2854,7 @@ if (!Date.prototype.toISOString) {
     EDIT_UPDATE = 1;
     EDIT_ADD = 2;
     EDIT_DELETE = 3;
-    compare.arrays = function(value, oldValue) {
+    diff.arrays = function(value, oldValue) {
       var currentEnd, currentStart, distances, index, minLength, oldEnd, oldIndex, oldStart, op, ops, prefixCount, splice, splices, suffixCount, _j, _len1;
       currentStart = 0;
       currentEnd = value.length;
@@ -2921,7 +2921,7 @@ if (!Date.prototype.toISOString) {
     sharedPrefix = function(current, old, searchLength) {
       var i, _j;
       for (i = _j = 0; 0 <= searchLength ? _j < searchLength : _j > searchLength; i = 0 <= searchLength ? ++_j : --_j) {
-        if (compare.basic(current[i], old[i])) {
+        if (diff.basic(current[i], old[i])) {
           return i;
         }
       }
@@ -2932,7 +2932,7 @@ if (!Date.prototype.toISOString) {
       index1 = current.length;
       index2 = old.length;
       count = 0;
-      while (count < searchLength && !compare.basic(current[--index1], old[--index2])) {
+      while (count < searchLength && !diff.basic(current[--index1], old[--index2])) {
         count++;
       }
       return count;
@@ -3005,7 +3005,7 @@ if (!Date.prototype.toISOString) {
       }
       for (i = _l = 1; 1 <= rowCount ? _l < rowCount : _l > rowCount; i = 1 <= rowCount ? ++_l : --_l) {
         for (j = _m = 1; 1 <= columnCount ? _m < columnCount : _m > columnCount; j = 1 <= columnCount ? ++_m : --_m) {
-          if (!compare.basic(current[currentStart + j - 1], old[oldStart + i - 1])) {
+          if (!diff.basic(current[currentStart + j - 1], old[oldStart + i - 1])) {
             distances[i][j] = distances[i - 1][j - 1];
           } else {
             north = distances[i - 1][j] + 1;
@@ -3018,6 +3018,6 @@ if (!Date.prototype.toISOString) {
     };
   }).call(this);
 
-  chip.compare = compare;
+  chip.diff = diff;
 
 }).call(this);

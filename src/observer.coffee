@@ -26,7 +26,7 @@ class Observer
       delete @skip
     # If an array has changed calculate the splices and call the callback. This 
     else
-      changed = compare.values value, @oldValue
+      changed = diff.values value, @oldValue
       return unless changed
       if Array.isArray changed
         @callback(value, @oldValue, changed)
@@ -36,7 +36,7 @@ class Observer
     # Store an immutable version of the value, allowing for arrays and objects to change instance but not
     # content and still refrain from dispatching callbacks (e.g. when using an object in chip-class or when
     # using array filters in chip-each)
-    @oldValue = compare.clone value
+    @oldValue = diff.clone value
   
   
   # Closes the observer, stopping it from being run and allowing it to be garbage-collected
@@ -71,7 +71,7 @@ class Observer
       skipTriggerImmediately = false
     
     value = getter()
-    observer = new Observer getter, callback, compare.clone(value)
+    observer = new Observer getter, callback, diff.clone(value)
     @observers.push observer
     callback(value) unless skipTriggerImmediately
     observer
