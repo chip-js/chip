@@ -328,17 +328,15 @@ chip.filter <span class="string">'autolink'</span>, (controller, value, target) 
 chip.filter <span class="string">'int'</span>, (controller, value) -&gt;
   value = parseInt value
   <span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
-, (controller, value) -&gt;
-  value = parseInt value
-  <span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
 
 
 chip.filter <span class="string">'float'</span>, (controller, value) -&gt;
   value = parseFloat value
   <span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value
-, (controller, value) -&gt;
-  value = parseInt value
-  <span class="keyword">if</span> isNaN(value) <span class="keyword">then</span> <span class="literal">null</span> <span class="keyword">else</span> value</pre></div></div>
+
+
+chip.filter <span class="string">'bool'</span>, (controller, value) -&gt;
+  value <span class="keyword">and</span> value <span class="keyword">isnt</span> <span class="string">'0'</span> <span class="keyword">and</span> value <span class="keyword">isnt</span> <span class="string">'false'</span></pre></div></div>
             
         </li>
         

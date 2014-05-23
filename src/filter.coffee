@@ -77,11 +77,11 @@ class Filter
   constructor: (@name, @filter) ->
   
   @filters: {}
-  @valueFilters: {}
+  @setterFilters: {}
   
-  @addFilter: (name, filter, valueFilter) ->
+  @addFilter: (name, filter, setterFilter) ->
     @filters[name] = new Filter name, filter if filter?
-    @valueFilters[name] = new Filter name, valueFilter if valueFilter?
+    @setterFilters[name] = new Filter name, setterFilter if setterFilter?
     this
   
   
@@ -90,7 +90,7 @@ class Filter
   
   
   @getValueFilter: (name) ->
-    @valueFilters[name]
+    @setterFilters[name]
   
   
   @runFilter: (controller, name, value, args...) ->
@@ -101,11 +101,10 @@ class Filter
       return value
   
   
-  @runValueFilter: (controller, name, value, currentValue, args...) ->
-    filter = @valueFilters[name]?.filter
+  @runSetterFilter: (controller, name, value, currentValue, args...) ->
+    filter = @setterFilters[name]?.filter or @filters[name]?.filter
     if filter
       return filter.apply(null, [controller, value, currentValue, args...])
     else
       return value
-
 

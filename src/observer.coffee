@@ -93,21 +93,12 @@ class Observer
   
   # Runs the observer sync cycle which checks all the observers to see if they've changed. Pass in true for
   # `synchronous` to run the syncronization immediately rather than on the next code cycle.
-  @sync: (asynchronous) ->
+  @sync: (callback) ->
+    @afterSync(callback) if typeof callback is 'function'
+    
     if @syncing
       @rerun = true
       return false
-    
-    if asynchronous
-      unless @timeout
-        @timeout = setTimeout =>
-          @timeout = null
-          @sync()
-        , 0
-        return true
-      else
-        return false
-        
     
     @syncing = true
     @rerun = true
@@ -129,6 +120,15 @@ class Observer
     @syncing = false
     @cycles = 0
     return true
+
+  @syncLater: (callback) ->
+    unless @timeout
+      @timeout = setTimeout =>
+        @timeout = null
+        @sync(callback)
+      return true
+    else
+      return false
 
   # After the next sync (or the current if in the middle of one), run the provided callback
   @afterSync: (callback) ->

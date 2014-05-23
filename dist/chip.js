@@ -958,22 +958,13 @@ if (!Date.prototype.toISOString) {
 
     Observer.timeout = null;
 
-    Observer.sync = function(asynchronous) {
-      var _this = this;
+    Observer.sync = function(callback) {
+      if (typeof callback === 'function') {
+        this.afterSync(callback);
+      }
       if (this.syncing) {
         this.rerun = true;
         return false;
-      }
-      if (asynchronous) {
-        if (!this.timeout) {
-          this.timeout = setTimeout(function() {
-            _this.timeout = null;
-            return _this.sync();
-          }, 0);
-          return true;
-        } else {
-          return false;
-        }
       }
       this.syncing = true;
       this.rerun = true;
@@ -993,6 +984,19 @@ if (!Date.prototype.toISOString) {
       this.syncing = false;
       this.cycles = 0;
       return true;
+    };
+
+    Observer.syncLater = function(callback) {
+      var _this = this;
+      if (!this.timeout) {
+        this.timeout = setTimeout(function() {
+          _this.timeout = null;
+          return _this.sync(callback);
+        });
+        return true;
+      } else {
+        return false;
+      }
     };
 
     Observer.afterSync = function(callback) {
@@ -1132,16 +1136,19 @@ if (!Date.prototype.toISOString) {
       }
     };
 
-    Controller.prototype.sync = function(later) {
-      Observer.sync(later);
-      if (typeof later === 'function') {
-        setTimeout(later);
-      }
+    Controller.prototype.sync = function(callback) {
+      Observer.sync(callback);
+      return this;
+    };
+
+    Controller.prototype.syncLater = function(callback) {
+      Observer.syncLater(callback);
       return this;
     };
 
     Controller.prototype.afterSync = function(callback) {
-      return Observer.afterSync(callback);
+      Observer.afterSync(callback);
+      return this;
     };
 
     Controller.prototype.runFilter = function() {
@@ -1150,10 +1157,10 @@ if (!Date.prototype.toISOString) {
       return Filter.runFilter.apply(Filter, [this, filterName, value].concat(__slice.call(args)));
     };
 
-    Controller.prototype.runValueFilter = function() {
+    Controller.prototype.runSetterFilter = function() {
       var args, currentValue, filterName, value;
       value = arguments[0], currentValue = arguments[1], filterName = arguments[2], args = 4 <= arguments.length ? __slice.call(arguments, 3) : [];
-      return Filter.runValueFilter.apply(Filter, [this, filterName, value, currentValue].concat(__slice.call(args)));
+      return Filter.runSetterFilter.apply(Filter, [this, filterName, value, currentValue].concat(__slice.call(args)));
     };
 
     Controller.prototype.passthrough = function(value) {
@@ -1290,7 +1297,7 @@ if (!Date.prototype.toISOString) {
         });
         if (setter) {
           getter = setter.split(' : ').pop().split(' = ').shift();
-          return value = "this.runValueFilter(" + value + ", " + getter + ", " + (args.join(', ')) + ")";
+          return value = "this.runSetterFilter(" + value + ", " + getter + ", " + (args.join(', ')) + ")";
         } else {
           return value = "this.runFilter(" + value + ", " + (args.join(', ')) + ")";
         }
@@ -1918,14 +1925,14 @@ if (!Date.prototype.toISOString) {
 
     Filter.filters = {};
 
-    Filter.valueFilters = {};
+    Filter.setterFilters = {};
 
-    Filter.addFilter = function(name, filter, valueFilter) {
+    Filter.addFilter = function(name, filter, setterFilter) {
       if (filter != null) {
         this.filters[name] = new Filter(name, filter);
       }
-      if (valueFilter != null) {
-        this.valueFilters[name] = new Filter(name, valueFilter);
+      if (setterFilter != null) {
+        this.setterFilters[name] = new Filter(name, setterFilter);
       }
       return this;
     };
@@ -1935,7 +1942,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Filter.getValueFilter = function(name) {
-      return this.valueFilters[name];
+      return this.setterFilters[name];
     };
 
     Filter.runFilter = function() {
@@ -1949,10 +1956,10 @@ if (!Date.prototype.toISOString) {
       }
     };
 
-    Filter.runValueFilter = function() {
-      var args, controller, currentValue, filter, name, value, _ref;
+    Filter.runSetterFilter = function() {
+      var args, controller, currentValue, filter, name, value, _ref, _ref1;
       controller = arguments[0], name = arguments[1], value = arguments[2], currentValue = arguments[3], args = 5 <= arguments.length ? __slice.call(arguments, 4) : [];
-      filter = (_ref = this.valueFilters[name]) != null ? _ref.filter : void 0;
+      filter = ((_ref = this.setterFilters[name]) != null ? _ref.filter : void 0) || ((_ref1 = this.filters[name]) != null ? _ref1.filter : void 0);
       if (filter) {
         return filter.apply(null, [controller, value, currentValue].concat(__slice.call(args)));
       } else {
@@ -2154,7 +2161,12 @@ if (!Date.prototype.toISOString) {
       element.find('input:radio:checked').prop('checked', false);
       return element.find('input:radio[value="' + value + '"]').prop('checked', true);
     } : function(value) {
-      element.val(selectValueField && value[selectValueField] || value);
+      var strValue;
+      strValue = selectValueField && value[selectValueField] || value;
+      if (strValue != null) {
+        strValue = '' + strValue;
+      }
+      element.val(strValue);
       if (selectValueField) {
         return element.data('value', value);
       }
@@ -2168,7 +2180,7 @@ if (!Date.prototype.toISOString) {
       return;
     }
     if (element.is('select')) {
-      setTimeout(function() {
+      controller.afterSync(function() {
         setValue(controller["eval"](expr));
         if (!element.is('[readonly]')) {
           return controller.evalSetter(expr, getValue(true));
@@ -2662,13 +2674,6 @@ if (!Date.prototype.toISOString) {
     } else {
       return value;
     }
-  }, function(controller, value) {
-    value = parseInt(value);
-    if (isNaN(value)) {
-      return null;
-    } else {
-      return value;
-    }
   });
 
   chip.filter('float', function(controller, value) {
@@ -2678,13 +2683,10 @@ if (!Date.prototype.toISOString) {
     } else {
       return value;
     }
-  }, function(controller, value) {
-    value = parseInt(value);
-    if (isNaN(value)) {
-      return null;
-    } else {
-      return value;
-    }
+  });
+
+  chip.filter('bool', function(controller, value) {
+    return value && value !== '0' && value !== 'false';
   });
 
   compare = {};

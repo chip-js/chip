@@ -105,11 +105,11 @@ chip.filter(&#39;date-hour&#39;, function(controller, value) {
   constructor: (<span class="property">@name</span>, <span class="property">@filter</span>) -&gt;
   
   <span class="property">@filters</span>: {}
-  <span class="property">@valueFilters</span>: {}
+  <span class="property">@setterFilters</span>: {}
   
-  <span class="property">@addFilter</span>: (name, filter, valueFilter) -&gt;
+  <span class="property">@addFilter</span>: (name, filter, setterFilter) -&gt;
     <span class="property">@filters</span>[name] = <span class="keyword">new</span> Filter name, filter <span class="keyword">if</span> filter?
-    <span class="property">@valueFilters</span>[name] = <span class="keyword">new</span> Filter name, valueFilter <span class="keyword">if</span> valueFilter?
+    <span class="property">@setterFilters</span>[name] = <span class="keyword">new</span> Filter name, setterFilter <span class="keyword">if</span> setterFilter?
     <span class="keyword">this</span>
   
   
@@ -118,7 +118,7 @@ chip.filter(&#39;date-hour&#39;, function(controller, value) {
   
   
   <span class="property">@getValueFilter</span>: (name) -&gt;
-    <span class="property">@valueFilters</span>[name]
+    <span class="property">@setterFilters</span>[name]
   
   
   <span class="property">@runFilter</span>: (controller, name, value, args...) -&gt;
@@ -129,8 +129,8 @@ chip.filter(&#39;date-hour&#39;, function(controller, value) {
       <span class="keyword">return</span> value
   
   
-  <span class="property">@runValueFilter</span>: (controller, name, value, currentValue, args...) -&gt;
-    filter = <span class="property">@valueFilters</span>[name]?.filter
+  <span class="property">@runSetterFilter</span>: (controller, name, value, currentValue, args...) -&gt;
+    filter = <span class="property">@setterFilters</span>[name]?.filter <span class="keyword">or</span> <span class="property">@filters</span>[name]?.filter
     <span class="keyword">if</span> filter
       <span class="keyword">return</span> filter.apply(<span class="literal">null</span>, [controller, value, currentValue, args...])
     <span class="keyword">else</span>

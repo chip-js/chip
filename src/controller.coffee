@@ -113,24 +113,30 @@ class Controller
     return
   
   
-  # Syncs the observers to propogate changes to the HTML
-  sync: (later) ->
-    Observer.sync(later)
-    if typeof later is 'function'
-      setTimeout later
+  # Syncs the observers to propogate changes to the HTML, call callback after
+  sync: (callback) ->
+    Observer.sync(callback)
+    this
+  
+  
+  # Runs the sync on the next tick, call callback after
+  syncLater: (callback) ->
+    Observer.syncLater(callback)
     this
 
   
+  # call callback after the current sync
   afterSync: (callback) ->
     Observer.afterSync callback
+    this
   
   
   runFilter: (value, filterName, args...) ->
     Filter.runFilter(this, filterName, value, args...)
   
   
-  runValueFilter: (value, currentValue, filterName, args...) ->
-    Filter.runValueFilter(this, filterName, value, currentValue, args...)
+  runSetterFilter: (value, currentValue, filterName, args...) ->
+    Filter.runSetterFilter(this, filterName, value, currentValue, args...)
   
   
   passthrough: (value) ->
@@ -255,7 +261,7 @@ normalizeExpression = (expr, extraArgNames) ->
         processProperties arg, options
       if setter
         getter = setter.split(' : ').pop().split(' = ').shift()
-        value = "this.runValueFilter(#{value}, #{getter}, #{args.join(', ')})"
+        value = "this.runSetterFilter(#{value}, #{getter}, #{args.join(', ')})"
       else
         value = "this.runFilter(#{value}, #{args.join(', ')})"
     

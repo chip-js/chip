@@ -180,14 +180,12 @@ chip.filter 'autolink', (controller, value, target) ->
 chip.filter 'int', (controller, value) ->
   value = parseInt value
   if isNaN(value) then null else value
-, (controller, value) ->
-  value = parseInt value
-  if isNaN(value) then null else value
 
 
 chip.filter 'float', (controller, value) ->
   value = parseFloat value
   if isNaN(value) then null else value
-, (controller, value) ->
-  value = parseInt value
-  if isNaN(value) then null else value
+
+
+chip.filter 'bool', (controller, value) ->
+  value and value isnt '0' and value isnt 'false'
