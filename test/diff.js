@@ -1,22 +1,22 @@
 
-describe('compare', function() {
-	var compare = chip.compare
+describe('diff', function() {
+	var diff = chip.diff
 	
 	it('should return no change for two NaN values', function() {
-		var changed = compare.values(NaN, NaN)
+		var changed = diff.values(NaN, NaN)
 		expect(changed).to.be.false
 	})
 	
 	describe('object', function() {
 		
 		it('should return no change records for identical objects', function() {
-			var changes = compare.objects({ name: 'test', age: 100 }, { name: 'test', age: 100 })
+			var changes = diff.objects({ name: 'test', age: 100 }, { name: 'test', age: 100 })
 			expect(changes).to.be.empty
 		})
 		
 		
 		it('should return change records for additions', function() {
-			var changes = compare.objects({ name: 'test', age: 100, height: 6 }, { name: 'test', age: 100 })
+			var changes = diff.objects({ name: 'test', age: 100, height: 6 }, { name: 'test', age: 100 })
 			expect(changes.length).to.equal(1)
 			
 			var change = changes.pop()
@@ -27,7 +27,7 @@ describe('compare', function() {
 		
 		
 		it('should return change records for deletions', function() {
-			var changes = compare.objects({ name: 'test', age: 100 }, { name: 'test', age: 100, height: 6 })
+			var changes = diff.objects({ name: 'test', age: 100 }, { name: 'test', age: 100, height: 6 })
 			expect(changes.length).to.equal(1)
 			
 			var change = changes.pop()
@@ -38,7 +38,7 @@ describe('compare', function() {
 		
 		
 		it('should return change records for updates', function() {
-			var changes = compare.objects({ name: 'test', age: 100 }, { name: 'test', age: 102 })
+			var changes = diff.objects({ name: 'test', age: 100 }, { name: 'test', age: 102 })
 			expect(changes.length).to.equal(1)
 			
 			var change = changes.pop()
@@ -49,7 +49,7 @@ describe('compare', function() {
 		
 		
 		it('should return multiple change records for multiple changes', function() {
-			var changes = compare.objects({ name: 'testing', age: 100, height: 6 }, { name: 'test', age: 102, color: 'green' })
+			var changes = diff.objects({ name: 'testing', age: 100, height: 6 }, { name: 'test', age: 102, color: 'green' })
 			expect(changes.length).to.equal(4)
 		})
 		
@@ -58,7 +58,7 @@ describe('compare', function() {
 	describe('array', function() {
 		
 		it('should return no splices for identical arrays', function() {
-			var splices = compare.arrays([1, 2, 3], [1, 2, 3])
+			var splices = diff.arrays([1, 2, 3], [1, 2, 3])
 			expect(splices).to.be.empty
 		})
 		
@@ -67,7 +67,7 @@ describe('compare', function() {
 			var arr = [1, 2, 3]
 			var newArr = arr.slice()
 			newArr.pop()
-			var splices = compare.arrays(newArr, arr)
+			var splices = diff.arrays(newArr, arr)
 			expect(splices.length).to.equal(1)
 			
 			var splice = splices.pop()
@@ -82,7 +82,7 @@ describe('compare', function() {
 			var arr = [1, 2, 3]
 			var newArr = arr.slice()
 			newArr.shift()
-			var splices = compare.arrays(newArr, arr)
+			var splices = diff.arrays(newArr, arr)
 			expect(splices.length).to.equal(1)
 			
 			var splice = splices.pop()
@@ -97,7 +97,7 @@ describe('compare', function() {
 			var arr = [1, 2, 3]
 			var newArr = arr.slice()
 			newArr.splice(1, 1, 'test')
-			var splices = compare.arrays(newArr, arr)
+			var splices = diff.arrays(newArr, arr)
 			expect(splices.length).to.equal(1)
 			
 			var splice = splices.pop()
@@ -111,7 +111,7 @@ describe('compare', function() {
 		it('should return a splice for a completely new array', function() {
 			var arr = [1, 2, 3]
 			var newArr = [4, 5, 6, 7, 8]
-			var splices = compare.arrays(newArr, arr)
+			var splices = diff.arrays(newArr, arr)
 			expect(splices.length).to.equal(1)
 			
 			var splice = splices.pop()
@@ -129,7 +129,7 @@ describe('compare', function() {
 			]
 			var newArr = arr.slice()
 			newArr.sort()
-			var splices = compare.arrays(newArr, arr)
+			var splices = diff.arrays(newArr, arr)
 			expect(splices).to.not.be.empty
 		})
 	})
