@@ -165,6 +165,8 @@ class Binding
     
     attribs = attribs.sort (a, b) ->
       b.priority - a.priority
+
+    processed = attribs.length > 0
     
     # Go through each binding attribute from first to last.
     while attribs.length
@@ -192,6 +194,8 @@ class Binding
     # Processes the children of this element after the element has been processed.
     element.children().each (index, child) =>
       @process $(child), controller
+
+    element.trigger('processed') if processed
   
 
 

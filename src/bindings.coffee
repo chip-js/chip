@@ -333,7 +333,7 @@ chip.binding 'value', (element, expr, controller) ->
   
   # Sets initial element value. For SELECT elements allows child option element values to be set first.
   if element.is('select')
-    controller.afterSync ->
+    element.one 'processed', ->
       setValue controller.eval expr
       unless element.is('[readonly]')
         controller.evalSetter expr, getValue(true)

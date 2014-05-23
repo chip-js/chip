@@ -1914,7 +1914,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.process = function(element, controller) {
-      var attr, attribs, newController, parentNode, prefix,
+      var attr, attribs, newController, parentNode, prefix, processed,
         _this = this;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
@@ -1939,6 +1939,7 @@ if (!Date.prototype.toISOString) {
       attribs = attribs.sort(function(a, b) {
         return b.priority - a.priority;
       });
+      processed = attribs.length > 0;
       while (attribs.length) {
         attr = attribs.shift();
         if (element.attr(attr.name) == null) {
@@ -1955,9 +1956,12 @@ if (!Date.prototype.toISOString) {
           controller = newController;
         }
       }
-      return element.children().each(function(index, child) {
+      element.children().each(function(index, child) {
         return _this.process($(child), controller);
       });
+      if (processed) {
+        return element.trigger('processed');
+      }
     };
 
     return Binding;
@@ -2245,7 +2249,7 @@ if (!Date.prototype.toISOString) {
       return;
     }
     if (element.is('select')) {
-      controller.afterSync(function() {
+      element.one('processed', function() {
         setValue(controller["eval"](expr));
         if (!element.is('[readonly]')) {
           return controller.evalSetter(expr, getValue(true));

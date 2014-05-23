@@ -262,7 +262,9 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
       keepAttribute: entry.keepAttribute
     
     attribs = attribs.sort (a, b) -&gt;
-      b.priority - a.priority</pre></div></div>
+      b.priority - a.priority
+
+    processed = attribs.length &gt; <span class="number">0</span></pre></div></div>
             
         </li>
         
@@ -373,7 +375,9 @@ This is used for chip-if and chip-each for example.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>    element.children().each (index, child) =&gt;
-      <span class="property">@process</span> $(child), controller</pre></div></div>
+      <span class="property">@process</span> $(child), controller
+
+    element.trigger(<span class="string">'processed'</span>) <span class="keyword">if</span> processed</pre></div></div>
             
         </li>
         

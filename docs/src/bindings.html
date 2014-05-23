@@ -491,7 +491,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
-    controller.afterSync -&gt;
+    element.one <span class="string">'processed'</span>, -&gt;
       setValue controller.eval expr
       <span class="keyword">unless</span> element.<span class="keyword">is</span>(<span class="string">'[readonly]'</span>)
         controller.evalSetter expr, getValue(<span class="literal">true</span>)
