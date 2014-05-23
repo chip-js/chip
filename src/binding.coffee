@@ -87,7 +87,9 @@ class Binding
       element.on eventName, (event) ->
         event.preventDefault()
         unless element.attr('disabled')
+          controller.thisElement = element
           controller.eval expr
+          delete controller.thisElement
   
   
   # Shortcut, adds a handler that responds when the given key is pressed, e.g. `Binding.addEventBinding('esc', 27)`.
@@ -98,7 +100,9 @@ class Binding
         return unless event.keyCode is keyCode
         event.preventDefault()
         unless element.attr('disabled')
+          controller.thisElement = element
           controller.eval expr
+          delete controller.thisElement
   
   
   # Shortcut, adds a handler to set the named attribute to the value of the expression.

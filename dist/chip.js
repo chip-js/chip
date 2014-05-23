@@ -1865,7 +1865,9 @@ if (!Date.prototype.toISOString) {
         return element.on(eventName, function(event) {
           event.preventDefault();
           if (!element.attr('disabled')) {
-            return controller["eval"](expr);
+            controller.thisElement = element;
+            controller["eval"](expr);
+            return delete controller.thisElement;
           }
         });
       });
@@ -1882,7 +1884,9 @@ if (!Date.prototype.toISOString) {
           }
           event.preventDefault();
           if (!element.attr('disabled')) {
-            return controller["eval"](expr);
+            controller.thisElement = element;
+            controller["eval"](expr);
+            return delete controller.thisElement;
           }
         });
       });
@@ -2177,6 +2181,16 @@ if (!Date.prototype.toISOString) {
       return controller.off('urlChange', refresh);
     });
     return refresh();
+  });
+
+  chip.binding('change-action', function(element, expr, controller) {
+    var action, _ref;
+    _ref = expr.split(/\s*!\s*/), expr = _ref[0], action = _ref[1];
+    return controller.watch(expr, function(value) {
+      controller.thisElement = element;
+      controller["eval"](action);
+      return delete controller.thisElement;
+    });
   });
 
   chip.binding('value', function(element, expr, controller) {

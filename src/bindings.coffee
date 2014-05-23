@@ -249,6 +249,17 @@ chip.binding 'active-section', (element, expr, controller) ->
   refresh()
 
 
+# ## chip-change-action
+# Runs the action provided after the ! whenever the value before the ! changes.
+# This is for advanced use and a generic example doesn't fit.
+chip.binding 'change-action', (element, expr, controller) ->
+  [ expr, action ] = expr.split /\s*!\s*/
+  controller.watch expr, (value) ->
+    controller.thisElement = element
+    controller.eval action
+    delete controller.thisElement
+
+
 # ## chip-value
 # Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
 # the form element, providing two way binding.

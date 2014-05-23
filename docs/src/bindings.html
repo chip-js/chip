@@ -362,6 +362,28 @@ whole section.</p>
               <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
+              <h2>chip-change-action</h2>
+<p>Runs the action provided after the ! whenever the value before the ! changes.
+This is for advanced use and a generic example doesn&#39;t fit.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'change-action'</span>, (element, expr, controller) -&gt;
+  [ expr, action ] = expr.split <span class="regexp">/\s*!\s*/</span>
+  controller.watch expr, (value) -&gt;
+    controller.thisElement = element
+    controller.eval action
+    <span class="keyword">delete</span> controller.thisElement</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
               <h2>chip-value</h2>
 <p>Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
 the form element, providing two way binding.</p>
@@ -398,11 +420,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p>Handles input (checkboxes, radios), select, textarea, option</p>
 
@@ -443,11 +465,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>Skips setting values on option elements since the user cannot change these with user input</p>
 
@@ -458,11 +480,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p>Sets initial element value. For SELECT elements allows child option element values to be set first.</p>
 
@@ -492,11 +514,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <h2>chip-[event]</h2>
 <p>Adds a handler for each event name in the array. When the event is triggered the expression will be run.</p>
@@ -529,11 +551,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <h2>chip-[key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches.</p>
@@ -556,11 +578,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <h2>chip-[control key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches and the ctrlKey or metaKey is
@@ -581,11 +603,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <h2>chip-[attribute]</h2>
 <p>Adds a handler to set the attribute of element to the value of the expression.</p>
@@ -609,11 +631,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <h2>chip-[toggle attribute]</h2>
 <p>Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.</p>
@@ -639,11 +661,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <h2>animateIn/animateOut</h2>
 <p>Adds a jquery plugin to allow an element to use CSS3 transitions or animations to animate in or out of the page. This
@@ -692,11 +714,11 @@ $.fn.<span class="function"><span class="title">animateOut</span></span> = (dont
         </li>
         
         
-        <li id="section-22">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>backup to ensure it “finishes”</p>
 
@@ -720,11 +742,11 @@ $.fn.<span class="function"><span class="title">willAnimate</span></span> = -&gt
         </li>
         
         
-        <li id="section-23">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <h2>chip-if</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -765,11 +787,11 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
         </li>
         
         
-        <li id="section-24">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <h2>chip-unless</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -810,11 +832,11 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
         </li>
         
         
-        <li id="section-25">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <h2>chip-each</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
@@ -938,11 +960,11 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
         </li>
         
         
-        <li id="section-26">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <h2>chip-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
@@ -987,11 +1009,11 @@ attributes which appear after <code>chip-partial</code> will have the new value 
         </li>
         
         
-        <li id="section-27">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <h2>chip-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the

@@ -136,7 +136,9 @@ priority. The default is <code>0</code>.</p>
       element.<span class="literal">on</span> eventName, (event) -&gt;
         event.preventDefault()
         <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
-          controller.eval expr</pre></div></div>
+          controller.thisElement = element
+          controller.eval expr
+          <span class="keyword">delete</span> controller.thisElement</pre></div></div>
             
         </li>
         
@@ -158,7 +160,9 @@ priority. The default is <code>0</code>.</p>
         <span class="keyword">return</span> <span class="keyword">unless</span> event.keyCode <span class="keyword">is</span> keyCode
         event.preventDefault()
         <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
-          controller.eval expr</pre></div></div>
+          controller.thisElement = element
+          controller.eval expr
+          <span class="keyword">delete</span> controller.thisElement</pre></div></div>
             
         </li>
         
