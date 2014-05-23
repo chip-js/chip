@@ -105,10 +105,14 @@ class Controller
       @parent._children.remove this
 
     @beforeClose() if @hasOwnProperty('beforeClose')
-    if @_observers
-      for observer in @_observers
-        observer.close()
-      @_observers.length = 0
+    if @_syncListeners
+      for listener in @_syncListeners
+        Observer.removeOnSync listener
+      delete @_syncListeners
+    
+    for observer in @_observers
+      observer.close()
+    @_observers.length = 0
     @onClose() if @hasOwnProperty('onClose')
     return
   
@@ -128,6 +132,22 @@ class Controller
   # call callback after the current sync
   afterSync: (callback) ->
     Observer.afterSync callback
+    this
+  
+  
+  # Runs the listener on every sync, stops once the controller is closed
+  onSync: (listener) ->
+    @_syncListeners = [] unless @_syncListeners
+    @_syncListeners.push listener
+    Observer.onSync(listener)
+    this
+  
+  
+  # Removes a sync listener
+  removeOnSync: (listener) ->
+    index = @_syncListeners.indexOf listener
+    @_syncListeners.splice(index, 1) unless index is -1
+    Observer.removeOnSync(listener)
     this
   
   

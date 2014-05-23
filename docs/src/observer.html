@@ -189,7 +189,8 @@ using array filters in chip-each)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@callbacks</span>: []</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@callbacks</span>: []
+  <span class="property">@listeners</span>: []</pre></div></div>
             
         </li>
         
@@ -326,8 +327,8 @@ run infinite loops</p>
         <span class="keyword">this</span>.observers[i].sync()
       }</span>`
     
-    <span class="keyword">while</span> <span class="property">@callbacks</span>.length
-      <span class="property">@callbacks</span>.shift()()
+    <span class="property">@callbacks</span>.shift()() <span class="keyword">while</span> <span class="property">@callbacks</span>.length
+    listener() <span class="keyword">for</span> listener <span class="keyword">in</span> <span class="property">@listeners</span>
 
     <span class="property">@syncing</span> = <span class="literal">false</span>
     <span class="property">@cycles</span> = <span class="number">0</span>
@@ -358,6 +359,15 @@ run infinite loops</p>
             <div class="content"><div class='highlight'><pre>  <span class="property">@afterSync</span>: (callback) -&gt;
     <span class="keyword">throw</span> <span class="keyword">new</span> TypeError(<span class="string">'callback must be a function'</span>) <span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
     <span class="property">@callbacks</span>.push callback
+
+  <span class="property">@onSync</span>: (listener) -&gt;
+    <span class="keyword">throw</span> <span class="keyword">new</span> TypeError(<span class="string">'listener must be a function'</span>) <span class="keyword">unless</span> <span class="keyword">typeof</span> listener <span class="keyword">is</span> <span class="string">'function'</span>
+    <span class="property">@listeners</span>.push listener
+
+  <span class="property">@removeOnSync</span>: (listener) -&gt;
+    <span class="keyword">throw</span> <span class="keyword">new</span> TypeError(<span class="string">'listener must be a function'</span>) <span class="keyword">unless</span> <span class="keyword">typeof</span> listener <span class="keyword">is</span> <span class="string">'function'</span>
+    index = <span class="property">@listeners</span>.indexOf listener
+    <span class="property">@listeners</span>.splice(index, <span class="number">1</span>).pop() <span class="keyword">unless</span> index <span class="keyword">is</span> -<span class="number">1</span>
 
 
 chip.Observer = Observer</pre></div></div>

@@ -922,6 +922,8 @@ if (!Date.prototype.toISOString) {
 
     Observer.callbacks = [];
 
+    Observer.listeners = [];
+
     Observer.add = function(getter, skipTriggerImmediately, callback) {
       var observer, value;
       if (typeof skipTriggerImmediately === 'function') {
@@ -959,6 +961,7 @@ if (!Date.prototype.toISOString) {
     Observer.timeout = null;
 
     Observer.sync = function(callback) {
+      var listener, _i, _len, _ref;
       if (typeof callback === 'function') {
         this.afterSync(callback);
       }
@@ -980,6 +983,11 @@ if (!Date.prototype.toISOString) {
       }
       while (this.callbacks.length) {
         this.callbacks.shift()();
+      }
+      _ref = this.listeners;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        listener = _ref[_i];
+        listener();
       }
       this.syncing = false;
       this.cycles = 0;
@@ -1004,6 +1012,24 @@ if (!Date.prototype.toISOString) {
         throw new TypeError('callback must be a function');
       }
       return this.callbacks.push(callback);
+    };
+
+    Observer.onSync = function(listener) {
+      if (typeof listener !== 'function') {
+        throw new TypeError('listener must be a function');
+      }
+      return this.listeners.push(listener);
+    };
+
+    Observer.removeOnSync = function(listener) {
+      var index;
+      if (typeof listener !== 'function') {
+        throw new TypeError('listener must be a function');
+      }
+      index = this.listeners.indexOf(listener);
+      if (index !== -1) {
+        return this.listeners.splice(index, 1).pop();
+      }
     };
 
     return Observer;
@@ -1106,7 +1132,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype.closeController = function() {
-      var child, observer, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+      var child, listener, observer, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3;
       if (this._closed) {
         return;
       }
@@ -1123,14 +1149,20 @@ if (!Date.prototype.toISOString) {
       if (this.hasOwnProperty('beforeClose')) {
         this.beforeClose();
       }
-      if (this._observers) {
-        _ref2 = this._observers;
+      if (this._syncListeners) {
+        _ref2 = this._syncListeners;
         for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          observer = _ref2[_j];
-          observer.close();
+          listener = _ref2[_j];
+          Observer.removeOnSync(listener);
         }
-        this._observers.length = 0;
+        delete this._syncListeners;
       }
+      _ref3 = this._observers;
+      for (_k = 0, _len2 = _ref3.length; _k < _len2; _k++) {
+        observer = _ref3[_k];
+        observer.close();
+      }
+      this._observers.length = 0;
       if (this.hasOwnProperty('onClose')) {
         this.onClose();
       }
@@ -1148,6 +1180,25 @@ if (!Date.prototype.toISOString) {
 
     Controller.prototype.afterSync = function(callback) {
       Observer.afterSync(callback);
+      return this;
+    };
+
+    Controller.prototype.onSync = function(listener) {
+      if (!this._syncListeners) {
+        this._syncListeners = [];
+      }
+      this._syncListeners.push(listener);
+      Observer.onSync(listener);
+      return this;
+    };
+
+    Controller.prototype.removeOnSync = function(listener) {
+      var index;
+      index = this._syncListeners.indexOf(listener);
+      if (index !== -1) {
+        this._syncListeners.splice(index, 1);
+      }
+      Observer.removeOnSync(listener);
       return this;
     };
 

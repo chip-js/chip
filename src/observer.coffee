@@ -49,6 +49,7 @@ class Observer
 
   # An array of callbacks to run after the next sync, considered *private* 
   @callbacks: []
+  @listeners: []
   
   # Adds a new observer to be notified of changes. `getter` is a function which returns a value. `callback` is called
   # whenever `getter` returns a new value. `callback` is called with that value and perhaps splices or change records.
@@ -114,8 +115,8 @@ class Observer
         this.observers[i].sync()
       }`
     
-    while @callbacks.length
-      @callbacks.shift()()
+    @callbacks.shift()() while @callbacks.length
+    listener() for listener in @listeners
 
     @syncing = false
     @cycles = 0
@@ -134,6 +135,15 @@ class Observer
   @afterSync: (callback) ->
     throw new TypeError('callback must be a function') unless typeof callback is 'function'
     @callbacks.push callback
+
+  @onSync: (listener) ->
+    throw new TypeError('listener must be a function') unless typeof listener is 'function'
+    @listeners.push listener
+
+  @removeOnSync: (listener) ->
+    throw new TypeError('listener must be a function') unless typeof listener is 'function'
+    index = @listeners.indexOf listener
+    @listeners.splice(index, 1).pop() unless index is -1
 
 
 chip.Observer = Observer
