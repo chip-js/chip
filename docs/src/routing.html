@@ -93,10 +93,10 @@ portion of the URL.</p>
   
   
   redirect: (url, replace = <span class="literal">false</span>) -&gt;
-    <span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'.'</span>
+    <span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'.'</span> <span class="keyword">or</span> url.split(<span class="string">'//'</span>).length &gt; <span class="number">1</span>
       pathParts = document.createElement(<span class="string">'a'</span>)
       pathParts.href = url
-      url = pathParts.pathname
+      url = pathParts.pathname + pathParts.search
     <span class="keyword">else</span>
       url = <span class="property">@prefix</span> + url
     

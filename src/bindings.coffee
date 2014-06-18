@@ -319,13 +319,13 @@ chip.binding 'value', (element, expr, controller) ->
         element.find('input:radio[value="' + value + '"]').prop('checked', true)
     else
       (value) ->
-        strValue = selectValueField and value[selectValueField] or value
+        strValue = selectValueField and value?[selectValueField] or value
         strValue = '' + strValue if strValue?
         element.val(strValue)
         element.data('value', value) if selectValueField
   
   observer = controller.watch watchExpr, (value) ->
-    if `getValue() != value` # Allows for string/number equality
+    if getValue() isnt '' + value # Allows for string/number equality
       setValue controller.eval expr
   
   # Skips setting values on option elements since the user cannot change these with user input

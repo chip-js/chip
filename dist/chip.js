@@ -613,10 +613,10 @@ if (!Date.prototype.toISOString) {
       if (replace == null) {
         replace = false;
       }
-      if (url.charAt(0) === '.') {
+      if (url.charAt(0) === '.' || url.split('//').length > 1) {
         pathParts = document.createElement('a');
         pathParts.href = url;
-        url = pathParts.pathname;
+        url = pathParts.pathname + pathParts.search;
       } else {
         url = this.prefix + url;
       }
@@ -2231,7 +2231,7 @@ if (!Date.prototype.toISOString) {
       return element.find('input:radio[value="' + value + '"]').prop('checked', true);
     } : function(value) {
       var strValue;
-      strValue = selectValueField && value[selectValueField] || value;
+      strValue = selectValueField && (value != null ? value[selectValueField] : void 0) || value;
       if (strValue != null) {
         strValue = '' + strValue;
       }
@@ -2241,7 +2241,7 @@ if (!Date.prototype.toISOString) {
       }
     };
     observer = controller.watch(watchExpr, function(value) {
-      if (getValue() != value) {
+      if (getValue() !== '' + value) {
         return setValue(controller["eval"](expr));
       }
     });

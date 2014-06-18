@@ -33,10 +33,10 @@ class Router
   
   
   redirect: (url, replace = false) ->
-    if url.charAt(0) is '.'
+    if url.charAt(0) is '.' or url.split('//').length > 1
       pathParts = document.createElement('a')
       pathParts.href = url
-      url = pathParts.pathname
+      url = pathParts.pathname + pathParts.search
     else
       url = @prefix + url
     
