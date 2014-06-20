@@ -36,7 +36,7 @@ class Router
     if url.charAt(0) is '.' or url.split('//').length > 1
       pathParts = document.createElement('a')
       pathParts.href = url
-      url = pathParts.pathname + pathParts.search
+      url = pathname(pathParts) + pathParts.search
     else
       url = @prefix + url
     
@@ -111,8 +111,7 @@ class Router
   getUrlParts: (url) ->
     urlParts = document.createElement('a')
     urlParts.href = url
-    path = urlParts.pathname
-    path = '/' + path if path.charAt(0) isnt '/'
+    path = pathname(urlParts)
     return null if path.indexOf(@prefix) isnt 0
     path.replace @prefix, ''
     path: path, query: urlParts.search
@@ -232,3 +231,9 @@ parseQuery = (search) ->
     query[decodeURIComponent(key)] = decodeURIComponent(value)
   
   query
+
+# Fix IE's missing slash prefix
+pathname = (anchor) ->
+  path = anchor.pathname
+  path = '/' + path unless path.charAt(0) is '/'
+  path

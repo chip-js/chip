@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, diff, div, emptyQuoteExpr, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, urlExp, varExpr, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, diff, div, emptyQuoteExpr, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pathname, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, urlExp, varExpr, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -616,7 +616,7 @@ if (!Date.prototype.toISOString) {
       if (url.charAt(0) === '.' || url.split('//').length > 1) {
         pathParts = document.createElement('a');
         pathParts.href = url;
-        url = pathParts.pathname + pathParts.search;
+        url = pathname(pathParts) + pathParts.search;
       } else {
         url = this.prefix + url;
       }
@@ -719,10 +719,7 @@ if (!Date.prototype.toISOString) {
       var path, urlParts;
       urlParts = document.createElement('a');
       urlParts.href = url;
-      path = urlParts.pathname;
-      if (path.charAt(0) !== '/') {
-        path = '/' + path;
-      }
+      path = pathname(urlParts);
       if (path.indexOf(this.prefix) !== 0) {
         return null;
       }
@@ -882,6 +879,15 @@ if (!Date.prototype.toISOString) {
       return query[decodeURIComponent(key)] = decodeURIComponent(value);
     });
     return query;
+  };
+
+  pathname = function(anchor) {
+    var path;
+    path = anchor.pathname;
+    if (path.charAt(0) !== '/') {
+      path = '/' + path;
+    }
+    return path;
   };
 
   Observer = (function() {

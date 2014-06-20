@@ -96,7 +96,7 @@ portion of the URL.</p>
     <span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'.'</span> <span class="keyword">or</span> url.split(<span class="string">'//'</span>).length &gt; <span class="number">1</span>
       pathParts = document.createElement(<span class="string">'a'</span>)
       pathParts.href = url
-      url = pathParts.pathname + pathParts.search
+      url = pathname(pathParts) + pathParts.search
     <span class="keyword">else</span>
       url = <span class="property">@prefix</span> + url
     
@@ -196,8 +196,7 @@ portion of the URL.</p>
   getUrlParts: (url) -&gt;
     urlParts = document.createElement('a')
     urlParts.href = url
-    path = urlParts.pathname
-    path = '/' + path if path.charAt(0) isnt '/'
+    path = pathname(urlParts)
     return null if path.indexOf(@prefix) isnt 0
     path.replace @prefix, ''
     path: path, query: urlParts.search
@@ -396,6 +395,24 @@ contain <code>[&quot;id&quot;]</code>.</p>
     query[decodeURIComponent(key)] = decodeURIComponent(value)
   
   query</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>Fix IE&#39;s missing slash prefix</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="title">pathname</span></span> = (anchor) -&gt;
+  path = anchor.pathname
+  path = <span class="string">'/'</span> + path <span class="keyword">unless</span> path.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'/'</span>
+  path</pre></div></div>
             
         </li>
         
