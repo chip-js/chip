@@ -2,23 +2,23 @@
 
 # ## filter
 # Adds a filter to filter an array by the given filter function
-chip.filter 'filter', (controller, value, filterFunc) ->
+chip.filter 'filter', (value, filterFunc) ->
   return [] unless Array.isArray value
   return value unless filterFunc
-  value.filter(filterFunc, controller)
+  value.filter(filterFunc, this)
 
 # ## map
 # Adds a filter to map an array or value by the given mapping function
-chip.filter 'map', (controller, value, mapFunc) ->
+chip.filter 'map', (value, mapFunc) ->
   return value unless value? and mapFunc
   if Array.isArray value
-    value.map(mapFunc, controller)
+    value.map(mapFunc, this)
   else
-    mapFunc.call(controller, value)
+    mapFunc.call(this, value)
 
 # ## reduce
 # Adds a filter to reduce an array or value by the given reduce function
-chip.filter 'reduce', (controller, value, reduceFunc, initialValue) ->
+chip.filter 'reduce', (value, reduceFunc, initialValue) ->
   return value unless value? and reduceFunc
   if Array.isArray value
     if arguments.length is 4 then value.reduce(reduceFunc, initialValue) else value.reduce(reduceFunc)
@@ -27,7 +27,7 @@ chip.filter 'reduce', (controller, value, reduceFunc, initialValue) ->
 
 # ## reduce
 # Adds a filter to reduce an array or value by the given reduce function
-chip.filter 'slice', (controller, value, index, endIndex) ->
+chip.filter 'slice', (value, index, endIndex) ->
   if Array.isArray value
     value.slice(index, endIndex)
   else
@@ -36,24 +36,24 @@ chip.filter 'slice', (controller, value, index, endIndex) ->
 
 # ## date
 # Adds a filter to format dates and strings
-chip.filter 'date', (controller, value) ->
+chip.filter 'date', (value) ->
   return '' unless value
   unless value instanceof Date
-    value = new Date(controller, value)
+    value = new Date(value)
   return '' if isNaN value.getTime()
   value.toLocaleString()
 
 
 # ## log
 # Adds a filter to log the value of the expression, useful for debugging
-chip.filter 'log', (controller, value, prefix = 'Log') ->
+chip.filter 'log', (value, prefix = 'Log') ->
   console.log prefix + ':', value
   return value
 
 
 # ## limit
 # Adds a filter to limit the length of an array or string
-chip.filter 'limit', (controller, value, limit) ->
+chip.filter 'limit', (value, limit) ->
   if value and typeof value.slice is 'function'
     if limit < 0
       value.slice limit
@@ -65,7 +65,7 @@ chip.filter 'limit', (controller, value, limit) ->
 
 # ## sort
 # Adds a filter to sort an array
-chip.filter 'sort', (controller, value, sortFunc) ->
+chip.filter 'sort', (value, sortFunc) ->
   return value unless sortFunc
   if typeof sortFunc is 'string'
     [prop,dir] = sortFunc.split(':')
@@ -93,9 +93,9 @@ chip.filter 'sort', (controller, value, sortFunc) ->
 # <div>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!</div>
 # ```
 div = null
-chip.filter 'escape', (controller, value) ->
+chip.filter 'escape', (value) ->
   div = $('<div></div>') unless div
-  div.text(controller, value or '').text()
+  div.text(value or '').text()
 
 # ## p
 # HTML escapes content wrapping paragraphs in <p> tags.
@@ -109,7 +109,7 @@ chip.filter 'escape', (controller, value) ->
 # <div><p>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!</p>
 # <p>It's great</p></div>
 # ```
-chip.filter 'p', (controller, value) ->
+chip.filter 'p', (value) ->
   div = $('<div></div>') unless div
   lines = (value or '').split(/\r?\n/)
   escaped = lines.map (line) -> div.text(line).text() or '<br>'
@@ -128,7 +128,7 @@ chip.filter 'p', (controller, value) ->
 # <div>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!<br>
 # It's great</div>
 # ```
-chip.filter 'br', (controller, value) ->
+chip.filter 'br', (value) ->
   div = $('<div></div>') unless div
   lines = (value or '').split(/\r?\n/)
   escaped = lines.map (line) -> div.text(line).text()
@@ -147,7 +147,7 @@ chip.filter 'br', (controller, value) ->
 # <div><p>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!<br>
 # It's great</p></div>
 # ```
-chip.filter 'newline', (controller, value) ->
+chip.filter 'newline', (value) ->
   div = $('<div></div>') unless div
   paragraphs = (value or '').split(/\r?\n\s*\r?\n/)
   escaped = paragraphs.map (paragraph) ->
@@ -170,22 +170,22 @@ chip.filter 'newline', (controller, value) ->
 # <div>Check out <a href="https://github.com/teamsnap/chip" target="_blank">https://github.com/teamsnap/chip</a>!</div>
 # ```
 urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi
-chip.filter 'autolink', (controller, value, target) ->
+chip.filter 'autolink', (value, target) ->
   target = if target then ' target="_blank"' else ''
   ('' + value).replace /<[^>]+>|[^<]+/g, (match) ->
     return match if match.charAt(0) is '<'
     match.replace(urlExp, '$1<a href="$2"' + target + '>$2</a>')
 
 
-chip.filter 'int', (controller, value) ->
+chip.filter 'int', (value) ->
   value = parseInt value
   if isNaN(value) then null else value
 
 
-chip.filter 'float', (controller, value) ->
+chip.filter 'float', (value) ->
   value = parseFloat value
   if isNaN(value) then null else value
 
 
-chip.filter 'bool', (controller, value) ->
+chip.filter 'bool', (value) ->
   value and value isnt '0' and value isnt 'false'

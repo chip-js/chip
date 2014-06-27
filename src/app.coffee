@@ -132,6 +132,7 @@ class App
       # Sets instance of app on this controller as a top-level controller
       controller.app = this
       controller.translations = @translations
+      controller._filters = Filter.filters
     
     # If `extend` is provided, all properties from that object will be copied over to the controller before it is
     # initialized by its definition or bound to its element.

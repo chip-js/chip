@@ -407,14 +407,16 @@ value of <code>&#39;Jac&#39;</code>.</p>
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'value'</span>, (element, expr, controller) -&gt;
   prefix = controller.app.bindingPrefix
   watchExpr = expr
+
+  fieldExpr = element.attr(prefix + <span class="string">'value-field'</span>)
+  element.removeAttr(prefix + <span class="string">'value-field'</span>)
+
   <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
-    fieldExpr = element.attr(prefix + <span class="string">'value-field'</span>)
-    element.removeAttr(prefix + <span class="string">'value-field'</span>)
     selectValueField = <span class="keyword">if</span> fieldExpr <span class="keyword">then</span> controller.eval(fieldExpr) <span class="keyword">else</span> <span class="literal">null</span>
     chip.lastSelectValueField = selectValueField
   
-  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'option'</span>) <span class="keyword">and</span> chip.lastSelectValueField
-    selectValueField = chip.lastSelectValueField
+  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'option'</span>) <span class="keyword">and</span> fieldExpr <span class="keyword">or</span> chip.lastSelectValueField
+    selectValueField = fieldExpr <span class="keyword">or</span> chip.lastSelectValueField
     watchExpr += <span class="string">'.'</span> + selectValueField</pre></div></div>
             
         </li>

@@ -6,6 +6,7 @@ module.exports = function(grunt) {
 		'src/routing.coffee',
 		'src/observer.coffee',
 		'src/controller.coffee',
+		'src/expression.coffee',
 		'src/app.coffee',
 		'src/binding.coffee',
 		'src/filter.coffee',

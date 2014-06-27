@@ -4,11 +4,11 @@
 # `callback` is called with the value.
 # 
 # If the old and new values were either an array or an object, the `callback` also
-# receives the an array of splices (for an array), or an array of change objects (for an object) which are the same
+# receives an array of splices (for an array), or an array of change objects (for an object) which are the same
 # format that `Array.observe` and `Object.observe` return <http://wiki.ecmascript.org/doku.php?id=harmony:observe>.
 class Observer
   
-  # An Observer should never be created with it's constructor. Only through `Observer.add()`.
+  # An Observer should never be created with its constructor. Only through `Observer.add()`.
   constructor: (@getter, @callback, @oldValue) ->
   
   

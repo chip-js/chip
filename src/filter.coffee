@@ -37,10 +37,6 @@
 #   // value coming from the controller expression, to be set on the element
 #   if (value == null || isNaN(value)) return ''
 #   return value
-# }, function(controller, value, currentValue) {
-#   // value coming from the HTML element, this will always be a string
-#   value = parseFloat(value)
-#   return isNaN(value) ? null : parseFloat(value)
 # })
 # 
 # chip.filter('date-hour', function(controller, value) {
@@ -50,17 +46,6 @@
 #   if (hours >= 12) hours -= 12
 #   if (hours == 0) hours = 12
 #   return hours
-# }, function(controller, value, currentValue) {
-#   // value coming from the HTML element, this will always be a string
-#   value = parseInt(value)
-#   if (isNaN(value) || value < 1 || value > 12 || !(currentValue instanceof Date) ) return currentValue
-#   var hours = currentValue.getHours()
-#   // if PM make 1 become 13
-#   if (hours >= 12 && value != 12) value += 12
-#   // if AM make 12 AM 0
-#   if (hours < 12 && value == 12) value = 0
-#   currentValue.setHours(value)
-#   return currentValue
 # })
 # ```xml
 # <label>Number Attending:</label>
@@ -77,34 +62,11 @@ class Filter
   constructor: (@name, @filter) ->
   
   @filters: {}
-  @setterFilters: {}
   
-  @addFilter: (name, filter, setterFilter) ->
-    @filters[name] = new Filter name, filter if filter?
-    @setterFilters[name] = new Filter name, setterFilter if setterFilter?
+  @addFilter: (name, filter) ->
+    @filters[name] = filter if filter?
     this
   
   
   @getFilter: (name) ->
     @filters[name]
-  
-  
-  @getValueFilter: (name) ->
-    @setterFilters[name]
-  
-  
-  @runFilter: (controller, name, value, args...) ->
-    filter = @filters[name]?.filter
-    if filter
-      return filter.apply(null, [controller, value, args...])
-    else
-      return value
-  
-  
-  @runSetterFilter: (controller, name, value, currentValue, args...) ->
-    filter = @setterFilters[name]?.filter or @filters[name]?.filter
-    if filter
-      return filter.apply(null, [controller, value, currentValue, args...])
-    else
-      return value
-

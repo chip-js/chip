@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, argSeparator, attribs, chip, diff, div, emptyQuoteExpr, keyCode, keyCodes, makeEventEmitter, name, normalizeExpression, parsePath, parseQuery, pathname, pipeExpr, processPart, processProperties, quoteExpr, setterExpr, urlExp, varExpr, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, addReferences, addThis, argSeparator, attribs, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, finishedChain, getFunctionCall, ignore, initParse, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, splitLinks, strings, urlExp, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -1049,6 +1049,7 @@ if (!Date.prototype.toISOString) {
       this._observers = [];
       this._children = [];
       this._closed = false;
+      this._filters = Filter.filters;
     }
 
     Controller.prototype.watch = function(expr, skipTriggerImmediately, callback) {
@@ -1086,7 +1087,7 @@ if (!Date.prototype.toISOString) {
       if (typeof expr === 'function') {
         getter = expr;
       } else {
-        getter = Controller.createBoundFunction(this, expr);
+        getter = expression.bind(expr, this);
       }
       observer = Observer.add(getter, skipTriggerImmediately, callback);
       observer.expr = expr;
@@ -1108,7 +1109,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype["eval"] = function(expr) {
-      return Controller.createFunction(expr).call(this);
+      return expression.get(expr).call(this);
     };
 
     Controller.prototype.evalSetter = function(expr, value) {
@@ -1116,13 +1117,17 @@ if (!Date.prototype.toISOString) {
         return this.passthrough().evalSetter(expr, value);
       }
       expr = expr.replace(/(\s*\||$)/, ' = value$1');
-      return Controller.createFunction(expr, ['value']).call(this, value);
+      return expression.get(expr, {
+        args: ['value']
+      }).call(this, value);
     };
 
     Controller.prototype.getBoundEval = function() {
       var expr, extraArgNames;
       expr = arguments[0], extraArgNames = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return Controller.createBoundFunction(this, expr, extraArgNames);
+      return expression.bind(expr, this, {
+        args: extraArgNames
+      });
     };
 
     Controller.prototype.redirect = function(url, replace) {
@@ -1208,18 +1213,6 @@ if (!Date.prototype.toISOString) {
       return this;
     };
 
-    Controller.prototype.runFilter = function() {
-      var args, filterName, value;
-      value = arguments[0], filterName = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
-      return Filter.runFilter.apply(Filter, [this, filterName, value].concat(__slice.call(args)));
-    };
-
-    Controller.prototype.runSetterFilter = function() {
-      var args, currentValue, filterName, value;
-      value = arguments[0], currentValue = arguments[1], filterName = arguments[2], args = 4 <= arguments.length ? __slice.call(arguments, 3) : [];
-      return Filter.runSetterFilter.apply(Filter, [this, filterName, value, currentValue].concat(__slice.call(args)));
-    };
-
     Controller.prototype.passthrough = function(value) {
       if (arguments.length) {
         return this._passthrough = value;
@@ -1230,37 +1223,6 @@ if (!Date.prototype.toISOString) {
           return this;
         }
       }
-    };
-
-    Controller.keywords = ['this', 'window', '$', 'true', 'false'];
-
-    Controller.filters = {};
-
-    Controller.exprCache = {};
-
-    Controller.createFunction = function(expr, extraArgNames) {
-      var e, func, normalizedExpr;
-      if (extraArgNames == null) {
-        extraArgNames = [];
-      }
-      func = this.exprCache[expr];
-      if (func) {
-        return func;
-      }
-      normalizedExpr = normalizeExpression(expr, extraArgNames);
-      try {
-        func = this.exprCache[expr] = Function.apply(null, __slice.call(extraArgNames).concat([normalizedExpr]));
-      } catch (_error) {
-        e = _error;
-        throw new Error(e.message + ' in observer binding:\n`' + expr + '`\n' + 'Compiled binding:\n' + normalizedExpr);
-      }
-      return func;
-    };
-
-    Controller.createBoundFunction = function(controller, expr, extraArgNames) {
-      var func;
-      func = Controller.createFunction(expr, extraArgNames);
-      return func.bind(controller);
     };
 
     return Controller;
@@ -1301,7 +1263,39 @@ if (!Date.prototype.toISOString) {
     })($.cleanData);
   }
 
-  varExpr = /[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi;
+  chip.Controller = Controller;
+
+  expression = {
+    cache: {},
+    globals: ['true', 'false', 'window', 'this']
+  };
+
+  expression.get = function(expr, options) {
+    var args, body, e, func;
+    if (options == null) {
+      options = {};
+    }
+    func = expression.cache[expr];
+    if (func) {
+      return func;
+    }
+    body = expression.parse(expr, options);
+    args = options.args || [];
+    try {
+      func = expression.cache[expr] = Function.apply(null, __slice.call(args).concat([body]));
+    } catch (_error) {
+      e = _error;
+      if (console) {
+        console.error('Bad expression:\n`' + expr + '`\n' + 'Compiled expression:\n' + body);
+      }
+      throw new Error(e.message);
+    }
+    return func;
+  };
+
+  expression.bind = function(expr, scope, options) {
+    return expression.get(expr, options).bind(scope);
+  };
 
   quoteExpr = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -1311,20 +1305,73 @@ if (!Date.prototype.toISOString) {
 
   argSeparator = /\s*:\s*/g;
 
+  propExpr = /((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi;
+
+  chainLinks = /\.|\[/g;
+
+  chainLink = /\.|\[|\(/;
+
   setterExpr = /\s=\s/;
 
-  normalizeExpression = function(expr, extraArgNames) {
-    var filters, i, options, orig, refs, setter, strIndex, strings, value, _i, _ref, _ref1, _ref2, _ref3;
-    orig = expr;
-    options = {
-      references: 0,
-      ignore: Controller.keywords.concat(extraArgNames)
-    };
-    strings = [];
-    expr = expr.replace(quoteExpr, function(str, quote) {
+  ignore = null;
+
+  strings = [];
+
+  referenceCount = 0;
+
+  currentReference = 0;
+
+  currentIndex = 0;
+
+  finishedChain = false;
+
+  continuation = false;
+
+  expression.parse = function(expr, options) {
+    initParse(expr, options);
+    expr = pullOutStrings(expr);
+    expr = parseFilters(expr);
+    expr = parseExpr(expr);
+    expr = 'return ' + expr;
+    expr = putInStrings(expr);
+    expr = addReferences(expr);
+    return expr;
+  };
+
+  initParse = function(expr, options) {
+    referenceCount = currentReference = 0;
+    ignore = expression.globals.concat((options != null ? options.globals : void 0) || [], (options != null ? options.args : void 0) || []);
+    return strings.length = 0;
+  };
+
+  pullOutStrings = function(expr) {
+    var javascript;
+    return javascript = expr.replace(quoteExpr, function(str, quote) {
       strings.push(str);
       return quote + quote;
     });
+  };
+
+  putInStrings = function(expr) {
+    return expr = expr.replace(emptyQuoteExpr, function() {
+      return strings.shift();
+    });
+  };
+
+  addReferences = function(expr) {
+    var i, refs, _i;
+    if (referenceCount) {
+      refs = [];
+      for (i = _i = 1; 1 <= referenceCount ? _i <= referenceCount : _i >= referenceCount; i = 1 <= referenceCount ? ++_i : --_i) {
+        refs.push('_ref' + i);
+      }
+      expr = 'var ' + refs.join(', ') + ';\n' + expr;
+    }
+    return expr;
+  };
+
+  parseFilters = function(expr) {
+    var filters, setter, value, _ref;
     expr = expr.replace(pipeExpr, function(match, orIndicator) {
       if (orIndicator) {
         return match;
@@ -1333,174 +1380,193 @@ if (!Date.prototype.toISOString) {
     });
     filters = expr.split(/\s*@@@\s*/);
     expr = filters.shift();
-    if (filters.length) {
-      if (setterExpr.test(expr)) {
-        _ref = expr.split(' = '), setter = _ref[0], value = _ref[1];
-        setter = processProperties(setter, options).replace(/^\(|\)$/g, '') + ' = ';
-        value = processProperties(value, options);
-      } else {
-        setter = '';
-        value = processProperties(expr, options);
+    if (!filters.length) {
+      return expr;
+    }
+    if (setterExpr.test(expr)) {
+      _ref = expr.split(setterExpr), setter = _ref[0], value = _ref[1];
+      setter += ' = ';
+    } else {
+      setter = '';
+      value = expr;
+    }
+    filters.forEach(function(filter) {
+      var args, filterName;
+      args = filter.split(argSeparator);
+      filterName = args.shift();
+      args.unshift(value);
+      if (setter) {
+        args.push(true);
       }
-      strIndex = ((_ref1 = expr.match(quoteExpr)) != null ? _ref1.length : void 0) || 0;
-      filters.forEach(function(filter) {
-        var args, getter, _ref2;
-        args = filter.split(argSeparator);
-        strings.splice(strIndex++, 0, "'" + args[0] + "'");
-        strIndex += ((_ref2 = filter.match(quoteExpr)) != null ? _ref2.length : void 0) || 0;
-        args[0] = "''";
-        args = args.map(function(arg) {
-          return processProperties(arg, options);
-        });
-        if (setter) {
-          getter = setter.split(' : ').pop().split(' = ').shift();
-          return value = "this.runSetterFilter(" + value + ", " + getter + ", " + (args.join(', ')) + ")";
+      return value = "_filters." + filterName + ".call(this, " + (args.join(', ')) + ")";
+    });
+    return setter + value;
+  };
+
+  parseExpr = function(expr) {
+    var setter, value, _ref;
+    if (setterExpr.test(expr)) {
+      _ref = expr.split(' = '), setter = _ref[0], value = _ref[1];
+      setter = parsePropertyChains(setter).replace(/^\(|\)$/g, '') + ' = ';
+      value = parsePropertyChains(value);
+      return setter + value;
+    } else {
+      return parsePropertyChains(expr);
+    }
+  };
+
+  parsePropertyChains = function(expr) {
+    var javascript, js, previousIndexes;
+    javascript = '';
+    previousIndexes = [currentIndex, propExpr.lastIndex];
+    currentIndex = 0;
+    propExpr.lastIndex = 0;
+    while ((js = nextChain(expr)) !== false) {
+      javascript += js;
+    }
+    propExpr.lastIndex = previousIndexes.pop();
+    currentIndex = previousIndexes.pop();
+    return javascript;
+  };
+
+  nextChain = function(expr) {
+    var colonOrParen, match, objIndicator, postfix, prefix, propChain, skipped, _ref;
+    if (finishedChain) {
+      return (finishedChain = false);
+    }
+    match = propExpr.exec(expr);
+    if (!match) {
+      finishedChain = true;
+      return expr.slice(currentIndex);
+    }
+    _ref = match, match = _ref[0], prefix = _ref[1], objIndicator = _ref[2], propChain = _ref[3], postfix = _ref[4], colonOrParen = _ref[5];
+    skipped = expr.slice(currentIndex, propExpr.lastIndex - match.length);
+    currentIndex = propExpr.lastIndex;
+    if (objIndicator && colonOrParen === ':') {
+      return skipped + match;
+    }
+    return skipped + parseChain(prefix, propChain, postfix, colonOrParen, expr);
+  };
+
+  splitLinks = function(chain) {
+    var index, match, parts;
+    index = 0;
+    parts = [];
+    while ((match = chainLinks.exec(chain))) {
+      if (chainLinks.lastIndex === 1) {
+        continue;
+      }
+      parts.push(chain.slice(index, chainLinks.lastIndex - 1));
+      index = chainLinks.lastIndex - 1;
+    }
+    parts.push(chain.slice(index));
+    return parts;
+  };
+
+  addThis = function(chain) {
+    if (ignore.indexOf(chain.split(chainLink).shift()) === -1) {
+      return "this." + chain;
+    } else {
+      return chain;
+    }
+  };
+
+  parseChain = function(prefix, propChain, postfix, paren, expr) {
+    var link, links, newChain;
+    continuation = prefix === '.';
+    if (continuation) {
+      propChain = '.' + propChain;
+      prefix = '';
+    }
+    links = splitLinks(propChain);
+    newChain = '';
+    if (links.length === 1 && !continuation && !paren) {
+      link = links[0];
+      newChain = addThis(link);
+    } else {
+      if (!continuation) {
+        newChain = '(';
+      }
+      links.forEach(function(link, index) {
+        if (index !== links.length - 1) {
+          newChain += parsePart(link, index);
         } else {
-          return value = "this.runFilter(" + value + ", " + (args.join(', ')) + ")";
+          if (!parens[paren]) {
+            newChain += "_ref" + currentReference + link + ")";
+          } else {
+            postfix = postfix.replace(paren, '');
+            newChain += parseFunction(link, index, expr);
+          }
         }
       });
-      expr = setter + value;
+    }
+    return prefix + newChain + postfix;
+  };
+
+  parens = {
+    '(': ')',
+    '[': ']'
+  };
+
+  parseFunction = function(link, index, expr) {
+    var call, insideParens, ref;
+    call = getFunctionCall(expr);
+    link += call.slice(0, 1) + '~~insideParens~~' + call.slice(-1);
+    insideParens = call.slice(1, -1);
+    if (expr.charAt(propExpr.lastIndex) === '.') {
+      link = parsePart(link, index);
+    } else if (index === 0) {
+      link = parsePart(link, index);
+      link += "_ref" + currentReference + ")";
     } else {
-      if (setterExpr.test(expr)) {
-        _ref2 = expr.split(' = '), setter = _ref2[0], value = _ref2[1];
-        setter = processProperties(setter, options).replace(/^\(|\)$/g, '') + ' = ';
-        value = processProperties(value, options);
-        expr = setter + value;
-      } else {
-        expr = processProperties(expr, options);
-      }
+      link = "_ref" + currentReference + link + ")";
     }
-    expr = 'return ' + expr;
-    expr = expr.replace(emptyQuoteExpr, function() {
-      return strings.shift();
-    });
-    if (options.references) {
-      refs = [];
-      for (i = _i = 1, _ref3 = options.references; 1 <= _ref3 ? _i <= _ref3 : _i >= _ref3; i = 1 <= _ref3 ? ++_i : --_i) {
-        refs.push('_ref' + i);
-      }
-      expr = 'var ' + refs.join(', ') + ';\n' + expr;
-    }
-    return expr;
+    ref = currentReference;
+    link = link.replace('~~insideParens~~', parsePropertyChains(insideParens));
+    currentReference = ref;
+    return link;
   };
 
-  processProperties = function(expr, options) {
-    var currentIndex, index, matchArgs, newExpr, processProperty, propExpr;
-    if (options == null) {
-      options = {};
-    }
-    if (!options.references) {
-      options.references = 0;
-    }
-    options.currentRef = options.references;
-    if (!options.ignore) {
-      options.ignore = [];
-    }
-    propExpr = /((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi;
-    currentIndex = 0;
-    newExpr = '';
-    processProperty = function(match, prefix, objIndicator, propChain, postfix, colonOrParen) {
-      var breaks, continuation, index, newChain, part, parts;
-      index = propExpr.lastIndex - match.length;
-      if (objIndicator && colonOrParen === ':') {
-        return match;
+  getFunctionCall = function(expr) {
+    var close, endIndex, open, parenCount, startIndex;
+    startIndex = propExpr.lastIndex;
+    open = expr.charAt(startIndex - 1);
+    close = parens[open];
+    endIndex = startIndex - 1;
+    parenCount = 1;
+    while (endIndex++ < expr.length) {
+      switch (expr.charAt(endIndex)) {
+        case open:
+          parenCount++;
+          break;
+        case close:
+          parenCount--;
       }
-      continuation = prefix === '.';
-      if (continuation) {
-        propChain = '.' + propChain;
-        prefix = '';
+      if (parenCount === 0) {
+        break;
       }
-      breaks = /\.|\[/g;
-      index = 0;
-      parts = [];
-      while ((match = breaks.exec(propChain))) {
-        if (breaks.lastIndex === 1) {
-          continue;
-        }
-        parts.push(propChain.slice(index, breaks.lastIndex - 1));
-        index = breaks.lastIndex - 1;
-      }
-      parts.push(propChain.slice(index));
-      newChain = '';
-      if (parts.length === 1 && !continuation && !colonOrParen) {
-        part = parts[0];
-        newChain = options.ignore.indexOf(part) === -1 ? 'this.' + part : part;
-      } else {
-        if (!continuation) {
-          newChain += '(';
-        }
-        parts.forEach(function(part, partIndex) {
-          var close, currentRef, endIndex, innards, open, parenCount, startIndex;
-          if (partIndex !== parts.length - 1) {
-            return newChain += processPart(options, part, partIndex, continuation);
-          } else {
-            if (colonOrParen !== '(' && colonOrParen !== '[') {
-              return newChain += "_ref" + options.currentRef + part + ")";
-            } else {
-              open = colonOrParen;
-              close = colonOrParen === '(' ? ')' : ']';
-              parenCount = 1;
-              startIndex = propExpr.lastIndex;
-              endIndex = startIndex - 1;
-              while (endIndex++ < expr.length) {
-                switch (expr.charAt(endIndex)) {
-                  case open:
-                    parenCount++;
-                    break;
-                  case close:
-                    parenCount--;
-                }
-                if (parenCount === 0) {
-                  break;
-                }
-              }
-              propExpr.lastIndex = endIndex + 1;
-              postfix = '';
-              part += open + '~~innards~~' + close;
-              if (expr.charAt(endIndex + 1) === '.') {
-                newChain += processPart(options, part, partIndex, continuation);
-              } else if (partIndex === 0) {
-                newChain += processPart(options, part, partIndex, continuation);
-                newChain += "_ref" + options.currentRef + ")";
-              } else {
-                newChain += "_ref" + options.currentRef + part + ")";
-              }
-              currentRef = options.currentRef;
-              innards = processProperties(expr.slice(startIndex, endIndex), options);
-              newChain = newChain.replace(/~~innards~~/, innards);
-              return options.currentRef = currentRef;
-            }
-          }
-        });
-      }
-      return prefix + newChain + postfix;
-    };
-    while ((matchArgs = propExpr.exec(expr))) {
-      index = propExpr.lastIndex - matchArgs[0].length;
-      newExpr += expr.slice(currentIndex, index) + processProperty.apply(null, matchArgs);
-      currentIndex = propExpr.lastIndex;
     }
-    newExpr += expr.slice(currentIndex);
-    return newExpr;
+    currentIndex = propExpr.lastIndex = endIndex + 1;
+    return open + expr.slice(startIndex, endIndex) + close;
   };
 
-  processPart = function(options, part, index, continuation) {
+  parsePart = function(part, index) {
     var ref;
     if (index === 0 && !continuation) {
-      if (options.ignore.indexOf(part.split(/\.|\(|\[/).shift()) === -1) {
+      if (ignore.indexOf(part.split(/\.|\(|\[/).shift()) === -1) {
         part = "this." + part;
       } else {
         part = "" + part;
       }
     } else {
-      part = "_ref" + options.currentRef + part;
+      part = "_ref" + currentReference + part;
     }
-    options.currentRef = ++options.references;
-    ref = "_ref" + options.currentRef;
+    currentReference = ++referenceCount;
+    ref = "_ref" + currentReference;
     return "(" + ref + " = " + part + ") == null ? undefined : ";
   };
 
-  chip.Controller = Controller;
+  chip.expression = expression;
 
   App = (function() {
     function App(appName) {
@@ -1990,46 +2056,15 @@ if (!Date.prototype.toISOString) {
 
     Filter.filters = {};
 
-    Filter.setterFilters = {};
-
-    Filter.addFilter = function(name, filter, setterFilter) {
+    Filter.addFilter = function(name, filter) {
       if (filter != null) {
-        this.filters[name] = new Filter(name, filter);
-      }
-      if (setterFilter != null) {
-        this.setterFilters[name] = new Filter(name, setterFilter);
+        this.filters[name] = filter;
       }
       return this;
     };
 
     Filter.getFilter = function(name) {
       return this.filters[name];
-    };
-
-    Filter.getValueFilter = function(name) {
-      return this.setterFilters[name];
-    };
-
-    Filter.runFilter = function() {
-      var args, controller, filter, name, value, _ref;
-      controller = arguments[0], name = arguments[1], value = arguments[2], args = 4 <= arguments.length ? __slice.call(arguments, 3) : [];
-      filter = (_ref = this.filters[name]) != null ? _ref.filter : void 0;
-      if (filter) {
-        return filter.apply(null, [controller, value].concat(__slice.call(args)));
-      } else {
-        return value;
-      }
-    };
-
-    Filter.runSetterFilter = function() {
-      var args, controller, currentValue, filter, name, value, _ref, _ref1;
-      controller = arguments[0], name = arguments[1], value = arguments[2], currentValue = arguments[3], args = 5 <= arguments.length ? __slice.call(arguments, 4) : [];
-      filter = ((_ref = this.setterFilters[name]) != null ? _ref.filter : void 0) || ((_ref1 = this.filters[name]) != null ? _ref1.filter : void 0);
-      if (filter) {
-        return filter.apply(null, [controller, value, currentValue].concat(__slice.call(args)));
-      } else {
-        return value;
-      }
     };
 
     return Filter;
@@ -2207,14 +2242,14 @@ if (!Date.prototype.toISOString) {
     var events, fieldExpr, getValue, observer, prefix, selectValueField, setValue, watchExpr;
     prefix = controller.app.bindingPrefix;
     watchExpr = expr;
+    fieldExpr = element.attr(prefix + 'value-field');
+    element.removeAttr(prefix + 'value-field');
     if (element.is('select')) {
-      fieldExpr = element.attr(prefix + 'value-field');
-      element.removeAttr(prefix + 'value-field');
       selectValueField = fieldExpr ? controller["eval"](fieldExpr) : null;
       chip.lastSelectValueField = selectValueField;
     }
-    if (element.is('option') && chip.lastSelectValueField) {
-      selectValueField = chip.lastSelectValueField;
+    if (element.is('option') && fieldExpr || chip.lastSelectValueField) {
+      selectValueField = fieldExpr || chip.lastSelectValueField;
       watchExpr += '.' + selectValueField;
     }
     getValue = element.attr('type') === 'checkbox' ? function() {
@@ -2578,28 +2613,28 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.filter('filter', function(controller, value, filterFunc) {
+  chip.filter('filter', function(value, filterFunc) {
     if (!Array.isArray(value)) {
       return [];
     }
     if (!filterFunc) {
       return value;
     }
-    return value.filter(filterFunc, controller);
+    return value.filter(filterFunc, this);
   });
 
-  chip.filter('map', function(controller, value, mapFunc) {
+  chip.filter('map', function(value, mapFunc) {
     if (!((value != null) && mapFunc)) {
       return value;
     }
     if (Array.isArray(value)) {
-      return value.map(mapFunc, controller);
+      return value.map(mapFunc, this);
     } else {
-      return mapFunc.call(controller, value);
+      return mapFunc.call(this, value);
     }
   });
 
-  chip.filter('reduce', function(controller, value, reduceFunc, initialValue) {
+  chip.filter('reduce', function(value, reduceFunc, initialValue) {
     if (!((value != null) && reduceFunc)) {
       return value;
     }
@@ -2614,7 +2649,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.filter('slice', function(controller, value, index, endIndex) {
+  chip.filter('slice', function(value, index, endIndex) {
     if (Array.isArray(value)) {
       return value.slice(index, endIndex);
     } else {
@@ -2622,12 +2657,12 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.filter('date', function(controller, value) {
+  chip.filter('date', function(value) {
     if (!value) {
       return '';
     }
     if (!(value instanceof Date)) {
-      value = new Date(controller, value);
+      value = new Date(value);
     }
     if (isNaN(value.getTime())) {
       return '';
@@ -2635,7 +2670,7 @@ if (!Date.prototype.toISOString) {
     return value.toLocaleString();
   });
 
-  chip.filter('log', function(controller, value, prefix) {
+  chip.filter('log', function(value, prefix) {
     if (prefix == null) {
       prefix = 'Log';
     }
@@ -2643,7 +2678,7 @@ if (!Date.prototype.toISOString) {
     return value;
   });
 
-  chip.filter('limit', function(controller, value, limit) {
+  chip.filter('limit', function(value, limit) {
     if (value && typeof value.slice === 'function') {
       if (limit < 0) {
         return value.slice(limit);
@@ -2655,7 +2690,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.filter('sort', function(controller, value, sortFunc) {
+  chip.filter('sort', function(value, sortFunc) {
     var dir, prop, _ref;
     if (!sortFunc) {
       return value;
@@ -2682,14 +2717,14 @@ if (!Date.prototype.toISOString) {
 
   div = null;
 
-  chip.filter('escape', function(controller, value) {
+  chip.filter('escape', function(value) {
     if (!div) {
       div = $('<div></div>');
     }
-    return div.text(controller, value || '').text();
+    return div.text(value || '').text();
   });
 
-  chip.filter('p', function(controller, value) {
+  chip.filter('p', function(value) {
     var escaped, lines;
     if (!div) {
       div = $('<div></div>');
@@ -2701,7 +2736,7 @@ if (!Date.prototype.toISOString) {
     return '<p>' + escaped.join('</p><p>') + '</p>';
   });
 
-  chip.filter('br', function(controller, value) {
+  chip.filter('br', function(value) {
     var escaped, lines;
     if (!div) {
       div = $('<div></div>');
@@ -2713,7 +2748,7 @@ if (!Date.prototype.toISOString) {
     return escaped.join('<br>');
   });
 
-  chip.filter('newline', function(controller, value) {
+  chip.filter('newline', function(value) {
     var escaped, paragraphs;
     if (!div) {
       div = $('<div></div>');
@@ -2732,7 +2767,7 @@ if (!Date.prototype.toISOString) {
 
   urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
 
-  chip.filter('autolink', function(controller, value, target) {
+  chip.filter('autolink', function(value, target) {
     target = target ? ' target="_blank"' : '';
     return ('' + value).replace(/<[^>]+>|[^<]+/g, function(match) {
       if (match.charAt(0) === '<') {
@@ -2742,7 +2777,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.filter('int', function(controller, value) {
+  chip.filter('int', function(value) {
     value = parseInt(value);
     if (isNaN(value)) {
       return null;
@@ -2751,7 +2786,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.filter('float', function(controller, value) {
+  chip.filter('float', function(value) {
     value = parseFloat(value);
     if (isNaN(value)) {
       return null;
@@ -2760,7 +2795,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.filter('bool', function(controller, value) {
+  chip.filter('bool', function(value) {
     return value && value !== '0' && value !== 'false';
   });
 

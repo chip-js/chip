@@ -57,7 +57,8 @@
             
             <div class="content"><div class='highlight'><pre>    <span class="property">@_observers</span> = []
     <span class="property">@_children</span> = []
-    <span class="property">@_closed</span> = <span class="literal">false</span></pre></div></div>
+    <span class="property">@_closed</span> = <span class="literal">false</span>
+    <span class="property">@_filters</span> = Filter.filters</pre></div></div>
             
         </li>
         
@@ -114,7 +115,7 @@ the value in the expression changes. An expression can be as simple as <code>nam
     <span class="keyword">if</span> <span class="keyword">typeof</span> expr <span class="keyword">is</span> <span class="string">'function'</span>
       getter = expr
     <span class="keyword">else</span>
-      getter = Controller.createBoundFunction(<span class="keyword">this</span>, expr)</pre></div></div>
+      getter = expression.bind(expr, <span class="keyword">this</span>)</pre></div></div>
             
         </li>
         
@@ -170,7 +171,7 @@ the value in the expression changes. An expression can be as simple as <code>nam
             </div>
             
             <div class="content"><div class='highlight'><pre>  eval: (expr) -&gt;
-    Controller.createFunction(expr).call(<span class="keyword">this</span>)</pre></div></div>
+    expression.get(expr).call(<span class="keyword">this</span>)</pre></div></div>
             
         </li>
         
@@ -188,7 +189,7 @@ the value in the expression changes. An expression can be as simple as <code>nam
             <div class="content"><div class='highlight'><pre>  evalSetter: (expr, value) -&gt;
     <span class="keyword">return</span> <span class="property">@passthrough</span>().evalSetter(expr, value) <span class="keyword">if</span> <span class="property">@passthrough</span>() <span class="keyword">isnt</span> <span class="keyword">this</span>
     expr = expr.replace(<span class="regexp">/(\s*\||$)/</span>, <span class="string">' = value$1'</span>)
-    Controller.createFunction(expr, [<span class="string">'value'</span>]).call(<span class="keyword">this</span>, value)</pre></div></div>
+    expression.get(expr, args: [<span class="string">'value'</span>]).call(<span class="keyword">this</span>, value)</pre></div></div>
             
         </li>
         
@@ -210,7 +211,7 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
             </div>
             
             <div class="content"><div class='highlight'><pre>  getBoundEval: (expr, extraArgNames...) -&gt;
-    Controller.createBoundFunction(<span class="keyword">this</span>, expr, extraArgNames)</pre></div></div>
+    expression.bind(expr, <span class="keyword">this</span>, args: extraArgNames)</pre></div></div>
             
         </li>
         
@@ -370,14 +371,6 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
     <span class="keyword">this</span>
   
   
-  runFilter: (value, filterName, args...) -&gt;
-    Filter.runFilter(<span class="keyword">this</span>, filterName, value, args...)
-  
-  
-  runSetterFilter: (value, currentValue, filterName, args...) -&gt;
-    Filter.runSetterFilter(<span class="keyword">this</span>, filterName, value, currentValue, args...)
-  
-  
   passthrough: (value) -&gt;
     <span class="keyword">if</span> arguments.length
       <span class="property">@_passthrough</span> = value
@@ -392,129 +385,6 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-19">&#182;</a>
-              </div>
-              <p>The keywords which will <em>not</em> get <code>this.</code> prepended to inside an expression. All other valid variable names will
-have <code>this.</code> added to them. <code>this</code> is the controller instance when the expression is run. Add additional keywords
-to this array if there are global variables you wish to use in expressions. E.g. <code>$</code> or <code>jQuery</code></p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="property">@keywords</span>: [<span class="string">'this'</span>, <span class="string">'window'</span>, <span class="string">'$'</span>, <span class="string">'true'</span>, <span class="string">'false'</span>]
-  
-  <span class="property">@filters</span>: {}
-  <span class="property">@exprCache</span>: {}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-20">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
-              </div>
-              <p><em>private:</em> Creates a function from the given expression, allowing for extra arguments. This function will be
-cached so subsequent calls with the same expression will return the previous function. E.g. the expression “name”
-will always return a single function with the body <code>return this.name</code>.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="property">@createFunction</span>: (expr, extraArgNames = []) -&gt;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-21">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
-              </div>
-              <p>Returns the cached function for this expression if it exists.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    func = <span class="property">@exprCache</span>[expr]
-    <span class="keyword">return</span> func <span class="keyword">if</span> func</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-22">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
-              </div>
-              <p>Prefix all property lookups with the <code>this</code> keyword. Ignores keywords (window, true, false) and extra args </p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    normalizedExpr = normalizeExpression expr, extraArgNames
-    
-    <span class="keyword">try</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-23">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
-              </div>
-              <p>We can safely (until getters/setters are common) add a try/catch around expression that don&#39;t use
-functions. Those that do use functions need the error to occur so developers can debug their code.
-Caches the function for later</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>      func = <span class="property">@exprCache</span>[expr] = Function(extraArgNames..., normalizedExpr)
-    <span class="keyword">catch</span> e</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-24">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
-              </div>
-              <p>Throws an error if the expression was not valid JavaScript</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">throw</span> <span class="keyword">new</span> Error e.message + <span class="string">' in observer binding:\n`'</span> + expr + <span class="string">'`\n'</span> +
-      <span class="string">'Compiled binding:\n'</span> + normalizedExpr
-    func</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-25">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
-              </div>
-              <p><em>private:</em> Creates a function and binds it to the given controller so it may be called from anywhere
-(e.g. provided to observers).</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="property">@createBoundFunction</span>: (controller, expr, extraArgNames) -&gt;
-    func = Controller.createFunction(expr, extraArgNames)
-    func.bind(controller)</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-26">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>jQuery plugin to get the controller for the given element</p>
 
@@ -532,11 +402,11 @@ Caches the function for later</p>
         </li>
         
         
-        <li id="section-27">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>Provides the ‘remove’ event to be dispatched when an element is removed from the DOM and cleaned up. Gets
 called when an element with the event ‘remove’, is removed from the DOM. Manually call the listener.</p>
@@ -551,368 +421,7 @@ called when an element with the event ‘remove’, is removed from the DOM. Man
           $(elem).triggerHandler(<span class="string">'remove'</span>)
         <span class="keyword">catch</span> e
       orig elems
-  )($.cleanData)</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-28">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
-              </div>
-              <p>Searches out possible properties or finds the beginning of strings (which we skip)</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>varExpr = <span class="regexp">/[a-z$_\$][a-z_\$0-9\.-]*\s*:?|'|"/gi</span>
-quoteExpr = <span class="regexp">/(['"\/])(\\\1|[^\1])*?\1/g</span>
-emptyQuoteExpr = <span class="regexp">/(['"\/])\1/g</span>
-pipeExpr = <span class="regexp">/\|(\|)?/g</span>
-argSeparator = <span class="regexp">/\s*:\s*/g</span>
-setterExpr = <span class="regexp">/\s=\s/</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-29">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
-              </div>
-              <p>Adds <code>this.</code> to the beginning of each valid property in an expression and processes filters</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="title">normalizeExpression</span></span> = (expr, extraArgNames) -&gt;
-  orig = expr
-  options =
-    references: <span class="number">0</span>
-    ignore: Controller.keywords.concat(extraArgNames) <span class="comment"># Ignores keywords and provided argument names</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-30">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
-              </div>
-              <p>Adds placeholders for strings so we can process the rest without their content messing us up.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  strings = []
-  expr = expr.replace quoteExpr, (str, quote) -&gt;
-    strings.push str
-    <span class="keyword">return</span> quote + quote <span class="comment"># placeholder for the string</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-31">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
-              </div>
-              <p>Removes filters from expression string</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  expr = expr.replace pipeExpr, (match, orIndicator) -&gt;
-    <span class="keyword">if</span> orIndicator
-      <span class="keyword">return</span> match
-    <span class="keyword">return</span> <span class="string">'@@@'</span>
-  
-  filters = expr.split <span class="regexp">/\s*@@@\s*/</span>
-  expr = filters.shift()</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-32">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
-              </div>
-              <p>Processes the filters</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> filters.length
-    <span class="keyword">if</span> setterExpr.test(expr)
-      [ setter, value ] = expr.split(<span class="string">' = '</span>)
-      setter = processProperties(setter, options).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
-      value = processProperties(value, options)
-    <span class="keyword">else</span>
-      setter = <span class="string">''</span>
-      value = processProperties(expr, options)
-    
-    strIndex = expr.match(quoteExpr)?.length <span class="keyword">or</span> <span class="number">0</span>
-    filters.forEach (filter) -&gt;
-      args = filter.split(argSeparator)
-      strings.splice strIndex++, <span class="number">0</span>, <span class="string">"'"</span> + args[<span class="number">0</span>] + <span class="string">"'"</span>
-      strIndex += filter.match(quoteExpr)?.length <span class="keyword">or</span> <span class="number">0</span>
-      args[<span class="number">0</span>] = <span class="string">"''"</span>
-      args = args.map (arg) -&gt;
-        processProperties arg, options
-      <span class="keyword">if</span> setter
-        getter = setter.split(<span class="string">' : '</span>).pop().split(<span class="string">' = '</span>).shift()
-        value = <span class="string">"this.runSetterFilter(<span class="subst">#{value}</span>, <span class="subst">#{getter}</span>, <span class="subst">#{args.join(', ')}</span>)"</span>
-      <span class="keyword">else</span>
-        value = <span class="string">"this.runFilter(<span class="subst">#{value}</span>, <span class="subst">#{args.join(', ')}</span>)"</span>
-    
-    expr = setter + value
-  <span class="keyword">else</span>
-    <span class="keyword">if</span> setterExpr.test(expr)
-      [ setter, value ] = expr.split(<span class="string">' = '</span>)
-      setter = processProperties(setter, options).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
-      value = processProperties(value, options)
-      expr = setter + value
-    <span class="keyword">else</span>
-      expr = processProperties(expr, options)
-  
-  expr = <span class="string">'return '</span> + expr</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-33">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
-              </div>
-              <p>Replaces string placeholders.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  expr = expr.replace emptyQuoteExpr, -&gt;
-    <span class="keyword">return</span> strings.shift()</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-34">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
-              </div>
-              <p>Prepends reference variable definitions</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> options.references
-    refs = []
-    <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">1.</span>.options.references]
-      refs.push <span class="string">'_ref'</span> + i
-    expr = <span class="string">'var '</span> + refs.join(<span class="string">', '</span>) + <span class="string">';\n'</span> + expr
-    
-  expr
-
-
-
-<span class="function"><span class="title">processProperties</span></span> = (expr, options = {}) -&gt;
-  options.references = <span class="number">0</span> <span class="keyword">unless</span> options.references
-  options.currentRef = options.references
-  options.ignore = [] <span class="keyword">unless</span> options.ignore
-  propExpr = <span class="regexp">/((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi</span>
-  currentIndex = <span class="number">0</span>
-  newExpr = <span class="string">''</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-35">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
-              </div>
-              <p>Adds the “this.” prefix onto properties found in the expression and modifies to handle null exceptions.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="function"><span class="title">processProperty</span></span> = (match, prefix, objIndicator, propChain, postfix, colonOrParen) -&gt;
-    index = propExpr.lastIndex - match.length</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-36">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
-              </div>
-              <p><code>objIndicator</code> is <code>{</code> or <code>,</code> and let&#39;s us know this is an object property name (e.g. prop in <code>{prop:false}</code>).
-<code>prefix</code> is <code>objIndicator</code> with the whitespace that may come after it.
-<code>propChain</code> is the chain of properties matched (e.g. <code>this.user.email</code>).
-<code>colonOrParen</code> matches the colon (:) after the property (if it is an object) or parenthesis if it is a
-function. We use <code>colonOrParen</code> and <code>objIndicator</code> to know if it is an object.
-<code>postfix</code> is the <code>colonOrParen</code> with whitespace before it.</p>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-37">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-37">&#182;</a>
-              </div>
-              <p>skips object keys e.g. test in <code>{test:true}</code>.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> objIndicator <span class="keyword">and</span> colonOrParen <span class="keyword">is</span> <span class="string">':'</span>
-      <span class="keyword">return</span> match</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-38">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-38">&#182;</a>
-              </div>
-              <p>continuations after a function (e.g. <code>getUser(12).firstName</code>).</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    continuation = prefix <span class="keyword">is</span> <span class="string">'.'</span>
-    <span class="keyword">if</span> continuation
-      propChain = <span class="string">'.'</span> + propChain
-      prefix = <span class="string">''</span>
-    
-    breaks = <span class="regexp">/\.|\[/g</span>
-    index = <span class="number">0</span>
-    parts = []
-    <span class="keyword">while</span> (match = breaks.exec propChain)
-      <span class="keyword">continue</span> <span class="keyword">if</span> breaks.lastIndex <span class="keyword">is</span> <span class="number">1</span>
-      parts.push propChain.slice(index, breaks.lastIndex - <span class="number">1</span>)
-      index = breaks.lastIndex - <span class="number">1</span>
-    parts.push propChain.slice(index)
-    newChain = <span class="string">''</span>
-    
-    <span class="keyword">if</span> parts.length <span class="keyword">is</span> <span class="number">1</span> <span class="keyword">and</span> <span class="keyword">not</span> continuation <span class="keyword">and</span> <span class="keyword">not</span> colonOrParen
-      part = parts[<span class="number">0</span>]
-      newChain = <span class="keyword">if</span> options.ignore.indexOf(part) <span class="keyword">is</span> -<span class="number">1</span> <span class="keyword">then</span> <span class="string">'this.'</span> + part <span class="keyword">else</span> part
-    <span class="keyword">else</span>
-      newChain += <span class="string">'('</span> <span class="keyword">unless</span> continuation
-      
-      parts.forEach (part, partIndex) -&gt;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-39">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-39">&#182;</a>
-              </div>
-              <p>if the last</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> partIndex <span class="keyword">isnt</span> parts.length - <span class="number">1</span>
-          newChain += processPart(options, part, partIndex, continuation)
-        <span class="keyword">else</span>
-          <span class="keyword">if</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'('</span> <span class="keyword">and</span> colonOrParen <span class="keyword">isnt</span> <span class="string">'['</span>
-            newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>)"</span>
-          <span class="keyword">else</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-40">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-40">&#182;</a>
-              </div>
-              <p>Handles a function to be called in its correct scope
-Finds the end of the function and processes the arguments</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>            open = colonOrParen
-            close = <span class="keyword">if</span> colonOrParen <span class="keyword">is</span> <span class="string">'('</span> <span class="keyword">then</span> <span class="string">')'</span> <span class="keyword">else</span> <span class="string">']'</span>
-            parenCount = <span class="number">1</span>
-            startIndex = propExpr.lastIndex
-            endIndex = startIndex - <span class="number">1</span>
-            <span class="keyword">while</span> endIndex++ &lt; expr.length
-              <span class="keyword">switch</span> expr.charAt endIndex
-                <span class="keyword">when</span> open <span class="keyword">then</span> parenCount++
-                <span class="keyword">when</span> close <span class="keyword">then</span> parenCount--
-              <span class="keyword">break</span> <span class="keyword">if</span> parenCount <span class="keyword">is</span> <span class="number">0</span>
-            
-            propExpr.lastIndex = endIndex + <span class="number">1</span>
-            postfix = <span class="string">''</span>
-            part += open + <span class="string">'~~innards~~'</span> + close
-            
-            <span class="keyword">if</span> expr.charAt(endIndex + <span class="number">1</span>) <span class="keyword">is</span> <span class="string">'.'</span>
-              newChain += processPart(options, part, partIndex, continuation)
-            <span class="keyword">else</span> <span class="keyword">if</span> partIndex <span class="keyword">is</span> <span class="number">0</span>
-              newChain += processPart(options, part, partIndex, continuation)
-              newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span>)"</span>
-            <span class="keyword">else</span>
-              newChain += <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>)"</span>
-            
-            currentRef = options.currentRef
-            innards = processProperties expr.slice(startIndex, endIndex), options
-            newChain = newChain.replace(<span class="regexp">/~~innards~~/</span>, innards)
-            options.currentRef = currentRef
-    
-    <span class="keyword">return</span> prefix + newChain + postfix
-  
-  
-  <span class="keyword">while</span> (matchArgs = propExpr.exec expr)
-    index = propExpr.lastIndex - matchArgs[<span class="number">0</span>].length
-    newExpr += expr.slice(currentIndex, index) + processProperty matchArgs...
-    currentIndex = propExpr.lastIndex
-  newExpr += expr.slice(currentIndex)
-  
-  newExpr
-
-
-
-<span class="function"><span class="title">processPart</span></span> = (options, part, index, continuation) -&gt;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-41">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-41">&#182;</a>
-              </div>
-              <p>if the first</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> index <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span> <span class="keyword">not</span> continuation
-    <span class="keyword">if</span> options.ignore.indexOf(part.split(<span class="regexp">/\.|\(|\[/</span>).shift()) <span class="keyword">is</span> -<span class="number">1</span>
-      part = <span class="string">"this.<span class="subst">#{part}</span>"</span>
-    <span class="keyword">else</span>
-      part = <span class="string">"<span class="subst">#{part}</span>"</span>
-  <span class="keyword">else</span>
-    part = <span class="string">"_ref<span class="subst">#{options.currentRef}</span><span class="subst">#{part}</span>"</span>
-  
-  options.currentRef = ++options.references
-  ref = <span class="string">"_ref<span class="subst">#{options.currentRef}</span>"</span>
-  <span class="string">"(<span class="subst">#{ref}</span> = <span class="subst">#{part}</span>) == null ? undefined : "</span>
+  )($.cleanData)
 
 
 chip.Controller = Controller</pre></div></div>

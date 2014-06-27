@@ -285,14 +285,16 @@ chip.binding 'change-action', (element, expr, controller) ->
 chip.binding 'value', (element, expr, controller) ->
   prefix = controller.app.bindingPrefix
   watchExpr = expr
+
+  fieldExpr = element.attr(prefix + 'value-field')
+  element.removeAttr(prefix + 'value-field')
+
   if element.is('select')
-    fieldExpr = element.attr(prefix + 'value-field')
-    element.removeAttr(prefix + 'value-field')
     selectValueField = if fieldExpr then controller.eval(fieldExpr) else null
     chip.lastSelectValueField = selectValueField
   
-  if element.is('option') and chip.lastSelectValueField
-    selectValueField = chip.lastSelectValueField
+  if element.is('option') and fieldExpr or chip.lastSelectValueField
+    selectValueField = fieldExpr or chip.lastSelectValueField
     watchExpr += '.' + selectValueField
 
   # Handles input (checkboxes, radios), select, textarea, option
