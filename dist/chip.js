@@ -1049,7 +1049,6 @@ if (!Date.prototype.toISOString) {
       this._observers = [];
       this._children = [];
       this._closed = false;
-      this._filters = Filter.filters;
     }
 
     Controller.prototype.watch = function(expr, skipTriggerImmediately, callback) {
@@ -1680,6 +1679,7 @@ if (!Date.prototype.toISOString) {
         makeEventEmitter(controller, this._emitter);
         controller.app = this;
         controller.translations = this.translations;
+        controller._filters = Filter.filters;
       }
       if (options.properties) {
         _ref = options.properties;
@@ -2249,7 +2249,11 @@ if (!Date.prototype.toISOString) {
       chip.lastSelectValueField = selectValueField;
     }
     if (element.is('option') && fieldExpr || chip.lastSelectValueField) {
-      selectValueField = fieldExpr || chip.lastSelectValueField;
+      if (fieldExpr) {
+        selectValueField = controller["eval"](fieldExpr);
+      } else {
+        selectValueField = chip.lastSelectValueField;
+      }
       watchExpr += '.' + selectValueField;
     }
     getValue = element.attr('type') === 'checkbox' ? function() {
@@ -2582,27 +2586,49 @@ if (!Date.prototype.toISOString) {
     itemExpr = parts[0], itemName = parts[1];
     childController = null;
     properties = {};
+    if (element.is('iframe')) {
+      element.css({
+        border: 'none',
+        background: 'none transparent',
+        width: '100%'
+      });
+      element.contents().find('head').html($('link[rel="stylesheet"][href]').clone()).append('<style>\nbody {\n  background: none transparent;\n  width: auto;\n  min-width: 0;\n}\n</style>');
+    }
     if (itemExpr && itemName) {
       controller.watch(itemExpr, true, function(value) {
         return childController[itemName] = value;
       });
     }
     return controller.watch(nameExpr, function(name) {
+      var body;
       if (name == null) {
         return;
       }
-      return element.animateOut(function() {
-        element.html(controller.template(name));
+      if (element.is('iframe')) {
+        body = element.contents().find('body').html(controller.template(name));
+        element.height(body.outerHeight());
         if (itemExpr && itemName) {
           properties[itemName] = controller["eval"](itemExpr);
         }
-        element.animateIn();
         return childController = controller.child({
-          element: element,
+          element: body,
           name: name,
           properties: properties
         });
-      });
+      } else {
+        return element.animateOut(function() {
+          element.html(controller.template(name));
+          if (itemExpr && itemName) {
+            properties[itemName] = controller["eval"](itemExpr);
+          }
+          element.animateIn();
+          return childController = controller.child({
+            element: element,
+            name: name,
+            properties: properties
+          });
+        });
+      }
     });
   });
 

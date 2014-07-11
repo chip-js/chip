@@ -294,7 +294,10 @@ chip.binding 'value', (element, expr, controller) ->
     chip.lastSelectValueField = selectValueField
   
   if element.is('option') and fieldExpr or chip.lastSelectValueField
-    selectValueField = fieldExpr or chip.lastSelectValueField
+    if fieldExpr
+      selectValueField = controller.eval(fieldExpr)
+    else
+      selectValueField = chip.lastSelectValueField
     watchExpr += '.' + selectValueField
 
   # Handles input (checkboxes, radios), select, textarea, option
@@ -753,6 +756,22 @@ chip.binding 'partial', 50, (element, expr, controller) ->
   [ itemExpr, itemName ] = parts
   childController = null
   properties = {}
+
+  if element.is('iframe')
+    element.css
+      border: 'none'
+      background: 'none transparent'
+      width: '100%'
+    element.contents().find('head')
+      .html($('link[rel="stylesheet"][href]').clone())
+      .append '''<style>
+body {
+  background: none transparent;
+  width: auto;
+  min-width: 0;
+}
+</style>'''
+
   
   if itemExpr and itemName
     controller.watch itemExpr, true, (value) ->
@@ -760,12 +779,19 @@ chip.binding 'partial', 50, (element, expr, controller) ->
   
   controller.watch nameExpr, (name) ->
     return unless name?
-    element.animateOut ->
-      element.html controller.template(name)
+    if element.is('iframe')
+      body = element.contents().find('body').html controller.template(name)
+      element.height body.outerHeight()
       if itemExpr and itemName
         properties[itemName] = controller.eval itemExpr
-      element.animateIn()
-      childController = controller.child element: element, name: name, properties: properties
+      childController = controller.child element: body, name: name, properties: properties
+    else
+      element.animateOut ->
+        element.html controller.template(name)
+        if itemExpr and itemName
+          properties[itemName] = controller.eval itemExpr
+        element.animateIn()
+        childController = controller.child element: element, name: name, properties: properties
 
 
 # ## chip-controller
