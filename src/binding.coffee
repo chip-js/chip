@@ -82,8 +82,8 @@ class Binding
   # ```xml
   # <button chip-click="window.alert('hello!')">Say Hello</button>
   #```
-  @addEventBinding: (eventName) ->
-    @addBinding eventName, (element, expr, controller) ->
+  @addEventBinding: (eventName, priority) ->
+    @addBinding eventName, priority, (element, expr, controller) ->
       element.on eventName, (event) ->
         event.preventDefault()
         unless element.attr('disabled')
@@ -93,8 +93,8 @@ class Binding
   
   
   # Shortcut, adds a handler that responds when the given key is pressed, e.g. `Binding.addEventBinding('esc', 27)`.
-  @addKeyEventBinding: (name, keyCode, ctrlKey) ->
-    @addBinding name, (element, expr, controller) ->
+  @addKeyEventBinding: (name, keyCode, ctrlKey, priority) ->
+    @addBinding name, priority, (element, expr, controller) ->
       element.on 'keydown', (event) ->
         return if ctrlKey? and (event.ctrlKey isnt ctrlKey and event.metaKey isnt ctrlKey)
         return unless event.keyCode is keyCode
@@ -119,8 +119,8 @@ class Binding
   # ```xml
   # <a href="/profile/368">My Profile</a>
   # ```
-  @addAttributeBinding: (name) ->
-    @addBinding name, (element, expr, controller) ->
+  @addAttributeBinding: (name, priority) ->
+    @addBinding name, priority, (element, expr, controller) ->
       controller.watch expr, (value) ->
         if value?
           element.attr name, value
@@ -131,8 +131,8 @@ class Binding
   
   # Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
   # e.g. `Binding.addAttributeToggleBinding('checked')`.
-  @addAttributeToggleBinding: (name) ->
-    @addBinding name, (element, expr, controller) ->
+  @addAttributeToggleBinding: (name, priority) ->
+    @addBinding name, priority, (element, expr, controller) ->
       controller.watch expr, (value) ->
         element.attr name, value and true or false
   
@@ -156,7 +156,7 @@ class Binding
     
     attribs = attribs.map (attr) =>
       bindingName = attr.name.replace(prefix, '')
-      entry = @bindings[bindingName] or @addAttributeBinding(bindingName)
+      entry = @bindings[bindingName] or @addAttributeBinding(bindingName, -1)
       name: attr.name
       value: attr.value
       priority: entry.priority

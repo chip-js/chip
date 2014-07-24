@@ -131,8 +131,8 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addEventBinding</span>: (eventName) -&gt;
-    <span class="property">@addBinding</span> eventName, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addEventBinding</span>: (eventName, priority) -&gt;
+    <span class="property">@addBinding</span> eventName, priority, (element, expr, controller) -&gt;
       element.<span class="literal">on</span> eventName, (event) -&gt;
         event.preventDefault()
         <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
@@ -153,8 +153,8 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addKeyEventBinding</span>: (name, keyCode, ctrlKey) -&gt;
-    <span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addKeyEventBinding</span>: (name, keyCode, ctrlKey, priority) -&gt;
+    <span class="property">@addBinding</span> name, priority, (element, expr, controller) -&gt;
       element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
         <span class="keyword">return</span> <span class="keyword">if</span> ctrlKey? <span class="keyword">and</span> (event.ctrlKey <span class="keyword">isnt</span> ctrlKey <span class="keyword">and</span> event.metaKey <span class="keyword">isnt</span> ctrlKey)
         <span class="keyword">return</span> <span class="keyword">unless</span> event.keyCode <span class="keyword">is</span> keyCode
@@ -183,8 +183,8 @@ priority. The default is <code>0</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeBinding</span>: (name) -&gt;
-    <span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeBinding</span>: (name, priority) -&gt;
+    <span class="property">@addBinding</span> name, priority, (element, expr, controller) -&gt;
       controller.watch expr, (value) -&gt;
         <span class="keyword">if</span> value?
           element.attr name, value
@@ -206,8 +206,8 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeToggleBinding</span>: (name) -&gt;
-    <span class="property">@addBinding</span> name, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeToggleBinding</span>: (name, priority) -&gt;
+    <span class="property">@addBinding</span> name, priority, (element, expr, controller) -&gt;
       controller.watch expr, (value) -&gt;
         element.attr name, value <span class="keyword">and</span> <span class="literal">true</span> <span class="keyword">or</span> <span class="literal">false</span></pre></div></div>
             
@@ -254,7 +254,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
     
     attribs = attribs.map (attr) =&gt;
       bindingName = attr.name.replace(prefix, <span class="string">''</span>)
-      entry = <span class="property">@bindings</span>[bindingName] <span class="keyword">or</span> <span class="property">@addAttributeBinding</span>(bindingName)
+      entry = <span class="property">@bindings</span>[bindingName] <span class="keyword">or</span> <span class="property">@addAttributeBinding</span>(bindingName, -<span class="number">1</span>)
       name: attr.name
       value: attr.value
       priority: entry.priority

@@ -549,7 +549,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>[ <span class="string">'click'</span>, <span class="string">'dblclick'</span>, <span class="string">'submit'</span>, <span class="string">'change'</span>, <span class="string">'focus'</span>, <span class="string">'blur'</span>, <span class="string">'keydown'</span>, <span class="string">'keyup'</span>, <span class="string">'paste'</span> ]
+            <div class="content"><div class='highlight'><pre>[ <span class="string">'click'</span>, <span class="string">'dblclick'</span>, <span class="string">'submit'</span>, <span class="string">'change'</span>, <span class="string">'focus'</span>, <span class="string">'blur'</span>, <span class="string">'keydown'</span>, <span class="string">'keyup'</span>, <span class="string">'paste'</span>, <span class="string">'load'</span>, <span class="string">'unload'</span>, <span class="string">'error'</span> ]
   .forEach (name) -&gt;
     chip.eventBinding(name)</pre></div></div>
             
@@ -787,7 +787,17 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
     <span class="keyword">else</span>
       <span class="keyword">unless</span> placeholder.parent().length
         element.before placeholder
-        element.animateOut()</pre></div></div>
+        element.animateOut()
+
+
+chip.binding <span class="string">'show'</span>, (element, expr, controller) -&gt;
+  controller.watch expr, (value) -&gt;
+    <span class="keyword">if</span> value <span class="keyword">then</span> element.show() <span class="keyword">else</span> element.hide()
+
+
+chip.binding <span class="string">'hide'</span>, (element, expr, controller) -&gt;
+  controller.watch expr, (value) -&gt;
+    <span class="keyword">if</span> value <span class="keyword">then</span> element.hide() <span class="keyword">else</span> element.show()</pre></div></div>
             
         </li>
         
@@ -997,42 +1007,57 @@ attributes which appear after <code>chip-partial</code> will have the new value 
   [ itemExpr, itemName ] = parts
   childController = null
   properties = {}
-
   if element.is('iframe')
-    element.css
-      border: 'none'
-      background: 'none transparent'
-      width: '100%'
-    element.contents().find('head')
-      .html($('link[rel="stylesheet"][href]').clone())
-      .append '''&lt;style&gt;
+      element.css
+        border: 'none'
+        background: 'none transparent'
+        width: '100%'
+  
+  controller.watch nameExpr, (name) -&gt;
+    if element.is('iframe')
+      element.data('body')?.triggerHandler('remove')
+      element.data('body')?.html('')
+      element.removeData('body')
+      return unless name
+
+      setup = (body) -&gt;
+        body.siblings('head')
+          .html($('link[rel="stylesheet"][href]').clone())
+          .append '''&lt;style&gt;
 body {
   background: none transparent;
   width: auto;
   min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 &lt;/style&gt;'''
+        body.html controller.template(name)
+        if itemExpr and itemName
+          properties[itemName] = controller.eval itemExpr
+        childController = controller.child element: body, name: name, properties: properties
+        element.height body.outerHeight()
+        element.data('body', body)
 
-  
-  if itemExpr and itemName
-    controller.watch itemExpr, true, (value) -&gt;
-      childController[itemName] = value
-  
-  controller.watch nameExpr, (name) -&gt;
-    return unless name?
-    if element.is('iframe')
-      body = element.contents().find('body').html controller.template(name)
-      element.height body.outerHeight()
-      if itemExpr and itemName
-        properties[itemName] = controller.eval itemExpr
-      childController = controller.child element: body, name: name, properties: properties
+      try
+        setup element.contents().find('body')
+      catch e # cross domain issues
+        element.one 'load', -&gt; setup element.contents().find('body')
+        element.attr 'src', 'about:blank'
     else
       element.animateOut -&gt;
+        element.html('')
+        return unless name?
         element.html controller.template(name)
         if itemExpr and itemName
           properties[itemName] = controller.eval itemExpr
         element.animateIn()
-        childController = controller.child element: element, name: name, properties: properties</pre></div></div>
+        childController = controller.child element: element, name: name, properties: properties
+
+  
+  if itemExpr and itemName
+    controller.watch itemExpr, true, (value) -&gt;
+      childController[itemName] = value</pre></div></div>
             
         </li>
         

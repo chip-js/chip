@@ -1932,8 +1932,8 @@ if (!Date.prototype.toISOString) {
       return this.bindings.splice(this.bindings.indexOf(entry), 1);
     };
 
-    Binding.addEventBinding = function(eventName) {
-      return this.addBinding(eventName, function(element, expr, controller) {
+    Binding.addEventBinding = function(eventName, priority) {
+      return this.addBinding(eventName, priority, function(element, expr, controller) {
         return element.on(eventName, function(event) {
           event.preventDefault();
           if (!element.attr('disabled')) {
@@ -1945,8 +1945,8 @@ if (!Date.prototype.toISOString) {
       });
     };
 
-    Binding.addKeyEventBinding = function(name, keyCode, ctrlKey) {
-      return this.addBinding(name, function(element, expr, controller) {
+    Binding.addKeyEventBinding = function(name, keyCode, ctrlKey, priority) {
+      return this.addBinding(name, priority, function(element, expr, controller) {
         return element.on('keydown', function(event) {
           if ((ctrlKey != null) && (event.ctrlKey !== ctrlKey && event.metaKey !== ctrlKey)) {
             return;
@@ -1964,8 +1964,8 @@ if (!Date.prototype.toISOString) {
       });
     };
 
-    Binding.addAttributeBinding = function(name) {
-      return this.addBinding(name, function(element, expr, controller) {
+    Binding.addAttributeBinding = function(name, priority) {
+      return this.addBinding(name, priority, function(element, expr, controller) {
         return controller.watch(expr, function(value) {
           if (value != null) {
             element.attr(name, value);
@@ -1977,8 +1977,8 @@ if (!Date.prototype.toISOString) {
       });
     };
 
-    Binding.addAttributeToggleBinding = function(name) {
-      return this.addBinding(name, function(element, expr, controller) {
+    Binding.addAttributeToggleBinding = function(name, priority) {
+      return this.addBinding(name, priority, function(element, expr, controller) {
         return controller.watch(expr, function(value) {
           return element.attr(name, value && true || false);
         });
@@ -1999,7 +1999,7 @@ if (!Date.prototype.toISOString) {
       attribs = attribs.map(function(attr) {
         var bindingName, entry;
         bindingName = attr.name.replace(prefix, '');
-        entry = _this.bindings[bindingName] || _this.addAttributeBinding(bindingName);
+        entry = _this.bindings[bindingName] || _this.addAttributeBinding(bindingName, -1);
         return {
           name: attr.name,
           value: attr.value,
@@ -2321,7 +2321,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  ['click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste'].forEach(function(name) {
+  ['click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste', 'load', 'unload', 'error'].forEach(function(name) {
     return chip.eventBinding(name);
   });
 
@@ -2449,6 +2449,26 @@ if (!Date.prototype.toISOString) {
           element.before(placeholder);
           return element.animateOut();
         }
+      }
+    });
+  });
+
+  chip.binding('show', function(element, expr, controller) {
+    return controller.watch(expr, function(value) {
+      if (value) {
+        return element.show();
+      } else {
+        return element.hide();
+      }
+    });
+  });
+
+  chip.binding('hide', function(element, expr, controller) {
+    return controller.watch(expr, function(value) {
+      if (value) {
+        return element.hide();
+      } else {
+        return element.show();
       }
     });
   });
@@ -2592,31 +2612,49 @@ if (!Date.prototype.toISOString) {
         background: 'none transparent',
         width: '100%'
       });
-      element.contents().find('head').html($('link[rel="stylesheet"][href]').clone()).append('<style>\nbody {\n  background: none transparent;\n  width: auto;\n  min-width: 0;\n}\n</style>');
     }
-    if (itemExpr && itemName) {
-      controller.watch(itemExpr, true, function(value) {
-        return childController[itemName] = value;
-      });
-    }
-    return controller.watch(nameExpr, function(name) {
-      var body;
-      if (name == null) {
-        return;
-      }
+    controller.watch(nameExpr, function(name) {
+      var e, setup, _ref, _ref1;
       if (element.is('iframe')) {
-        body = element.contents().find('body').html(controller.template(name));
-        element.height(body.outerHeight());
-        if (itemExpr && itemName) {
-          properties[itemName] = controller["eval"](itemExpr);
+        if ((_ref = element.data('body')) != null) {
+          _ref.triggerHandler('remove');
         }
-        return childController = controller.child({
-          element: body,
-          name: name,
-          properties: properties
-        });
+        if ((_ref1 = element.data('body')) != null) {
+          _ref1.html('');
+        }
+        element.removeData('body');
+        if (!name) {
+          return;
+        }
+        setup = function(body) {
+          body.siblings('head').html($('link[rel="stylesheet"][href]').clone()).append('<style>\nbody {\n  background: none transparent;\n  width: auto;\n  min-width: 0;\n  margin: 0;\n  padding: 0;\n}\n</style>');
+          body.html(controller.template(name));
+          if (itemExpr && itemName) {
+            properties[itemName] = controller["eval"](itemExpr);
+          }
+          childController = controller.child({
+            element: body,
+            name: name,
+            properties: properties
+          });
+          element.height(body.outerHeight());
+          return element.data('body', body);
+        };
+        try {
+          return setup(element.contents().find('body'));
+        } catch (_error) {
+          e = _error;
+          element.one('load', function() {
+            return setup(element.contents().find('body'));
+          });
+          return element.attr('src', 'about:blank');
+        }
       } else {
         return element.animateOut(function() {
+          element.html('');
+          if (name == null) {
+            return;
+          }
           element.html(controller.template(name));
           if (itemExpr && itemName) {
             properties[itemName] = controller["eval"](itemExpr);
@@ -2630,6 +2668,11 @@ if (!Date.prototype.toISOString) {
         });
       }
     });
+    if (itemExpr && itemName) {
+      return controller.watch(itemExpr, true, function(value) {
+        return childController[itemName] = value;
+      });
+    }
   });
 
   chip.binding('controller', 30, function(element, controllerName, controller) {

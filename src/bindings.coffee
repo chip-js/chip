@@ -386,7 +386,7 @@ chip.binding 'value', (element, expr, controller) ->
 #   <button>Save</button>
 # </form>
 # ```
-[ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste' ]
+[ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste', 'load', 'unload', 'error' ]
   .forEach (name) ->
     chip.eventBinding(name)
 
@@ -566,6 +566,16 @@ chip.binding 'if', 50, (element, expr, controller) ->
       unless placeholder.parent().length
         element.before placeholder
         element.animateOut()
+
+
+chip.binding 'show', (element, expr, controller) ->
+  controller.watch expr, (value) ->
+    if value then element.show() else element.hide()
+
+
+chip.binding 'hide', (element, expr, controller) ->
+  controller.watch expr, (value) ->
+    if value then element.hide() else element.show()
 
 # ## chip-unless
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -756,42 +766,57 @@ chip.binding 'partial', 50, (element, expr, controller) ->
   [ itemExpr, itemName ] = parts
   childController = null
   properties = {}
-
   if element.is('iframe')
-    element.css
-      border: 'none'
-      background: 'none transparent'
-      width: '100%'
-    element.contents().find('head')
-      .html($('link[rel="stylesheet"][href]').clone())
-      .append '''<style>
+      element.css
+        border: 'none'
+        background: 'none transparent'
+        width: '100%'
+  
+  controller.watch nameExpr, (name) ->
+    if element.is('iframe')
+      element.data('body')?.triggerHandler('remove')
+      element.data('body')?.html('')
+      element.removeData('body')
+      return unless name
+
+      setup = (body) ->
+        body.siblings('head')
+          .html($('link[rel="stylesheet"][href]').clone())
+          .append '''<style>
 body {
   background: none transparent;
   width: auto;
   min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 </style>'''
+        body.html controller.template(name)
+        if itemExpr and itemName
+          properties[itemName] = controller.eval itemExpr
+        childController = controller.child element: body, name: name, properties: properties
+        element.height body.outerHeight()
+        element.data('body', body)
 
-  
-  if itemExpr and itemName
-    controller.watch itemExpr, true, (value) ->
-      childController[itemName] = value
-  
-  controller.watch nameExpr, (name) ->
-    return unless name?
-    if element.is('iframe')
-      body = element.contents().find('body').html controller.template(name)
-      element.height body.outerHeight()
-      if itemExpr and itemName
-        properties[itemName] = controller.eval itemExpr
-      childController = controller.child element: body, name: name, properties: properties
+      try
+        setup element.contents().find('body')
+      catch e # cross domain issues
+        element.one 'load', -> setup element.contents().find('body')
+        element.attr 'src', 'about:blank'
     else
       element.animateOut ->
+        element.html('')
+        return unless name?
         element.html controller.template(name)
         if itemExpr and itemName
           properties[itemName] = controller.eval itemExpr
         element.animateIn()
         childController = controller.child element: element, name: name, properties: properties
+
+  
+  if itemExpr and itemName
+    controller.watch itemExpr, true, (value) ->
+      childController[itemName] = value
 
 
 # ## chip-controller
