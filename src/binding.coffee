@@ -44,6 +44,8 @@ class Binding
       handler = priority
       priority = 0
     
+    priority = priority or 0
+
     entry =
       name: name
       priority: priority

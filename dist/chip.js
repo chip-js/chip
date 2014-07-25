@@ -1909,6 +1909,7 @@ if (!Date.prototype.toISOString) {
         handler = priority;
         priority = 0;
       }
+      priority = priority || 0;
       entry = {
         name: name,
         priority: priority,
