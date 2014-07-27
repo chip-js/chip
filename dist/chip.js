@@ -1994,54 +1994,55 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.process = function(element, controller) {
-      var attr, attribs, newController, parentNode, prefix, processed,
+      var elements, prefix, slice,
         _this = this;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
       }
-      parentNode = element.parent().get(0);
       prefix = controller.app.bindingPrefix;
-      attribs = $(element.get(0).attributes).toArray().filter(function(attr) {
-        return attr.name.indexOf(prefix) === 0 && (_this.bindings[attr.name.replace(prefix, '')] || prefix) && attr.value !== void 0;
-      });
-      attribs = attribs.map(function(attr) {
-        var bindingName, entry;
-        bindingName = attr.name.replace(prefix, '');
-        entry = _this.bindings[bindingName] || _this.addAttributeBinding(bindingName, -1);
-        return {
-          name: attr.name,
-          value: attr.value,
-          priority: entry.priority,
-          handler: entry.handler,
-          keepAttribute: entry.keepAttribute
-        };
-      });
-      attribs = attribs.sort(function(a, b) {
-        return b.priority - a.priority;
-      });
-      processed = attribs.length > 0;
-      while (attribs.length) {
-        attr = attribs.shift();
-        if (element.attr(attr.name) == null) {
-          continue;
+      slice = Array.prototype.slice;
+      elements = element.find('*').toArray();
+      elements.unshift(element.get(0));
+      return elements.forEach(function(node, index) {
+        var attr, attribs, parentNode, processed;
+        element = $(node);
+        parentNode = node.parentNode;
+        attribs = slice.call(node.attributes).filter(function(attr) {
+          var name;
+          name = attr.name.replace(prefix, '');
+          return attr.name.indexOf(prefix) === 0 && (_this.bindings[name] || prefix) && attr.value !== void 0;
+        });
+        attribs = attribs.map(function(attr) {
+          var bindingName, entry;
+          bindingName = attr.name.replace(prefix, '');
+          entry = _this.bindings[bindingName] || _this.addAttributeBinding(bindingName, -1);
+          return {
+            name: attr.name,
+            value: attr.value,
+            priority: entry.priority,
+            handler: entry.handler,
+            keepAttribute: entry.keepAttribute
+          };
+        });
+        attribs = attribs.sort(function(a, b) {
+          return b.priority - a.priority;
+        });
+        processed = attribs.length > 0;
+        while (attribs.length) {
+          attr = attribs.shift();
+          if (!attr.keepAttribute) {
+            element.removeAttr(attr.name);
+          }
+          attr.handler(element, attr.value, controller);
+          if (node.parentNode !== parentNode) {
+            elements.splice(index + 1, element.find('*').length);
+            return;
+          }
         }
-        if (!attr.keepAttribute) {
-          element.removeAttr(attr.name);
+        if (processed) {
+          return element.trigger('processed');
         }
-        newController = attr.handler(element, attr.value, controller);
-        if (element.parent().get(0) !== parentNode) {
-          return;
-        }
-        if (newController instanceof Controller && newController !== controller) {
-          controller = newController;
-        }
-      }
-      element.children().each(function(index, child) {
-        return _this.process($(child), controller);
       });
-      if (processed) {
-        return element.trigger('processed');
-      }
     };
 
     return Binding;

@@ -144,61 +144,58 @@ class Binding
     unless controller instanceof Controller
       throw new Error 'A Controller is required to bind a jQuery element.'
     
-    parentNode = element.parent().get(0)
     prefix = controller.app.bindingPrefix
-    
-    # Finds binding attributes and sorts by priority.
-    attribs = $(element.get(0).attributes).toArray().filter (attr) =>
-      attr.name.indexOf(prefix) is 0 and
-        (
-          @bindings[attr.name.replace(prefix, '')] or
-          prefix
-          ) and
+    slice = Array::slice
+    elements = element.find('*').toArray()
+    elements.unshift element.get(0)
+
+    elements.forEach (node, index) =>
+      element = $ node
+      parentNode = node.parentNode
+      
+      # Finds binding attributes and sorts by priority.
+      attribs = slice.call(node.attributes).filter (attr) =>
+        name = attr.name.replace(prefix, '')
+        attr.name.indexOf(prefix) is 0 and
+        ( @bindings[name] or prefix ) and
         attr.value isnt undefined # Fix for IE7
-    
-    attribs = attribs.map (attr) =>
-      bindingName = attr.name.replace(prefix, '')
-      entry = @bindings[bindingName] or @addAttributeBinding(bindingName, -1)
-      name: attr.name
-      value: attr.value
-      priority: entry.priority
-      handler: entry.handler
-      keepAttribute: entry.keepAttribute
-    
-    attribs = attribs.sort (a, b) ->
-      b.priority - a.priority
+      
+      attribs = attribs.map (attr) =>
+        bindingName = attr.name.replace(prefix, '')
+        entry = @bindings[bindingName] or @addAttributeBinding(bindingName, -1)
+        name: attr.name
+        value: attr.value
+        priority: entry.priority
+        handler: entry.handler
+        keepAttribute: entry.keepAttribute
+      
+      attribs = attribs.sort (a, b) ->
+        b.priority - a.priority
 
-    processed = attribs.length > 0
-    
-    # Go through each binding attribute from first to last.
-    while attribs.length
-      attr = attribs.shift()
+      processed = attribs.length > 0
       
-      # Don't re-process if it has been removed. Could happen if one handler uses another and removes it.
-      continue unless element.attr(attr.name)?
-      
-      # Remove the binding handlers so they only get processed once. This simplifies our code, but it also
-      # makes the DOM cleaner.
-      unless attr.keepAttribute
-        element.removeAttr(attr.name)
-      
-      # Calls the handler function allowing the handler to set up the binding.
-      newController = attr.handler element, attr.value, controller
-      
-      # Stops processing of this element and its children if the element was removed from the DOM.
-      # This is used for chip-if and chip-each for example.
-      return if element.parent().get(0) isnt parentNode
-      
-      # Sets controller to new controller if a new controller has been defined by a handler.
-      if newController instanceof Controller and newController isnt controller
-        controller = newController
-    
-    # Processes the children of this element after the element has been processed.
-    element.children().each (index, child) =>
-      @process $(child), controller
+      # Go through each binding attribute from first to last.
+      while attribs.length
+        attr = attribs.shift()
+        
+        # Remove the binding handlers so they only get processed once. This simplifies code and also
+        # makes the DOM cleaner.
+        unless attr.keepAttribute
+          element.removeAttr(attr.name)
+        
+        # Calls the handler function allowing the handler to set up the binding.
+        attr.handler element, attr.value, controller
+        
+        # Stops processing of this element and its children if the element was removed from the DOM.
+        # This is used for chip-if and chip-each etc.
+        if node.parentNode isnt parentNode
+          # remove the nodes that were in the element from the elements being
+          # processed
+          elements.splice index + 1, element.find('*').length
+          return
 
-    element.trigger('processed') if processed
-  
+      element.trigger('processed') if processed
+    
 
 
 # Sets up the binding handlers for this jQuery element and all of its descendants

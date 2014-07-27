@@ -230,8 +230,14 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
     <span class="keyword">unless</span> controller <span class="keyword">instanceof</span> Controller
       <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'A Controller is required to bind a jQuery element.'</span>
     
-    parentNode = element.parent().get(<span class="number">0</span>)
-    prefix = controller.app.bindingPrefix</pre></div></div>
+    prefix = controller.app.bindingPrefix
+    slice = Array::slice
+    elements = element.find(<span class="string">'*'</span>).toArray()
+    elements.unshift element.get(<span class="number">0</span>)
+
+    elements.forEach (node, index) =&gt;
+      element = $ node
+      parentNode = node.parentNode</pre></div></div>
             
         </li>
         
@@ -246,27 +252,25 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    attribs = $(element.get(<span class="number">0</span>).attributes).toArray().filter (attr) =&gt;
-      attr.name.indexOf(prefix) <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span>
-        (
-          <span class="property">@bindings</span>[attr.name.replace(prefix, <span class="string">''</span>)] <span class="keyword">or</span>
-          prefix
-          ) <span class="keyword">and</span>
+            <div class="content"><div class='highlight'><pre>      attribs = slice.call(node.attributes).filter (attr) =&gt;
+        name = attr.name.replace(prefix, <span class="string">''</span>)
+        attr.name.indexOf(prefix) <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span>
+        ( <span class="property">@bindings</span>[name] <span class="keyword">or</span> prefix ) <span class="keyword">and</span>
         attr.value <span class="keyword">isnt</span> <span class="literal">undefined</span> <span class="comment"># Fix for IE7</span>
-    
-    attribs = attribs.map (attr) =&gt;
-      bindingName = attr.name.replace(prefix, <span class="string">''</span>)
-      entry = <span class="property">@bindings</span>[bindingName] <span class="keyword">or</span> <span class="property">@addAttributeBinding</span>(bindingName, -<span class="number">1</span>)
-      name: attr.name
-      value: attr.value
-      priority: entry.priority
-      handler: entry.handler
-      keepAttribute: entry.keepAttribute
-    
-    attribs = attribs.sort (a, b) -&gt;
-      b.priority - a.priority
+      
+      attribs = attribs.map (attr) =&gt;
+        bindingName = attr.name.replace(prefix, <span class="string">''</span>)
+        entry = <span class="property">@bindings</span>[bindingName] <span class="keyword">or</span> <span class="property">@addAttributeBinding</span>(bindingName, -<span class="number">1</span>)
+        name: attr.name
+        value: attr.value
+        priority: entry.priority
+        handler: entry.handler
+        keepAttribute: entry.keepAttribute
+      
+      attribs = attribs.sort (a, b) -&gt;
+        b.priority - a.priority
 
-    processed = attribs.length &gt; <span class="number">0</span></pre></div></div>
+      processed = attribs.length &gt; <span class="number">0</span></pre></div></div>
             
         </li>
         
@@ -281,8 +285,8 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">while</span> attribs.length
-      attr = attribs.shift()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">while</span> attribs.length
+        attr = attribs.shift()</pre></div></div>
             
         </li>
         
@@ -293,11 +297,13 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
-              <p>Don&#39;t re-process if it has been removed. Could happen if one handler uses another and removes it.</p>
+              <p>Remove the binding handlers so they only get processed once. This simplifies code and also
+makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">continue</span> <span class="keyword">unless</span> element.attr(attr.name)?</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">unless</span> attr.keepAttribute
+          element.removeAttr(attr.name)</pre></div></div>
             
         </li>
         
@@ -308,13 +314,11 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
-              <p>Remove the binding handlers so they only get processed once. This simplifies our code, but it also
-makes the DOM cleaner.</p>
+              <p>Calls the handler function allowing the handler to set up the binding.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">unless</span> attr.keepAttribute
-        element.removeAttr(attr.name)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        attr.handler element, attr.value, controller</pre></div></div>
             
         </li>
         
@@ -325,11 +329,12 @@ makes the DOM cleaner.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
-              <p>Calls the handler function allowing the handler to set up the binding.</p>
+              <p>Stops processing of this element and its children if the element was removed from the DOM.
+This is used for chip-if and chip-each etc.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      newController = attr.handler element, attr.value, controller</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> node.parentNode <span class="keyword">isnt</span> parentNode</pre></div></div>
             
         </li>
         
@@ -340,12 +345,15 @@ makes the DOM cleaner.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <p>Stops processing of this element and its children if the element was removed from the DOM.
-This is used for chip-if and chip-each for example.</p>
+              <p>remove the nodes that were in the element from the elements being
+processed</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">return</span> <span class="keyword">if</span> element.parent().get(<span class="number">0</span>) <span class="keyword">isnt</span> parentNode</pre></div></div>
+            <div class="content"><div class='highlight'><pre>          elements.splice index + <span class="number">1</span>, element.find(<span class="string">'*'</span>).length
+          <span class="keyword">return</span>
+
+      element.trigger(<span class="string">'processed'</span>) <span class="keyword">if</span> processed</pre></div></div>
             
         </li>
         
@@ -355,40 +363,6 @@ This is used for chip-if and chip-each for example.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-16">&#182;</a>
-              </div>
-              <p>Sets controller to new controller if a new controller has been defined by a handler.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">if</span> newController <span class="keyword">instanceof</span> Controller <span class="keyword">and</span> newController <span class="keyword">isnt</span> controller
-        controller = newController</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-17">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
-              </div>
-              <p>Processes the children of this element after the element has been processed.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    element.children().each (index, child) =&gt;
-      <span class="property">@process</span> $(child), controller
-
-    element.trigger(<span class="string">'processed'</span>) <span class="keyword">if</span> processed</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-18">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Sets up the binding handlers for this jQuery element and all of its descendants</p>
 
