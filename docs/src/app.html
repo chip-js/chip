@@ -536,13 +536,9 @@ template and controller by the same name. This template will be placed in the fi
             <span class="keyword">return</span>
           <span class="property">@rootController</span>.params = req.params
           <span class="property">@rootController</span>.query = req.query
-          depth-- <span class="keyword">if</span> <span class="property">@rootElement</span>.<span class="keyword">is</span>(<span class="string">"[<span class="subst">#{@bindingPrefix}</span>route]"</span>)
-          <span class="keyword">if</span> depth <span class="keyword">is</span> -<span class="number">1</span>
-            container = <span class="property">@rootElement</span>
-          <span class="keyword">else</span>
-            selector = []
-            selector.push(<span class="string">"[<span class="subst">#{@bindingPrefix}</span>route]"</span>) <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">0.</span>.depth]
-            container = <span class="property">@rootElement</span>.find selector.join(<span class="string">' '</span>) + <span class="string">':first'</span>
+          selector = []
+          selector.push(<span class="string">"[<span class="subst">#{@bindingPrefix}</span>route]"</span>) <span class="keyword">for</span> i <span class="keyword">in</span> [<span class="number">0.</span>.depth]
+          container = <span class="property">@rootElement</span>.find selector.join(<span class="string">' '</span>) + <span class="string">':first'</span>
           isExistingRoute = <span class="property">@rootController</span>.route
           <span class="keyword">unless</span> req.isSamePath?
             req.isSamePath = req.path <span class="keyword">is</span> <span class="property">@rootController</span>.path <span class="comment"># handle query-string changes</span>

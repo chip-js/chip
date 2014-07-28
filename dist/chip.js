@@ -1756,18 +1756,11 @@ if (!Date.prototype.toISOString) {
             }
             _this.rootController.params = req.params;
             _this.rootController.query = req.query;
-            if (_this.rootElement.is("[" + _this.bindingPrefix + "route]")) {
-              depth--;
+            selector = [];
+            for (i = _i = 0; 0 <= depth ? _i <= depth : _i >= depth; i = 0 <= depth ? ++_i : --_i) {
+              selector.push("[" + _this.bindingPrefix + "route]");
             }
-            if (depth === -1) {
-              container = _this.rootElement;
-            } else {
-              selector = [];
-              for (i = _i = 0; 0 <= depth ? _i <= depth : _i >= depth; i = 0 <= depth ? ++_i : --_i) {
-                selector.push("[" + _this.bindingPrefix + "route]");
-              }
-              container = _this.rootElement.find(selector.join(' ') + ':first');
-            }
+            container = _this.rootElement.find(selector.join(' ') + ':first');
             isExistingRoute = _this.rootController.route;
             if (req.isSamePath == null) {
               req.isSamePath = req.path === _this.rootController.path;

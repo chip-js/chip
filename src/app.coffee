@@ -202,13 +202,9 @@ class App
             return
           @rootController.params = req.params
           @rootController.query = req.query
-          depth-- if @rootElement.is("[#{@bindingPrefix}route]")
-          if depth is -1
-            container = @rootElement
-          else
-            selector = []
-            selector.push("[#{@bindingPrefix}route]") for i in [0..depth]
-            container = @rootElement.find selector.join(' ') + ':first'
+          selector = []
+          selector.push("[#{@bindingPrefix}route]") for i in [0..depth]
+          container = @rootElement.find selector.join(' ') + ':first'
           isExistingRoute = @rootController.route
           unless req.isSamePath?
             req.isSamePath = req.path is @rootController.path # handle query-string changes
