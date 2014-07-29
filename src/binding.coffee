@@ -166,7 +166,6 @@ class Binding
       
       attribs = attribs.map (attr) =>
         bindingName = attr.name.replace(prefix, '')
-        console.log bindingName, 'missing' unless @bindings[bindingName]
         entry = @bindings[bindingName] or @addAttributeBinding(bindingName, -1)
         name: attr.name
         value: attr.value

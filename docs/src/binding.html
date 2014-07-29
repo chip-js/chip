@@ -264,7 +264,6 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
       
       attribs = attribs.map (attr) =&gt;
         bindingName = attr.name.replace(prefix, <span class="string">''</span>)
-        console.log bindingName, <span class="string">'missing'</span> <span class="keyword">unless</span> <span class="property">@bindings</span>[bindingName]
         entry = <span class="property">@bindings</span>[bindingName] <span class="keyword">or</span> <span class="property">@addAttributeBinding</span>(bindingName, -<span class="number">1</span>)
         name: attr.name
         value: attr.value

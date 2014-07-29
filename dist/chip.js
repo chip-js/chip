@@ -2012,9 +2012,6 @@ if (!Date.prototype.toISOString) {
         attribs = attribs.map(function(attr) {
           var bindingName, entry;
           bindingName = attr.name.replace(prefix, '');
-          if (!_this.bindings[bindingName]) {
-            console.log(bindingName, 'missing');
-          }
           entry = _this.bindings[bindingName] || _this.addAttributeBinding(bindingName, -1);
           return {
             name: attr.name,
