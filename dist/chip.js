@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, addReferences, addThis, argSeparator, attribs, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, finishedChain, getFunctionCall, ignore, initParse, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, splitLinks, strings, urlExp, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, Walker, addReferences, addThis, argSeparator, attribs, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, finishedChain, getFunctionCall, ignore, initParse, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, splitLinks, strings, urlExp, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -1987,17 +1987,21 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.process = function(element, controller) {
-      var elements, prefix, slice,
+      var attr, attribs, node, parentNode, prefix, processed, slice, walker,
         _this = this;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
       }
       prefix = controller.app.bindingPrefix;
       slice = Array.prototype.slice;
-      elements = element.find('*').toArray();
-      elements.unshift(element.get(0));
-      return elements.forEach(function(node, index) {
-        var attr, attribs, parentNode, processed;
+      walker = new Walker(element.get(0));
+      processed = [];
+      walker.onElementDone = function(node) {
+        if (processed.length && processed[processed.length - 1].get(0) === node) {
+          return processed.pop().trigger('processed');
+        }
+      };
+      while (node = walker.next()) {
         element = $(node);
         parentNode = node.parentNode;
         attribs = slice.call(node.attributes).filter(function(attr) {
@@ -2008,6 +2012,9 @@ if (!Date.prototype.toISOString) {
         attribs = attribs.map(function(attr) {
           var bindingName, entry;
           bindingName = attr.name.replace(prefix, '');
+          if (!_this.bindings[bindingName]) {
+            console.log(bindingName, 'missing');
+          }
           entry = _this.bindings[bindingName] || _this.addAttributeBinding(bindingName, -1);
           return {
             name: attr.name,
@@ -2020,7 +2027,9 @@ if (!Date.prototype.toISOString) {
         attribs = attribs.sort(function(a, b) {
           return b.priority - a.priority;
         });
-        processed = attribs.length > 0;
+        if (attribs.length) {
+          processed.push(element);
+        }
         while (attribs.length) {
           attr = attribs.shift();
           if (!attr.keepAttribute) {
@@ -2028,14 +2037,12 @@ if (!Date.prototype.toISOString) {
           }
           attr.handler(element, attr.value, controller);
           if (node.parentNode !== parentNode) {
-            elements.splice(index + 1, element.find('*').length);
-            return;
+            processed.pop();
+            break;
           }
         }
-        if (processed) {
-          return element.trigger('processed');
-        }
-      });
+      }
+      return element;
     };
 
     return Binding;
@@ -2049,6 +2056,66 @@ if (!Date.prototype.toISOString) {
   };
 
   chip.Binding = Binding;
+
+  Walker = (function() {
+    function Walker(root) {
+      this.root = root;
+      this.current = null;
+    }
+
+    Walker.prototype.onElementDone = function() {};
+
+    Walker.prototype.next = function() {
+      if (this.current === null) {
+        return this.current = this.root;
+      }
+      if (this.current !== this.root && this.current.parentNode === null) {
+        this.current = this.placeholder;
+      }
+      this.current = this.traverse(this.current);
+      if (this.current) {
+        this.placeholder = {
+          parentNode: this.current.parentNode,
+          nextElementSibling: this.current.nextElementSibling
+        };
+      } else {
+        this.placeholder = null;
+        this.onElementDone(this.root);
+      }
+      return this.current;
+    };
+
+    Walker.prototype.traverse = function(node) {
+      var child, sibling;
+      if (node.nodeType) {
+        child = node.firstElementChild;
+        if (child) {
+          return child;
+        }
+      }
+      while (node !== null) {
+        if (node.nodeType) {
+          this.onElementDone(node);
+        }
+        if (node === this.root) {
+          return null;
+        }
+        sibling = node.nextElementSibling;
+        if (sibling) {
+          return sibling;
+        }
+        node = node.parentNode;
+      }
+      return node;
+    };
+
+    Walker.prototype.skip = function() {
+      return this.current = this.placeholder;
+    };
+
+    return Walker;
+
+  })();
 
   Filter = (function() {
     function Filter(name, filter) {

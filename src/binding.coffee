@@ -144,12 +144,16 @@ class Binding
     unless controller instanceof Controller
       throw new Error 'A Controller is required to bind a jQuery element.'
     
+
     prefix = controller.app.bindingPrefix
     slice = Array::slice
-    elements = element.find('*').toArray()
-    elements.unshift element.get(0)
+    walker = new Walker element.get(0)
+    processed = []
+    walker.onElementDone = (node) ->
+      if processed.length and processed[processed.length - 1].get(0) is node
+        processed.pop().trigger('processed')
 
-    elements.forEach (node, index) =>
+    while node = walker.next()
       element = $ node
       parentNode = node.parentNode
       
@@ -162,6 +166,7 @@ class Binding
       
       attribs = attribs.map (attr) =>
         bindingName = attr.name.replace(prefix, '')
+        console.log bindingName, 'missing' unless @bindings[bindingName]
         entry = @bindings[bindingName] or @addAttributeBinding(bindingName, -1)
         name: attr.name
         value: attr.value
@@ -172,7 +177,7 @@ class Binding
       attribs = attribs.sort (a, b) ->
         b.priority - a.priority
 
-      processed = attribs.length > 0
+      processed.push element if attribs.length
       
       # Go through each binding attribute from first to last.
       while attribs.length
@@ -186,15 +191,13 @@ class Binding
         # Calls the handler function allowing the handler to set up the binding.
         attr.handler element, attr.value, controller
         
-        # Stops processing of this element and its children if the element was removed from the DOM.
+        # Stops processing of this element (and its children will be skipped) if the element was removed from the DOM.
         # This is used for chip-if and chip-each etc.
         if node.parentNode isnt parentNode
-          # remove the nodes that were in the element from the elements being
-          # processed
-          elements.splice index + 1, element.find('*').length
-          return
+          processed.pop()
+          break
 
-      element.trigger('processed') if processed
+    element
     
 
 
@@ -205,3 +208,46 @@ jQuery.fn.bindTo = (controller) ->
 
 
 chip.Binding = Binding
+
+
+
+
+class Walker
+  constructor: (@root) ->
+    @current = null
+
+  # A callback to do additional things when a node and it's children are done
+  onElementDone: ->
+    
+  # Get the next element and process it
+  next: ->
+    return @current = @root if @current is null
+    @current = @placeholder if @current isnt @root and @current.parentNode is null
+    @current = @traverse @current
+    # Save a placeholder for when a node is removed from the DOM so we can continue walking
+    if @current
+      @placeholder =
+        parentNode: @current.parentNode
+        nextElementSibling: @current.nextElementSibling
+    else
+      @placeholder = null
+      @onElementDone @root
+    @current
+
+  traverse: (node) ->
+    if node.nodeType
+      child = node.firstElementChild
+      return child if child
+
+    while (node isnt null)
+      @onElementDone node if node.nodeType
+      return null if node is @root
+      sibling = node.nextElementSibling
+      return sibling if sibling
+      node = node.parentNode
+    node
+
+  # Skip over the current element (don't walk its children) on next call to next()
+  skip: ->
+    @current = @placeholder
+

@@ -230,12 +230,16 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
     <span class="keyword">unless</span> controller <span class="keyword">instanceof</span> Controller
       <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'A Controller is required to bind a jQuery element.'</span>
     
+
     prefix = controller.app.bindingPrefix
     slice = Array::slice
-    elements = element.find(<span class="string">'*'</span>).toArray()
-    elements.unshift element.get(<span class="number">0</span>)
+    walker = <span class="keyword">new</span> Walker element.get(<span class="number">0</span>)
+    processed = []
+    walker.<span class="function"><span class="title">onElementDone</span></span> = (node) -&gt;
+      <span class="keyword">if</span> processed.length <span class="keyword">and</span> processed[processed.length - <span class="number">1</span>].get(<span class="number">0</span>) <span class="keyword">is</span> node
+        processed.pop().trigger(<span class="string">'processed'</span>)
 
-    elements.forEach (node, index) =&gt;
+    <span class="keyword">while</span> node = walker.next()
       element = $ node
       parentNode = node.parentNode</pre></div></div>
             
@@ -260,6 +264,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
       
       attribs = attribs.map (attr) =&gt;
         bindingName = attr.name.replace(prefix, <span class="string">''</span>)
+        console.log bindingName, <span class="string">'missing'</span> <span class="keyword">unless</span> <span class="property">@bindings</span>[bindingName]
         entry = <span class="property">@bindings</span>[bindingName] <span class="keyword">or</span> <span class="property">@addAttributeBinding</span>(bindingName, -<span class="number">1</span>)
         name: attr.name
         value: attr.value
@@ -270,7 +275,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
       attribs = attribs.sort (a, b) -&gt;
         b.priority - a.priority
 
-      processed = attribs.length &gt; <span class="number">0</span></pre></div></div>
+      processed.push element <span class="keyword">if</span> attribs.length</pre></div></div>
             
         </li>
         
@@ -329,12 +334,16 @@ makes the DOM cleaner.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
-              <p>Stops processing of this element and its children if the element was removed from the DOM.
+              <p>Stops processing of this element (and its children will be skipped) if the element was removed from the DOM.
 This is used for chip-if and chip-each etc.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> node.parentNode <span class="keyword">isnt</span> parentNode</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> node.parentNode <span class="keyword">isnt</span> parentNode
+          processed.pop()
+          <span class="keyword">break</span>
+
+    element</pre></div></div>
             
         </li>
         
@@ -345,15 +354,23 @@ This is used for chip-if and chip-each etc.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <p>remove the nodes that were in the element from the elements being
-processed</p>
+              <p>Sets up the binding handlers for this jQuery element and all of its descendants</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>          elements.splice index + <span class="number">1</span>, element.find(<span class="string">'*'</span>).length
-          <span class="keyword">return</span>
+            <div class="content"><div class='highlight'><pre>jQuery.fn.<span class="function"><span class="title">bindTo</span></span> = (controller) -&gt;
+  <span class="keyword">if</span> <span class="keyword">this</span>.length <span class="keyword">isnt</span> <span class="number">0</span>
+    Binding.process(<span class="keyword">this</span>, controller)
 
-      element.trigger(<span class="string">'processed'</span>) <span class="keyword">if</span> processed</pre></div></div>
+
+chip.Binding = Binding
+
+
+
+
+<span class="class"><span class="keyword">class</span> <span class="title">Walker</span></span>
+  constructor: (<span class="property">@root</span>) -&gt;
+    <span class="property">@current</span> = <span class="literal">null</span></pre></div></div>
             
         </li>
         
@@ -364,16 +381,80 @@ processed</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
-              <p>Sets up the binding handlers for this jQuery element and all of its descendants</p>
+              <p>A callback to do additional things when a node and it&#39;s children are done</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>jQuery.fn.<span class="function"><span class="title">bindTo</span></span> = (controller) -&gt;
-  <span class="keyword">if</span> <span class="keyword">this</span>.length <span class="keyword">isnt</span> <span class="number">0</span>
-    Binding.process(<span class="keyword">this</span>, controller)
+            <div class="content"><div class='highlight'><pre>  onElementDone: -&gt;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>Get the next element and process it</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  next: -&gt;
+    <span class="keyword">return</span> <span class="property">@current</span> = <span class="property">@root</span> <span class="keyword">if</span> <span class="property">@current</span> <span class="keyword">is</span> <span class="literal">null</span>
+    <span class="property">@current</span> = <span class="property">@placeholder</span> <span class="keyword">if</span> <span class="property">@current</span> <span class="keyword">isnt</span> <span class="property">@root</span> <span class="keyword">and</span> <span class="property">@current</span>.parentNode <span class="keyword">is</span> <span class="literal">null</span>
+    <span class="property">@current</span> = <span class="property">@traverse</span> <span class="property">@current</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>Save a placeholder for when a node is removed from the DOM so we can continue walking</p>
 
-chip.Binding = Binding</pre></div></div>
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> <span class="property">@current</span>
+      <span class="property">@placeholder</span> =
+        parentNode: <span class="property">@current</span>.parentNode
+        nextElementSibling: <span class="property">@current</span>.nextElementSibling
+    <span class="keyword">else</span>
+      <span class="property">@placeholder</span> = <span class="literal">null</span>
+      <span class="property">@onElementDone</span> <span class="property">@root</span>
+    <span class="property">@current</span>
+
+  traverse: (node) -&gt;
+    <span class="keyword">if</span> node.nodeType
+      child = node.firstElementChild
+      <span class="keyword">return</span> child <span class="keyword">if</span> child
+
+    <span class="keyword">while</span> (node <span class="keyword">isnt</span> <span class="literal">null</span>)
+      <span class="property">@onElementDone</span> node <span class="keyword">if</span> node.nodeType
+      <span class="keyword">return</span> <span class="literal">null</span> <span class="keyword">if</span> node <span class="keyword">is</span> <span class="property">@root</span>
+      sibling = node.nextElementSibling
+      <span class="keyword">return</span> sibling <span class="keyword">if</span> sibling
+      node = node.parentNode
+    node</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>Skip over the current element (don&#39;t walk its children) on next call to next()</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  skip: -&gt;
+    <span class="property">@current</span> = <span class="property">@placeholder</span></pre></div></div>
             
         </li>
         
