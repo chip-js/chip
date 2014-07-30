@@ -24,7 +24,7 @@ class Binding
   # 
   # **Example:** This binding handler adds pirateized text to an element.
   # ```javascript
-  # Binding.addBinding('pirate', function(element, expr, controller) {
+  # Binding.addBinding('my-pirate', function(element, expr, controller) {
   #   controller.watch(expr, function(value) {
   #     value = (value+'' || '')
   #       .replace(/\Bing\b/g, "in'")
@@ -37,18 +37,19 @@ class Binding
   # ```
   # 
   # ```xml
-  # <p chip-pirate="post.body">This text will be replaced.</p>
+  # <p my-pirate="post.body">This text will be replaced.</p>
   # ```
-  @addBinding: (name, priority, handler) ->
-    if typeof priority is 'function'
-      handler = priority
-      priority = 0
-    
-    priority = priority or 0
+  @addBinding: (name, options, handler) ->
+    if typeof options is 'function'
+      handler = options
+      options = {}
+    else unless options
+      options = {}
 
     entry =
       name: name
-      priority: priority
+      priority: options.priority or 0
+      keepAttribute: options.keepAttribute
       handler: handler
     @bindings[name] = entry
     @bindings.push entry
@@ -65,7 +66,7 @@ class Binding
   # ```
   # 
   # ```xml
-  # <p chip-pirate="post.body">This text will be replaced.</p>
+  # <p my-pirate="post.body">This text will not be replaced.</p>
   # ```
   @removeBinding: (name) ->
     entry = @bindings[name]
@@ -78,14 +79,15 @@ class Binding
   #
   # **Example:** Handles the click event.
   #```javascript
-  # Binding.addEventBinding('click')
+  # Binding.addEventBinding('on-click')
   # ```
   # 
   # ```xml
-  # <button chip-click="window.alert('hello!')">Say Hello</button>
+  # <button on-click="window.alert('hello!')">Say Hello</button>
   #```
-  @addEventBinding: (eventName, priority) ->
-    @addBinding eventName, priority, (element, expr, controller) ->
+  @addEventBinding: (name, options) ->
+    eventName = name.split('-').slice(1).join('-')
+    @addBinding name, options, (element, expr, controller) ->
       element.on eventName, (event) ->
         event.preventDefault()
         unless element.attr('disabled')
@@ -94,9 +96,9 @@ class Binding
           delete controller.thisElement
   
   
-  # Shortcut, adds a handler that responds when the given key is pressed, e.g. `Binding.addEventBinding('esc', 27)`.
-  @addKeyEventBinding: (name, keyCode, ctrlKey, priority) ->
-    @addBinding name, priority, (element, expr, controller) ->
+  # Shortcut, adds a handler that responds when the given key is pressed, e.g. `Binding.addEventBinding('on-esc', 27)`.
+  @addKeyEventBinding: (name, keyCode, ctrlKey, options) ->
+    @addBinding name, options, (element, expr, controller) ->
       element.on 'keydown', (event) ->
         return if ctrlKey? and (event.ctrlKey isnt ctrlKey and event.metaKey isnt ctrlKey)
         return unless event.keyCode is keyCode
@@ -111,32 +113,34 @@ class Binding
   # 
   # **Example**
   # ```javascript
-  # Binding.addAttributeBinding('href')
+  # Binding.addAttributeBinding('attr-href')
   # ```
   # allows
   # ```xml
-  # <a chip-href="'/profile/' + person.id">My Profile</a>
+  # <a attr-href="'/profile/' + person.id">My Profile</a>
   # ```
   # which would result in
   # ```xml
   # <a href="/profile/368">My Profile</a>
   # ```
-  @addAttributeBinding: (name, priority) ->
-    @addBinding name, priority, (element, expr, controller) ->
+  @addAttributeBinding: (name, options) ->
+    attrName = name.split('-').slice(1).join('-')
+    @addBinding name, options, (element, expr, controller) ->
       controller.watch expr, (value) ->
         if value?
-          element.attr name, value
-          element.trigger name + 'Changed'
+          element.attr attrName, value
+          element.trigger attrName + 'Changed'
         else
-          element.removeAttr name
+          element.removeAttr attrName
   
   
   # Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
-  # e.g. `Binding.addAttributeToggleBinding('checked')`.
-  @addAttributeToggleBinding: (name, priority) ->
-    @addBinding name, priority, (element, expr, controller) ->
+  # e.g. `Binding.addAttributeToggleBinding('attr-checked')`.
+  @addAttributeToggleBinding: (name, options) ->
+    attrName = name.split('-').slice(1).join('-')
+    @addBinding name, options, (element, expr, controller) ->
       controller.watch expr, (value) ->
-        element.attr name, value and true or false
+        element.attr attrName, value and true or false
   
   
   # Processes the bindings for the given jQuery element and all of its children.
@@ -145,7 +149,6 @@ class Binding
       throw new Error 'A Controller is required to bind a jQuery element.'
     
 
-    prefix = controller.app.bindingPrefix
     slice = Array::slice
     walker = new Walker element.get(0)
     processed = []
@@ -158,40 +161,28 @@ class Binding
       parentNode = node.parentNode
       
       # Finds binding attributes and sorts by priority.
-      attribs = slice.call(node.attributes).filter (attr) =>
-        name = attr.name.replace(prefix, '')
-        attr.name.indexOf(prefix) is 0 and
-        ( @bindings[name] or prefix ) and
-        attr.value isnt undefined # Fix for IE7
-      
-      attribs = attribs.map (attr) =>
-        bindingName = attr.name.replace(prefix, '')
-        entry = @bindings[bindingName] or @addAttributeBinding(bindingName, -1)
-        name: attr.name
-        value: attr.value
-        priority: entry.priority
-        handler: entry.handler
-        keepAttribute: entry.keepAttribute
-      
-      attribs = attribs.sort (a, b) ->
-        b.priority - a.priority
+      bindings = slice.call(node.attributes)
+        .map((attr) => @bindings[attr.name])
+        .filter((binding) -> binding)
+        .sort((a, b) -> b.priority - a.priority)
 
-      processed.push element if attribs.length
+      processed.push element if bindings.length
       
       # Go through each binding attribute from first to last.
-      while attribs.length
-        attr = attribs.shift()
+      while bindings.length
+        binding = bindings.shift()
+        value = node.getAttribute binding.name
         
         # Remove the binding handlers so they only get processed once. This simplifies code and also
         # makes the DOM cleaner.
-        unless attr.keepAttribute
-          element.removeAttr(attr.name)
+        unless binding.keepAttribute
+          element.removeAttr(binding.name)
         
         # Calls the handler function allowing the handler to set up the binding.
-        attr.handler element, attr.value, controller
+        binding.handler element, value, controller
         
         # Stops processing of this element (and its children will be skipped) if the element was removed from the DOM.
-        # This is used for chip-if and chip-each etc.
+        # This is used for bind-if and bind-each etc.
         if node.parentNode isnt parentNode
           processed.pop()
           break

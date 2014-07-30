@@ -190,7 +190,7 @@ children of the element.</p>
 priority. The default is <code>0</code>.</p>
 <p>If only <code>name</code> is provided the previously registered handler will be returned, or undefined if there is none.</p>
 <p><strong>Example:</strong> This binding handler adds pirateized text to an element.</p>
-<pre><code class="lang-javascript">chip.addBinding(<span class="string">'pirate'</span>, <span class="keyword">function</span>(element, expr, controller) {
+<pre><code class="lang-javascript">chip.addBinding(<span class="string">'my-pirate'</span>, <span class="keyword">function</span>(element, expr, controller) {
   controller.watch(expr, <span class="keyword">function</span>(value) {
     value = (value+<span class="string">''</span> || <span class="string">''</span>)
       .replace(<span class="regexp">/\Bing\b/g</span>, <span class="string">"in'"</span>)
@@ -200,7 +200,7 @@ priority. The default is <code>0</code>.</p>
     element.text(value)
   }
 }</code></pre>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">chip-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">my-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
 
             </div>
             
@@ -221,8 +221,8 @@ priority. The default is <code>0</code>.</p>
               </div>
               <p>Shortcut, adds a handler that executes the expression when the named event is dispatched.</p>
 <p><strong>Example:</strong> Handles the click event.</p>
-<pre><code class="lang-javascript">chip.addEventBinding(<span class="string">'click'</span>)</code></pre>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">chip-click</span>=<span class="value">"window.alert('hello!')"</span>&gt;</span>Say Hello<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
+<pre><code class="lang-javascript">chip.addEventBinding(<span class="string">'on-click'</span>)</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">on-click</span>=<span class="value">"window.alert('hello!')"</span>&gt;</span>Say Hello<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
 
             </div>
             
@@ -238,7 +238,7 @@ priority. The default is <code>0</code>.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
-              <p>Shortcut, adds a handler that responds when the given key is pressed, e.g. <code>chip.addEventBinding(&#39;esc&#39;, 27)</code>.</p>
+              <p>Shortcut, adds a handler that responds when the given key is pressed, e.g. <code>chip.addEventBinding(&#39;on-esc&#39;, 27)</code>.</p>
 
             </div>
             
@@ -256,9 +256,9 @@ priority. The default is <code>0</code>.</p>
               </div>
               <p>Shortcut, adds a handler to set the named attribute to the value of the expression.</p>
 <p><strong>Example</strong></p>
-<pre><code class="lang-javascript">chip.addAttributeBinding(<span class="string">'href'</span>)</code></pre>
+<pre><code class="lang-javascript">chip.addAttributeBinding(<span class="string">'attr-href'</span>)</code></pre>
 <p>allows</p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">chip-href</span>=<span class="value">"'/profile/' + person.id"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">attr-href</span>=<span class="value">"'/profile/' + person.id"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
 <p>which would result in</p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/profile/368"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
 
@@ -277,7 +277,7 @@ priority. The default is <code>0</code>.</p>
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
-e.g. <code>chip.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
+e.g. <code>chip.addAttributeToggleBinding(&#39;attr-checked&#39;)</code>.</p>
 
             </div>
             

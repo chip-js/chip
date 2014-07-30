@@ -51,7 +51,7 @@ chip.filter(&#39;replace&#39;, function(controller, value, replace, with) {
   return value.replace(replace, with)
 })
 ```xml
-&lt;h1 chip-text=&quot;title | uppercase | replace:&#39;LETTER&#39;:&#39;NUMBER&#39;&quot;&gt;&lt;/h1&gt;</code></pre>
+&lt;h1 bind-text=&quot;title | uppercase | replace:&#39;LETTER&#39;:&#39;NUMBER&#39;&quot;&gt;&lt;/h1&gt;</code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">h1</span>&gt;</span>GETTING TO KNOW ALL ABOUT THE NUMBER A<span class="tag">&lt;/<span class="title">h1</span>&gt;</span></code></pre>
 <p>A <code>valueFilter</code> is like a filter but used specifically with the <code>value</code> binding since it is a two-way binding. When
@@ -75,11 +75,11 @@ chip.filter(&#39;date-hour&#39;, function(controller, value) {
 })
 ```xml
 &lt;label&gt;Number Attending:&lt;/label&gt;
-&lt;input size=&quot;4&quot; chip-value=&quot;event.attendeeCount | numeric&quot;&gt;
+&lt;input size=&quot;4&quot; bind-value=&quot;event.attendeeCount | numeric&quot;&gt;
 &lt;label&gt;Time:&lt;/label&gt;
-&lt;input size=&quot;2&quot; chip-value=&quot;event.date | date-hour&quot;&gt; :
-&lt;input size=&quot;2&quot; chip-value=&quot;event.date | date-minute&quot;&gt;
-&lt;select chip-value=&quot;event.date | date-ampm&quot;&gt;
+&lt;input size=&quot;2&quot; bind-value=&quot;event.date | date-hour&quot;&gt; :
+&lt;input size=&quot;2&quot; bind-value=&quot;event.date | date-minute&quot;&gt;
+&lt;select bind-value=&quot;event.date | date-ampm&quot;&gt;
   &lt;option&gt;AM&lt;/option&gt;
   &lt;option&gt;PM&lt;/option&gt;
 &lt;/select&gt;</code></pre>

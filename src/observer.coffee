@@ -34,8 +34,8 @@ class Observer
         @callback(value, @oldValue)
     
     # Store an immutable version of the value, allowing for arrays and objects to change instance but not
-    # content and still refrain from dispatching callbacks (e.g. when using an object in chip-class or when
-    # using array filters in chip-each)
+    # content and still refrain from dispatching callbacks (e.g. when using an object in bind-class or when
+    # using array filters in bind-each)
     @oldValue = diff.clone value
   
   

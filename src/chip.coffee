@@ -60,7 +60,7 @@ chip =
   # 
   # **Example:** This binding handler adds pirateized text to an element.
   # ```javascript
-  # chip.addBinding('pirate', function(element, expr, controller) {
+  # chip.addBinding('my-pirate', function(element, expr, controller) {
   #   controller.watch(expr, function(value) {
   #     value = (value+'' || '')
   #       .replace(/\Bing\b/g, "in'")
@@ -73,7 +73,7 @@ chip =
   # ```
   # 
   # ```xml
-  # <p chip-pirate="post.body">This text will be replaced.</p>
+  # <p my-pirate="post.body">This text will be replaced.</p>
   # ```
   binding: (name, priority, handler) ->
     if priority or handler
@@ -86,17 +86,17 @@ chip =
   #
   # **Example:** Handles the click event.
   #```javascript
-  # chip.addEventBinding('click')
+  # chip.addEventBinding('on-click')
   # ```
   # 
   # ```xml
-  # <button chip-click="window.alert('hello!')">Say Hello</button>
+  # <button on-click="window.alert('hello!')">Say Hello</button>
   #```
   eventBinding: (eventName) ->
     Binding.addEventBinding(eventName)
   
   
-  # Shortcut, adds a handler that responds when the given key is pressed, e.g. `chip.addEventBinding('esc', 27)`.
+  # Shortcut, adds a handler that responds when the given key is pressed, e.g. `chip.addEventBinding('on-esc', 27)`.
   keyEventBinding: (name, keyCode, ctrlKey) ->
     Binding.addKeyEventBinding(name, keyCode, ctrlKey)
   
@@ -105,11 +105,11 @@ chip =
   # 
   # **Example**
   # ```javascript
-  # chip.addAttributeBinding('href')
+  # chip.addAttributeBinding('attr-href')
   # ```
   # allows
   # ```xml
-  # <a chip-href="'/profile/' + person.id">My Profile</a>
+  # <a attr-href="'/profile/' + person.id">My Profile</a>
   # ```
   # which would result in
   # ```xml
@@ -120,7 +120,7 @@ chip =
   
   
   # Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
-  # e.g. `chip.addAttributeToggleBinding('checked')`.
+  # e.g. `chip.addAttributeToggleBinding('attr-checked')`.
   attributeToggleBinding: (name) ->
     Binding.addAttributeToggleBinding(name)
     

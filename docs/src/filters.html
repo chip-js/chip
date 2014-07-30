@@ -209,7 +209,7 @@
               <h2>escape</h2>
 <p>HTML escapes content. For use with other HTML-adding filters such as autolink.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | escape | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">bind-html</span>=<span class="value">"tweet.content | escape | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 
@@ -232,7 +232,7 @@ chip.filter <span class="string">'escape'</span>, (value) -&gt;
               <h2>p</h2>
 <p>HTML escapes content wrapping paragraphs in <p> tags.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | p | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">bind-html</span>=<span class="value">"tweet.content | p | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span><span class="tag">&lt;<span class="title">p</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;/<span class="title">p</span>&gt;</span>
 <span class="tag">&lt;<span class="title">p</span>&gt;</span>It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
@@ -257,7 +257,7 @@ chip.filter <span class="string">'escape'</span>, (value) -&gt;
               <h2>br</h2>
 <p>HTML escapes content adding <br> tags in place of newlines characters.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | br | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">bind-html</span>=<span class="value">"tweet.content | br | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;<span class="title">br</span>&gt;</span>
 It's great<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
@@ -282,7 +282,7 @@ It's great<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code
               <h2>newline</h2>
 <p>HTML escapes content adding <p> tags at doulbe newlines and <br> tags in place of single newline characters.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | newline | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">bind-html</span>=<span class="value">"tweet.content | newline | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span><span class="tag">&lt;<span class="title">p</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;<span class="title">br</span>&gt;</span>
 It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
@@ -311,7 +311,7 @@ It's great<span class="tag">&lt;/<span class="title">p</span>&gt;</span><span cl
 <p>Adds automatic links to escaped content (be sure to escape user content). Can be used on existing HTML content as it
 will skip URLs within HTML tags. Passing true in the second parameter will set the target to <code>_blank</code>.</p>
 <p><strong>Example:</strong></p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">chip-html</span>=<span class="value">"tweet.content | escape | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span> <span class="attribute">bind-html</span>=<span class="value">"tweet.content | escape | autolink:true"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 <p><em>Result:</em></p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">div</span>&gt;</span>Check out <span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"https://github.com/teamsnap/chip"</span> <span class="attribute">target</span>=<span class="value">"_blank"</span>&gt;</span>https://github.com/teamsnap/chip<span class="tag">&lt;/<span class="title">a</span>&gt;</span>!<span class="tag">&lt;/<span class="title">div</span>&gt;</span></code></pre>
 

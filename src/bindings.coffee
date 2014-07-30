@@ -1,27 +1,27 @@
 # # Default Bindings
 
 
-chip.binding 'debug', 200, (element, expr, controller) ->
+chip.binding 'bind-debug', priority: 200, (element, expr, controller) ->
   controller.watch expr, (value) ->
     console?.info 'Debug:', expr, '=', value
 
 
-# ## chip-route
+# ## bind-route
 # Placeholder for routing and others
-chip.binding('route', ->).keepAttribute = true
+chip.binding 'bind-route', keepAttribute: true, ->
 
 
-# ## chip-text
+# ## bind-text
 # Adds a handler to display text inside an element.
 #
 # **Example:**
 # ```xml
-# <h1 chip-text="post.title">Title</h1>
+# <h1 bind-text="post.title">Title</h1>
 # <div class="info">
 #   Written by
-#   <span chip-text="post.author.name">author</span>
+#   <span bind-text="post.author.name">author</span>
 #   on
-#   <span chip-text="post.date.toLocaleDateString()">date</span>.
+#   <span bind-text="post.date.toLocaleDateString()">date</span>.
 # </div>
 # ```
 # *Result:*
@@ -34,18 +34,18 @@ chip.binding('route', ->).keepAttribute = true
 #   <span>10/16/2013</span>.
 # </div>
 # ```
-chip.binding 'text', (element, expr, controller) ->
+chip.binding 'bind-text', (element, expr, controller) ->
   controller.watch expr, (value) ->
     element.text(if value? then value else '')
 
 
-# ## chip-html
+# ## bind-html
 # Adds a handler to display unescaped HTML inside an element. Be sure it's trusted!
 #
 # **Example:**
 # ```xml
-# <h1 chip-text="post.title">Title</h1>
-# <div chip-html="post.body"></div>
+# <h1 bind-text="post.title">Title</h1>
+# <div bind-html="post.body"></div>
 # ```
 # *Result:*
 # ```xml
@@ -58,26 +58,26 @@ chip.binding 'text', (element, expr, controller) ->
 #   </p>
 # </div>
 # ```
-chip.binding 'html', (element, expr, controller) ->
+chip.binding 'bind-html', (element, expr, controller) ->
   controller.watch expr, (value) ->
     element.html(if value? then value else '')
 
 
-# ## chip-trim
+# ## bind-trim
 # Adds a handler to trim whitespace text nodes inside an element.
 #
 # **Example:**
 # ```xml
-# <div chip-trim class="info">
-#   <span chip-text="post.author.name">author</span>
-#   <span chip-text="post.date.toLocaleDateString()">date</span>
+# <div bind-trim class="info">
+#   <span bind-text="post.author.name">author</span>
+#   <span bind-text="post.date.toLocaleDateString()">date</span>
 # </div>
 # ```
 # *Result:*
 # ```xml
 # <div class="info"><span>Jacob Wright</span><span>10/16/2013</span></div>
 # ```
-chip.binding 'trim', (element, expr, controller) ->
+chip.binding 'bind-trim', (element, expr, controller) ->
   node = element.get(0).firstChild
   while node
     next = node.nextSibling
@@ -89,12 +89,12 @@ chip.binding 'trim', (element, expr, controller) ->
     node = next
 
 
-# ## chip-translate
+# ## bind-translate
 # Adds a handler to translate the text inside an element.
 #
 # **Example:**
 # ```xml
-# <h1 chip-translate>Welcome <span chip-text="name"></span>!</h1>
+# <h1 bind-translate>Welcome <span bind-text="name"></span>!</h1>
 # ```
 # *Initial Result:*
 # ```xml
@@ -107,7 +107,7 @@ chip.binding 'trim', (element, expr, controller) ->
 # ```xml
 # <h1>Sup <span>Jacob</span> Yo!</h1>
 # ```
-chip.binding 'translate', (element, expr, controller) ->
+chip.binding 'bind-translate', (element, expr, controller) ->
   nodes = element.get(0).childNodes
   text = ''
   placeholders = []
@@ -145,7 +145,7 @@ chip.binding 'translate', (element, expr, controller) ->
     refresh()
 
 
-# ## chip-class
+# ## bind-class
 # Adds a handler to add classes to an element. If the value of the expression is a string, that string will be set as the
 # class attribute. If the value is an array of strings, those will be set as the element classes. These two methods
 # overwrite any existing classes. If the value is an object, each property of that object will be toggled on or off in
@@ -153,8 +153,8 @@ chip.binding 'translate', (element, expr, controller) ->
 # 
 # **Example:**
 # ```xml
-# <div chip-class="theClasses">
-#   <button class="btn primary" chip-class="{highlight:ready}"></button>
+# <div bind-class="theClasses">
+#   <button class="btn primary" bind-class="{highlight:ready}"></button>
 # </div>
 # ```
 # *Result if `theClases` equals "red blue" and `ready` is `true`:*
@@ -163,7 +163,7 @@ chip.binding 'translate', (element, expr, controller) ->
 #   <button class="btn primary highlight"></button>
 # </div>
 # ```
-chip.binding 'class', (element, expr, controller) ->
+chip.binding 'bind-class', (element, expr, controller) ->
   prevClasses = (element.attr('class') or '').split(/\s+/)
   prevClasses.pop() if prevClasses[0] is ''
 
@@ -181,18 +181,39 @@ chip.binding 'class', (element, expr, controller) ->
           element.removeClass(className)
 
 
-# ## chip-active
+chip.binding 'bind-attr', (element, expr, controller) ->
+  controller.watch expr, (value, oldValue, changes) ->
+    if changes
+      # use the change records to remove deleted properties which won't show up
+      changes.forEach (change) ->
+        if change.type is 'deleted' or not value[change.name]?
+          element.removeAttr change.name
+          element.trigger change.name + 'Changed'
+        else
+          element.attr change.name, value[change.name]
+          element.trigger change.name + 'Changed'
+    else if value and typeof value is 'object'
+      for own attrName, attrValue of value
+        if attrValue?
+          element.attr attrName, attrValue
+          element.trigger attrName + 'Changed'
+        else
+          element.removeAttr attrName
+          element.trigger attrName + 'Changed'
+
+
+# ## bind-active
 # Adds a handler to add the class "active" to an element if the expression is truthy, or if no expression is
 # provided it adds the "active" class if the element or it's first anchor child's href matches the URL in the browser.
 #
 # **Example:**
 # ```xml
-# <button class="btn btn-primary" chip-active="formValid">Submit</button>
+# <button class="btn btn-primary" bind-active="formValid">Submit</button>
 # 
 # <ul class="header-links">
-#   <li chip-active><a href="/posts">My Blog</a></li>
-#   <li chip-active><a href="/account">My Account</a></li>
-#   <li chip-active><a href="/profile">Profile</a></li>
+#   <li bind-active><a href="/posts">My Blog</a></li>
+#   <li bind-active><a href="/account">My Account</a></li>
+#   <li bind-active><a href="/profile">Profile</a></li>
 # </ul>
 # ```
 # *Result if `formValid` is `true` and the browser is at "http://www.example.com/account":*
@@ -205,7 +226,7 @@ chip.binding 'class', (element, expr, controller) ->
 #   <li><a href="/profile">Profile</a></li>
 # </ul>
 # ```
-chip.binding 'active', (element, expr, controller) ->
+chip.binding 'bind-active', (element, expr, controller) ->
   if expr
     controller.watch expr, (value) ->
       if value
@@ -229,10 +250,10 @@ chip.binding 'active', (element, expr, controller) ->
     refresh()
 
 
-# ## chip-active-section
+# ## bind-active-section
 # The same as active except that the active class is added for any URL which starts with the link (marks active for the
 # whole section.
-chip.binding 'active-section', (element, expr, controller) ->
+chip.binding 'bind-active-section', (element, expr, controller) ->
   refresh = ->
     if link.length and location.href.indexOf(link.get(0).href) is 0
       element.addClass('active')
@@ -249,10 +270,10 @@ chip.binding 'active-section', (element, expr, controller) ->
   refresh()
 
 
-# ## chip-change-action
+# ## bind-change-action
 # Runs the action provided after the ! whenever the value before the ! changes.
 # This is for advanced use and a generic example doesn't fit.
-chip.binding 'change-action', (element, expr, controller) ->
+chip.binding 'bind-change-action', (element, expr, controller) ->
   [ expr, action ] = expr.split /\s*!\s*/
   controller.watch expr, (value) ->
     controller.thisElement = element
@@ -260,17 +281,17 @@ chip.binding 'change-action', (element, expr, controller) ->
     delete controller.thisElement
 
 
-# ## chip-value
+# ## bind-value
 # Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
 # the form element, providing two way binding.
 #
 # **Example:**
 # ```xml
 # <label>First Name</label>
-# <input type="text" name="firstName" chip-value="user.firstName">
+# <input type="text" name="firstName" bind-value="user.firstName">
 #
 # <label>Last Name</label>
-# <input type="text" name="lastName" chip-value="user.lastName">
+# <input type="text" name="lastName" bind-value="user.lastName">
 # ```
 # *Result:*
 # ```xml
@@ -282,12 +303,11 @@ chip.binding 'change-action', (element, expr, controller) ->
 # ```
 # And when the user changes the text in the first input to "Jac", `user.firstName` will be updated immediately with the
 # value of `'Jac'`.
-chip.binding 'value', (element, expr, controller) ->
-  prefix = controller.app.bindingPrefix
+chip.binding 'bind-value', (element, expr, controller) ->
   watchExpr = expr
 
-  fieldExpr = element.attr(prefix + 'value-field')
-  element.removeAttr(prefix + 'value-field')
+  fieldExpr = element.attr('bind-value-field')
+  element.removeAttr('bind-value-field')
 
   if element.is('select')
     selectValueField = if fieldExpr then controller.eval(fieldExpr) else null
@@ -345,8 +365,8 @@ chip.binding 'value', (element, expr, controller) ->
   else unless element.is('[readonly]')
     controller.evalSetter expr, getValue()
   
-  events = element.attr(prefix + 'value-events') or 'change'
-  element.removeAttr(prefix + 'value-events')
+  events = element.attr('bind-value-events') or 'change'
+  element.removeAttr('bind-value-events')
   if element.is ':text'
     element.on 'keydown', (event) ->
       if event.keyCode is 13
@@ -360,21 +380,21 @@ chip.binding 'value', (element, expr, controller) ->
 
 
 
-# ## chip-[event]
+# ## on-[event]
 # Adds a handler for each event name in the array. When the event is triggered the expression will be run.
 # 
 # **Events:**
 # 
-# * chip-click
-# * chip-dblclick
-# * chip-submit
-# * chip-change
-# * chip-focus
-# * chip-blur
+# * on-click
+# * on-dblclick
+# * on-submit
+# * on-change
+# * on-focus
+# * on-blur
 #
 # **Example:**
 # ```xml
-# <form chip-submit="saveUser()">
+# <form on-submit="saveUser()">
 #   <input name="firstName" value="Jacob">
 #   <button>Save</button>
 # </form>
@@ -386,21 +406,21 @@ chip.binding 'value', (element, expr, controller) ->
 #   <button>Save</button>
 # </form>
 # ```
-[ 'click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste', 'load', 'unload', 'error' ]
+[ 'on-click', 'on-dblclick', 'on-submit', 'on-change', 'on-focus', 'on-blur', 'on-keydown', 'on-keyup', 'on-paste', 'on-load', 'on-unload', 'on-error' ]
   .forEach (name) ->
     chip.eventBinding(name)
 
-# ## chip-[key event]
+# ## on-[key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches.
 # 
 # **Key Events:**
 # 
-# * chip-enter
-# * chip-esc
+# * on-enter
+# * on-esc
 #
 # **Example:**
 # ```xml
-# <input chip-enter="window.alert(element.val())">
+# <input on-enter="window.alert(element.val())">
 # ```
 # *Result:*
 # ```xml
@@ -410,58 +430,62 @@ keyCodes = { enter: 13, esc: 27 }
 for own name, keyCode of keyCodes
   chip.keyEventBinding(name, keyCode)
 
-# ## chip-[control key event]
+# ## on-[control key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches and the ctrlKey or metaKey is
 # pressed.
 # 
 # **Key Events:**
 # 
-# * chip-ctrl-enter
+# * on-ctrl-enter
 #
 # **Example:**
 # ```xml
-# <input chip-ctrl-enter="window.alert(element.val())">
+# <input on-ctrl-enter="window.alert(element.val())">
 # ```
 # *Result:*
 # ```xml
 # <input>
 # ```
-chip.keyEventBinding('ctrl-enter', keyCodes.enter, true)
+chip.keyEventBinding('on-ctrl-enter', keyCodes.enter, true)
 
-# ## chip-[attribute]
+# ## attr-[attribute]
 # Adds a handler to set the attribute of element to the value of the expression.
 # 
 # **Attributes:**
 # 
-# * chip-href
-# * chip-src
-# * chip-id
+# * attr-href
+# * attr-src
+# * attr-id
 #
 # **Example:**
 # ```xml
-# <img chip-src="user.avatarUrl">
+# <img attr-src="user.avatarUrl">
 # ```
 # *Result:*
 # ```xml
 # <img src="http://cdn.example.com/avatars/jacwright-small.png">
 # ```
-attribs = [ 'href', 'src', 'id' ]
+
+attribs = [ 'attr-class', 'attr-href', 'attr-src', 'attr-id' ]
 for name in attribs
   chip.attributeBinding(name)
 
-# ## chip-[toggle attribute]
+# ## attr-[toggle attribute]
 # Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.
 # 
 # **Attributes:**
 # 
-# * chip-checked
-# * chip-disabled
+# * attr-checked
+# * attr-disabled
+# * attr-multiple
+# * attr-readonly
+# * attr-selected
 #
 # **Example:**
 # ```xml
 # <label>Is Administrator</label>
-# <input type="checkbox" chip-checked="user.isAdmin">
-# <button chip-disabled="isProcessing">Submit</button>
+# <input type="checkbox" attr-checked="user.isAdmin">
+# <button attr-disabled="isProcessing">Submit</button>
 # ```
 # *Result if `isProcessing` is `true` and `user.isAdmin` is false:*
 # ```xml
@@ -469,13 +493,13 @@ for name in attribs
 # <input type="checkbox">
 # <button disabled>Submit</button>
 # ```
-[ 'checked', 'disabled' ].forEach (name) ->
+[ 'attr-checked', 'attr-disabled', 'attr-multiple', 'attr-readonly', 'attr-selected' ].forEach (name) ->
   chip.attributeToggleBinding(name)
 
 
 # ## animateIn/animateOut
 # Adds a jquery plugin to allow an element to use CSS3 transitions or animations to animate in or out of the page. This
-# is used with chip-if, chip-each, etc. to show and hide elements.
+# is used with bind-if, bind-each, etc. to show and hide elements.
 $.fn.animateIn = (callback) ->
   if @parent().length
     placeholder = $('<!---->')
@@ -529,32 +553,31 @@ $.fn.cssDuration = (property) ->
 $.fn.willAnimate = ->
   (@cssDuration 'transition' or @cssDuration 'animation') and true
 
-# ## chip-if
+# ## bind-if
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
 # when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.
 #
 # **Example:**
 # ```xml
 # <ul class="header-links">
-#   <li chip-if="user"><a href="/account">My Account</a></li>
-#   <li chip-if="user"><a href="/logout">Sign Out</a></li>
-#   <li chip-if="!user"><a href="/login">Sign In</a></li>
+#   <li bind-if="user"><a href="/account">My Account</a></li>
+#   <li bind-if="user"><a href="/logout">Sign Out</a></li>
+#   <li bind-if="!user"><a href="/login">Sign In</a></li>
 # </ul>
 # ```
 # *Result if `user` is null:*
 # ```xml
 # <ul class="header-links">
-#   <!--chip-if="user"-->
-#   <!--chip-if="user"-->
+#   <!--bind-if="user"-->
+#   <!--bind-if="user"-->
 #   <li><a href="/login">Sign In</a></li>
 # </ul>
 # ```
-chip.binding 'if', 50, (element, expr, controller) ->
-  prefix = controller.app.bindingPrefix
+chip.binding 'bind-if', priority: 50, (element, expr, controller) ->
   template = element # use a placeholder for the element and the element as a template
-  placeholder = $("<!--#{prefix}if=\"#{expr}\"-->").replaceAll(template)
-  controllerName = element.attr(prefix + 'controller')
-  element.removeAttr(prefix + 'controller')
+  placeholder = $("<!--bind-if=\"#{expr}\"-->").replaceAll(template)
+  controllerName = element.attr('bind-controller')
+  element.removeAttr('bind-controller')
   
   controller.watch expr, (value) ->
     if value
@@ -568,41 +591,40 @@ chip.binding 'if', 50, (element, expr, controller) ->
         element.animateOut()
 
 
-chip.binding 'show', (element, expr, controller) ->
+chip.binding 'bind-show', (element, expr, controller) ->
   controller.watch expr, (value) ->
     if value then element.show() else element.hide()
 
 
-chip.binding 'hide', (element, expr, controller) ->
+chip.binding 'bind-hide', (element, expr, controller) ->
   controller.watch expr, (value) ->
     if value then element.hide() else element.show()
 
-# ## chip-unless
+# ## bind-unless
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
 # when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.
 #
 # **Example:**
 # ```xml
 # <ul class="header-links">
-#   <li chip-if="user"><a href="/account">My Account</a></li>
-#   <li chip-if="user"><a href="/logout">Sign Out</a></li>
-#   <li chip-unless="user"><a href="/login">Sign In</a></li>
+#   <li bind-if="user"><a href="/account">My Account</a></li>
+#   <li bind-if="user"><a href="/logout">Sign Out</a></li>
+#   <li bind-unless="user"><a href="/login">Sign In</a></li>
 # </ul>
 # ```
 # *Result if `user` is null:*
 # ```xml
 # <ul class="header-links">
-#   <!--chip-if="user"-->
-#   <!--chip-if="user"-->
+#   <!--bind-if="user"-->
+#   <!--bind-if="user"-->
 #   <li><a href="/login">Sign In</a></li>
 # </ul>
 # ```
-chip.binding 'unless', 50, (element, expr, controller) ->
-  prefix = controller.app.bindingPrefix
+chip.binding 'bind-unless', priority: 50, (element, expr, controller) ->
   template = element # use a placeholder for the element and the element as a template
-  placeholder = $("<!--#{prefix}unless=\"#{expr}\"-->").replaceAll(template)
-  controllerName = element.attr(prefix + 'controller')
-  element.removeAttr(prefix + 'controller')
+  placeholder = $("<!--bind-unless=\"#{expr}\"-->").replaceAll(template)
+  controllerName = element.attr('bind-controller')
+  element.removeAttr('bind-controller')
   
   controller.watch expr, (value) ->
     unless value
@@ -616,17 +638,17 @@ chip.binding 'unless', 50, (element, expr, controller) ->
         element.animateOut()
 
 
-# ## chip-each
+# ## bind-each
 # Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
-# running the controller definition if `chip-controller` is set on the element after `chip-each`. The expression must
+# running the controller definition if `bind-controller` is set on the element after `bind-each`. The expression must
 # be of the format `itemName in arrayName` where `itemName` is the name each item inside the array will be referenced
 # by inside the element. `arrayName` is any expression, e.g. `post in user.getPosts()`.
 #
 # **Example:**
 # ```xml
-# <div chip-each="post in posts" chip-class="{featured:post.isFeatured}">
-#   <h1 chip-text="post.title">Title</h1>
-#   <div chip-html="post.body"></div>
+# <div bind-each="post in posts" bind-class="{featured:post.isFeatured}">
+#   <h1 bind-text="post.title">Title</h1>
+#   <div bind-html="post.body"></div>
 # </div>
 # ```
 # *Result if there are 2 posts and the first one is featured:*
@@ -652,22 +674,21 @@ chip.binding 'unless', 50, (element, expr, controller) ->
 #   </div>
 # </div>
 # ```
-chip.binding 'each', 100, (element, expr, controller) ->
-  prefix = controller.app.bindingPrefix
+chip.binding 'bind-each', priority: 100, (element, expr, controller) ->
   orig = expr
   [ itemName, expr ] = expr.split /\s+in\s+/
   unless itemName and expr
-    throw "Invalid #{prefix}each=\"" +
+    throw "Invalid bind-each=\"" +
       orig +
       '". Requires the format "item in list"' +
       ' or "key, propery in object".'
   
-  controllerName = element.attr(prefix + 'controller')
-  element.removeAttr(prefix + 'controller')
+  controllerName = element.attr('bind-controller')
+  element.removeAttr('bind-controller')
   [ itemName, propName ] = itemName.split /\s*,\s*/
   
   template = element # use a placeholder for the element and the element as a template
-  placeholder = $("<!--#{prefix}each=\"#{expr}\"-->").replaceAll(template)
+  placeholder = $("<!--bind-each=\"#{expr}\"-->").replaceAll(template)
   elements = $()
   properties = {}
   value = null
@@ -738,29 +759,29 @@ chip.binding 'each', 100, (element, expr, controller) ->
             elements.eq(splice.index - 1).after(newElements)
 
 
-# ## chip-partial
+# ## bind-partial
 # Adds a handler to set the contents of the element with the template and controller by that name. The expression may
 # be just the name of the template/controller, or it may be of the format `expr as itemName with partialName` where
 # `expr` is an expression who's value will be set to `itemName` on the conroller in the partial. Note: any binding
-# attributes which appear after `chip-partial` will have the new value available if using the special format.
+# attributes which appear after `bind-partial` will have the new value available if using the special format.
 #
 # **Example:**
 # ```xml
-# <!--<div chip-partial="userInfo"></div>-->
-# <div chip-partial="getUser() as user with userInfo" chip-class="{administrator:user.isAdmin}"></div>
+# <!--<div bind-partial="userInfo"></div>-->
+# <div bind-partial="getUser() as user with userInfo" bind-class="{administrator:user.isAdmin}"></div>
 # 
 # <script name="userInfo" type="text/html">
-#   <span chip-text="user.name"></span>
+#   <span bind-text="user.name"></span>
 # </script>
 # ```
 # *Result:*
 # ```xml
-# <!--<div chip-partial="userInfo"></div>-->
+# <!--<div bind-partial="userInfo"></div>-->
 # <div class="administrator">
 #   <span>Jacob</span>
 # </div>
 # ```
-chip.binding 'partial', 50, (element, expr, controller) ->
+chip.binding 'bind-partial', priority: 50, (element, expr, controller) ->
   parts = expr.split /\s+as\s+|\s+with\s+/
   nameExpr = parts.pop()
   [ itemExpr, itemName ] = parts
@@ -819,14 +840,14 @@ body {
       childController[itemName] = value
 
 
-# ## chip-controller
+# ## bind-controller
 # Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the
 # controller definition name which will be run if provided. Use this when you want to sandbox controller values (such
 # as a form) or provide functionality provided by that controller to the element.
 #
 # **Example:**
 # ```xml
-# <form chip-controller="userForm" chip-submit="saveUser()">
+# <form bind-controller="userForm" bind-submit="saveUser()">
 # </form>
 # ```
 # *Result if `formValid` is `true` and the browser is at "http://www.example.com/account":*
@@ -834,5 +855,7 @@ body {
 # <form>
 # </form>
 # ```
-chip.binding 'controller', 30, (element, controllerName, controller) ->
+chip.binding 'bind-controller', priority: 30, (element, controllerName, controller) ->
+  # clone and remove the original element to start a new controlled section
+  element = element.clone().replaceAll element
   controller.child element: element, name: controllerName

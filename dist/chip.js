@@ -1571,7 +1571,6 @@ if (!Date.prototype.toISOString) {
     function App(appName) {
       var _this = this;
       this.name = appName;
-      this.bindingPrefix = 'chip-';
       this.controllers = {};
       this.templates = {};
       this.router = new Router();
@@ -1606,9 +1605,9 @@ if (!Date.prototype.toISOString) {
           return $this.remove();
         }
       });
-      while ((element = this.rootElement.find("[" + this.bindingPrefix + "controller]:first")).length) {
-        name = element.attr("" + this.bindingPrefix + "controller");
-        element.removeAttr("" + this.bindingPrefix + "controller");
+      while ((element = this.rootElement.find("[bind-controller]:first")).length) {
+        name = element.attr("bind-controller");
+        element.removeAttr("bind-controller");
         this.createController({
           element: element,
           name: name,
@@ -1758,7 +1757,7 @@ if (!Date.prototype.toISOString) {
             _this.rootController.query = req.query;
             selector = [];
             for (i = _i = 0; 0 <= depth ? _i <= depth : _i >= depth; i = 0 <= depth ? ++_i : --_i) {
-              selector.push("[" + _this.bindingPrefix + "route]");
+              selector.push("[bind-route]");
             }
             container = _this.rootElement.find(selector.join(' ') + ':first');
             isExistingRoute = _this.rootController.route;
@@ -1768,7 +1767,7 @@ if (!Date.prototype.toISOString) {
             if (container.length) {
               showNextPage = function() {
                 var parentController, placholder;
-                container.attr("" + _this.bindingPrefix + "route", name);
+                container.attr("bind-route", name);
                 _this.rootController.route = name;
                 _this.rootController.path = req.path;
                 _this.trigger('routeChange', [name]);
@@ -1903,16 +1902,18 @@ if (!Date.prototype.toISOString) {
 
     Binding.bindings = [];
 
-    Binding.addBinding = function(name, priority, handler) {
+    Binding.addBinding = function(name, options, handler) {
       var entry;
-      if (typeof priority === 'function') {
-        handler = priority;
-        priority = 0;
+      if (typeof options === 'function') {
+        handler = options;
+        options = {};
+      } else if (!options) {
+        options = {};
       }
-      priority = priority || 0;
       entry = {
         name: name,
-        priority: priority,
+        priority: options.priority || 0,
+        keepAttribute: options.keepAttribute,
         handler: handler
       };
       this.bindings[name] = entry;
@@ -1933,8 +1934,10 @@ if (!Date.prototype.toISOString) {
       return this.bindings.splice(this.bindings.indexOf(entry), 1);
     };
 
-    Binding.addEventBinding = function(eventName, priority) {
-      return this.addBinding(eventName, priority, function(element, expr, controller) {
+    Binding.addEventBinding = function(name, options) {
+      var eventName;
+      eventName = name.split('-').slice(1).join('-');
+      return this.addBinding(name, options, function(element, expr, controller) {
         return element.on(eventName, function(event) {
           event.preventDefault();
           if (!element.attr('disabled')) {
@@ -1946,8 +1949,8 @@ if (!Date.prototype.toISOString) {
       });
     };
 
-    Binding.addKeyEventBinding = function(name, keyCode, ctrlKey, priority) {
-      return this.addBinding(name, priority, function(element, expr, controller) {
+    Binding.addKeyEventBinding = function(name, keyCode, ctrlKey, options) {
+      return this.addBinding(name, options, function(element, expr, controller) {
         return element.on('keydown', function(event) {
           if ((ctrlKey != null) && (event.ctrlKey !== ctrlKey && event.metaKey !== ctrlKey)) {
             return;
@@ -1965,34 +1968,37 @@ if (!Date.prototype.toISOString) {
       });
     };
 
-    Binding.addAttributeBinding = function(name, priority) {
-      return this.addBinding(name, priority, function(element, expr, controller) {
+    Binding.addAttributeBinding = function(name, options) {
+      var attrName;
+      attrName = name.split('-').slice(1).join('-');
+      return this.addBinding(name, options, function(element, expr, controller) {
         return controller.watch(expr, function(value) {
           if (value != null) {
-            element.attr(name, value);
-            return element.trigger(name + 'Changed');
+            element.attr(attrName, value);
+            return element.trigger(attrName + 'Changed');
           } else {
-            return element.removeAttr(name);
+            return element.removeAttr(attrName);
           }
         });
       });
     };
 
-    Binding.addAttributeToggleBinding = function(name, priority) {
-      return this.addBinding(name, priority, function(element, expr, controller) {
+    Binding.addAttributeToggleBinding = function(name, options) {
+      var attrName;
+      attrName = name.split('-').slice(1).join('-');
+      return this.addBinding(name, options, function(element, expr, controller) {
         return controller.watch(expr, function(value) {
-          return element.attr(name, value && true || false);
+          return element.attr(attrName, value && true || false);
         });
       });
     };
 
     Binding.process = function(element, controller) {
-      var attr, attribs, node, parentNode, prefix, processed, slice, walker,
+      var binding, bindings, node, parentNode, processed, slice, value, walker,
         _this = this;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
       }
-      prefix = controller.app.bindingPrefix;
       slice = Array.prototype.slice;
       walker = new Walker(element.get(0));
       processed = [];
@@ -2004,35 +2010,23 @@ if (!Date.prototype.toISOString) {
       while (node = walker.next()) {
         element = $(node);
         parentNode = node.parentNode;
-        attribs = slice.call(node.attributes).filter(function(attr) {
-          var name;
-          name = attr.name.replace(prefix, '');
-          return attr.name.indexOf(prefix) === 0 && (_this.bindings[name] || prefix) && attr.value !== void 0;
-        });
-        attribs = attribs.map(function(attr) {
-          var bindingName, entry;
-          bindingName = attr.name.replace(prefix, '');
-          entry = _this.bindings[bindingName] || _this.addAttributeBinding(bindingName, -1);
-          return {
-            name: attr.name,
-            value: attr.value,
-            priority: entry.priority,
-            handler: entry.handler,
-            keepAttribute: entry.keepAttribute
-          };
-        });
-        attribs = attribs.sort(function(a, b) {
+        bindings = slice.call(node.attributes).map(function(attr) {
+          return _this.bindings[attr.name];
+        }).filter(function(binding) {
+          return binding;
+        }).sort(function(a, b) {
           return b.priority - a.priority;
         });
-        if (attribs.length) {
+        if (bindings.length) {
           processed.push(element);
         }
-        while (attribs.length) {
-          attr = attribs.shift();
-          if (!attr.keepAttribute) {
-            element.removeAttr(attr.name);
+        while (bindings.length) {
+          binding = bindings.shift();
+          value = node.getAttribute(binding.name);
+          if (!binding.keepAttribute) {
+            element.removeAttr(binding.name);
           }
-          attr.handler(element, attr.value, controller);
+          binding.handler(element, value, controller);
           if (node.parentNode !== parentNode) {
             processed.pop();
             break;
@@ -2137,27 +2131,31 @@ if (!Date.prototype.toISOString) {
 
   })();
 
-  chip.binding('debug', 200, function(element, expr, controller) {
+  chip.binding('bind-debug', {
+    priority: 200
+  }, function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return typeof console !== "undefined" && console !== null ? console.info('Debug:', expr, '=', value) : void 0;
     });
   });
 
-  chip.binding('route', function() {}).keepAttribute = true;
+  chip.binding('bind-route', {
+    keepAttribute: true
+  }, function() {});
 
-  chip.binding('text', function(element, expr, controller) {
+  chip.binding('bind-text', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.text(value != null ? value : '');
     });
   });
 
-  chip.binding('html', function(element, expr, controller) {
+  chip.binding('bind-html', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       return element.html(value != null ? value : '');
     });
   });
 
-  chip.binding('trim', function(element, expr, controller) {
+  chip.binding('bind-trim', function(element, expr, controller) {
     var next, node, _results;
     node = element.get(0).firstChild;
     _results = [];
@@ -2175,7 +2173,7 @@ if (!Date.prototype.toISOString) {
     return _results;
   });
 
-  chip.binding('translate', function(element, expr, controller) {
+  chip.binding('bind-translate', function(element, expr, controller) {
     var i, node, nodes, placeholders, refresh, text, _i, _len;
     nodes = element.get(0).childNodes;
     text = '';
@@ -2219,7 +2217,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.binding('class', function(element, expr, controller) {
+  chip.binding('bind-class', function(element, expr, controller) {
     var prevClasses;
     prevClasses = (element.attr('class') || '').split(/\s+/);
     if (prevClasses[0] === '') {
@@ -2248,7 +2246,38 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('active', function(element, expr, controller) {
+  chip.binding('bind-attr', function(element, expr, controller) {
+    return controller.watch(expr, function(value, oldValue, changes) {
+      var attrName, attrValue, _results;
+      if (changes) {
+        return changes.forEach(function(change) {
+          if (change.type === 'deleted' || (value[change.name] == null)) {
+            element.removeAttr(change.name);
+            return element.trigger(change.name + 'Changed');
+          } else {
+            element.attr(change.name, value[change.name]);
+            return element.trigger(change.name + 'Changed');
+          }
+        });
+      } else if (value && typeof value === 'object') {
+        _results = [];
+        for (attrName in value) {
+          if (!__hasProp.call(value, attrName)) continue;
+          attrValue = value[attrName];
+          if (attrValue != null) {
+            element.attr(attrName, attrValue);
+            _results.push(element.trigger(attrName + 'Changed'));
+          } else {
+            element.removeAttr(attrName);
+            _results.push(element.trigger(attrName + 'Changed'));
+          }
+        }
+        return _results;
+      }
+    });
+  });
+
+  chip.binding('bind-active', function(element, expr, controller) {
     var link, refresh;
     if (expr) {
       return controller.watch(expr, function(value) {
@@ -2276,7 +2305,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.binding('active-section', function(element, expr, controller) {
+  chip.binding('bind-active-section', function(element, expr, controller) {
     var link, refresh;
     refresh = function() {
       if (link.length && location.href.indexOf(link.get(0).href) === 0) {
@@ -2294,7 +2323,7 @@ if (!Date.prototype.toISOString) {
     return refresh();
   });
 
-  chip.binding('change-action', function(element, expr, controller) {
+  chip.binding('bind-change-action', function(element, expr, controller) {
     var action, _ref;
     _ref = expr.split(/\s*!\s*/), expr = _ref[0], action = _ref[1];
     return controller.watch(expr, function(value) {
@@ -2304,12 +2333,11 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('value', function(element, expr, controller) {
-    var events, fieldExpr, getValue, observer, prefix, selectValueField, setValue, watchExpr;
-    prefix = controller.app.bindingPrefix;
+  chip.binding('bind-value', function(element, expr, controller) {
+    var events, fieldExpr, getValue, observer, selectValueField, setValue, watchExpr;
     watchExpr = expr;
-    fieldExpr = element.attr(prefix + 'value-field');
-    element.removeAttr(prefix + 'value-field');
+    fieldExpr = element.attr('bind-value-field');
+    element.removeAttr('bind-value-field');
     if (element.is('select')) {
       selectValueField = fieldExpr ? controller["eval"](fieldExpr) : null;
       chip.lastSelectValueField = selectValueField;
@@ -2369,8 +2397,8 @@ if (!Date.prototype.toISOString) {
     } else if (!element.is('[readonly]')) {
       controller.evalSetter(expr, getValue());
     }
-    events = element.attr(prefix + 'value-events') || 'change';
-    element.removeAttr(prefix + 'value-events');
+    events = element.attr('bind-value-events') || 'change';
+    element.removeAttr('bind-value-events');
     if (element.is(':text')) {
       element.on('keydown', function(event) {
         if (event.keyCode === 13) {
@@ -2387,7 +2415,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  ['click', 'dblclick', 'submit', 'change', 'focus', 'blur', 'keydown', 'keyup', 'paste', 'load', 'unload', 'error'].forEach(function(name) {
+  ['on-click', 'on-dblclick', 'on-submit', 'on-change', 'on-focus', 'on-blur', 'on-keydown', 'on-keyup', 'on-paste', 'on-load', 'on-unload', 'on-error'].forEach(function(name) {
     return chip.eventBinding(name);
   });
 
@@ -2402,16 +2430,16 @@ if (!Date.prototype.toISOString) {
     chip.keyEventBinding(name, keyCode);
   }
 
-  chip.keyEventBinding('ctrl-enter', keyCodes.enter, true);
+  chip.keyEventBinding('on-ctrl-enter', keyCodes.enter, true);
 
-  attribs = ['href', 'src', 'id'];
+  attribs = ['attr-class', 'attr-href', 'attr-src', 'attr-id'];
 
   for (_i = 0, _len = attribs.length; _i < _len; _i++) {
     name = attribs[_i];
     chip.attributeBinding(name);
   }
 
-  ['checked', 'disabled'].forEach(function(name) {
+  ['attr-checked', 'attr-disabled', 'attr-multiple', 'attr-readonly', 'attr-selected'].forEach(function(name) {
     return chip.attributeToggleBinding(name);
   });
 
@@ -2492,13 +2520,14 @@ if (!Date.prototype.toISOString) {
     return (this.cssDuration('transition' || this.cssDuration('animation'))) && true;
   };
 
-  chip.binding('if', 50, function(element, expr, controller) {
-    var controllerName, placeholder, prefix, template;
-    prefix = controller.app.bindingPrefix;
+  chip.binding('bind-if', {
+    priority: 50
+  }, function(element, expr, controller) {
+    var controllerName, placeholder, template;
     template = element;
-    placeholder = $("<!--" + prefix + "if=\"" + expr + "\"-->").replaceAll(template);
-    controllerName = element.attr(prefix + 'controller');
-    element.removeAttr(prefix + 'controller');
+    placeholder = $("<!--bind-if=\"" + expr + "\"-->").replaceAll(template);
+    controllerName = element.attr('bind-controller');
+    element.removeAttr('bind-controller');
     return controller.watch(expr, function(value) {
       if (value) {
         if (placeholder.parent().length) {
@@ -2519,7 +2548,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('show', function(element, expr, controller) {
+  chip.binding('bind-show', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       if (value) {
         return element.show();
@@ -2529,7 +2558,7 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('hide', function(element, expr, controller) {
+  chip.binding('bind-hide', function(element, expr, controller) {
     return controller.watch(expr, function(value) {
       if (value) {
         return element.hide();
@@ -2539,13 +2568,14 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('unless', 50, function(element, expr, controller) {
-    var controllerName, placeholder, prefix, template;
-    prefix = controller.app.bindingPrefix;
+  chip.binding('bind-unless', {
+    priority: 50
+  }, function(element, expr, controller) {
+    var controllerName, placeholder, template;
     template = element;
-    placeholder = $("<!--" + prefix + "unless=\"" + expr + "\"-->").replaceAll(template);
-    controllerName = element.attr(prefix + 'controller');
-    element.removeAttr(prefix + 'controller');
+    placeholder = $("<!--bind-unless=\"" + expr + "\"-->").replaceAll(template);
+    controllerName = element.attr('bind-controller');
+    element.removeAttr('bind-controller');
     return controller.watch(expr, function(value) {
       if (!value) {
         if (placeholder.parent().length) {
@@ -2566,19 +2596,20 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('each', 100, function(element, expr, controller) {
-    var controllerName, createElement, elements, itemName, orig, placeholder, prefix, propName, properties, template, value, _ref, _ref1;
-    prefix = controller.app.bindingPrefix;
+  chip.binding('bind-each', {
+    priority: 100
+  }, function(element, expr, controller) {
+    var controllerName, createElement, elements, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1;
     orig = expr;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
     if (!(itemName && expr)) {
-      throw ("Invalid " + prefix + "each=\"") + orig + '". Requires the format "item in list"' + ' or "key, propery in object".';
+      throw "Invalid bind-each=\"" + orig + '". Requires the format "item in list"' + ' or "key, propery in object".';
     }
-    controllerName = element.attr(prefix + 'controller');
-    element.removeAttr(prefix + 'controller');
+    controllerName = element.attr('bind-controller');
+    element.removeAttr('bind-controller');
     _ref1 = itemName.split(/\s*,\s*/), itemName = _ref1[0], propName = _ref1[1];
     template = element;
-    placeholder = $("<!--" + prefix + "each=\"" + expr + "\"-->").replaceAll(template);
+    placeholder = $("<!--bind-each=\"" + expr + "\"-->").replaceAll(template);
     elements = $();
     properties = {};
     value = null;
@@ -2665,7 +2696,9 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('partial', 50, function(element, expr, controller) {
+  chip.binding('bind-partial', {
+    priority: 50
+  }, function(element, expr, controller) {
     var childController, itemExpr, itemName, nameExpr, parts, properties;
     parts = expr.split(/\s+as\s+|\s+with\s+/);
     nameExpr = parts.pop();
@@ -2741,7 +2774,10 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.binding('controller', 30, function(element, controllerName, controller) {
+  chip.binding('bind-controller', {
+    priority: 30
+  }, function(element, controllerName, controller) {
+    element = element.clone().replaceAll(element);
     return controller.child({
       element: element,
       name: controllerName

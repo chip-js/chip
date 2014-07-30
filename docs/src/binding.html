@@ -64,7 +64,7 @@ children of the element.</p>
 <p>The <code>priority</code> argument is optional and allows handlers with higher priority to be run before those with lower
 priority. The default is <code>0</code>.</p>
 <p><strong>Example:</strong> This binding handler adds pirateized text to an element.</p>
-<pre><code class="lang-javascript">Binding.addBinding(<span class="string">'pirate'</span>, <span class="keyword">function</span>(element, expr, controller) {
+<pre><code class="lang-javascript">Binding.addBinding(<span class="string">'my-pirate'</span>, <span class="keyword">function</span>(element, expr, controller) {
   controller.watch(expr, <span class="keyword">function</span>(value) {
     value = (value+<span class="string">''</span> || <span class="string">''</span>)
       .replace(<span class="regexp">/\Bing\b/g</span>, <span class="string">"in'"</span>)
@@ -74,20 +74,21 @@ priority. The default is <code>0</code>.</p>
     element.text(value)
   }
 })</code></pre>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">chip-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">my-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addBinding</span>: (name, priority, handler) -&gt;
-    <span class="keyword">if</span> <span class="keyword">typeof</span> priority <span class="keyword">is</span> <span class="string">'function'</span>
-      handler = priority
-      priority = <span class="number">0</span>
-    
-    priority = priority <span class="keyword">or</span> <span class="number">0</span>
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addBinding</span>: (name, options, handler) -&gt;
+    <span class="keyword">if</span> <span class="keyword">typeof</span> options <span class="keyword">is</span> <span class="string">'function'</span>
+      handler = options
+      options = {}
+    <span class="keyword">else</span> <span class="keyword">unless</span> options
+      options = {}
 
     entry =
       name: name
-      priority: priority
+      priority: options.priority <span class="keyword">or</span> <span class="number">0</span>
+      keepAttribute: options.keepAttribute
       handler: handler
     <span class="property">@bindings</span>[name] = entry
     <span class="property">@bindings</span>.push entry
@@ -107,7 +108,7 @@ priority. The default is <code>0</code>.</p>
               <p>Removes a binding handler that was added with <code>addBinding()</code>.</p>
 <p><strong>Example:</strong></p>
 <pre><code class="lang-javascript">Binding.removeBinding(<span class="string">'pirate'</span>)</code></pre>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">chip-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">p</span> <span class="attribute">my-pirate</span>=<span class="value">"post.body"</span>&gt;</span>This text will not be replaced.<span class="tag">&lt;/<span class="title">p</span>&gt;</span></code></pre>
 
             </div>
             
@@ -128,13 +129,14 @@ priority. The default is <code>0</code>.</p>
               </div>
               <p>Shortcut, adds a handler that executes the expression when the named event is dispatched.</p>
 <p><strong>Example:</strong> Handles the click event.</p>
-<pre><code class="lang-javascript">Binding.addEventBinding(<span class="string">'click'</span>)</code></pre>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">chip-click</span>=<span class="value">"window.alert('hello!')"</span>&gt;</span>Say Hello<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
+<pre><code class="lang-javascript">Binding.addEventBinding(<span class="string">'on-click'</span>)</code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">button</span> <span class="attribute">on-click</span>=<span class="value">"window.alert('hello!')"</span>&gt;</span>Say Hello<span class="tag">&lt;/<span class="title">button</span>&gt;</span></code></pre>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addEventBinding</span>: (eventName, priority) -&gt;
-    <span class="property">@addBinding</span> eventName, priority, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addEventBinding</span>: (name, options) -&gt;
+    eventName = name.split(<span class="string">'-'</span>).slice(<span class="number">1</span>).join(<span class="string">'-'</span>)
+    <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
       element.<span class="literal">on</span> eventName, (event) -&gt;
         event.preventDefault()
         <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
@@ -151,12 +153,12 @@ priority. The default is <code>0</code>.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
-              <p>Shortcut, adds a handler that responds when the given key is pressed, e.g. <code>Binding.addEventBinding(&#39;esc&#39;, 27)</code>.</p>
+              <p>Shortcut, adds a handler that responds when the given key is pressed, e.g. <code>Binding.addEventBinding(&#39;on-esc&#39;, 27)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addKeyEventBinding</span>: (name, keyCode, ctrlKey, priority) -&gt;
-    <span class="property">@addBinding</span> name, priority, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addKeyEventBinding</span>: (name, keyCode, ctrlKey, options) -&gt;
+    <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
       element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
         <span class="keyword">return</span> <span class="keyword">if</span> ctrlKey? <span class="keyword">and</span> (event.ctrlKey <span class="keyword">isnt</span> ctrlKey <span class="keyword">and</span> event.metaKey <span class="keyword">isnt</span> ctrlKey)
         <span class="keyword">return</span> <span class="keyword">unless</span> event.keyCode <span class="keyword">is</span> keyCode
@@ -177,22 +179,23 @@ priority. The default is <code>0</code>.</p>
               </div>
               <p>Shortcut, adds a handler to set the named attribute to the value of the expression.</p>
 <p><strong>Example</strong></p>
-<pre><code class="lang-javascript">Binding.addAttributeBinding(<span class="string">'href'</span>)</code></pre>
+<pre><code class="lang-javascript">Binding.addAttributeBinding(<span class="string">'attr-href'</span>)</code></pre>
 <p>allows</p>
-<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">chip-href</span>=<span class="value">"'/profile/' + person.id"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
+<pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">attr-href</span>=<span class="value">"'/profile/' + person.id"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
 <p>which would result in</p>
 <pre><code class="lang-xml"><span class="tag">&lt;<span class="title">a</span> <span class="attribute">href</span>=<span class="value">"/profile/368"</span>&gt;</span>My Profile<span class="tag">&lt;/<span class="title">a</span>&gt;</span></code></pre>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeBinding</span>: (name, priority) -&gt;
-    <span class="property">@addBinding</span> name, priority, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeBinding</span>: (name, options) -&gt;
+    attrName = name.split(<span class="string">'-'</span>).slice(<span class="number">1</span>).join(<span class="string">'-'</span>)
+    <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
       controller.watch expr, (value) -&gt;
         <span class="keyword">if</span> value?
-          element.attr name, value
-          element.trigger name + <span class="string">'Changed'</span>
+          element.attr attrName, value
+          element.trigger attrName + <span class="string">'Changed'</span>
         <span class="keyword">else</span>
-          element.removeAttr name</pre></div></div>
+          element.removeAttr attrName</pre></div></div>
             
         </li>
         
@@ -204,14 +207,15 @@ priority. The default is <code>0</code>.</p>
                 <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>Shortcut, adds a handler to toggle an attribute on or off if the value of the expression is truthy or false,
-e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
+e.g. <code>Binding.addAttributeToggleBinding(&#39;attr-checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeToggleBinding</span>: (name, priority) -&gt;
-    <span class="property">@addBinding</span> name, priority, (element, expr, controller) -&gt;
+            <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeToggleBinding</span>: (name, options) -&gt;
+    attrName = name.split(<span class="string">'-'</span>).slice(<span class="number">1</span>).join(<span class="string">'-'</span>)
+    <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
       controller.watch expr, (value) -&gt;
-        element.attr name, value <span class="keyword">and</span> <span class="literal">true</span> <span class="keyword">or</span> <span class="literal">false</span></pre></div></div>
+        element.attr attrName, value <span class="keyword">and</span> <span class="literal">true</span> <span class="keyword">or</span> <span class="literal">false</span></pre></div></div>
             
         </li>
         
@@ -231,7 +235,6 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
       <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'A Controller is required to bind a jQuery element.'</span>
     
 
-    prefix = controller.app.bindingPrefix
     slice = Array::slice
     walker = <span class="keyword">new</span> Walker element.get(<span class="number">0</span>)
     processed = []
@@ -256,25 +259,12 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      attribs = slice.call(node.attributes).filter (attr) =&gt;
-        name = attr.name.replace(prefix, <span class="string">''</span>)
-        attr.name.indexOf(prefix) <span class="keyword">is</span> <span class="number">0</span> <span class="keyword">and</span>
-        ( <span class="property">@bindings</span>[name] <span class="keyword">or</span> prefix ) <span class="keyword">and</span>
-        attr.value <span class="keyword">isnt</span> <span class="literal">undefined</span> <span class="comment"># Fix for IE7</span>
-      
-      attribs = attribs.map (attr) =&gt;
-        bindingName = attr.name.replace(prefix, <span class="string">''</span>)
-        entry = <span class="property">@bindings</span>[bindingName] <span class="keyword">or</span> <span class="property">@addAttributeBinding</span>(bindingName, -<span class="number">1</span>)
-        name: attr.name
-        value: attr.value
-        priority: entry.priority
-        handler: entry.handler
-        keepAttribute: entry.keepAttribute
-      
-      attribs = attribs.sort (a, b) -&gt;
-        b.priority - a.priority
+            <div class="content"><div class='highlight'><pre>      bindings = slice.call(node.attributes)
+        .map((attr) =&gt; <span class="property">@bindings</span>[attr.name])
+        .filter((binding) -&gt; binding)
+        .sort((a, b) -&gt; b.priority - a.priority)
 
-      processed.push element <span class="keyword">if</span> attribs.length</pre></div></div>
+      processed.push element <span class="keyword">if</span> bindings.length</pre></div></div>
             
         </li>
         
@@ -289,8 +279,9 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">while</span> attribs.length
-        attr = attribs.shift()</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">while</span> bindings.length
+        binding = bindings.shift()
+        value = node.getAttribute binding.name</pre></div></div>
             
         </li>
         
@@ -306,8 +297,8 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        <span class="keyword">unless</span> attr.keepAttribute
-          element.removeAttr(attr.name)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">unless</span> binding.keepAttribute
+          element.removeAttr(binding.name)</pre></div></div>
             
         </li>
         
@@ -322,7 +313,7 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        attr.handler element, attr.value, controller</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        binding.handler element, value, controller</pre></div></div>
             
         </li>
         
@@ -334,7 +325,7 @@ makes the DOM cleaner.</p>
                 <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p>Stops processing of this element (and its children will be skipped) if the element was removed from the DOM.
-This is used for chip-if and chip-each etc.</p>
+This is used for bind-if and bind-each etc.</p>
 
             </div>
             

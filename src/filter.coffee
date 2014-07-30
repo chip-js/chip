@@ -19,7 +19,7 @@
 #   return value.replace(replace, with)
 # })
 # ```xml
-# <h1 chip-text="title | uppercase | replace:'LETTER':'NUMBER'"></h1>
+# <h1 bind-text="title | uppercase | replace:'LETTER':'NUMBER'"></h1>
 # ```
 # *Result:*
 # ```xml
@@ -49,11 +49,11 @@
 # })
 # ```xml
 # <label>Number Attending:</label>
-# <input size="4" chip-value="event.attendeeCount | numeric">
+# <input size="4" bind-value="event.attendeeCount | numeric">
 # <label>Time:</label>
-# <input size="2" chip-value="event.date | date-hour"> :
-# <input size="2" chip-value="event.date | date-minute">
-# <select chip-value="event.date | date-ampm">
+# <input size="2" bind-value="event.date | date-hour"> :
+# <input size="2" bind-value="event.date | date-minute">
+# <select bind-value="event.date | date-ampm">
 #   <option>AM</option>
 #   <option>PM</option>
 # </select>

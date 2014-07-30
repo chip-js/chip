@@ -86,7 +86,7 @@ chip.filter 'sort', (value, sortFunc) ->
 #
 # **Example:**
 # ```xml
-# <div chip-html="tweet.content | escape | autolink:true"></div>
+# <div bind-html="tweet.content | escape | autolink:true"></div>
 # ```
 # *Result:*
 # ```xml
@@ -102,7 +102,7 @@ chip.filter 'escape', (value) ->
 #
 # **Example:**
 # ```xml
-# <div chip-html="tweet.content | p | autolink:true"></div>
+# <div bind-html="tweet.content | p | autolink:true"></div>
 # ```
 # *Result:*
 # ```xml
@@ -121,7 +121,7 @@ chip.filter 'p', (value) ->
 #
 # **Example:**
 # ```xml
-# <div chip-html="tweet.content | br | autolink:true"></div>
+# <div bind-html="tweet.content | br | autolink:true"></div>
 # ```
 # *Result:*
 # ```xml
@@ -140,7 +140,7 @@ chip.filter 'br', (value) ->
 #
 # **Example:**
 # ```xml
-# <div chip-html="tweet.content | newline | autolink:true"></div>
+# <div bind-html="tweet.content | newline | autolink:true"></div>
 # ```
 # *Result:*
 # ```xml
@@ -163,7 +163,7 @@ chip.filter 'newline', (value) ->
 #
 # **Example:**
 # ```xml
-# <div chip-html="tweet.content | escape | autolink:true"></div>
+# <div bind-html="tweet.content | escape | autolink:true"></div>
 # ```
 # *Result:*
 # ```xml

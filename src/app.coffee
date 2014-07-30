@@ -7,7 +7,6 @@ class App
   # Creates a new app
   constructor: (appName) ->
     @name = appName
-    @bindingPrefix = 'chip-'
     @controllers = {}
     @templates = {}
     @router = new Router()
@@ -32,9 +31,9 @@ class App
         app.template name, $this.html()
         $this.remove()
     
-    while (element = @rootElement.find("[#{@bindingPrefix}controller]:first")).length
-      name = element.attr "#{@bindingPrefix}controller"
-      element.removeAttr "#{@bindingPrefix}controller"
+    while (element = @rootElement.find("[bind-controller]:first")).length
+      name = element.attr "bind-controller"
+      element.removeAttr "bind-controller"
       @createController element: element, name: name, parent: @rootController
 
     @rootController
@@ -91,7 +90,7 @@ class App
   #     controller.sync()
   #   })
   #
-  #   // provide a function for the view to call. E.g. <button chip-click="logout">Logout</button>
+  #   // provide a function for the view to call. E.g. <button on-click="logout">Logout</button>
   #   controller.logout = function() {
   #     MyAppAPI.logout(function(err) {
   #       controller.user = null
@@ -184,7 +183,7 @@ class App
   
   # Create a route to be run when the given URL `path` is hit in the browser URL. The route `name` is used to load the
   # template and controller by the same name. This template will be placed in the first element on page with a
-  # `chip-route` attribute.
+  # `bind-route` attribute.
   route: (path, handler, subroutes) ->
     handleRoute = (path, handler, subroutes, depth, before) =>
       if typeof handler is 'function' and handler.toString().match(/\(route\)/)
@@ -203,14 +202,14 @@ class App
           @rootController.params = req.params
           @rootController.query = req.query
           selector = []
-          selector.push("[#{@bindingPrefix}route]") for i in [0..depth]
+          selector.push("[bind-route]") for i in [0..depth]
           container = @rootElement.find selector.join(' ') + ':first'
           isExistingRoute = @rootController.route
           unless req.isSamePath?
             req.isSamePath = req.path is @rootController.path # handle query-string changes
           if container.length
             showNextPage = =>
-              container.attr("#{@bindingPrefix}route", name)
+              container.attr("bind-route", name)
               @rootController.route = name
               @rootController.path = req.path
               @trigger 'routeChange', [name]
