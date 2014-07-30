@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, Walker, addReferences, addThis, argSeparator, attribs, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, finishedChain, getFunctionCall, ignore, initParse, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, splitLinks, strings, urlExp, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, Walker, addReferences, addThis, argSeparator, attribs, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, filterBindings, finishedChain, getBindings, getFunctionCall, ignore, initParse, invertedExpr, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, sortBindings, splitLinks, strings, urlExp, _i, _len,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -1269,6 +1269,17 @@ if (!Date.prototype.toISOString) {
     globals: ['true', 'false', 'window', 'this']
   };
 
+  expression.isInverted = function(expr) {
+    return expr.match(invertedExpr) && true;
+  };
+
+  expression.revert = function(expr) {
+    expr = '"' + expr.replace(invertedExpr, function(match, expr) {
+      return '" + ' + expr + ' + "';
+    }) + '"';
+    return expr.replace(/^"" \+ | \+ ""$/g, '');
+  };
+
   expression.get = function(expr, options) {
     var args, body, e, func;
     if (options == null) {
@@ -1295,6 +1306,8 @@ if (!Date.prototype.toISOString) {
   expression.bind = function(expr, scope, options) {
     return expression.get(expr, options).bind(scope);
   };
+
+  invertedExpr = /{{(.*)}}/g;
 
   quoteExpr = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -1911,16 +1924,14 @@ if (!Date.prototype.toISOString) {
         options = {};
       }
       entry = {
-        name: name,
+        name: options.name || name,
         priority: options.priority || 0,
         keepAttribute: options.keepAttribute,
         handler: handler
       };
       this.bindings[name] = entry;
       this.bindings.push(entry);
-      this.bindings.sort(function(a, b) {
-        return b.priority - a.priority;
-      });
+      this.bindings.sort(sortBindings);
       return entry;
     };
 
@@ -1972,6 +1983,9 @@ if (!Date.prototype.toISOString) {
       var attrName;
       attrName = name.split('-').slice(1).join('-');
       return this.addBinding(name, options, function(element, expr, controller) {
+        if (options != null ? options.inverted : void 0) {
+          expr = expression.revert(expr);
+        }
         return controller.watch(expr, function(value) {
           if (value != null) {
             element.attr(attrName, value);
@@ -1994,8 +2008,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.process = function(element, controller) {
-      var binding, bindings, node, parentNode, processed, slice, value, walker,
-        _this = this;
+      var binding, bindings, node, parentNode, processed, slice, value, walker;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
       }
@@ -2010,13 +2023,7 @@ if (!Date.prototype.toISOString) {
       while (node = walker.next()) {
         element = $(node);
         parentNode = node.parentNode;
-        bindings = slice.call(node.attributes).map(function(attr) {
-          return _this.bindings[attr.name];
-        }).filter(function(binding) {
-          return binding;
-        }).sort(function(a, b) {
-          return b.priority - a.priority;
-        });
+        bindings = slice.call(node.attributes).map(getBindings).filter(filterBindings).sort(sortBindings);
         if (bindings.length) {
           processed.push(element);
         }
@@ -2039,6 +2046,28 @@ if (!Date.prototype.toISOString) {
     return Binding;
 
   })();
+
+  getBindings = function(attr) {
+    var binding;
+    binding = Binding.bindings[attr.name];
+    if (binding) {
+      return binding;
+    }
+    if (expression.isInverted(attr.value)) {
+      return Binding.bindings['$attr-' + attr.name] || Binding.addAttributeBinding('$attr-' + attr.name, {
+        inverted: true,
+        name: attr.name
+      });
+    }
+  };
+
+  filterBindings = function(binding) {
+    return binding;
+  };
+
+  sortBindings = function(a, b) {
+    return b.priority - a.priority;
+  };
 
   jQuery.fn.bindTo = function(controller) {
     if (this.length !== 0) {

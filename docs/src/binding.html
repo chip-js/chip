@@ -86,14 +86,14 @@ priority. The default is <code>0</code>.</p>
       options = {}
 
     entry =
-      name: name
+      name: options.name <span class="keyword">or</span> name
       priority: options.priority <span class="keyword">or</span> <span class="number">0</span>
       keepAttribute: options.keepAttribute
       handler: handler
     <span class="property">@bindings</span>[name] = entry
     <span class="property">@bindings</span>.push entry
     
-    <span class="property">@bindings</span>.sort (a, b) -&gt; b.priority - a.priority
+    <span class="property">@bindings</span>.sort sortBindings
     entry</pre></div></div>
             
         </li>
@@ -190,6 +190,7 @@ priority. The default is <code>0</code>.</p>
             <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeBinding</span>: (name, options) -&gt;
     attrName = name.split(<span class="string">'-'</span>).slice(<span class="number">1</span>).join(<span class="string">'-'</span>)
     <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
+      expr = expression.revert expr <span class="keyword">if</span> options?.inverted
       controller.watch expr, (value) -&gt;
         <span class="keyword">if</span> value?
           element.attr attrName, value
@@ -260,9 +261,9 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;attr-checked&#39;)</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>      bindings = slice.call(node.attributes)
-        .map((attr) =&gt; <span class="property">@bindings</span>[attr.name])
-        .filter((binding) -&gt; binding)
-        .sort((a, b) -&gt; b.priority - a.priority)
+        .map(getBindings)
+        .filter(filterBindings)
+        .sort(sortBindings)
 
       processed.push element <span class="keyword">if</span> bindings.length</pre></div></div>
             
@@ -333,7 +334,17 @@ This is used for bind-if and bind-each etc.</p>
           processed.pop()
           <span class="keyword">break</span>
 
-    element</pre></div></div>
+    element
+
+
+<span class="function"><span class="title">getBindings</span></span> = (attr) -&gt;
+  binding = Binding.bindings[attr.name]
+  <span class="keyword">return</span> binding <span class="keyword">if</span> binding
+  <span class="keyword">if</span> expression.isInverted attr.value
+    Binding.bindings[<span class="string">'$attr-'</span> + attr.name] <span class="keyword">or</span>
+    Binding.addAttributeBinding <span class="string">'$attr-'</span> + attr.name, inverted: <span class="literal">true</span>, name: attr.name
+<span class="function"><span class="title">filterBindings</span></span> = (binding) -&gt; binding
+<span class="function"><span class="title">sortBindings</span></span> = (a, b) -&gt; b.priority - a.priority</pre></div></div>
             
         </li>
         

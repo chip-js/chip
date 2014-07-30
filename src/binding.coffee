@@ -47,14 +47,14 @@ class Binding
       options = {}
 
     entry =
-      name: name
+      name: options.name or name
       priority: options.priority or 0
       keepAttribute: options.keepAttribute
       handler: handler
     @bindings[name] = entry
     @bindings.push entry
     
-    @bindings.sort (a, b) -> b.priority - a.priority
+    @bindings.sort sortBindings
     entry
   
   
@@ -126,6 +126,7 @@ class Binding
   @addAttributeBinding: (name, options) ->
     attrName = name.split('-').slice(1).join('-')
     @addBinding name, options, (element, expr, controller) ->
+      expr = expression.revert expr if options?.inverted
       controller.watch expr, (value) ->
         if value?
           element.attr attrName, value
@@ -162,9 +163,9 @@ class Binding
       
       # Finds binding attributes and sorts by priority.
       bindings = slice.call(node.attributes)
-        .map((attr) => @bindings[attr.name])
-        .filter((binding) -> binding)
-        .sort((a, b) -> b.priority - a.priority)
+        .map(getBindings)
+        .filter(filterBindings)
+        .sort(sortBindings)
 
       processed.push element if bindings.length
       
@@ -188,7 +189,16 @@ class Binding
           break
 
     element
-    
+
+
+getBindings = (attr) ->
+  binding = Binding.bindings[attr.name]
+  return binding if binding
+  if expression.isInverted attr.value
+    Binding.bindings['$attr-' + attr.name] or
+    Binding.addAttributeBinding '$attr-' + attr.name, inverted: true, name: attr.name
+filterBindings = (binding) -> binding
+sortBindings = (a, b) -> b.priority - a.priority
 
 
 # Sets up the binding handlers for this jQuery element and all of its descendants

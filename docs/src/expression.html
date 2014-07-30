@@ -67,6 +67,40 @@ errors, allows for filters on data, and provides detailed error reporting.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
+              <p>Tests whether an expression is inverted. An inverted expression will look like
+<code>/user/{{user.id}}</code> instead of <code>&#39;/user/&#39; + user.id</code></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>expression.<span class="function"><span class="title">isInverted</span></span> = (expr) -&gt;
+  expr.match(invertedExpr) <span class="keyword">and</span> <span class="literal">true</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Reverts an inverted expression from <code>/user/{{user.id}}</code> to <code>&quot;/user/&quot; + user.id</code></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>expression.<span class="function"><span class="title">revert</span></span> = (expr) -&gt;
+  expr = <span class="string">'"'</span> + expr.replace(invertedExpr, (match, expr) -&gt; <span class="string">'" + '</span> + expr + <span class="string">' + "'</span>) + <span class="string">'"'</span>
+  expr.replace(<span class="regexp">/^"" \+ | \+ ""$/g</span>, <span class="string">''</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
               <p>Creates a function from the given expression. An <code>options</code> object may be
 provided with the following options:
 <em> <code>args</code> is an array of strings which will be the function&#39;s argument names
@@ -86,11 +120,11 @@ filters that the expressions may use.</p>
         </li>
         
         
-        <li id="section-5">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-5">&#182;</a>
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <p>Returns the cached function for this expression if it exists.</p>
 
@@ -102,11 +136,11 @@ filters that the expressions may use.</p>
         </li>
         
         
-        <li id="section-6">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>Prefix all property lookups with the <code>this</code> keyword. Ignores keywords
 (window, true, false) and extra args </p>
@@ -123,11 +157,11 @@ filters that the expressions may use.</p>
         </li>
         
         
-        <li id="section-7">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <p>Throws an error if the expression was not valid JavaScript</p>
 
@@ -142,11 +176,11 @@ filters that the expressions may use.</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <p>Compiles an expression and binds it in the given scope. This allows it to be
 called from anywhere (e.g. event listeners) while retaining the scope.</p>
@@ -159,47 +193,17 @@ called from anywhere (e.g. event listeners) while retaining the scope.</p>
         </li>
         
         
-        <li id="section-9">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
-              </div>
-              <p>finds all quoted strings</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>quoteExpr = <span class="regexp">/(['"\/])(\\\1|[^\1])*?\1/g</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-10">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
-              </div>
-              <p>finds all empty quoted strings</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>emptyQuoteExpr = <span class="regexp">/(['"\/])\1/g</span></pre></div></div>
-            
-        </li>
-        
-        
         <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
-              <p>finds pipes that aren&#39;t ORs (<code>|</code> not <code>||</code>) for filters</p>
+              <p>determines whether an expression is inverted</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>pipeExpr = <span class="regexp">/\|(\|)?/g</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>invertedExpr = <span class="regexp">/{{(.*)}}/g</span></pre></div></div>
             
         </li>
         
@@ -210,11 +214,11 @@ called from anywhere (e.g. event listeners) while retaining the scope.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
-              <p>finds argument separators for filters (<code>arg1:arg2</code>)</p>
+              <p>finds all quoted strings</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>quoteExpr = <span class="regexp">/(['"\/])(\\\1|[^\1])*?\1/g</span></pre></div></div>
             
         </li>
         
@@ -225,11 +229,11 @@ called from anywhere (e.g. event listeners) while retaining the scope.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
-              <p>matches property chains (e.g. <code>name</code>, <code>user.name</code>, and <code>user.fullName().capitalize()</code>)</p>
+              <p>finds all empty quoted strings</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>propExpr = <span class="regexp">/((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>emptyQuoteExpr = <span class="regexp">/(['"\/])\1/g</span></pre></div></div>
             
         </li>
         
@@ -240,11 +244,11 @@ called from anywhere (e.g. event listeners) while retaining the scope.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
-              <p>links in a property chain</p>
+              <p>finds pipes that aren&#39;t ORs (<code>|</code> not <code>||</code>) for filters</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chainLinks = <span class="regexp">/\.|\[/g</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>pipeExpr = <span class="regexp">/\|(\|)?/g</span></pre></div></div>
             
         </li>
         
@@ -255,11 +259,11 @@ called from anywhere (e.g. event listeners) while retaining the scope.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <p>the property name part of links</p>
+              <p>finds argument separators for filters (<code>arg1:arg2</code>)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chainLink = <span class="regexp">/\.|\[|\(/</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>argSeparator = <span class="regexp">/\s*:\s*/g</span></pre></div></div>
             
         </li>
         
@@ -269,6 +273,51 @@ called from anywhere (e.g. event listeners) while retaining the scope.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>matches property chains (e.g. <code>name</code>, <code>user.name</code>, and <code>user.fullName().capitalize()</code>)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>propExpr = <span class="regexp">/((\{|,|\.)?\s*)([a-z$_\$](?:[a-z_\$0-9\.-]|\[['"\d]+\])*)(\s*(:|\(|\[)?)/gi</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>links in a property chain</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chainLinks = <span class="regexp">/\.|\[/g</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>the property name part of links</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>chainLink = <span class="regexp">/\.|\[|\(/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>determines whether an expression is a setter or getter (<code>name</code> vs
 <code>name = &#39;bob&#39;</code>)</p>
@@ -288,11 +337,11 @@ continuation = <span class="literal">false</span></pre></div></div>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>Adds <code>this.</code> to the beginning of each valid property in an expression,
 processes filters, and provides null-termination in property chains</p>
@@ -316,11 +365,11 @@ processes filters, and provides null-termination in property chains</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>Ignores keywords and provided argument names</p>
 
@@ -332,11 +381,11 @@ processes filters, and provides null-termination in property chains</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>Adds placeholders for strings so we can process the rest without their content
 messing us up.</p>
@@ -351,11 +400,11 @@ messing us up.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>Replaces string placeholders.</p>
 
@@ -368,11 +417,11 @@ messing us up.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>Prepends reference variable definitions</p>
 
@@ -392,11 +441,11 @@ messing us up.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>Removes filters from expression string</p>
 
@@ -413,11 +462,11 @@ messing us up.</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>Processes the filters
 If the expression is a setter the value will be run through the filters</p>
@@ -457,11 +506,11 @@ If the expression is a setter the value will be run through the filters</p>
         </li>
         
         
-        <li id="section-24">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>allow recursion into function args by resetting propExpr</p>
 
@@ -486,11 +535,11 @@ If the expression is a setter the value will be run through the filters</p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p><code>objIndicator</code> is <code>{</code> or <code>,</code> and let&#39;s us know this is an object property
 name (e.g. prop in <code>{prop:false}</code>).
@@ -510,11 +559,11 @@ to know if it is an object.
         </li>
         
         
-        <li id="section-26">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <p>skips object keys e.g. test in <code>{test:true}</code>.</p>
 
@@ -548,11 +597,11 @@ to know if it is an object.
         </li>
         
         
-        <li id="section-27">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <p>continuations after a function (e.g. <code>getUser(12).firstName</code>).</p>
 
@@ -593,11 +642,11 @@ parens =
         </li>
         
         
-        <li id="section-28">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p>Handles a function to be called in its correct scope
 Finds the end of the function and processes the arguments</p>
@@ -625,11 +674,11 @@ Finds the end of the function and processes the arguments</p>
         </li>
         
         
-        <li id="section-29">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <p>returns the call part of a function (e.g. <code>test(123)</code> would return <code>(123)</code>)</p>
 
@@ -656,11 +705,11 @@ Finds the end of the function and processes the arguments</p>
         </li>
         
         
-        <li id="section-30">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-33">&#182;</a>
               </div>
               <p>if the first</p>
 

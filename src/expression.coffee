@@ -11,6 +11,17 @@ expression = {
   globals: ['true', 'false', 'window', 'this']
 }
 
+# Tests whether an expression is inverted. An inverted expression will look like
+# `/user/{{user.id}}` instead of `'/user/' + user.id`
+expression.isInverted = (expr) ->
+  expr.match(invertedExpr) and true
+
+# Reverts an inverted expression from `/user/{{user.id}}` to `"/user/" + user.id`
+expression.revert = (expr) ->
+  expr = '"' + expr.replace(invertedExpr, (match, expr) -> '" + ' + expr + ' + "') + '"'
+  expr.replace(/^"" \+ | \+ ""$/g, '')
+
+
 # Creates a function from the given expression. An `options` object may be
 # provided with the following options:
 # * `args` is an array of strings which will be the function's argument names
@@ -50,6 +61,9 @@ expression.get = (expr, options = {}) ->
 # called from anywhere (e.g. event listeners) while retaining the scope.
 expression.bind = (expr, scope, options) ->
   expression.get(expr, options).bind(scope)
+
+# determines whether an expression is inverted
+invertedExpr = /{{(.*)}}/g
 
 # finds all quoted strings
 quoteExpr = /(['"\/])(\\\1|[^\1])*?\1/g
