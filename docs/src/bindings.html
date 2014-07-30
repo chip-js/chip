@@ -611,7 +611,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
             
             <div class="content"><div class='highlight'><pre>keyCodes = { enter: <span class="number">13</span>, esc: <span class="number">27</span> }
 <span class="keyword">for</span> own name, keyCode <span class="keyword">of</span> keyCodes
-  chip.keyEventBinding(name, keyCode)</pre></div></div>
+  chip.keyEventBinding(<span class="string">'on-'</span> + name, keyCode)</pre></div></div>
             
         </li>
         
@@ -1017,12 +1017,24 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
               </div>
               <h2>bind-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
-be just the name of the template/controller, or it may be of the format <code>expr as itemName with partialName</code> where
-<code>expr</code> is an expression who&#39;s value will be set to <code>itemName</code> on the conroller in the partial. Note: any binding
+be just the name of the template/controller, or it may be of the format <code>partialName with locals { itemName: expr }</code>
+where <code>expr</code> is an expression who&#39;s value will be set to <code>itemName</code> on the conroller in the partial. Note: any binding
 attributes which appear after <code>bind-partial</code> will have the new value available if using the special format.</p>
-<p><strong>Example:</strong></p>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p><strong>Example:</strong></p>
 <pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div bind-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
-<span class="tag">&lt;<span class="title">div</span> <span class="attribute">bind-partial</span>=<span class="value">"getUser() as user with userInfo"</span> <span class="attribute">bind-class</span>=<span class="value">"{administrator:user.isAdmin}"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">bind-partial</span>=<span class="value">"userInfo with locals { user: getUser() }"</span> <span class="attribute">bind-class</span>=<span class="value">"{administrator:user.isAdmin}"</span>&gt;</span><span class="tag">&lt;/<span class="title">div</span>&gt;</span>
 
 <span class="tag">&lt;<span class="title">script</span> <span class="attribute">name</span>=<span class="value">"userInfo"</span> <span class="attribute">type</span>=<span class="value">"text/html"</span>&gt;</span><span class="javascript">
   &lt;span bind-text=<span class="string">"user.name"</span>&gt;<span class="xml"><span class="tag">&lt;/<span class="title">span</span>&gt;</span>
@@ -1036,11 +1048,10 @@ attributes which appear after <code>bind-partial</code> will have the new value 
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding 'bind-partial', priority: 50, (element, expr, controller) -&gt;
-  parts = expr.split /\s+as\s+|\s+with\s+/
-  nameExpr = parts.pop()
-  [ itemExpr, itemName ] = parts
+  parts = expr.split /\s+with\s+locals?\s+/i
+  nameExpr = parts.shift()
+  locals = parts.pop()
   childController = null
-  properties = {}
   if element.is('iframe')
       element.css
         border: 'none'
@@ -1048,6 +1059,9 @@ attributes which appear after <code>bind-partial</code> will have the new value 
         width: '100%'
   
   controller.watch nameExpr, (name) -&gt;
+    if locals
+      properties = controller.eval locals
+
     if element.is('iframe')
       element.data('body')?.triggerHandler('remove')
       element.data('body')?.html('')
@@ -1067,8 +1081,6 @@ body {
 }
 &lt;/style&gt;'''
         body.html controller.template(name)
-        if itemExpr and itemName
-          properties[itemName] = controller.eval itemExpr
         childController = controller.child element: body, name: name, properties: properties
         element.height body.outerHeight()
         element.data('body', body)
@@ -1083,24 +1095,26 @@ body {
         element.html('')
         return unless name?
         element.html controller.template(name)
-        if itemExpr and itemName
-          properties[itemName] = controller.eval itemExpr
         element.animateIn()
         childController = controller.child element: element, name: name, properties: properties
 
   
-  if itemExpr and itemName
-    controller.watch itemExpr, true, (value) -&gt;
-      childController[itemName] = value</pre></div></div>
+  if locals
+    controller.watch locals, true, (value, old, changes) -&gt;
+      changes.forEach (change) -&gt;
+        if change.type is 'deleted'
+          delete childController[change.name]
+        else
+          childController[change.name] = value[change.name]</pre></div></div>
             
         </li>
         
         
-        <li id="section-29">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <h2>bind-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the
@@ -1120,11 +1134,11 @@ as a form) or provide functionality provided by that controller to the element.<
         </li>
         
         
-        <li id="section-30">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p>clone and remove the original element to start a new controlled section</p>
 

@@ -2456,7 +2456,7 @@ if (!Date.prototype.toISOString) {
   for (name in keyCodes) {
     if (!__hasProp.call(keyCodes, name)) continue;
     keyCode = keyCodes[name];
-    chip.keyEventBinding(name, keyCode);
+    chip.keyEventBinding('on-' + name, keyCode);
   }
 
   chip.keyEventBinding('on-ctrl-enter', keyCodes.enter, true);
@@ -2728,12 +2728,11 @@ if (!Date.prototype.toISOString) {
   chip.binding('bind-partial', {
     priority: 50
   }, function(element, expr, controller) {
-    var childController, itemExpr, itemName, nameExpr, parts, properties;
-    parts = expr.split(/\s+as\s+|\s+with\s+/);
-    nameExpr = parts.pop();
-    itemExpr = parts[0], itemName = parts[1];
+    var childController, locals, nameExpr, parts;
+    parts = expr.split(/\s+with\s+locals?\s+/i);
+    nameExpr = parts.shift();
+    locals = parts.pop();
     childController = null;
-    properties = {};
     if (element.is('iframe')) {
       element.css({
         border: 'none',
@@ -2742,7 +2741,10 @@ if (!Date.prototype.toISOString) {
       });
     }
     controller.watch(nameExpr, function(name) {
-      var e, setup, _ref, _ref1;
+      var e, properties, setup, _ref, _ref1;
+      if (locals) {
+        properties = controller["eval"](locals);
+      }
       if (element.is('iframe')) {
         if ((_ref = element.data('body')) != null) {
           _ref.triggerHandler('remove');
@@ -2757,9 +2759,6 @@ if (!Date.prototype.toISOString) {
         setup = function(body) {
           body.siblings('head').html($('link[rel="stylesheet"][href]').clone()).append('<style>\nbody {\n  background: none transparent;\n  width: auto;\n  min-width: 0;\n  margin: 0;\n  padding: 0;\n}\n</style>');
           body.html(controller.template(name));
-          if (itemExpr && itemName) {
-            properties[itemName] = controller["eval"](itemExpr);
-          }
           childController = controller.child({
             element: body,
             name: name,
@@ -2784,9 +2783,6 @@ if (!Date.prototype.toISOString) {
             return;
           }
           element.html(controller.template(name));
-          if (itemExpr && itemName) {
-            properties[itemName] = controller["eval"](itemExpr);
-          }
           element.animateIn();
           return childController = controller.child({
             element: element,
@@ -2796,9 +2792,15 @@ if (!Date.prototype.toISOString) {
         });
       }
     });
-    if (itemExpr && itemName) {
-      return controller.watch(itemExpr, true, function(value) {
-        return childController[itemName] = value;
+    if (locals) {
+      return controller.watch(locals, true, function(value, old, changes) {
+        return changes.forEach(function(change) {
+          if (change.type === 'deleted') {
+            return delete childController[change.name];
+          } else {
+            return childController[change.name] = value[change.name];
+          }
+        });
       });
     }
   });

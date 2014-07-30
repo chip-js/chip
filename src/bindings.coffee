@@ -428,7 +428,7 @@ chip.binding 'bind-value', (element, expr, controller) ->
 # ```
 keyCodes = { enter: 13, esc: 27 }
 for own name, keyCode of keyCodes
-  chip.keyEventBinding(name, keyCode)
+  chip.keyEventBinding('on-' + name, keyCode)
 
 # ## on-[control key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches and the ctrlKey or metaKey is
@@ -761,14 +761,14 @@ chip.binding 'bind-each', priority: 100, (element, expr, controller) ->
 
 # ## bind-partial
 # Adds a handler to set the contents of the element with the template and controller by that name. The expression may
-# be just the name of the template/controller, or it may be of the format `expr as itemName with partialName` where
-# `expr` is an expression who's value will be set to `itemName` on the conroller in the partial. Note: any binding
+# be just the name of the template/controller, or it may be of the format `partialName with locals { itemName: expr }`
+# where `expr` is an expression who's value will be set to `itemName` on the conroller in the partial. Note: any binding
 # attributes which appear after `bind-partial` will have the new value available if using the special format.
-#
+
 # **Example:**
 # ```xml
 # <!--<div bind-partial="userInfo"></div>-->
-# <div bind-partial="getUser() as user with userInfo" bind-class="{administrator:user.isAdmin}"></div>
+# <div bind-partial="userInfo with locals { user: getUser() }" bind-class="{administrator:user.isAdmin}"></div>
 # 
 # <script name="userInfo" type="text/html">
 #   <span bind-text="user.name"></span>
@@ -782,11 +782,10 @@ chip.binding 'bind-each', priority: 100, (element, expr, controller) ->
 # </div>
 # ```
 chip.binding 'bind-partial', priority: 50, (element, expr, controller) ->
-  parts = expr.split /\s+as\s+|\s+with\s+/
-  nameExpr = parts.pop()
-  [ itemExpr, itemName ] = parts
+  parts = expr.split /\s+with\s+locals?\s+/i
+  nameExpr = parts.shift()
+  locals = parts.pop()
   childController = null
-  properties = {}
   if element.is('iframe')
       element.css
         border: 'none'
@@ -794,6 +793,9 @@ chip.binding 'bind-partial', priority: 50, (element, expr, controller) ->
         width: '100%'
   
   controller.watch nameExpr, (name) ->
+    if locals
+      properties = controller.eval locals
+
     if element.is('iframe')
       element.data('body')?.triggerHandler('remove')
       element.data('body')?.html('')
@@ -813,8 +815,6 @@ body {
 }
 </style>'''
         body.html controller.template(name)
-        if itemExpr and itemName
-          properties[itemName] = controller.eval itemExpr
         childController = controller.child element: body, name: name, properties: properties
         element.height body.outerHeight()
         element.data('body', body)
@@ -829,15 +829,17 @@ body {
         element.html('')
         return unless name?
         element.html controller.template(name)
-        if itemExpr and itemName
-          properties[itemName] = controller.eval itemExpr
         element.animateIn()
         childController = controller.child element: element, name: name, properties: properties
 
   
-  if itemExpr and itemName
-    controller.watch itemExpr, true, (value) ->
-      childController[itemName] = value
+  if locals
+    controller.watch locals, true, (value, old, changes) ->
+      changes.forEach (change) ->
+        if change.type is 'deleted'
+          delete childController[change.name]
+        else
+          childController[change.name] = value[change.name]
 
 
 # ## bind-controller
