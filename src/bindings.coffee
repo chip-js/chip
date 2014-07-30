@@ -466,7 +466,7 @@ chip.keyEventBinding('on-ctrl-enter', keyCodes.enter, true)
 # <img src="http://cdn.example.com/avatars/jacwright-small.png">
 # ```
 
-attribs = [ 'attr-class', 'attr-href', 'attr-src', 'attr-id' ]
+attribs = [ 'attr-class', 'attr-href', 'attr-src', 'attr-id', 'attr-value' ]
 for name in attribs
   chip.attributeBinding(name)
 

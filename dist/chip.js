@@ -2461,7 +2461,7 @@ if (!Date.prototype.toISOString) {
 
   chip.keyEventBinding('on-ctrl-enter', keyCodes.enter, true);
 
-  attribs = ['attr-class', 'attr-href', 'attr-src', 'attr-id'];
+  attribs = ['attr-class', 'attr-href', 'attr-src', 'attr-id', 'attr-value'];
 
   for (_i = 0, _len = attribs.length; _i < _len; _i++) {
     name = attribs[_i];
