@@ -18,12 +18,12 @@ describe('Binding', function() {
 	it('should call a binding handler when an element is processed', function() {
 		var value, app = chip.app()
 		
-		Binding.addBinding('foo', function(element, attr, controller) {
+		Binding.addBinding('attr-foo', function(element, attr, controller) {
 			value = 'the attr value'
 		})
 		
 		app.init()
-		Binding.process($('<div chip-foo="the attr value"></div>'), app.rootController)
+		Binding.process($('<div attr-foo="the attr value"></div>'), app.rootController)
 		expect(value).to.equal('the attr value')
 	})
 	
