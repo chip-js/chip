@@ -1,7 +1,8 @@
 # # Default Bindings
 
 
-chip.binding 'bind-debug', priority: 200, (element, expr, controller) ->
+chip.binding 'bind-debug', priority: 200, (element, attr, controller) ->
+  expr = attr.value
   controller.watch expr, (value) ->
     console?.info 'Debug:', expr, '=', value
 
@@ -34,7 +35,8 @@ chip.binding 'bind-route', keepAttribute: true, ->
 #   <span>10/16/2013</span>.
 # </div>
 # ```
-chip.binding 'bind-text', (element, expr, controller) ->
+chip.binding 'bind-text', (element, attr, controller) ->
+  expr = attr.value
   controller.watch expr, (value) ->
     element.text(if value? then value else '')
 
@@ -58,7 +60,8 @@ chip.binding 'bind-text', (element, expr, controller) ->
 #   </p>
 # </div>
 # ```
-chip.binding 'bind-html', (element, expr, controller) ->
+chip.binding 'bind-html', (element, attr, controller) ->
+  expr = attr.value
   controller.watch expr, (value) ->
     element.html(if value? then value else '')
 
@@ -77,7 +80,7 @@ chip.binding 'bind-html', (element, expr, controller) ->
 # ```xml
 # <div class="info"><span>Jacob Wright</span><span>10/16/2013</span></div>
 # ```
-chip.binding 'bind-trim', (element, expr, controller) ->
+chip.binding 'bind-trim', (element, attr, controller) ->
   node = element.get(0).firstChild
   while node
     next = node.nextSibling
@@ -107,7 +110,7 @@ chip.binding 'bind-trim', (element, expr, controller) ->
 # ```xml
 # <h1>Sup <span>Jacob</span> Yo!</h1>
 # ```
-chip.binding 'bind-translate', (element, expr, controller) ->
+chip.binding 'bind-translate', (element, attr, controller) ->
   nodes = element.get(0).childNodes
   text = ''
   placeholders = []
@@ -163,7 +166,8 @@ chip.binding 'bind-translate', (element, expr, controller) ->
 #   <button class="btn primary highlight"></button>
 # </div>
 # ```
-chip.binding 'bind-class', (element, expr, controller) ->
+chip.binding 'bind-class', (element, attr, controller) ->
+  expr = attr.value
   prevClasses = (element.attr('class') or '').split(/\s+/)
   prevClasses.pop() if prevClasses[0] is ''
 
@@ -181,7 +185,8 @@ chip.binding 'bind-class', (element, expr, controller) ->
           element.removeClass(className)
 
 
-chip.binding 'bind-attr', (element, expr, controller) ->
+chip.binding 'bind-attr', (element, attr, controller) ->
+  expr = attr.value
   controller.watch expr, (value, oldValue, changes) ->
     if changes
       # use the change records to remove deleted properties which won't show up
@@ -226,7 +231,8 @@ chip.binding 'bind-attr', (element, expr, controller) ->
 #   <li><a href="/profile">Profile</a></li>
 # </ul>
 # ```
-chip.binding 'bind-active', (element, expr, controller) ->
+chip.binding 'bind-active', (element, attr, controller) ->
+  expr = attr.value
   if expr
     controller.watch expr, (value) ->
       if value
@@ -253,7 +259,7 @@ chip.binding 'bind-active', (element, expr, controller) ->
 # ## bind-active-section
 # The same as active except that the active class is added for any URL which starts with the link (marks active for the
 # whole section.
-chip.binding 'bind-active-section', (element, expr, controller) ->
+chip.binding 'bind-active-section', (element, attr, controller) ->
   refresh = ->
     if link.length and location.href.indexOf(link.get(0).href) is 0
       element.addClass('active')
@@ -273,7 +279,8 @@ chip.binding 'bind-active-section', (element, expr, controller) ->
 # ## bind-change-action
 # Runs the action provided after the ! whenever the value before the ! changes.
 # This is for advanced use and a generic example doesn't fit.
-chip.binding 'bind-change-action', (element, expr, controller) ->
+chip.binding 'bind-change-action', (element, attr, controller) ->
+  expr = attr.value
   [ expr, action ] = expr.split /\s*!\s*/
   controller.watch expr, (value) ->
     controller.thisElement = element
@@ -303,7 +310,8 @@ chip.binding 'bind-change-action', (element, expr, controller) ->
 # ```
 # And when the user changes the text in the first input to "Jac", `user.firstName` will be updated immediately with the
 # value of `'Jac'`.
-chip.binding 'bind-value', (element, expr, controller) ->
+chip.binding 'bind-value', (element, attr, controller) ->
+  expr = attr.value
   watchExpr = expr
 
   fieldExpr = element.attr('bind-value-field')
@@ -383,7 +391,7 @@ chip.binding 'bind-value', (element, expr, controller) ->
 # ## on-[event]
 # Adds a handler for each event name in the array. When the event is triggered the expression will be run.
 # 
-# **Events:**
+# **Example Events:**
 # 
 # * on-click
 # * on-dblclick
@@ -406,9 +414,16 @@ chip.binding 'bind-value', (element, expr, controller) ->
 #   <button>Save</button>
 # </form>
 # ```
-[ 'on-click', 'on-dblclick', 'on-submit', 'on-change', 'on-focus', 'on-blur', 'on-keydown', 'on-keyup', 'on-paste', 'on-load', 'on-unload', 'on-error' ]
-  .forEach (name) ->
-    chip.eventBinding(name)
+chip.binding 'on-*', (element, attr, controller) ->
+  eventName = attr.match
+  expr = attr.value
+  element.on eventName, (event) ->
+    event.preventDefault()
+    unless element.attr('disabled')
+      controller.thisElement = element
+      controller.eval expr
+      delete controller.thisElement
+
 
 # ## on-[key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches.
@@ -451,11 +466,13 @@ chip.keyEventBinding('on-ctrl-enter', keyCodes.enter, true)
 # ## attr-[attribute]
 # Adds a handler to set the attribute of element to the value of the expression.
 # 
-# **Attributes:**
+# **Example Attributes:**
 # 
-# * attr-href
-# * attr-src
-# * attr-id
+# * attr-checked
+# * attr-disabled
+# * attr-multiple
+# * attr-readonly
+# * attr-selected
 #
 # **Example:**
 # ```xml
@@ -465,10 +482,20 @@ chip.keyEventBinding('on-ctrl-enter', keyCodes.enter, true)
 # ```xml
 # <img src="http://cdn.example.com/avatars/jacwright-small.png">
 # ```
+chip.binding 'attr-*', (element, attr, controller) ->
+  if attr.name isnt attr.match # e.g. attr-href="someUrl"
+    attrName = attr.match
+    expr = attr.value
+  else # e.g. href="http://example.com{{someUrl}}"
+    attrName = attr.name
+    expr = expression.revert attr.value
 
-attribs = [ 'attr-class', 'attr-href', 'attr-src', 'attr-id', 'attr-value' ]
-for name in attribs
-  chip.attributeBinding(name)
+  controller.watch expr, (value) ->
+    if value?
+      element.attr attrName, value
+      element.trigger attrName + 'Changed'
+    else
+      element.removeAttr attrName
 
 # ## attr-[toggle attribute]
 # Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.
@@ -573,7 +600,8 @@ $.fn.willAnimate = ->
 #   <li><a href="/login">Sign In</a></li>
 # </ul>
 # ```
-chip.binding 'bind-if', priority: 50, (element, expr, controller) ->
+chip.binding 'bind-if', priority: 50, (element, attr, controller) ->
+  expr = attr.value
   template = element # use a placeholder for the element and the element as a template
   placeholder = $("<!--bind-if=\"#{expr}\"-->").replaceAll(template)
   controllerName = element.attr('bind-controller')
@@ -591,12 +619,14 @@ chip.binding 'bind-if', priority: 50, (element, expr, controller) ->
         element.animateOut()
 
 
-chip.binding 'bind-show', (element, expr, controller) ->
+chip.binding 'bind-show', (element, attr, controller) ->
+  expr = attr.value
   controller.watch expr, (value) ->
     if value then element.show() else element.hide()
 
 
-chip.binding 'bind-hide', (element, expr, controller) ->
+chip.binding 'bind-hide', (element, attr, controller) ->
+  expr = attr.value
   controller.watch expr, (value) ->
     if value then element.hide() else element.show()
 
@@ -620,7 +650,8 @@ chip.binding 'bind-hide', (element, expr, controller) ->
 #   <li><a href="/login">Sign In</a></li>
 # </ul>
 # ```
-chip.binding 'bind-unless', priority: 50, (element, expr, controller) ->
+chip.binding 'bind-unless', priority: 50, (element, attr, controller) ->
+  expr = attr.value
   template = element # use a placeholder for the element and the element as a template
   placeholder = $("<!--bind-unless=\"#{expr}\"-->").replaceAll(template)
   controllerName = element.attr('bind-controller')
@@ -674,8 +705,8 @@ chip.binding 'bind-unless', priority: 50, (element, expr, controller) ->
 #   </div>
 # </div>
 # ```
-chip.binding 'bind-each', priority: 100, (element, expr, controller) ->
-  orig = expr
+chip.binding 'bind-each', priority: 100, (element, attr, controller) ->
+  orig = expr = attr.value
   [ itemName, expr ] = expr.split /\s+in\s+/
   unless itemName and expr
     throw "Invalid bind-each=\"" +
@@ -761,14 +792,13 @@ chip.binding 'bind-each', priority: 100, (element, expr, controller) ->
 
 # ## bind-partial
 # Adds a handler to set the contents of the element with the template and controller by that name. The expression may
-# be just the name of the template/controller, or it may be of the format `partialName with locals { itemName: expr }`
-# where `expr` is an expression who's value will be set to `itemName` on the conroller in the partial. Note: any binding
-# attributes which appear after `bind-partial` will have the new value available if using the special format.
+# be just the name of the template/controller, or it may be of the format `partialName`. Use the local-* binding
+# to pass data into a partial.
 
 # **Example:**
 # ```xml
 # <!--<div bind-partial="userInfo"></div>-->
-# <div bind-partial="userInfo with locals { user: getUser() }" bind-class="{administrator:user.isAdmin}"></div>
+# <div bind-partial="userInfo" local-user="getUser()" bind-class="{administrator:user.isAdmin}"></div>
 # 
 # <script name="userInfo" type="text/html">
 #   <span bind-text="user.name"></span>
@@ -781,21 +811,21 @@ chip.binding 'bind-each', priority: 100, (element, expr, controller) ->
 #   <span>Jacob</span>
 # </div>
 # ```
-chip.binding 'bind-partial', priority: 50, (element, expr, controller) ->
-  parts = expr.split /\s+with\s+locals?\s+/i
-  nameExpr = parts.shift()
-  locals = parts.pop()
+chip.binding 'bind-partial', priority: 40, (element, attr, controller) ->
+  expr = attr.value
   childController = null
+  if element.children().length
+    properties = _partialContent: element.children().remove()
+  else
+    properties = _partialContent: null
+  
   if element.is('iframe')
       element.css
         border: 'none'
         background: 'none transparent'
         width: '100%'
   
-  controller.watch nameExpr, (name) ->
-    if locals
-      properties = controller.eval locals
-
+  controller.watch expr, (name) ->
     if element.is('iframe')
       element.data('body')?.triggerHandler('remove')
       element.data('body')?.html('')
@@ -832,14 +862,30 @@ body {
         element.animateIn()
         childController = controller.child element: element, name: name, properties: properties
 
-  
-  if locals
-    controller.watch locals, true, (value, old, changes) ->
-      changes.forEach (change) ->
-        if change.type is 'deleted'
-          delete childController[change.name]
-        else
-          childController[change.name] = value[change.name]
+
+# ## local-*
+# You may pass data into bind-partial, bind-each, bind-if, or bind-controller using this wildcard
+# binding by using attributes prefixed with `local-`. The attribute name portion that follows `local-`
+# will be converted to camelCase and the value will be set locally. Examples:
+# `local-link="user.addressUrl"` will pass the value of `user.addressUrl` into the partial as `link`.
+# `local-post-body="user.description"` will pass the value of `user.description` into the partial as `postBody`.
+chip.binding 'local-*', priority: 20, (element, attr, controller) ->
+  expr = attr.value
+  prop = attr.camel
+  if expr
+    controller.watch expr, (value) ->
+      controller[prop] = value
+  else
+    controller[prop] = true
+
+
+# ## bind-content
+# Allows an element with a `bind-partial` attribute to include HTML within it that may be inserted somewhere
+# inside the partial's template.
+chip.binding 'bind-content', priority: 40, (element, attr, controller) ->
+  # Allow a default if content wasn't provided by the partial
+  if controller._partialContent
+    element.html controller._partialContent
 
 
 # ## bind-controller
@@ -857,7 +903,8 @@ body {
 # <form>
 # </form>
 # ```
-chip.binding 'bind-controller', priority: 30, (element, controllerName, controller) ->
+chip.binding 'bind-controller', priority: 30, (element, attr, controller) ->
+  controllerName = attr.value
   # clone and remove the original element to start a new controlled section
   element = element.clone().replaceAll element
   controller.child element: element, name: controllerName

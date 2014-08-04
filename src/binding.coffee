@@ -54,7 +54,7 @@ class Binding
     @bindings[name] = entry
     @bindings.push entry
     
-    @bindings.sort sortBindings
+    @bindings.sort bindingSort
     entry
   
   
@@ -87,7 +87,8 @@ class Binding
   #```
   @addEventBinding: (name, options) ->
     eventName = name.split('-').slice(1).join('-')
-    @addBinding name, options, (element, expr, controller) ->
+    @addBinding name, options, (element, attr, controller) ->
+      expr = attr.value
       element.on eventName, (event) ->
         event.preventDefault()
         unless element.attr('disabled')
@@ -98,7 +99,8 @@ class Binding
   
   # Shortcut, adds a handler that responds when the given key is pressed, e.g. `Binding.addEventBinding('on-esc', 27)`.
   @addKeyEventBinding: (name, keyCode, ctrlKey, options) ->
-    @addBinding name, options, (element, expr, controller) ->
+    @addBinding name, options, (element, attr, controller) ->
+      expr = attr.value
       element.on 'keydown', (event) ->
         return if ctrlKey? and (event.ctrlKey isnt ctrlKey and event.metaKey isnt ctrlKey)
         return unless event.keyCode is keyCode
@@ -125,8 +127,8 @@ class Binding
   # ```
   @addAttributeBinding: (name, options) ->
     attrName = name.split('-').slice(1).join('-')
-    @addBinding name, options, (element, expr, controller) ->
-      expr = expression.revert expr if options?.inverted
+    @addBinding name, options, (element, attr, controller) ->
+      expr = attr.value
       controller.watch expr, (value) ->
         if value?
           element.attr attrName, value
@@ -139,7 +141,8 @@ class Binding
   # e.g. `Binding.addAttributeToggleBinding('attr-checked')`.
   @addAttributeToggleBinding: (name, options) ->
     attrName = name.split('-').slice(1).join('-')
-    @addBinding name, options, (element, expr, controller) ->
+    @addBinding name, options, (element, attr, controller) ->
+      expr = attr.value
       controller.watch expr, (value) ->
         element.attr attrName, value and true or false
   
@@ -162,25 +165,31 @@ class Binding
       parentNode = node.parentNode
       
       # Finds binding attributes and sorts by priority.
-      bindings = slice.call(node.attributes)
-        .map(getBindings)
-        .filter(filterBindings)
-        .sort(sortBindings)
+      attributes = slice.call(node.attributes)
+        .map(getBoundAttributes)
+        .filter(filterAttributes)
+        .sort(sortAttributes)
 
-      processed.push element if bindings.length
+      processed.push element if attributes.length
       
       # Go through each binding attribute from first to last.
-      while bindings.length
-        binding = bindings.shift()
-        value = node.getAttribute binding.name
+      while attributes.length
+        attribute = attributes.shift()
+        binding = attribute.binding
         
         # Remove the binding handlers so they only get processed once. This simplifies code and also
         # makes the DOM cleaner.
         unless binding.keepAttribute
-          element.removeAttr(binding.name)
+          element.removeAttr(attribute.name)
         
         # Calls the handler function allowing the handler to set up the binding.
-        binding.handler element, value, controller
+        if binding.name.slice(-2) is '-*'
+          # Wildcard bindings get the camelcased name
+          attribute.match = attribute.name.replace(binding.name.slice(0, -1), '')
+          attribute.camel = attribute.match
+            .replace /[-_]+(\w)/g, (_, char) -> char.toUpperCase()
+
+        binding.handler element, attribute, controller
         
         # Stops processing of this element (and its children will be skipped) if the element was removed from the DOM.
         # This is used for bind-if and bind-each etc.
@@ -191,14 +200,24 @@ class Binding
     element
 
 
-getBindings = (attr) ->
+getBoundAttributes = (attr) ->
+  # If a binding is registered for the exact name or for prefix-* use that
   binding = Binding.bindings[attr.name]
-  return binding if binding
-  if expression.isInverted attr.value
-    Binding.bindings['$attr-' + attr.name] or
-    Binding.addAttributeBinding '$attr-' + attr.name, inverted: true, name: attr.name
-filterBindings = (binding) -> binding
-sortBindings = (a, b) -> b.priority - a.priority
+  unless binding
+    parts = attr.name.split('-')
+    while parts.length > 1
+      parts.pop()
+      break if (binding = Binding.bindings[parts.join('-') + '-*'])
+  unless binding
+    if expression.isInverted attr.value
+      binding = Binding.bindings['attr-*']
+  # Cache in an object since attr.value will empty once it is removed
+  if binding
+    binding: binding, name: attr.name, value: attr.value
+
+filterAttributes = (binding) -> binding
+sortAttributes = (a, b) -> b.binding.priority - a.binding.priority
+bindingSort = (a, b) -> b.priority - a.priority
 
 
 # Sets up the binding handlers for this jQuery element and all of its descendants

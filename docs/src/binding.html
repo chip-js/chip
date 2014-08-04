@@ -93,7 +93,7 @@ priority. The default is <code>0</code>.</p>
     <span class="property">@bindings</span>[name] = entry
     <span class="property">@bindings</span>.push entry
     
-    <span class="property">@bindings</span>.sort sortBindings
+    <span class="property">@bindings</span>.sort bindingSort
     entry</pre></div></div>
             
         </li>
@@ -136,7 +136,8 @@ priority. The default is <code>0</code>.</p>
             
             <div class="content"><div class='highlight'><pre>  <span class="property">@addEventBinding</span>: (name, options) -&gt;
     eventName = name.split(<span class="string">'-'</span>).slice(<span class="number">1</span>).join(<span class="string">'-'</span>)
-    <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
+    <span class="property">@addBinding</span> name, options, (element, attr, controller) -&gt;
+      expr = attr.value
       element.<span class="literal">on</span> eventName, (event) -&gt;
         event.preventDefault()
         <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
@@ -158,7 +159,8 @@ priority. The default is <code>0</code>.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  <span class="property">@addKeyEventBinding</span>: (name, keyCode, ctrlKey, options) -&gt;
-    <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
+    <span class="property">@addBinding</span> name, options, (element, attr, controller) -&gt;
+      expr = attr.value
       element.<span class="literal">on</span> <span class="string">'keydown'</span>, (event) -&gt;
         <span class="keyword">return</span> <span class="keyword">if</span> ctrlKey? <span class="keyword">and</span> (event.ctrlKey <span class="keyword">isnt</span> ctrlKey <span class="keyword">and</span> event.metaKey <span class="keyword">isnt</span> ctrlKey)
         <span class="keyword">return</span> <span class="keyword">unless</span> event.keyCode <span class="keyword">is</span> keyCode
@@ -189,8 +191,8 @@ priority. The default is <code>0</code>.</p>
             
             <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeBinding</span>: (name, options) -&gt;
     attrName = name.split(<span class="string">'-'</span>).slice(<span class="number">1</span>).join(<span class="string">'-'</span>)
-    <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
-      expr = expression.revert expr <span class="keyword">if</span> options?.inverted
+    <span class="property">@addBinding</span> name, options, (element, attr, controller) -&gt;
+      expr = attr.value
       controller.watch expr, (value) -&gt;
         <span class="keyword">if</span> value?
           element.attr attrName, value
@@ -214,7 +216,8 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;attr-checked&#39;)</code>.</p>
             
             <div class="content"><div class='highlight'><pre>  <span class="property">@addAttributeToggleBinding</span>: (name, options) -&gt;
     attrName = name.split(<span class="string">'-'</span>).slice(<span class="number">1</span>).join(<span class="string">'-'</span>)
-    <span class="property">@addBinding</span> name, options, (element, expr, controller) -&gt;
+    <span class="property">@addBinding</span> name, options, (element, attr, controller) -&gt;
+      expr = attr.value
       controller.watch expr, (value) -&gt;
         element.attr attrName, value <span class="keyword">and</span> <span class="literal">true</span> <span class="keyword">or</span> <span class="literal">false</span></pre></div></div>
             
@@ -260,12 +263,12 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;attr-checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      bindings = slice.call(node.attributes)
-        .map(getBindings)
-        .filter(filterBindings)
-        .sort(sortBindings)
+            <div class="content"><div class='highlight'><pre>      attributes = slice.call(node.attributes)
+        .map(getBoundAttributes)
+        .filter(filterAttributes)
+        .sort(sortAttributes)
 
-      processed.push element <span class="keyword">if</span> bindings.length</pre></div></div>
+      processed.push element <span class="keyword">if</span> attributes.length</pre></div></div>
             
         </li>
         
@@ -280,9 +283,9 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;attr-checked&#39;)</code>.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="keyword">while</span> bindings.length
-        binding = bindings.shift()
-        value = node.getAttribute binding.name</pre></div></div>
+            <div class="content"><div class='highlight'><pre>      <span class="keyword">while</span> attributes.length
+        attribute = attributes.shift()
+        binding = attribute.binding</pre></div></div>
             
         </li>
         
@@ -299,7 +302,7 @@ makes the DOM cleaner.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>        <span class="keyword">unless</span> binding.keepAttribute
-          element.removeAttr(binding.name)</pre></div></div>
+          element.removeAttr(attribute.name)</pre></div></div>
             
         </li>
         
@@ -314,7 +317,7 @@ makes the DOM cleaner.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        binding.handler element, value, controller</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> binding.name.slice(-<span class="number">2</span>) <span class="keyword">is</span> <span class="string">'-*'</span></pre></div></div>
             
         </li>
         
@@ -324,6 +327,25 @@ makes the DOM cleaner.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>Wildcard bindings get the camelcased name</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          attribute.match = attribute.name.replace(binding.name.slice(<span class="number">0</span>, -<span class="number">1</span>), <span class="string">''</span>)
+          attribute.camel = attribute.match
+            .replace <span class="regexp">/[-_]+(\w)/g</span>, (_, char) -&gt; char.toUpperCase()
+
+        binding.handler element, attribute, controller</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>Stops processing of this element (and its children will be skipped) if the element was removed from the DOM.
 This is used for bind-if and bind-each etc.</p>
@@ -337,23 +359,59 @@ This is used for bind-if and bind-each etc.</p>
     element
 
 
-<span class="function"><span class="title">getBindings</span></span> = (attr) -&gt;
-  binding = Binding.bindings[attr.name]
-  <span class="keyword">return</span> binding <span class="keyword">if</span> binding
-  <span class="keyword">if</span> expression.isInverted attr.value
-    Binding.bindings[<span class="string">'$attr-'</span> + attr.name] <span class="keyword">or</span>
-    Binding.addAttributeBinding <span class="string">'$attr-'</span> + attr.name, inverted: <span class="literal">true</span>, name: attr.name
-<span class="function"><span class="title">filterBindings</span></span> = (binding) -&gt; binding
-<span class="function"><span class="title">sortBindings</span></span> = (a, b) -&gt; b.priority - a.priority</pre></div></div>
+<span class="function"><span class="title">getBoundAttributes</span></span> = (attr) -&gt;</pre></div></div>
             
         </li>
         
         
-        <li id="section-15">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>If a binding is registered for the exact name or for prefix-* use that</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  binding = Binding.bindings[attr.name]
+  <span class="keyword">unless</span> binding
+    parts = attr.name.split(<span class="string">'-'</span>)
+    <span class="keyword">while</span> parts.length &gt; <span class="number">1</span>
+      parts.pop()
+      <span class="keyword">break</span> <span class="keyword">if</span> (binding = Binding.bindings[parts.join(<span class="string">'-'</span>) + <span class="string">'-*'</span>])
+  <span class="keyword">unless</span> binding
+    <span class="keyword">if</span> expression.isInverted attr.value
+      binding = Binding.bindings[<span class="string">'attr-*'</span>]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>Cache in an object since attr.value will empty once it is removed</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> binding
+    binding: binding, name: attr.name, value: attr.value
+
+<span class="function"><span class="title">filterAttributes</span></span> = (binding) -&gt; binding
+<span class="function"><span class="title">sortAttributes</span></span> = (a, b) -&gt; b.binding.priority - a.binding.priority
+<span class="function"><span class="title">bindingSort</span></span> = (a, b) -&gt; b.priority - a.priority</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Sets up the binding handlers for this jQuery element and all of its descendants</p>
 
@@ -376,11 +434,11 @@ chip.Binding = Binding
         </li>
         
         
-        <li id="section-16">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>A callback to do additional things when a node and it&#39;s children are done</p>
 
@@ -391,11 +449,11 @@ chip.Binding = Binding
         </li>
         
         
-        <li id="section-17">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>Get the next element and process it</p>
 
@@ -409,11 +467,11 @@ chip.Binding = Binding
         </li>
         
         
-        <li id="section-18">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>Save a placeholder for when a node is removed from the DOM so we can continue walking</p>
 
@@ -444,11 +502,11 @@ chip.Binding = Binding
         </li>
         
         
-        <li id="section-19">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>Skip over the current element (don&#39;t walk its children) on next call to next()</p>
 

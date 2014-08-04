@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, Walker, addReferences, addThis, argSeparator, attribs, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, filterBindings, finishedChain, getBindings, getFunctionCall, ignore, initParse, invertedExpr, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, sortBindings, splitLinks, strings, urlExp, _i, _len,
+  var App, Binding, Controller, Filter, Observer, Route, Router, Walker, addReferences, addThis, argSeparator, bindingSort, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, filterAttributes, finishedChain, getBoundAttributes, getFunctionCall, ignore, initParse, invertedExpr, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, sortAttributes, splitLinks, strings, urlExp,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -1931,7 +1931,7 @@ if (!Date.prototype.toISOString) {
       };
       this.bindings[name] = entry;
       this.bindings.push(entry);
-      this.bindings.sort(sortBindings);
+      this.bindings.sort(bindingSort);
       return entry;
     };
 
@@ -1948,7 +1948,9 @@ if (!Date.prototype.toISOString) {
     Binding.addEventBinding = function(name, options) {
       var eventName;
       eventName = name.split('-').slice(1).join('-');
-      return this.addBinding(name, options, function(element, expr, controller) {
+      return this.addBinding(name, options, function(element, attr, controller) {
+        var expr;
+        expr = attr.value;
         return element.on(eventName, function(event) {
           event.preventDefault();
           if (!element.attr('disabled')) {
@@ -1961,7 +1963,9 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.addKeyEventBinding = function(name, keyCode, ctrlKey, options) {
-      return this.addBinding(name, options, function(element, expr, controller) {
+      return this.addBinding(name, options, function(element, attr, controller) {
+        var expr;
+        expr = attr.value;
         return element.on('keydown', function(event) {
           if ((ctrlKey != null) && (event.ctrlKey !== ctrlKey && event.metaKey !== ctrlKey)) {
             return;
@@ -1982,10 +1986,9 @@ if (!Date.prototype.toISOString) {
     Binding.addAttributeBinding = function(name, options) {
       var attrName;
       attrName = name.split('-').slice(1).join('-');
-      return this.addBinding(name, options, function(element, expr, controller) {
-        if (options != null ? options.inverted : void 0) {
-          expr = expression.revert(expr);
-        }
+      return this.addBinding(name, options, function(element, attr, controller) {
+        var expr;
+        expr = attr.value;
         return controller.watch(expr, function(value) {
           if (value != null) {
             element.attr(attrName, value);
@@ -2000,7 +2003,9 @@ if (!Date.prototype.toISOString) {
     Binding.addAttributeToggleBinding = function(name, options) {
       var attrName;
       attrName = name.split('-').slice(1).join('-');
-      return this.addBinding(name, options, function(element, expr, controller) {
+      return this.addBinding(name, options, function(element, attr, controller) {
+        var expr;
+        expr = attr.value;
         return controller.watch(expr, function(value) {
           return element.attr(attrName, value && true || false);
         });
@@ -2008,7 +2013,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.process = function(element, controller) {
-      var binding, bindings, node, parentNode, processed, slice, value, walker;
+      var attribute, attributes, binding, node, parentNode, processed, slice, walker;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
       }
@@ -2023,17 +2028,23 @@ if (!Date.prototype.toISOString) {
       while (node = walker.next()) {
         element = $(node);
         parentNode = node.parentNode;
-        bindings = slice.call(node.attributes).map(getBindings).filter(filterBindings).sort(sortBindings);
-        if (bindings.length) {
+        attributes = slice.call(node.attributes).map(getBoundAttributes).filter(filterAttributes).sort(sortAttributes);
+        if (attributes.length) {
           processed.push(element);
         }
-        while (bindings.length) {
-          binding = bindings.shift();
-          value = node.getAttribute(binding.name);
+        while (attributes.length) {
+          attribute = attributes.shift();
+          binding = attribute.binding;
           if (!binding.keepAttribute) {
-            element.removeAttr(binding.name);
+            element.removeAttr(attribute.name);
           }
-          binding.handler(element, value, controller);
+          if (binding.name.slice(-2) === '-*') {
+            attribute.match = attribute.name.replace(binding.name.slice(0, -1), '');
+            attribute.camel = attribute.match.replace(/[-_]+(\w)/g, function(_, char) {
+              return char.toUpperCase();
+            });
+          }
+          binding.handler(element, attribute, controller);
           if (node.parentNode !== parentNode) {
             processed.pop();
             break;
@@ -2047,25 +2058,41 @@ if (!Date.prototype.toISOString) {
 
   })();
 
-  getBindings = function(attr) {
-    var binding;
+  getBoundAttributes = function(attr) {
+    var binding, parts;
     binding = Binding.bindings[attr.name];
-    if (binding) {
-      return binding;
+    if (!binding) {
+      parts = attr.name.split('-');
+      while (parts.length > 1) {
+        parts.pop();
+        if ((binding = Binding.bindings[parts.join('-') + '-*'])) {
+          break;
+        }
+      }
     }
-    if (expression.isInverted(attr.value)) {
-      return Binding.bindings['$attr-' + attr.name] || Binding.addAttributeBinding('$attr-' + attr.name, {
-        inverted: true,
-        name: attr.name
-      });
+    if (!binding) {
+      if (expression.isInverted(attr.value)) {
+        binding = Binding.bindings['attr-*'];
+      }
+    }
+    if (binding) {
+      return {
+        binding: binding,
+        name: attr.name,
+        value: attr.value
+      };
     }
   };
 
-  filterBindings = function(binding) {
+  filterAttributes = function(binding) {
     return binding;
   };
 
-  sortBindings = function(a, b) {
+  sortAttributes = function(a, b) {
+    return b.binding.priority - a.binding.priority;
+  };
+
+  bindingSort = function(a, b) {
     return b.priority - a.priority;
   };
 
@@ -2162,7 +2189,9 @@ if (!Date.prototype.toISOString) {
 
   chip.binding('bind-debug', {
     priority: 200
-  }, function(element, expr, controller) {
+  }, function(element, attr, controller) {
+    var expr;
+    expr = attr.value;
     return controller.watch(expr, function(value) {
       return typeof console !== "undefined" && console !== null ? console.info('Debug:', expr, '=', value) : void 0;
     });
@@ -2172,19 +2201,23 @@ if (!Date.prototype.toISOString) {
     keepAttribute: true
   }, function() {});
 
-  chip.binding('bind-text', function(element, expr, controller) {
+  chip.binding('bind-text', function(element, attr, controller) {
+    var expr;
+    expr = attr.value;
     return controller.watch(expr, function(value) {
       return element.text(value != null ? value : '');
     });
   });
 
-  chip.binding('bind-html', function(element, expr, controller) {
+  chip.binding('bind-html', function(element, attr, controller) {
+    var expr;
+    expr = attr.value;
     return controller.watch(expr, function(value) {
       return element.html(value != null ? value : '');
     });
   });
 
-  chip.binding('bind-trim', function(element, expr, controller) {
+  chip.binding('bind-trim', function(element, attr, controller) {
     var next, node, _results;
     node = element.get(0).firstChild;
     _results = [];
@@ -2202,7 +2235,7 @@ if (!Date.prototype.toISOString) {
     return _results;
   });
 
-  chip.binding('bind-translate', function(element, expr, controller) {
+  chip.binding('bind-translate', function(element, attr, controller) {
     var i, node, nodes, placeholders, refresh, text, _i, _len;
     nodes = element.get(0).childNodes;
     text = '';
@@ -2246,8 +2279,9 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.binding('bind-class', function(element, expr, controller) {
-    var prevClasses;
+  chip.binding('bind-class', function(element, attr, controller) {
+    var expr, prevClasses;
+    expr = attr.value;
     prevClasses = (element.attr('class') || '').split(/\s+/);
     if (prevClasses[0] === '') {
       prevClasses.pop();
@@ -2275,7 +2309,9 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('bind-attr', function(element, expr, controller) {
+  chip.binding('bind-attr', function(element, attr, controller) {
+    var expr;
+    expr = attr.value;
     return controller.watch(expr, function(value, oldValue, changes) {
       var attrName, attrValue, _results;
       if (changes) {
@@ -2306,8 +2342,9 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('bind-active', function(element, expr, controller) {
-    var link, refresh;
+  chip.binding('bind-active', function(element, attr, controller) {
+    var expr, link, refresh;
+    expr = attr.value;
     if (expr) {
       return controller.watch(expr, function(value) {
         if (value) {
@@ -2334,7 +2371,7 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.binding('bind-active-section', function(element, expr, controller) {
+  chip.binding('bind-active-section', function(element, attr, controller) {
     var link, refresh;
     refresh = function() {
       if (link.length && location.href.indexOf(link.get(0).href) === 0) {
@@ -2352,8 +2389,9 @@ if (!Date.prototype.toISOString) {
     return refresh();
   });
 
-  chip.binding('bind-change-action', function(element, expr, controller) {
-    var action, _ref;
+  chip.binding('bind-change-action', function(element, attr, controller) {
+    var action, expr, _ref;
+    expr = attr.value;
     _ref = expr.split(/\s*!\s*/), expr = _ref[0], action = _ref[1];
     return controller.watch(expr, function(value) {
       controller.thisElement = element;
@@ -2362,8 +2400,9 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('bind-value', function(element, expr, controller) {
-    var events, fieldExpr, getValue, observer, selectValueField, setValue, watchExpr;
+  chip.binding('bind-value', function(element, attr, controller) {
+    var events, expr, fieldExpr, getValue, observer, selectValueField, setValue, watchExpr;
+    expr = attr.value;
     watchExpr = expr;
     fieldExpr = element.attr('bind-value-field');
     element.removeAttr('bind-value-field');
@@ -2444,8 +2483,18 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  ['on-click', 'on-dblclick', 'on-submit', 'on-change', 'on-focus', 'on-blur', 'on-keydown', 'on-keyup', 'on-paste', 'on-load', 'on-unload', 'on-error'].forEach(function(name) {
-    return chip.eventBinding(name);
+  chip.binding('on-*', function(element, attr, controller) {
+    var eventName, expr;
+    eventName = attr.match;
+    expr = attr.value;
+    return element.on(eventName, function(event) {
+      event.preventDefault();
+      if (!element.attr('disabled')) {
+        controller.thisElement = element;
+        controller["eval"](expr);
+        return delete controller.thisElement;
+      }
+    });
   });
 
   keyCodes = {
@@ -2461,12 +2510,24 @@ if (!Date.prototype.toISOString) {
 
   chip.keyEventBinding('on-ctrl-enter', keyCodes.enter, true);
 
-  attribs = ['attr-class', 'attr-href', 'attr-src', 'attr-id', 'attr-value'];
-
-  for (_i = 0, _len = attribs.length; _i < _len; _i++) {
-    name = attribs[_i];
-    chip.attributeBinding(name);
-  }
+  chip.binding('attr-*', function(element, attr, controller) {
+    var attrName, expr;
+    if (attr.name !== attr.match) {
+      attrName = attr.match;
+      expr = attr.value;
+    } else {
+      attrName = attr.name;
+      expr = expression.revert(attr.value);
+    }
+    return controller.watch(expr, function(value) {
+      if (value != null) {
+        element.attr(attrName, value);
+        return element.trigger(attrName + 'Changed');
+      } else {
+        return element.removeAttr(attrName);
+      }
+    });
+  });
 
   ['attr-checked', 'attr-disabled', 'attr-multiple', 'attr-readonly', 'attr-selected'].forEach(function(name) {
     return chip.attributeToggleBinding(name);
@@ -2551,8 +2612,9 @@ if (!Date.prototype.toISOString) {
 
   chip.binding('bind-if', {
     priority: 50
-  }, function(element, expr, controller) {
-    var controllerName, placeholder, template;
+  }, function(element, attr, controller) {
+    var controllerName, expr, placeholder, template;
+    expr = attr.value;
     template = element;
     placeholder = $("<!--bind-if=\"" + expr + "\"-->").replaceAll(template);
     controllerName = element.attr('bind-controller');
@@ -2577,7 +2639,9 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('bind-show', function(element, expr, controller) {
+  chip.binding('bind-show', function(element, attr, controller) {
+    var expr;
+    expr = attr.value;
     return controller.watch(expr, function(value) {
       if (value) {
         return element.show();
@@ -2587,7 +2651,9 @@ if (!Date.prototype.toISOString) {
     });
   });
 
-  chip.binding('bind-hide', function(element, expr, controller) {
+  chip.binding('bind-hide', function(element, attr, controller) {
+    var expr;
+    expr = attr.value;
     return controller.watch(expr, function(value) {
       if (value) {
         return element.hide();
@@ -2599,8 +2665,9 @@ if (!Date.prototype.toISOString) {
 
   chip.binding('bind-unless', {
     priority: 50
-  }, function(element, expr, controller) {
-    var controllerName, placeholder, template;
+  }, function(element, attr, controller) {
+    var controllerName, expr, placeholder, template;
+    expr = attr.value;
     template = element;
     placeholder = $("<!--bind-unless=\"" + expr + "\"-->").replaceAll(template);
     controllerName = element.attr('bind-controller');
@@ -2627,9 +2694,9 @@ if (!Date.prototype.toISOString) {
 
   chip.binding('bind-each', {
     priority: 100
-  }, function(element, expr, controller) {
-    var controllerName, createElement, elements, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1;
-    orig = expr;
+  }, function(element, attr, controller) {
+    var controllerName, createElement, elements, expr, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1;
+    orig = expr = attr.value;
     _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
     if (!(itemName && expr)) {
       throw "Invalid bind-each=\"" + orig + '". Requires the format "item in list"' + ' or "key, propery in object".';
@@ -2726,13 +2793,20 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.binding('bind-partial', {
-    priority: 50
-  }, function(element, expr, controller) {
-    var childController, locals, nameExpr, parts;
-    parts = expr.split(/\s+with\s+locals?\s+/i);
-    nameExpr = parts.shift();
-    locals = parts.pop();
+    priority: 40
+  }, function(element, attr, controller) {
+    var childController, expr, properties;
+    expr = attr.value;
     childController = null;
+    if (element.children().length) {
+      properties = {
+        _partialContent: element.children().remove()
+      };
+    } else {
+      properties = {
+        _partialContent: null
+      };
+    }
     if (element.is('iframe')) {
       element.css({
         border: 'none',
@@ -2740,11 +2814,8 @@ if (!Date.prototype.toISOString) {
         width: '100%'
       });
     }
-    controller.watch(nameExpr, function(name) {
-      var e, properties, setup, _ref, _ref1;
-      if (locals) {
-        properties = controller["eval"](locals);
-      }
+    return controller.watch(expr, function(name) {
+      var e, setup, _ref, _ref1;
       if (element.is('iframe')) {
         if ((_ref = element.data('body')) != null) {
           _ref.triggerHandler('remove');
@@ -2792,22 +2863,36 @@ if (!Date.prototype.toISOString) {
         });
       }
     });
-    if (locals) {
-      return controller.watch(locals, true, function(value, old, changes) {
-        return changes.forEach(function(change) {
-          if (change.type === 'deleted') {
-            return delete childController[change.name];
-          } else {
-            return childController[change.name] = value[change.name];
-          }
-        });
+  });
+
+  chip.binding('local-*', {
+    priority: 20
+  }, function(element, attr, controller) {
+    var expr, prop;
+    expr = attr.value;
+    prop = attr.camel;
+    if (expr) {
+      return controller.watch(expr, function(value) {
+        return controller[prop] = value;
       });
+    } else {
+      return controller[prop] = true;
+    }
+  });
+
+  chip.binding('bind-content', {
+    priority: 40
+  }, function(element, attr, controller) {
+    if (controller._partialContent) {
+      return element.html(controller._partialContent);
     }
   });
 
   chip.binding('bind-controller', {
     priority: 30
-  }, function(element, controllerName, controller) {
+  }, function(element, attr, controller) {
+    var controllerName;
+    controllerName = attr.value;
     element = element.clone().replaceAll(element);
     return controller.child({
       element: element,
@@ -3116,7 +3201,7 @@ if (!Date.prototype.toISOString) {
     EDIT_ADD = 2;
     EDIT_DELETE = 3;
     diff.arrays = function(value, oldValue) {
-      var currentEnd, currentStart, distances, index, minLength, oldEnd, oldIndex, oldStart, op, ops, prefixCount, splice, splices, suffixCount, _j, _len1;
+      var currentEnd, currentStart, distances, index, minLength, oldEnd, oldIndex, oldStart, op, ops, prefixCount, splice, splices, suffixCount, _i, _len;
       currentStart = 0;
       currentEnd = value.length;
       oldStart = 0;
@@ -3143,8 +3228,8 @@ if (!Date.prototype.toISOString) {
       splices = [];
       index = currentStart;
       oldIndex = oldStart;
-      for (_j = 0, _len1 = ops.length; _j < _len1; _j++) {
-        op = ops[_j];
+      for (_i = 0, _len = ops.length; _i < _len; _i++) {
+        op = ops[_i];
         if (op === EDIT_LEAVE) {
           if (splice) {
             splices.push(splice);
@@ -3180,8 +3265,8 @@ if (!Date.prototype.toISOString) {
       return splices;
     };
     sharedPrefix = function(current, old, searchLength) {
-      var i, _j;
-      for (i = _j = 0; 0 <= searchLength ? _j < searchLength : _j > searchLength; i = 0 <= searchLength ? ++_j : --_j) {
+      var i, _i;
+      for (i = _i = 0; 0 <= searchLength ? _i < searchLength : _i > searchLength; i = 0 <= searchLength ? ++_i : --_i) {
         if (diff.basic(current[i], old[i])) {
           return i;
         }
@@ -3253,19 +3338,19 @@ if (!Date.prototype.toISOString) {
       return edits;
     };
     return calcEditDistances = function(current, currentStart, currentEnd, old, oldStart, oldEnd) {
-      var columnCount, distances, i, j, north, rowCount, west, _j, _k, _l, _m;
+      var columnCount, distances, i, j, north, rowCount, west, _i, _j, _k, _l;
       rowCount = oldEnd - oldStart + 1;
       columnCount = currentEnd - currentStart + 1;
       distances = new Array(rowCount);
-      for (i = _j = 0; 0 <= rowCount ? _j < rowCount : _j > rowCount; i = 0 <= rowCount ? ++_j : --_j) {
+      for (i = _i = 0; 0 <= rowCount ? _i < rowCount : _i > rowCount; i = 0 <= rowCount ? ++_i : --_i) {
         distances[i] = new Array(columnCount);
         distances[i][0] = i;
       }
-      for (j = _k = 0; 0 <= columnCount ? _k < columnCount : _k > columnCount; j = 0 <= columnCount ? ++_k : --_k) {
+      for (j = _j = 0; 0 <= columnCount ? _j < columnCount : _j > columnCount; j = 0 <= columnCount ? ++_j : --_j) {
         distances[0][j] = j;
       }
-      for (i = _l = 1; 1 <= rowCount ? _l < rowCount : _l > rowCount; i = 1 <= rowCount ? ++_l : --_l) {
-        for (j = _m = 1; 1 <= columnCount ? _m < columnCount : _m > columnCount; j = 1 <= columnCount ? ++_m : --_m) {
+      for (i = _k = 1; 1 <= rowCount ? _k < rowCount : _k > rowCount; i = 1 <= rowCount ? ++_k : --_k) {
+        for (j = _l = 1; 1 <= columnCount ? _l < columnCount : _l > columnCount; j = 1 <= columnCount ? ++_l : --_l) {
           if (!diff.basic(current[currentStart + j - 1], old[oldStart + i - 1])) {
             distances[i][j] = distances[i - 1][j - 1];
           } else {
