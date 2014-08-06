@@ -161,7 +161,7 @@ class Binding
         processed.pop().trigger('processed')
 
     while node = walker.next()
-      element = $ node
+      element = $ node if node isnt walker.root
       parentNode = node.parentNode
       
       # Finds binding attributes and sorts by priority.
@@ -189,12 +189,17 @@ class Binding
           attribute.camel = attribute.match
             .replace /[-_]+(\w)/g, (_, char) -> char.toUpperCase()
 
-        binding.handler element, attribute, controller
+        result = binding.handler element, attribute, controller
         
         # Stops processing of this element (and its children will be skipped) if the element was removed from the DOM.
         # This is used for bind-if and bind-each etc.
         if node.parentNode isnt parentNode
           processed.pop()
+          break
+        
+        # If the binding returns false it signifies a new controller has taken over
+        if result is false
+          walker.skip()
           break
 
     element
@@ -240,9 +245,11 @@ class Walker
     
   # Get the next element and process it
   next: ->
-    return @current = @root if @current is null
-    @current = @placeholder if @current isnt @root and @current.parentNode is null
-    @current = @traverse @current
+    if @current is null
+      @current = @root
+    else
+      @current = @placeholder if @current isnt @root and @current.parentNode is null
+      @current = @traverse @current
     # Save a placeholder for when a node is removed from the DOM so we can continue walking
     if @current
       @placeholder =

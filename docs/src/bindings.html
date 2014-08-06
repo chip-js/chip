@@ -414,7 +414,19 @@ This is for advanced use and a generic example doesn&#39;t fit.</p>
   controller.watch expr, (value) -&gt;
     controller.thisElement = element
     controller.eval action
-    <span class="keyword">delete</span> controller.thisElement</pre></div></div>
+    <span class="keyword">delete</span> controller.thisElement
+
+
+chip.binding <span class="string">'bind-show'</span>, (element, attr, controller) -&gt;
+  expr = attr.value
+  controller.watch expr, (value) -&gt;
+    <span class="keyword">if</span> value <span class="keyword">then</span> element.show() <span class="keyword">else</span> element.hide()
+
+
+chip.binding <span class="string">'bind-hide'</span>, (element, attr, controller) -&gt;
+  expr = attr.value
+  controller.watch expr, (value) -&gt;
+    <span class="keyword">if</span> value <span class="keyword">then</span> element.hide() <span class="keyword">else</span> element.show()</pre></div></div>
             
         </li>
         
@@ -593,12 +605,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'on-*'</span>, (element, attr, controller) -&gt;
   eventName = attr.match
   expr = attr.value
-  element.<span class="literal">on</span> eventName, (event) -&gt;
-    event.preventDefault()
-    <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
-      controller.thisElement = element
-      controller.eval expr
-      <span class="keyword">delete</span> controller.thisElement</pre></div></div>
+  element.<span class="literal">on</span> eventName, (event) -&gt;</pre></div></div>
             
         </li>
         
@@ -606,8 +613,26 @@ value of <code>&#39;Jac&#39;</code>.</p>
         <li id="section-19">
             <div class="annotation">
               
-              <div class="pilwrap for-h2">
+              <div class="pilwrap ">
                 <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>prevent native events, let custom events use this mechanism</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> event.originalEvent
+      event.preventDefault()
+    <span class="keyword">unless</span> element.attr(<span class="string">'disabled'</span>)
+      controller.eval expr, event: event, element: element</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <h2>on-[key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches.</p>
@@ -630,11 +655,11 @@ value of <code>&#39;Jac&#39;</code>.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <h2>on-[control key event]</h2>
 <p>Adds a handler which is triggered when the keydown event&#39;s <code>keyCode</code> property matches and the ctrlKey or metaKey is
@@ -655,11 +680,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <h2>attr-[attribute]</h2>
 <p>Adds a handler to set the attribute of element to the value of the expression.</p>
@@ -696,11 +721,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <h2>attr-[toggle attribute]</h2>
 <p>Adds a handler to toggle an attribute on or off if the expression is truthy or falsey.</p>
@@ -729,11 +754,11 @@ pressed.</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <h2>animateIn/animateOut</h2>
 <p>Adds a jquery plugin to allow an element to use CSS3 transitions or animations to animate in or out of the page. This
@@ -782,11 +807,11 @@ $.fn.<span class="function"><span class="title">animateOut</span></span> = (dont
         </li>
         
         
-        <li id="section-24">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>backup to ensure it “finishes”</p>
 
@@ -805,16 +830,47 @@ $.fn.<span class="function"><span class="title">cssDuration</span></span> = (pro
   millis <span class="keyword">or</span> <span class="number">0</span>
 
 $.fn.<span class="function"><span class="title">willAnimate</span></span> = -&gt;
-  (<span class="property">@cssDuration</span> <span class="string">'transition'</span> <span class="keyword">or</span> <span class="property">@cssDuration</span> <span class="string">'animation'</span>) <span class="keyword">and</span> <span class="literal">true</span></pre></div></div>
+  (<span class="property">@cssDuration</span> <span class="string">'transition'</span> <span class="keyword">or</span> <span class="property">@cssDuration</span> <span class="string">'animation'</span>) <span class="keyword">and</span> <span class="literal">true</span>
+
+
+chip.binding.prepareScope = <span class="function"><span class="title">prepareScope</span></span> = (element, attr, controller) -&gt;
+  template = $ element <span class="comment"># use a placeholder for the element and the element as a template</span>
+  placeholder = $(<span class="string">"&lt;!--<span class="subst">#{attr.name}</span>=\"<span class="subst">#{attr.value}</span>\"--&gt;"</span>)
+  <span class="keyword">if</span> controller.element[<span class="number">0</span>] <span class="keyword">is</span> element[<span class="number">0</span>]
+    frag = document.createDocumentFragment()
+    frag.appendChild placeholder[<span class="number">0</span>]
+    element[<span class="number">0</span>] = frag
+  <span class="keyword">else</span>
+    element.replaceWith placeholder
+  controllerName = element.attr(<span class="string">'bind-controller'</span>)
+  element.removeAttr(<span class="string">'bind-controller'</span>)
+  template: template, placeholder: placeholder, controllerName: controllerName
+
+chip.binding.swapPlaceholder = <span class="function"><span class="title">swapPlaceholder</span></span> = (placeholder, element) -&gt;</pre></div></div>
             
         </li>
         
         
-        <li id="section-25">
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>A simple placeholder.replaceWith(element) but that works with fragments</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  placeholder[<span class="number">0</span>].parentNode.replaceChild element[<span class="number">0</span>], placeholder[<span class="number">0</span>]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <h2>bind-if</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -836,42 +892,28 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'bind-if'</span>, priority: <span class="number">50</span>, (element, attr, controller) -&gt;
   expr = attr.value
-  template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-  placeholder = $(<span class="string">"&lt;!--bind-if=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
-  controllerName = element.attr(<span class="string">'bind-controller'</span>)
-  element.removeAttr(<span class="string">'bind-controller'</span>)
+  { template, placeholder, controllerName } = prepareScope element, attr, controller
   
   controller.watch expr, (value) -&gt;
     <span class="keyword">if</span> value
-      <span class="keyword">if</span> placeholder.parent().length
+      <span class="keyword">if</span> placeholder[<span class="number">0</span>].parentNode
         element = template.clone().animateIn()
         controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
-        placeholder.replaceWith(element)
+        swapPlaceholder placeholder, element
     <span class="keyword">else</span>
-      <span class="keyword">unless</span> placeholder.parent().length
+      <span class="keyword">unless</span> placeholder[<span class="number">0</span>].parentNode
         element.before placeholder
         element.animateOut()
-
-
-chip.binding <span class="string">'bind-show'</span>, (element, attr, controller) -&gt;
-  expr = attr.value
-  controller.watch expr, (value) -&gt;
-    <span class="keyword">if</span> value <span class="keyword">then</span> element.show() <span class="keyword">else</span> element.hide()
-
-
-chip.binding <span class="string">'bind-hide'</span>, (element, attr, controller) -&gt;
-  expr = attr.value
-  controller.watch expr, (value) -&gt;
-    <span class="keyword">if</span> value <span class="keyword">then</span> element.hide() <span class="keyword">else</span> element.show()</pre></div></div>
+  <span class="keyword">return</span> <span class="literal">false</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-26">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <h2>bind-unless</h2>
 <p>Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -893,30 +935,28 @@ when hidden, replacing it with a non-visible placeholder and not needlessly exec
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'bind-unless'</span>, priority: <span class="number">50</span>, (element, attr, controller) -&gt;
   expr = attr.value
-  template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-  placeholder = $(<span class="string">"&lt;!--bind-unless=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
-  controllerName = element.attr(<span class="string">'bind-controller'</span>)
-  element.removeAttr(<span class="string">'bind-controller'</span>)
+  { template, placeholder, controllerName } = prepareScope element, attr, controller
   
   controller.watch expr, (value) -&gt;
     <span class="keyword">unless</span> value
-      <span class="keyword">if</span> placeholder.parent().length
+      <span class="keyword">if</span> placeholder[<span class="number">0</span>].parentNode
         element = template.clone().animateIn()
         controller.child element: element, name: controllerName, passthrough: <span class="literal">true</span>
-        placeholder.replaceWith(element)
+        swapPlaceholder placeholder, element
     <span class="keyword">else</span>
-      <span class="keyword">unless</span> placeholder.parent().length
+      <span class="keyword">unless</span> placeholder[<span class="number">0</span>].parentNode
         element.before placeholder
-        element.animateOut()</pre></div></div>
+        element.animateOut()
+  <span class="keyword">return</span> <span class="literal">false</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-27">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <h2>bind-each</h2>
 <p>Adds a handler to duplicate an element for each item in an array. Creates a new controller for each item, optionally
@@ -954,19 +994,16 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'bind-each'</span>, priority: <span class="number">100</span>, (element, attr, controller) -&gt;
   orig = expr = attr.value
+  { template, placeholder, controllerName } = prepareScope element, attr, controller
   [ itemName, expr ] = expr.split <span class="regexp">/\s+in\s+/</span>
+  [ itemName, propName ] = itemName.split <span class="regexp">/\s*,\s*/</span>
   <span class="keyword">unless</span> itemName <span class="keyword">and</span> expr
     <span class="keyword">throw</span> <span class="string">"Invalid bind-each=\""</span> +
       orig +
       <span class="string">'". Requires the format "item in list"'</span> +
       <span class="string">' or "key, propery in object".'</span>
   
-  controllerName = element.attr(<span class="string">'bind-controller'</span>)
-  element.removeAttr(<span class="string">'bind-controller'</span>)
-  [ itemName, propName ] = itemName.split <span class="regexp">/\s*,\s*/</span>
   
-  template = element <span class="comment"># use a placeholder for the element and the element as a template</span>
-  placeholder = $(<span class="string">"&lt;!--bind-each=\"<span class="subst">#{expr}</span>\"--&gt;"</span>).replaceAll(template)
   elements = $()
   properties = {}
   value = <span class="literal">null</span>
@@ -1034,16 +1071,17 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
             <span class="keyword">else</span>
               elements.eq(newElements.length).before(newElements)
           <span class="keyword">else</span>
-            elements.eq(splice.index - <span class="number">1</span>).after(newElements)</pre></div></div>
+            elements.eq(splice.index - <span class="number">1</span>).after(newElements)
+  <span class="keyword">return</span> <span class="literal">false</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-28">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <h2>bind-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
@@ -1055,11 +1093,11 @@ to pass data into a partial.</p>
         </li>
         
         
-        <li id="section-29">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p><strong>Example:</strong></p>
 <pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div bind-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
@@ -1125,16 +1163,17 @@ body {
         return unless name?
         element.html controller.template(name)
         element.animateIn()
-        childController = controller.child element: element, name: name, properties: properties</pre></div></div>
+        childController = controller.child element: element, name: name, properties: properties
+  return false</pre></div></div>
             
         </li>
         
         
-        <li id="section-30">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <h2>local-*</h2>
 <p>You may pass data into bind-partial, bind-each, bind-if, or bind-controller using this wildcard
@@ -1150,18 +1189,49 @@ will be converted to camelCase and the value will be set locally. Examples:
   prop = attr.camel
   <span class="keyword">if</span> expr
     controller.watch expr, (value) -&gt;
-      controller[prop] = value
+      controller[prop] = value</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>make a two-way binding if it doesn&#39;t end in a method</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> expr.slice(-<span class="number">1</span>) <span class="keyword">isnt</span> <span class="string">')'</span>
+      controller.watch prop, <span class="literal">true</span>, (value) -&gt;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>Set on the parent</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        controller.parent.passthrough().evalSetter expr, value
   <span class="keyword">else</span>
     controller[prop] = <span class="literal">true</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-31">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
               <h2>bind-content</h2>
 <p>Allows an element with a <code>bind-partial</code> attribute to include HTML within it that may be inserted somewhere
@@ -1174,11 +1244,11 @@ inside the partial&#39;s template.</p>
         </li>
         
         
-        <li id="section-32">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-36">&#182;</a>
               </div>
               <p>Allow a default if content wasn&#39;t provided by the partial</p>
 
@@ -1190,11 +1260,11 @@ inside the partial&#39;s template.</p>
         </li>
         
         
-        <li id="section-33">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
               <h2>bind-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the
@@ -1210,23 +1280,9 @@ as a form) or provide functionality provided by that controller to the element.<
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.binding <span class="string">'bind-controller'</span>, priority: <span class="number">30</span>, (element, attr, controller) -&gt;
-  controllerName = attr.value</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-34">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
-              </div>
-              <p>clone and remove the original element to start a new controlled section</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  element = element.clone().replaceAll element
-  controller.child element: element, name: controllerName</pre></div></div>
+  controllerName = attr.value
+  controller.child element: element, name: controllerName
+  <span class="keyword">return</span> <span class="literal">false</span></pre></div></div>
             
         </li>
         

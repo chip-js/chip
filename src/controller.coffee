@@ -58,8 +58,11 @@ class Controller
         false
   
   # Evaluates an expression immediately, returning the result
-  eval: (expr) ->
-    expression.get(expr).call(this)
+  eval: (expr, args) ->
+    if args
+      options = args: Object.keys(args)
+      values = options.args.map (key) -> args[key]
+    expression.get(expr, options).apply(this, values)
   
   # Evaluates an expression immediately as a setter, setting `value` to the expression running through filters.
   evalSetter: (expr, value) ->

@@ -36,17 +36,18 @@ expression.revert = (expr) ->
 # The function's scope expects an object named `_filters` on it to provide the
 # filters that the expressions may use.
 expression.get = (expr, options = {}) ->
+  args = options.args or []
+  cacheKey = expr + '|' + args.join(',')
   # Returns the cached function for this expression if it exists.
-  func = expression.cache[expr]
+  func = expression.cache[cacheKey]
   return func if func
 
   # Prefix all property lookups with the `this` keyword. Ignores keywords
   # (window, true, false) and extra args 
   body = expression.parse expr, options
-  args = options.args or []
   
   try
-    func = expression.cache[expr] = Function(args..., body)
+    func = expression.cache[cacheKey] = Function(args..., body)
   catch e
     # Throws an error if the expression was not valid JavaScript
     if console

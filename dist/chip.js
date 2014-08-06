@@ -512,7 +512,7 @@ if (!Date.prototype.toISOString) {
 }
 
 (function() {
-  var App, Binding, Controller, Filter, Observer, Route, Router, Walker, addReferences, addThis, argSeparator, bindingSort, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, filterAttributes, finishedChain, getBoundAttributes, getFunctionCall, ignore, initParse, invertedExpr, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, sortAttributes, splitLinks, strings, urlExp,
+  var App, Binding, Controller, Filter, Observer, Route, Router, Walker, addReferences, addThis, argSeparator, bindingSort, chainLink, chainLinks, chip, continuation, currentIndex, currentReference, diff, div, emptyQuoteExpr, expression, filterAttributes, finishedChain, getBoundAttributes, getFunctionCall, ignore, initParse, invertedExpr, keyCode, keyCodes, makeEventEmitter, name, nextChain, parens, parseChain, parseExpr, parseFilters, parseFunction, parsePart, parsePath, parsePropertyChains, parseQuery, pathname, pipeExpr, prepareScope, propExpr, pullOutStrings, putInStrings, quoteExpr, referenceCount, setterExpr, sortAttributes, splitLinks, strings, swapPlaceholder, urlExp,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty;
 
@@ -1107,8 +1107,17 @@ if (!Date.prototype.toISOString) {
       });
     };
 
-    Controller.prototype["eval"] = function(expr) {
-      return expression.get(expr).call(this);
+    Controller.prototype["eval"] = function(expr, args) {
+      var options, values;
+      if (args) {
+        options = {
+          args: Object.keys(args)
+        };
+        values = options.args.map(function(key) {
+          return args[key];
+        });
+      }
+      return expression.get(expr, options).apply(this, values);
     };
 
     Controller.prototype.evalSetter = function(expr, value) {
@@ -1281,18 +1290,19 @@ if (!Date.prototype.toISOString) {
   };
 
   expression.get = function(expr, options) {
-    var args, body, e, func;
+    var args, body, cacheKey, e, func;
     if (options == null) {
       options = {};
     }
-    func = expression.cache[expr];
+    args = options.args || [];
+    cacheKey = expr + '|' + args.join(',');
+    func = expression.cache[cacheKey];
     if (func) {
       return func;
     }
     body = expression.parse(expr, options);
-    args = options.args || [];
     try {
-      func = expression.cache[expr] = Function.apply(null, __slice.call(args).concat([body]));
+      func = expression.cache[cacheKey] = Function.apply(null, __slice.call(args).concat([body]));
     } catch (_error) {
       e = _error;
       if (console) {
@@ -1880,7 +1890,7 @@ if (!Date.prototype.toISOString) {
           }
           linkHost = this.host.replace(/:80$|:443$/, '');
           url = $(this).attr('href').replace(/^#/, '');
-          if ((linkHost && linkHost !== location.host) || this.href === location.href + '#') {
+          if (linkHost && linkHost !== location.host) {
             return;
           }
           if (event.metaKey || event.ctrlKey || $(event.target).attr('target')) {
@@ -1890,6 +1900,9 @@ if (!Date.prototype.toISOString) {
             return;
           }
           event.preventDefault();
+          if (this.href === location.href + '#') {
+            return;
+          }
           if (!$(this).attr('disabled')) {
             return app.redirect(url);
           }
@@ -2013,7 +2026,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Binding.process = function(element, controller) {
-      var attribute, attributes, binding, node, parentNode, processed, slice, walker;
+      var attribute, attributes, binding, node, parentNode, processed, result, slice, walker;
       if (!(controller instanceof Controller)) {
         throw new Error('A Controller is required to bind a jQuery element.');
       }
@@ -2026,7 +2039,9 @@ if (!Date.prototype.toISOString) {
         }
       };
       while (node = walker.next()) {
-        element = $(node);
+        if (node !== walker.root) {
+          element = $(node);
+        }
         parentNode = node.parentNode;
         attributes = slice.call(node.attributes).map(getBoundAttributes).filter(filterAttributes).sort(sortAttributes);
         if (attributes.length) {
@@ -2044,9 +2059,13 @@ if (!Date.prototype.toISOString) {
               return char.toUpperCase();
             });
           }
-          binding.handler(element, attribute, controller);
+          result = binding.handler(element, attribute, controller);
           if (node.parentNode !== parentNode) {
             processed.pop();
+            break;
+          }
+          if (result === false) {
+            walker.skip();
             break;
           }
         }
@@ -2114,12 +2133,13 @@ if (!Date.prototype.toISOString) {
 
     Walker.prototype.next = function() {
       if (this.current === null) {
-        return this.current = this.root;
+        this.current = this.root;
+      } else {
+        if (this.current !== this.root && this.current.parentNode === null) {
+          this.current = this.placeholder;
+        }
+        this.current = this.traverse(this.current);
       }
-      if (this.current !== this.root && this.current.parentNode === null) {
-        this.current = this.placeholder;
-      }
-      this.current = this.traverse(this.current);
       if (this.current) {
         this.placeholder = {
           parentNode: this.current.parentNode,
@@ -2400,6 +2420,30 @@ if (!Date.prototype.toISOString) {
     });
   });
 
+  chip.binding('bind-show', function(element, attr, controller) {
+    var expr;
+    expr = attr.value;
+    return controller.watch(expr, function(value) {
+      if (value) {
+        return element.show();
+      } else {
+        return element.hide();
+      }
+    });
+  });
+
+  chip.binding('bind-hide', function(element, attr, controller) {
+    var expr;
+    expr = attr.value;
+    return controller.watch(expr, function(value) {
+      if (value) {
+        return element.hide();
+      } else {
+        return element.show();
+      }
+    });
+  });
+
   chip.binding('bind-value', function(element, attr, controller) {
     var events, expr, fieldExpr, getValue, observer, selectValueField, setValue, watchExpr;
     expr = attr.value;
@@ -2488,11 +2532,14 @@ if (!Date.prototype.toISOString) {
     eventName = attr.match;
     expr = attr.value;
     return element.on(eventName, function(event) {
-      event.preventDefault();
+      if (event.originalEvent) {
+        event.preventDefault();
+      }
       if (!element.attr('disabled')) {
-        controller.thisElement = element;
-        controller["eval"](expr);
-        return delete controller.thisElement;
+        return controller["eval"](expr, {
+          event: event,
+          element: element
+        });
       }
     });
   });
@@ -2610,102 +2657,95 @@ if (!Date.prototype.toISOString) {
     return (this.cssDuration('transition' || this.cssDuration('animation'))) && true;
   };
 
+  chip.binding.prepareScope = prepareScope = function(element, attr, controller) {
+    var controllerName, frag, placeholder, template;
+    template = $(element);
+    placeholder = $("<!--" + attr.name + "=\"" + attr.value + "\"-->");
+    if (controller.element[0] === element[0]) {
+      frag = document.createDocumentFragment();
+      frag.appendChild(placeholder[0]);
+      element[0] = frag;
+    } else {
+      element.replaceWith(placeholder);
+    }
+    controllerName = element.attr('bind-controller');
+    element.removeAttr('bind-controller');
+    return {
+      template: template,
+      placeholder: placeholder,
+      controllerName: controllerName
+    };
+  };
+
+  chip.binding.swapPlaceholder = swapPlaceholder = function(placeholder, element) {
+    return placeholder[0].parentNode.replaceChild(element[0], placeholder[0]);
+  };
+
   chip.binding('bind-if', {
     priority: 50
   }, function(element, attr, controller) {
-    var controllerName, expr, placeholder, template;
+    var controllerName, expr, placeholder, template, _ref;
     expr = attr.value;
-    template = element;
-    placeholder = $("<!--bind-if=\"" + expr + "\"-->").replaceAll(template);
-    controllerName = element.attr('bind-controller');
-    element.removeAttr('bind-controller');
-    return controller.watch(expr, function(value) {
+    _ref = prepareScope(element, attr, controller), template = _ref.template, placeholder = _ref.placeholder, controllerName = _ref.controllerName;
+    controller.watch(expr, function(value) {
       if (value) {
-        if (placeholder.parent().length) {
+        if (placeholder[0].parentNode) {
           element = template.clone().animateIn();
           controller.child({
             element: element,
             name: controllerName,
             passthrough: true
           });
-          return placeholder.replaceWith(element);
+          return swapPlaceholder(placeholder, element);
         }
       } else {
-        if (!placeholder.parent().length) {
+        if (!placeholder[0].parentNode) {
           element.before(placeholder);
           return element.animateOut();
         }
       }
     });
-  });
-
-  chip.binding('bind-show', function(element, attr, controller) {
-    var expr;
-    expr = attr.value;
-    return controller.watch(expr, function(value) {
-      if (value) {
-        return element.show();
-      } else {
-        return element.hide();
-      }
-    });
-  });
-
-  chip.binding('bind-hide', function(element, attr, controller) {
-    var expr;
-    expr = attr.value;
-    return controller.watch(expr, function(value) {
-      if (value) {
-        return element.hide();
-      } else {
-        return element.show();
-      }
-    });
+    return false;
   });
 
   chip.binding('bind-unless', {
     priority: 50
   }, function(element, attr, controller) {
-    var controllerName, expr, placeholder, template;
+    var controllerName, expr, placeholder, template, _ref;
     expr = attr.value;
-    template = element;
-    placeholder = $("<!--bind-unless=\"" + expr + "\"-->").replaceAll(template);
-    controllerName = element.attr('bind-controller');
-    element.removeAttr('bind-controller');
-    return controller.watch(expr, function(value) {
+    _ref = prepareScope(element, attr, controller), template = _ref.template, placeholder = _ref.placeholder, controllerName = _ref.controllerName;
+    controller.watch(expr, function(value) {
       if (!value) {
-        if (placeholder.parent().length) {
+        if (placeholder[0].parentNode) {
           element = template.clone().animateIn();
           controller.child({
             element: element,
             name: controllerName,
             passthrough: true
           });
-          return placeholder.replaceWith(element);
+          return swapPlaceholder(placeholder, element);
         }
       } else {
-        if (!placeholder.parent().length) {
+        if (!placeholder[0].parentNode) {
           element.before(placeholder);
           return element.animateOut();
         }
       }
     });
+    return false;
   });
 
   chip.binding('bind-each', {
     priority: 100
   }, function(element, attr, controller) {
-    var controllerName, createElement, elements, expr, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1;
+    var controllerName, createElement, elements, expr, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1, _ref2;
     orig = expr = attr.value;
-    _ref = expr.split(/\s+in\s+/), itemName = _ref[0], expr = _ref[1];
+    _ref = prepareScope(element, attr, controller), template = _ref.template, placeholder = _ref.placeholder, controllerName = _ref.controllerName;
+    _ref1 = expr.split(/\s+in\s+/), itemName = _ref1[0], expr = _ref1[1];
+    _ref2 = itemName.split(/\s*,\s*/), itemName = _ref2[0], propName = _ref2[1];
     if (!(itemName && expr)) {
       throw "Invalid bind-each=\"" + orig + '". Requires the format "item in list"' + ' or "key, propery in object".';
     }
-    controllerName = element.attr('bind-controller');
-    element.removeAttr('bind-controller');
-    _ref1 = itemName.split(/\s*,\s*/), itemName = _ref1[0], propName = _ref1[1];
-    template = element;
-    placeholder = $("<!--bind-each=\"" + expr + "\"-->").replaceAll(template);
     elements = $();
     properties = {};
     value = null;
@@ -2728,7 +2768,7 @@ if (!Date.prototype.toISOString) {
       });
       return newElement.get(0);
     };
-    return controller.watch(expr, function(newValue, oldValue, splices) {
+    controller.watch(expr, function(newValue, oldValue, splices) {
       var hasNew;
       value = newValue;
       if (!splices) {
@@ -2790,6 +2830,7 @@ if (!Date.prototype.toISOString) {
         });
       }
     });
+    return false;
   });
 
   chip.binding('bind-partial', {
@@ -2814,7 +2855,7 @@ if (!Date.prototype.toISOString) {
         width: '100%'
       });
     }
-    return controller.watch(expr, function(name) {
+    controller.watch(expr, function(name) {
       var e, setup, _ref, _ref1;
       if (element.is('iframe')) {
         if ((_ref = element.data('body')) != null) {
@@ -2863,6 +2904,7 @@ if (!Date.prototype.toISOString) {
         });
       }
     });
+    return false;
   });
 
   chip.binding('local-*', {
@@ -2872,9 +2914,14 @@ if (!Date.prototype.toISOString) {
     expr = attr.value;
     prop = attr.camel;
     if (expr) {
-      return controller.watch(expr, function(value) {
+      controller.watch(expr, function(value) {
         return controller[prop] = value;
       });
+      if (expr.slice(-1) !== ')') {
+        return controller.watch(prop, true, function(value) {
+          return controller.parent.passthrough().evalSetter(expr, value);
+        });
+      }
     } else {
       return controller[prop] = true;
     }
@@ -2893,11 +2940,11 @@ if (!Date.prototype.toISOString) {
   }, function(element, attr, controller) {
     var controllerName;
     controllerName = attr.value;
-    element = element.clone().replaceAll(element);
-    return controller.child({
+    controller.child({
       element: element,
       name: controllerName
     });
+    return false;
   });
 
   chip.filter('filter', function(value, filterFunc) {

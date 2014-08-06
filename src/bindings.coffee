@@ -288,6 +288,18 @@ chip.binding 'bind-change-action', (element, attr, controller) ->
     delete controller.thisElement
 
 
+chip.binding 'bind-show', (element, attr, controller) ->
+  expr = attr.value
+  controller.watch expr, (value) ->
+    if value then element.show() else element.hide()
+
+
+chip.binding 'bind-hide', (element, attr, controller) ->
+  expr = attr.value
+  controller.watch expr, (value) ->
+    if value then element.hide() else element.show()
+
+
 # ## bind-value
 # Adds a handler which sets the value of an HTML form element. This handler also updates the data as it is changed in
 # the form element, providing two way binding.
@@ -418,11 +430,11 @@ chip.binding 'on-*', (element, attr, controller) ->
   eventName = attr.match
   expr = attr.value
   element.on eventName, (event) ->
-    event.preventDefault()
+    # prevent native events, let custom events use this mechanism
+    if event.originalEvent
+      event.preventDefault()
     unless element.attr('disabled')
-      controller.thisElement = element
-      controller.eval expr
-      delete controller.thisElement
+      controller.eval expr, event: event, element: element
 
 
 # ## on-[key event]
@@ -580,6 +592,25 @@ $.fn.cssDuration = (property) ->
 $.fn.willAnimate = ->
   (@cssDuration 'transition' or @cssDuration 'animation') and true
 
+
+chip.binding.prepareScope = prepareScope = (element, attr, controller) ->
+  template = $ element # use a placeholder for the element and the element as a template
+  placeholder = $("<!--#{attr.name}=\"#{attr.value}\"-->")
+  if controller.element[0] is element[0]
+    frag = document.createDocumentFragment()
+    frag.appendChild placeholder[0]
+    element[0] = frag
+  else
+    element.replaceWith placeholder
+  controllerName = element.attr('bind-controller')
+  element.removeAttr('bind-controller')
+  template: template, placeholder: placeholder, controllerName: controllerName
+
+chip.binding.swapPlaceholder = swapPlaceholder = (placeholder, element) ->
+  # A simple placeholder.replaceWith(element) but that works with fragments
+  placeholder[0].parentNode.replaceChild element[0], placeholder[0]
+
+
 # ## bind-if
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
 # when hidden, replacing it with a non-visible placeholder and not needlessly executing bindings inside.
@@ -602,33 +633,19 @@ $.fn.willAnimate = ->
 # ```
 chip.binding 'bind-if', priority: 50, (element, attr, controller) ->
   expr = attr.value
-  template = element # use a placeholder for the element and the element as a template
-  placeholder = $("<!--bind-if=\"#{expr}\"-->").replaceAll(template)
-  controllerName = element.attr('bind-controller')
-  element.removeAttr('bind-controller')
+  { template, placeholder, controllerName } = prepareScope element, attr, controller
   
   controller.watch expr, (value) ->
     if value
-      if placeholder.parent().length
+      if placeholder[0].parentNode
         element = template.clone().animateIn()
         controller.child element: element, name: controllerName, passthrough: true
-        placeholder.replaceWith(element)
+        swapPlaceholder placeholder, element
     else
-      unless placeholder.parent().length
+      unless placeholder[0].parentNode
         element.before placeholder
         element.animateOut()
-
-
-chip.binding 'bind-show', (element, attr, controller) ->
-  expr = attr.value
-  controller.watch expr, (value) ->
-    if value then element.show() else element.hide()
-
-
-chip.binding 'bind-hide', (element, attr, controller) ->
-  expr = attr.value
-  controller.watch expr, (value) ->
-    if value then element.hide() else element.show()
+  return false
 
 # ## bind-unless
 # Adds a handler to show or hide the element if the value is truthy or falsey. Actually removes the element from the DOM
@@ -652,21 +669,19 @@ chip.binding 'bind-hide', (element, attr, controller) ->
 # ```
 chip.binding 'bind-unless', priority: 50, (element, attr, controller) ->
   expr = attr.value
-  template = element # use a placeholder for the element and the element as a template
-  placeholder = $("<!--bind-unless=\"#{expr}\"-->").replaceAll(template)
-  controllerName = element.attr('bind-controller')
-  element.removeAttr('bind-controller')
+  { template, placeholder, controllerName } = prepareScope element, attr, controller
   
   controller.watch expr, (value) ->
     unless value
-      if placeholder.parent().length
+      if placeholder[0].parentNode
         element = template.clone().animateIn()
         controller.child element: element, name: controllerName, passthrough: true
-        placeholder.replaceWith(element)
+        swapPlaceholder placeholder, element
     else
-      unless placeholder.parent().length
+      unless placeholder[0].parentNode
         element.before placeholder
         element.animateOut()
+  return false
 
 
 # ## bind-each
@@ -707,19 +722,16 @@ chip.binding 'bind-unless', priority: 50, (element, attr, controller) ->
 # ```
 chip.binding 'bind-each', priority: 100, (element, attr, controller) ->
   orig = expr = attr.value
+  { template, placeholder, controllerName } = prepareScope element, attr, controller
   [ itemName, expr ] = expr.split /\s+in\s+/
+  [ itemName, propName ] = itemName.split /\s*,\s*/
   unless itemName and expr
     throw "Invalid bind-each=\"" +
       orig +
       '". Requires the format "item in list"' +
       ' or "key, propery in object".'
   
-  controllerName = element.attr('bind-controller')
-  element.removeAttr('bind-controller')
-  [ itemName, propName ] = itemName.split /\s*,\s*/
   
-  template = element # use a placeholder for the element and the element as a template
-  placeholder = $("<!--bind-each=\"#{expr}\"-->").replaceAll(template)
   elements = $()
   properties = {}
   value = null
@@ -788,6 +800,7 @@ chip.binding 'bind-each', priority: 100, (element, attr, controller) ->
               elements.eq(newElements.length).before(newElements)
           else
             elements.eq(splice.index - 1).after(newElements)
+  return false
 
 
 # ## bind-partial
@@ -861,6 +874,7 @@ body {
         element.html controller.template(name)
         element.animateIn()
         childController = controller.child element: element, name: name, properties: properties
+  return false
 
 
 # ## local-*
@@ -875,6 +889,11 @@ chip.binding 'local-*', priority: 20, (element, attr, controller) ->
   if expr
     controller.watch expr, (value) ->
       controller[prop] = value
+    # make a two-way binding if it doesn't end in a method
+    if expr.slice(-1) isnt ')'
+      controller.watch prop, true, (value) ->
+        # Set on the parent
+        controller.parent.passthrough().evalSetter expr, value
   else
     controller[prop] = true
 
@@ -905,6 +924,5 @@ chip.binding 'bind-content', priority: 40, (element, attr, controller) ->
 # ```
 chip.binding 'bind-controller', priority: 30, (element, attr, controller) ->
   controllerName = attr.value
-  # clone and remove the original element to start a new controlled section
-  element = element.clone().replaceAll element
   controller.child element: element, name: controllerName
+  return false

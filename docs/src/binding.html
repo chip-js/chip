@@ -247,7 +247,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;attr-checked&#39;)</code>.</p>
         processed.pop().trigger(<span class="string">'processed'</span>)
 
     <span class="keyword">while</span> node = walker.next()
-      element = $ node
+      element = $ node <span class="keyword">if</span> node <span class="keyword">isnt</span> walker.root
       parentNode = node.parentNode</pre></div></div>
             
         </li>
@@ -336,7 +336,7 @@ makes the DOM cleaner.</p>
           attribute.camel = attribute.match
             .replace <span class="regexp">/[-_]+(\w)/g</span>, (_, char) -&gt; char.toUpperCase()
 
-        binding.handler element, attribute, controller</pre></div></div>
+        result = binding.handler element, attribute, controller</pre></div></div>
             
         </li>
         
@@ -354,6 +354,23 @@ This is used for bind-if and bind-each etc.</p>
             
             <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> node.parentNode <span class="keyword">isnt</span> parentNode
           processed.pop()
+          <span class="keyword">break</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>If the binding returns false it signifies a new controller has taken over</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> result <span class="keyword">is</span> <span class="literal">false</span>
+          walker.skip()
           <span class="keyword">break</span>
 
     element
@@ -364,11 +381,11 @@ This is used for bind-if and bind-each etc.</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>If a binding is registered for the exact name or for prefix-* use that</p>
 
@@ -387,11 +404,11 @@ This is used for bind-if and bind-each etc.</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Cache in an object since attr.value will empty once it is removed</p>
 
@@ -407,11 +424,11 @@ This is used for bind-if and bind-each etc.</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Sets up the binding handlers for this jQuery element and all of its descendants</p>
 
@@ -434,11 +451,11 @@ chip.Binding = Binding
         </li>
         
         
-        <li id="section-19">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>A callback to do additional things when a node and it&#39;s children are done</p>
 
@@ -449,29 +466,31 @@ chip.Binding = Binding
         </li>
         
         
-        <li id="section-20">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>Get the next element and process it</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>  next: -&gt;
-    <span class="keyword">return</span> <span class="property">@current</span> = <span class="property">@root</span> <span class="keyword">if</span> <span class="property">@current</span> <span class="keyword">is</span> <span class="literal">null</span>
-    <span class="property">@current</span> = <span class="property">@placeholder</span> <span class="keyword">if</span> <span class="property">@current</span> <span class="keyword">isnt</span> <span class="property">@root</span> <span class="keyword">and</span> <span class="property">@current</span>.parentNode <span class="keyword">is</span> <span class="literal">null</span>
-    <span class="property">@current</span> = <span class="property">@traverse</span> <span class="property">@current</span></pre></div></div>
+    <span class="keyword">if</span> <span class="property">@current</span> <span class="keyword">is</span> <span class="literal">null</span>
+      <span class="property">@current</span> = <span class="property">@root</span>
+    <span class="keyword">else</span>
+      <span class="property">@current</span> = <span class="property">@placeholder</span> <span class="keyword">if</span> <span class="property">@current</span> <span class="keyword">isnt</span> <span class="property">@root</span> <span class="keyword">and</span> <span class="property">@current</span>.parentNode <span class="keyword">is</span> <span class="literal">null</span>
+      <span class="property">@current</span> = <span class="property">@traverse</span> <span class="property">@current</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-21">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>Save a placeholder for when a node is removed from the DOM so we can continue walking</p>
 
@@ -502,11 +521,11 @@ chip.Binding = Binding
         </li>
         
         
-        <li id="section-22">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>Skip over the current element (don&#39;t walk its children) on next call to next()</p>
 

@@ -169,8 +169,11 @@ the value in the expression changes. An expression can be as simple as <code>nam
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  eval: (expr) -&gt;
-    expression.get(expr).call(<span class="keyword">this</span>)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  eval: (expr, args) -&gt;
+    <span class="keyword">if</span> args
+      options = args: Object.keys(args)
+      values = options.args.map (key) -&gt; args[key]
+    expression.get(expr, options).apply(<span class="keyword">this</span>, values)</pre></div></div>
             
         </li>
         

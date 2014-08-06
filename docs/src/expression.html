@@ -115,7 +115,9 @@ filters that the expressions may use.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>expression.<span class="function"><span class="title">get</span></span> = (expr, options = {}) -&gt;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>expression.<span class="function"><span class="title">get</span></span> = (expr, options = {}) -&gt;
+  args = options.args <span class="keyword">or</span> []
+  cacheKey = expr + <span class="string">'|'</span> + args.join(<span class="string">','</span>)</pre></div></div>
             
         </li>
         
@@ -130,7 +132,7 @@ filters that the expressions may use.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  func = expression.cache[expr]
+            <div class="content"><div class='highlight'><pre>  func = expression.cache[cacheKey]
   <span class="keyword">return</span> func <span class="keyword">if</span> func</pre></div></div>
             
         </li>
@@ -148,10 +150,9 @@ filters that the expressions may use.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  body = expression.parse expr, options
-  args = options.args <span class="keyword">or</span> []
   
   <span class="keyword">try</span>
-    func = expression.cache[expr] = Function(args..., body)
+    func = expression.cache[cacheKey] = Function(args..., body)
   <span class="keyword">catch</span> e</pre></div></div>
             
         </li>
