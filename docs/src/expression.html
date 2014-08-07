@@ -89,7 +89,7 @@ errors, allows for filters on data, and provides detailed error reporting.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>expression.<span class="function"><span class="title">revert</span></span> = (expr) -&gt;
-  expr = <span class="string">'"'</span> + expr.replace(invertedExpr, (match, expr) -&gt; <span class="string">'" + '</span> + expr + <span class="string">' + "'</span>) + <span class="string">'"'</span>
+  expr = <span class="string">'"'</span> + expr.replace(invertedExpr, (match, expr) -&gt; <span class="string">'" + ('</span> + expr + <span class="string">') + "'</span>) + <span class="string">'"'</span>
   expr.replace(<span class="regexp">/^"" \+ | \+ ""$/g</span>, <span class="string">''</span>)</pre></div></div>
             
         </li>

@@ -1284,7 +1284,7 @@ if (!Date.prototype.toISOString) {
 
   expression.revert = function(expr) {
     expr = '"' + expr.replace(invertedExpr, function(match, expr) {
-      return '" + ' + expr + ' + "';
+      return '" + (' + expr + ') + "';
     }) + '"';
     return expr.replace(/^"" \+ | \+ ""$/g, '');
   };

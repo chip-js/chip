@@ -18,7 +18,7 @@ expression.isInverted = (expr) ->
 
 # Reverts an inverted expression from `/user/{{user.id}}` to `"/user/" + user.id`
 expression.revert = (expr) ->
-  expr = '"' + expr.replace(invertedExpr, (match, expr) -> '" + ' + expr + ' + "') + '"'
+  expr = '"' + expr.replace(invertedExpr, (match, expr) -> '" + (' + expr + ') + "') + '"'
   expr.replace(/^"" \+ | \+ ""$/g, '')
 
 
