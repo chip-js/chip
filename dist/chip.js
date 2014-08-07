@@ -2020,7 +2020,7 @@ if (!Date.prototype.toISOString) {
         var expr;
         expr = attr.value;
         return controller.watch(expr, function(value) {
-          return element.attr(attrName, value && true || false);
+          return element.prop(attrName, value && true || false);
         });
       });
     };

@@ -144,7 +144,7 @@ class Binding
     @addBinding name, options, (element, attr, controller) ->
       expr = attr.value
       controller.watch expr, (value) ->
-        element.attr attrName, value and true or false
+        element.prop attrName, value and true or false
   
   
   # Processes the bindings for the given jQuery element and all of its children.
