@@ -82,8 +82,8 @@
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'reduce'</span>, (value, reduceFunc, initialValue) -&gt;
   <span class="keyword">return</span> value <span class="keyword">unless</span> value? <span class="keyword">and</span> reduceFunc
   <span class="keyword">if</span> Array.isArray value
-    <span class="keyword">if</span> arguments.length <span class="keyword">is</span> <span class="number">4</span> <span class="keyword">then</span> value.reduce(reduceFunc, initialValue) <span class="keyword">else</span> value.reduce(reduceFunc)
-  <span class="keyword">else</span> <span class="keyword">if</span> arguments.length <span class="keyword">is</span> <span class="number">4</span>
+    <span class="keyword">if</span> arguments.length <span class="keyword">is</span> <span class="number">3</span> <span class="keyword">then</span> value.reduce(reduceFunc, initialValue) <span class="keyword">else</span> value.reduce(reduceFunc)
+  <span class="keyword">else</span> <span class="keyword">if</span> arguments.length <span class="keyword">is</span> <span class="number">3</span>
     reduceFunc(initialValue, value)</pre></div></div>
             
         </li>

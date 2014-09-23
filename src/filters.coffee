@@ -21,8 +21,8 @@ chip.filter 'map', (value, mapFunc) ->
 chip.filter 'reduce', (value, reduceFunc, initialValue) ->
   return value unless value? and reduceFunc
   if Array.isArray value
-    if arguments.length is 4 then value.reduce(reduceFunc, initialValue) else value.reduce(reduceFunc)
-  else if arguments.length is 4
+    if arguments.length is 3 then value.reduce(reduceFunc, initialValue) else value.reduce(reduceFunc)
+  else if arguments.length is 3
     reduceFunc(initialValue, value)
 
 # ## reduce
