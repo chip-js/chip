@@ -60,7 +60,7 @@ that function.
 ### View/HTML
 
 The view is just your HTML. The HTML document and your HTML templates contain no non-HTML markup. To fill your HTML
-with data provided by your controller you use HTML attributes, prefixed with "chip-". Each of these attributes creates
+with data provided by your controller, you use HTML attributes prefixed with "bind-". Each of these attributes creates
 a "binding" from the controller to the HTML. Chip registers "binding handlers" to handle the different types of binding
 you may wish to use. There is a binding handler for displaying text, showing/hiding an element, or repeating an element
 for each item in an array. Chip comes with a bunch of
@@ -71,7 +71,7 @@ easily using jQuery. Take a look at the provided binding handlers and check out 
 ### Routing
 
 Routing is how you specify what HTML to show when the URL changes. You define routes with a URL and a name, and the
-template and controller with the given name will be displayed within the element on your page that has the `chip-route`
+template and controller with the given name will be displayed within the element on your page that has the `bind-route`
 attribute.
 
 And that's all there is to Chip. It provides basic structure and helps with the boilerplate of keeping the view in sync
@@ -84,9 +84,9 @@ application is made available to the user by attaching functionality to attribut
 these attributes can be used for a few things:
 
 1. **Presenting data**. For example, referencing an array on a controller (`controller.todos`) to a
-`chip-each="todo in todos"` attribute will present that HTML element for each todo in the array. Individual data can
-also be inserted into the DOM using the `chip-text` attribute as with `chip-text="todo.description"`.
-2. **Embedding Action**. Setting an expression to the `chip-change` attribute will trigger the expression when the
+`bind-each="todo in todos"` attribute will present that HTML element for each todo in the array. Individual data can
+also be inserted into the DOM using the `bind-text` attribute as with `bind-text="todo.description"`.
+2. **Embedding Action**. Setting an expression to the `bind-change` attribute will trigger the expression when the
 element's change event fires.
 3. **Presenting State**. For example, HTML classes can be added to or removed from an element based on the state of an
 object.
@@ -138,8 +138,8 @@ through to persisting the data to the model.
 3. Include the additional property in the HTML.
 
 ```html
-<input class="edit" chip-value="editDescription" chip-esc="cancelEditing()" chip-blur="cancelEditing()" chip-enter="saveTodo()">
-<input class="edit-priority" chip-value="priority" chip-esc="cancelEditing()" chip-blur="cancelEditing()" chip-enter="saveTodo()">
+<input class="edit" bind-value="editDescription" on-esc="cancelEditing()" on-blur="cancelEditing()" on-enter="saveTodo()">
+<input class="edit-priority" bind-value="priority" on-esc="cancelEditing()" on-blur="cancelEditing()" on-enter="saveTodo()">
 ```
 Adding an input here is a good start and we can see that the `saveTodo` expression here should handle this new input well. Functionally speaking,
 this should complete our feature addition, though the actual display and styling begs for a bit more work.
