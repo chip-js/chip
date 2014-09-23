@@ -2973,12 +2973,12 @@ if (!Date.prototype.toISOString) {
       return value;
     }
     if (Array.isArray(value)) {
-      if (arguments.length === 4) {
+      if (arguments.length === 3) {
         return value.reduce(reduceFunc, initialValue);
       } else {
         return value.reduce(reduceFunc);
       }
-    } else if (arguments.length === 4) {
+    } else if (arguments.length === 3) {
       return reduceFunc(initialValue, value);
     }
   });
