@@ -333,7 +333,7 @@ chip.binding 'bind-value', (element, attr, controller) ->
     selectValueField = if fieldExpr then controller.eval(fieldExpr) else null
     chip.lastSelectValueField = selectValueField
   
-  if element.is('option') and fieldExpr or chip.lastSelectValueField
+  if element.is('option') and (fieldExpr or chip.lastSelectValueField)
     if fieldExpr
       selectValueField = controller.eval(fieldExpr)
     else
@@ -344,6 +344,8 @@ chip.binding 'bind-value', (element, attr, controller) ->
   getValue =
     if element.attr('type') is 'checkbox' # Handles checkboxes
       -> element.prop('checked')
+    else if element.attr('type') is 'file'
+      -> element.get(0).files?[0]
     else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
       -> element.find('input:radio:checked').val()
     else if selectValueField and element.is('select')
@@ -358,6 +360,8 @@ chip.binding 'bind-value', (element, attr, controller) ->
   setValue =
     if element.attr('type') is 'checkbox'
       (value) -> element.prop('checked', value)
+    else if element.attr('type') is 'file'
+      (value) -> # "get" only
     else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
       (value) ->
         element.find('input:radio:checked').prop('checked', false) # in case the value isn't found in radios
