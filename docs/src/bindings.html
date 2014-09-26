@@ -468,7 +468,7 @@ value of <code>&#39;Jac&#39;</code>.</p>
     selectValueField = <span class="keyword">if</span> fieldExpr <span class="keyword">then</span> controller.eval(fieldExpr) <span class="keyword">else</span> <span class="literal">null</span>
     chip.lastSelectValueField = selectValueField
   
-  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'option'</span>) <span class="keyword">and</span> fieldExpr <span class="keyword">or</span> chip.lastSelectValueField
+  <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">'option'</span>) <span class="keyword">and</span> (fieldExpr <span class="keyword">or</span> chip.lastSelectValueField)
     <span class="keyword">if</span> fieldExpr
       selectValueField = controller.eval(fieldExpr)
     <span class="keyword">else</span>
@@ -491,6 +491,8 @@ value of <code>&#39;Jac&#39;</code>.</p>
             <div class="content"><div class='highlight'><pre>  getValue =
     <span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span> <span class="comment"># Handles checkboxes</span>
       -&gt; element.prop(<span class="string">'checked'</span>)
+    <span class="keyword">else</span> <span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'file'</span>
+      -&gt; element.get(<span class="number">0</span>).files?[<span class="number">0</span>]
     <span class="keyword">else</span> <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">':not(input,select,textarea,option)'</span>) <span class="comment"># Handles a group of radio inputs</span>
       -&gt; element.find(<span class="string">'input:radio:checked'</span>).val()
     <span class="keyword">else</span> <span class="keyword">if</span> selectValueField <span class="keyword">and</span> element.<span class="keyword">is</span>(<span class="string">'select'</span>)
@@ -505,6 +507,8 @@ value of <code>&#39;Jac&#39;</code>.</p>
   setValue =
     <span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'checkbox'</span>
       (value) -&gt; element.prop(<span class="string">'checked'</span>, value)
+    <span class="keyword">else</span> <span class="keyword">if</span> element.attr(<span class="string">'type'</span>) <span class="keyword">is</span> <span class="string">'file'</span>
+      (value) -&gt; <span class="comment"># "get" only</span>
     <span class="keyword">else</span> <span class="keyword">if</span> element.<span class="keyword">is</span>(<span class="string">':not(input,select,textarea,option)'</span>) <span class="comment"># Handles a group of radio inputs</span>
       (value) -&gt;
         element.find(<span class="string">'input:radio:checked'</span>).prop(<span class="string">'checked'</span>, <span class="literal">false</span>) <span class="comment"># in case the value isn't found in radios</span>

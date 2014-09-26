@@ -2454,7 +2454,7 @@ if (!Date.prototype.toISOString) {
       selectValueField = fieldExpr ? controller["eval"](fieldExpr) : null;
       chip.lastSelectValueField = selectValueField;
     }
-    if (element.is('option') && fieldExpr || chip.lastSelectValueField) {
+    if (element.is('option') && (fieldExpr || chip.lastSelectValueField)) {
       if (fieldExpr) {
         selectValueField = controller["eval"](fieldExpr);
       } else {
@@ -2464,6 +2464,9 @@ if (!Date.prototype.toISOString) {
     }
     getValue = element.attr('type') === 'checkbox' ? function() {
       return element.prop('checked');
+    } : element.attr('type') === 'file' ? function() {
+      var _ref;
+      return (_ref = element.get(0).files) != null ? _ref[0] : void 0;
     } : element.is(':not(input,select,textarea,option)') ? function() {
       return element.find('input:radio:checked').val();
     } : selectValueField && element.is('select') ? function(realValue) {
@@ -2477,7 +2480,7 @@ if (!Date.prototype.toISOString) {
     };
     setValue = element.attr('type') === 'checkbox' ? function(value) {
       return element.prop('checked', value);
-    } : element.is(':not(input,select,textarea,option)') ? function(value) {
+    } : element.attr('type') === 'file' ? function(value) {} : element.is(':not(input,select,textarea,option)') ? function(value) {
       element.find('input:radio:checked').prop('checked', false);
       return element.find('input:radio[value="' + value + '"]').prop('checked', true);
     } : function(value) {
