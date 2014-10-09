@@ -735,7 +735,16 @@ chip.binding 'bind-each', priority: 100, (element, attr, controller) ->
       '". Requires the format "item in list"' +
       ' or "key, propery in object".'
   
-  
+  # Allow bind-each="i in [0...10]" or bind-each="pageNum in [1..pageCount]"
+  if (match = expr.match /\[(.+?)(\.{2,3})(.+)\]/)
+    if match[2] is '..'
+      controller.__each_range = (start = 0, end = 0) ->
+        num for num in [start..end]
+    else
+      controller.__each_range = (start = 0, end = 0) ->
+        num for num in [start...end]
+    expr = "__each_range(#{match[1]}, #{match[3]})"
+
   elements = $()
   properties = {}
   value = null
