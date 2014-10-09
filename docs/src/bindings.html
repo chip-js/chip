@@ -1005,9 +1005,30 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
     <span class="keyword">throw</span> <span class="string">"Invalid bind-each=\""</span> +
       orig +
       <span class="string">'". Requires the format "item in list"'</span> +
-      <span class="string">' or "key, propery in object".'</span>
-  
-  
+      <span class="string">' or "key, propery in object".'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>Allow bind-each=&quot;i in [0…10]“ or bind-each=”pageNum in [1..pageCount]&quot;</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="keyword">if</span> (match = expr.match <span class="regexp">/\[(.+?)(\.{2,3})(.+)\]/</span>)
+    <span class="keyword">if</span> match[<span class="number">2</span>] <span class="keyword">is</span> <span class="string">'..'</span>
+      controller.<span class="function"><span class="title">__each_range</span></span> = (start = <span class="number">0</span>, end = <span class="number">0</span>) -&gt;
+        num <span class="keyword">for</span> num <span class="keyword">in</span> [start..end]
+    <span class="keyword">else</span>
+      controller.<span class="function"><span class="title">__each_range</span></span> = (start = <span class="number">0</span>, end = <span class="number">0</span>) -&gt;
+        num <span class="keyword">for</span> num <span class="keyword">in</span> [start...end]
+    expr = <span class="string">"__each_range(<span class="subst">#{match[<span class="number">1</span>]}</span>, <span class="subst">#{match[<span class="number">3</span>]}</span>)"</span>
+
   elements = $()
   properties = {}
   value = <span class="literal">null</span>
@@ -1081,11 +1102,11 @@ by inside the element. <code>arrayName</code> is any expression, e.g. <code>post
         </li>
         
         
-        <li id="section-30">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <h2>bind-partial</h2>
 <p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
@@ -1097,11 +1118,11 @@ to pass data into a partial.</p>
         </li>
         
         
-        <li id="section-31">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <p><strong>Example:</strong></p>
 <pre><code class="lang-xml"><span class="comment">&lt;!--&lt;div bind-partial="userInfo"&gt;&lt;/div&gt;--&gt;</span>
@@ -1173,11 +1194,11 @@ body {
         </li>
         
         
-        <li id="section-32">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-33">&#182;</a>
               </div>
               <h2>local-*</h2>
 <p>You may pass data into bind-partial, bind-each, bind-if, or bind-controller using this wildcard
@@ -1198,11 +1219,11 @@ will be converted to camelCase and the value will be set locally. Examples:
         </li>
         
         
-        <li id="section-33">
+        <li id="section-34">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-34">&#182;</a>
               </div>
               <p>make a two-way binding if it doesn&#39;t end in a method</p>
 
@@ -1214,11 +1235,11 @@ will be converted to camelCase and the value will be set locally. Examples:
         </li>
         
         
-        <li id="section-34">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
+                <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
               <p>Set on the parent</p>
 
@@ -1231,11 +1252,11 @@ will be converted to camelCase and the value will be set locally. Examples:
         </li>
         
         
-        <li id="section-35">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-35">&#182;</a>
+                <a class="pilcrow" href="#section-36">&#182;</a>
               </div>
               <h2>bind-content</h2>
 <p>Allows an element with a <code>bind-partial</code> attribute to include HTML within it that may be inserted somewhere
@@ -1248,11 +1269,11 @@ inside the partial&#39;s template.</p>
         </li>
         
         
-        <li id="section-36">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
+                <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
               <p>Allow a default if content wasn&#39;t provided by the partial</p>
 
@@ -1264,11 +1285,11 @@ inside the partial&#39;s template.</p>
         </li>
         
         
-        <li id="section-37">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-37">&#182;</a>
+                <a class="pilcrow" href="#section-38">&#182;</a>
               </div>
               <h2>bind-controller</h2>
 <p>Adds a handler to create a new controller for this element and its descendants. The value of the attribute is the
