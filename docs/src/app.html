@@ -667,7 +667,7 @@ template and controller by the same name. This template will be placed in the fi
     $ =&gt;
       <span class="keyword">if</span> options.stop
         <span class="property">@router</span>.<span class="literal">off</span> <span class="string">'change'</span>, <span class="property">@_routeHandler</span> <span class="keyword">if</span> <span class="property">@_routeHandler</span>
-        <span class="property">@rootElement</span>.<span class="literal">off</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, <span class="property">@_clickHandler</span> <span class="keyword">if</span> <span class="property">@_clickHandler</span>
+        <span class="property">@rootElement</span>.<span class="literal">off</span> <span class="string">'click'</span>, <span class="property">@_clickHandler</span> <span class="keyword">if</span> <span class="property">@_clickHandler</span>
         <span class="keyword">return</span> <span class="property">@router</span>.listen options
       
       app = <span class="keyword">this</span>
@@ -675,19 +675,20 @@ template and controller by the same name. This template will be placed in the fi
         <span class="property">@trigger</span> <span class="string">'urlChange'</span>, [path]
       
       <span class="property">@_clickHandler</span> = (event) -&gt;
+        <span class="keyword">return</span> <span class="keyword">unless</span> (anchor = $(event.target).closest(<span class="string">'a[href]'</span>).get(<span class="number">0</span>))
         <span class="keyword">return</span> <span class="keyword">if</span> event.isDefaultPrevented() <span class="comment"># if something else already handled this, we won't</span>
-        linkHost = <span class="property">@host</span>.replace(<span class="regexp">/:80$|:443$/</span>, <span class="string">''</span>)
-        url = $(<span class="keyword">this</span>).attr(<span class="string">'href'</span>).replace(<span class="regexp">/^#/</span>, <span class="string">''</span>)
+        linkHost = anchor.host.replace(<span class="regexp">/:80$|:443$/</span>, <span class="string">''</span>)
+        url = $(anchor).attr(<span class="string">'href'</span>).replace(<span class="regexp">/^#/</span>, <span class="string">''</span>)
         <span class="keyword">return</span> <span class="keyword">if</span> (linkHost <span class="keyword">and</span> linkHost <span class="keyword">isnt</span> location.host)
         <span class="keyword">return</span> <span class="keyword">if</span> event.metaKey <span class="keyword">or</span> event.ctrlKey <span class="keyword">or</span> $(event.target).attr(<span class="string">'target'</span>)
         <span class="keyword">return</span> <span class="keyword">if</span> options.dontHandle404s <span class="keyword">and</span> <span class="keyword">not</span> app.hasMatchingRoutes(url)
         event.preventDefault()
-        <span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@href</span> <span class="keyword">is</span> location.href + <span class="string">'#'</span>
-        <span class="keyword">unless</span> $(<span class="keyword">this</span>).attr(<span class="string">'disabled'</span>)
+        <span class="keyword">return</span> <span class="keyword">if</span> anchor.href <span class="keyword">is</span> location.href + <span class="string">'#'</span>
+        <span class="keyword">unless</span> $(anchor).attr(<span class="string">'disabled'</span>)
           app.redirect url
       
       <span class="property">@router</span>.<span class="literal">on</span> <span class="string">'change'</span>, <span class="property">@_routeHandler</span>
-      <span class="property">@rootElement</span>.<span class="literal">on</span> <span class="string">'click'</span>, <span class="string">'a[href]'</span>, <span class="property">@_clickHandler</span>
+      <span class="property">@rootElement</span>.<span class="literal">on</span> <span class="string">'click'</span>, <span class="property">@_clickHandler</span>
       <span class="property">@router</span>.listen options
     <span class="keyword">this</span>
 
