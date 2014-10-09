@@ -57,6 +57,7 @@
             
             <div class="content"><div class='highlight'><pre>    <span class="property">@_observers</span> = []
     <span class="property">@_children</span> = []
+    <span class="property">@_syncListeners</span> = []
     <span class="property">@_closed</span> = <span class="literal">false</span></pre></div></div>
             
         </li>
@@ -357,18 +358,17 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
         </li>
         
         
-        <li id="section-17">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Runs the listener on every sync, stops once the controller is closed</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>  onSync: (listener) -&gt;
-    <span class="property">@_syncListeners</span> = [] <span class="keyword">unless</span> <span class="property">@_syncListeners</span>
     <span class="property">@_syncListeners</span>.push listener
     Observer.onSync(listener)
     <span class="keyword">this</span></pre></div></div>
@@ -376,11 +376,11 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
         </li>
         
         
-        <li id="section-18">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Removes a sync listener</p>
 
@@ -402,11 +402,11 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
         </li>
         
         
-        <li id="section-19">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>jQuery plugin to get the controller for the given element</p>
 
@@ -424,11 +424,11 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
         </li>
         
         
-        <li id="section-20">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>Provides the ‘remove’ event to be dispatched when an element is removed from the DOM and cleaned up. Gets
 called when an element with the event ‘remove’, is removed from the DOM. Manually call the listener.</p>

@@ -7,6 +7,7 @@ class Controller
     # Creates the observer array so child controllers don't inherit this from parents 
     @_observers = []
     @_children = []
+    @_syncListeners = []
     @_closed = false
   
   # Watches an expression for changes. Calls the `callback` immediately with the initial value and then every time
@@ -149,7 +150,6 @@ class Controller
   
   # Runs the listener on every sync, stops once the controller is closed
   onSync: (listener) ->
-    @_syncListeners = [] unless @_syncListeners
     @_syncListeners.push listener
     Observer.onSync(listener)
     this
