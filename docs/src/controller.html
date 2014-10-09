@@ -326,6 +326,26 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
+              <p>Syncs the observers to propogate changes to the HTML for this controller only</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  syncThis: -&gt;
+    <span class="property">@_observers</span>.forEach (observer) -&gt;
+      observer.sync()
+    <span class="property">@_children</span>.forEach (child) -&gt;
+      child.syncThis()
+    <span class="keyword">this</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
               <p>call callback after the current sync</p>
 
             </div>
