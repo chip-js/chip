@@ -1048,6 +1048,7 @@ if (!Date.prototype.toISOString) {
     function Controller() {
       this._observers = [];
       this._children = [];
+      this._syncListeners = [];
       this._closed = false;
     }
 
@@ -1197,15 +1198,22 @@ if (!Date.prototype.toISOString) {
       return this;
     };
 
+    Controller.prototype.syncThis = function() {
+      this._observers.forEach(function(observer) {
+        return observer.sync();
+      });
+      this._children.forEach(function(child) {
+        return child.syncThis();
+      });
+      return this;
+    };
+
     Controller.prototype.afterSync = function(callback) {
       Observer.afterSync(callback);
       return this;
     };
 
     Controller.prototype.onSync = function(listener) {
-      if (!this._syncListeners) {
-        this._syncListeners = [];
-      }
       this._syncListeners.push(listener);
       Observer.onSync(listener);
       return this;
@@ -1875,7 +1883,7 @@ if (!Date.prototype.toISOString) {
             _this.router.off('change', _this._routeHandler);
           }
           if (_this._clickHandler) {
-            _this.rootElement.off('click', 'a[href]', _this._clickHandler);
+            _this.rootElement.off('click', _this._clickHandler);
           }
           return _this.router.listen(options);
         }
@@ -1884,12 +1892,15 @@ if (!Date.prototype.toISOString) {
           return _this.trigger('urlChange', [path]);
         };
         _this._clickHandler = function(event) {
-          var linkHost, url;
+          var anchor, linkHost, url;
+          if (!(anchor = $(event.target).closest('a[href]').get(0))) {
+            return;
+          }
           if (event.isDefaultPrevented()) {
             return;
           }
-          linkHost = this.host.replace(/:80$|:443$/, '');
-          url = $(this).attr('href').replace(/^#/, '');
+          linkHost = anchor.host.replace(/:80$|:443$/, '');
+          url = $(anchor).attr('href').replace(/^#/, '');
           if (linkHost && linkHost !== location.host) {
             return;
           }
@@ -1900,15 +1911,15 @@ if (!Date.prototype.toISOString) {
             return;
           }
           event.preventDefault();
-          if (this.href === location.href + '#') {
+          if (anchor.href === location.href + '#') {
             return;
           }
-          if (!$(this).attr('disabled')) {
+          if (!$(anchor).attr('disabled')) {
             return app.redirect(url);
           }
         };
         _this.router.on('change', _this._routeHandler);
-        _this.rootElement.on('click', 'a[href]', _this._clickHandler);
+        _this.rootElement.on('click', _this._clickHandler);
         return _this.router.listen(options);
       });
       return this;
@@ -2741,13 +2752,47 @@ if (!Date.prototype.toISOString) {
   chip.binding('bind-each', {
     priority: 100
   }, function(element, attr, controller) {
-    var controllerName, createElement, elements, expr, itemName, orig, placeholder, propName, properties, template, value, _ref, _ref1, _ref2;
+    var controllerName, createElement, elements, expr, itemName, match, orig, placeholder, propName, properties, template, value, _ref, _ref1, _ref2;
     orig = expr = attr.value;
     _ref = prepareScope(element, attr, controller), template = _ref.template, placeholder = _ref.placeholder, controllerName = _ref.controllerName;
     _ref1 = expr.split(/\s+in\s+/), itemName = _ref1[0], expr = _ref1[1];
     _ref2 = itemName.split(/\s*,\s*/), itemName = _ref2[0], propName = _ref2[1];
     if (!(itemName && expr)) {
       throw "Invalid bind-each=\"" + orig + '". Requires the format "item in list"' + ' or "key, propery in object".';
+    }
+    if ((match = expr.match(/\[(.+?)(\.{2,3})(.+)\]/))) {
+      if (match[2] === '..') {
+        controller.__each_range = function(start, end) {
+          var num, _i, _results;
+          if (start == null) {
+            start = 0;
+          }
+          if (end == null) {
+            end = 0;
+          }
+          _results = [];
+          for (num = _i = start; start <= end ? _i <= end : _i >= end; num = start <= end ? ++_i : --_i) {
+            _results.push(num);
+          }
+          return _results;
+        };
+      } else {
+        controller.__each_range = function(start, end) {
+          var num, _i, _results;
+          if (start == null) {
+            start = 0;
+          }
+          if (end == null) {
+            end = 0;
+          }
+          _results = [];
+          for (num = _i = start; start <= end ? _i < end : _i > end; num = start <= end ? ++_i : --_i) {
+            _results.push(num);
+          }
+          return _results;
+        };
+      }
+      expr = "__each_range(" + match[1] + ", " + match[3] + ")";
     }
     elements = $();
     properties = {};
@@ -2951,13 +2996,31 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.filter('filter', function(value, filterFunc) {
+    var func, key, _i, _len;
     if (!Array.isArray(value)) {
       return [];
     }
     if (!filterFunc) {
       return value;
     }
-    return value.filter(filterFunc, this);
+    if (typeof filterFunc === 'function') {
+      return value.filter(filterFunc, this);
+    } else if (Array.isArray(filterFunc)) {
+      for (_i = 0, _len = filterFunc.length; _i < _len; _i++) {
+        func = filterFunc[_i];
+        value = value.filter(func, this);
+      }
+      return value;
+    } else if (typeof filterFunc === 'object') {
+      for (key in filterFunc) {
+        if (!__hasProp.call(filterFunc, key)) continue;
+        func = filterFunc[key];
+        if (typeof func === 'function') {
+          value = value.filter(func, this);
+        }
+      }
+      return value;
+    }
   });
 
   chip.filter('map', function(value, mapFunc) {
@@ -3027,13 +3090,14 @@ if (!Date.prototype.toISOString) {
     }
   });
 
-  chip.filter('sort', function(value, sortFunc) {
-    var dir, prop, _ref;
-    if (!sortFunc) {
+  chip.filter('sort', function(value, sortFunc, dir) {
+    var dir2, prop, _ref;
+    if (!(sortFunc && Array.isArray(value))) {
       return value;
     }
     if (typeof sortFunc === 'string') {
-      _ref = sortFunc.split(':'), prop = _ref[0], dir = _ref[1];
+      _ref = sortFunc.split(':'), prop = _ref[0], dir2 = _ref[1];
+      dir = dir || dir2;
       dir = dir === 'desc' ? -1 : 1;
       sortFunc = function(a, b) {
         if (a[prop] > b[prop]) {
@@ -3045,10 +3109,70 @@ if (!Date.prototype.toISOString) {
         return 0;
       };
     }
-    if (Array.isArray(value)) {
-      return value.slice().sort(sortFunc);
+    return value.slice().sort(sortFunc);
+  });
+
+  chip.filter('addQuery', function(value, queryField, queryValue) {
+    var addedQuery, expr, query, url, _ref;
+    url = value || location.href;
+    _ref = url.split('?'), url = _ref[0], query = _ref[1];
+    addedQuery = '';
+    if (queryValue != null) {
+      addedQuery = queryField + '=' + encodeURIComponent(queryValue);
+    }
+    if (query) {
+      expr = new RegExp('\\b' + queryField + '=[^&]*');
+      if (expr.test(query)) {
+        query = query.replace(expr, addedQuery);
+      } else if (addedQuery) {
+        query += '&' + addedQuery;
+      }
     } else {
+      query = addedQuery;
+    }
+    if (query) {
+      url = [url, query].join('?');
+    }
+    return url;
+  });
+
+  chip.filter('paginate', function(value, pageSize, defaultPage, name) {
+    var begin, currentPage, end, index, pageCount, pagination, _ref;
+    if (defaultPage == null) {
+      defaultPage = 1;
+    }
+    if (name == null) {
+      name = 'pagination';
+    }
+    if (!(pageSize && Array.isArray(value))) {
+      delete this.app.rootController[name];
+      this.trigger('paginated');
       return value;
+    } else {
+      pageCount = Math.ceil(value.length / pageSize);
+      if (defaultPage < 0) {
+        defaultPage = pageCount + defaultPage + 1;
+      } else if (typeof defaultPage === 'function') {
+        defaultPage = defaultPage(value, pageSize, pageCount) || 1;
+      }
+      currentPage = Math.min(pageCount, Math.max(1, ((_ref = this.query) != null ? _ref.page : void 0) || defaultPage));
+      index = currentPage - 1;
+      begin = index * pageSize;
+      end = Math.min(begin + pageSize, value.length);
+      if (!this.app.rootController[name]) {
+        this.app.rootController[name] = {};
+      }
+      pagination = this.app.rootController[name];
+      pagination.array = value;
+      pagination.page = value.slice(begin, end);
+      pagination.pageSize = pageSize;
+      pagination.pageCount = pageCount;
+      pagination.defaultPage = defaultPage;
+      pagination.currentPage = currentPage;
+      pagination.beginIndex = begin;
+      pagination.endIndex = end;
+      this.trigger('paginated');
+      return pagination.page;
     }
   });
 

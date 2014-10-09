@@ -88,8 +88,66 @@ chip.filter 'sort', (value, sortFunc, dir) ->
       return 0
   
   value.slice().sort(sortFunc)
+
+
+# ## addQuery
+# Takes the input URL and adds (or replaces) the field in the query
+chip.filter 'addQuery', (value, queryField, queryValue) ->
+  url = value or location.href
+  [url, query] = url.split('?')
+  addedQuery = ''
+  if queryValue?
+    addedQuery = queryField + '=' + encodeURIComponent(queryValue)
+
+  if query
+    expr = new RegExp('\\b' + queryField + '=[^&]*')
+    if expr.test query
+      query = query.replace(expr, addedQuery)
+    else if addedQuery
+      query += '&' + addedQuery
   else
+    query = addedQuery
+  url = [url, query].join('?') if query
+  return url
+
+
+# ## paginate
+# Paginates an array by pageSize with a defaultPage and optional name for the data
+chip.filter 'paginate', (value, pageSize, defaultPage = 1, name = 'pagination') ->
+  unless pageSize and Array.isArray value
+    delete this.app.rootController[name]
+    # triggers that pagination has run so view that is higher up in the page can refresh
+    this.trigger('paginated')
     value
+  else
+    pageCount = Math.ceil value.length / pageSize
+
+    # -1 would be the last page, -2 would be second to last page
+    if defaultPage < 0
+      defaultPage = pageCount + defaultPage + 1
+    else if typeof defaultPage is 'function'
+      defaultPage = defaultPage(value, pageSize, pageCount) or 1
+
+    currentPage = Math.min pageCount, Math.max(1, this.query?.page or defaultPage)
+    index = currentPage - 1
+    begin = index * pageSize
+    end = Math.min begin + pageSize, value.length
+
+    this.app.rootController[name] = {} unless this.app.rootController[name]
+    pagination = this.app.rootController[name]
+    pagination.array = value
+    pagination.page = value.slice(begin, end)
+    pagination.pageSize = pageSize
+    pagination.pageCount = pageCount
+    pagination.defaultPage = defaultPage
+    pagination.currentPage = currentPage
+    pagination.beginIndex = begin
+    pagination.endIndex = end
+
+    # triggers that pagination has run so view that is higher up in the page can refresh
+    this.trigger('paginated')
+
+    pagination.page
 
 
 # ## escape
