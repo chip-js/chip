@@ -274,7 +274,7 @@ class App
     $ =>
       if options.stop
         @router.off 'change', @_routeHandler if @_routeHandler
-        @rootElement.off 'click', 'a[href]', @_clickHandler if @_clickHandler
+        @rootElement.off 'click', @_clickHandler if @_clickHandler
         return @router.listen options
       
       app = this
@@ -282,19 +282,20 @@ class App
         @trigger 'urlChange', [path]
       
       @_clickHandler = (event) ->
+        return unless (anchor = $(event.target).closest('a[href]').get(0))
         return if event.isDefaultPrevented() # if something else already handled this, we won't
-        linkHost = @host.replace(/:80$|:443$/, '')
-        url = $(this).attr('href').replace(/^#/, '')
+        linkHost = anchor.host.replace(/:80$|:443$/, '')
+        url = $(anchor).attr('href').replace(/^#/, '')
         return if (linkHost and linkHost isnt location.host)
         return if event.metaKey or event.ctrlKey or $(event.target).attr('target')
         return if options.dontHandle404s and not app.hasMatchingRoutes(url)
         event.preventDefault()
-        return if @href is location.href + '#'
-        unless $(this).attr('disabled')
+        return if anchor.href is location.href + '#'
+        unless $(anchor).attr('disabled')
           app.redirect url
       
       @router.on 'change', @_routeHandler
-      @rootElement.on 'click', 'a[href]', @_clickHandler
+      @rootElement.on 'click', @_clickHandler
       @router.listen options
     this
 
