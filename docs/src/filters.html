@@ -35,14 +35,25 @@
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
               <h2>filter</h2>
-<p>Adds a filter to filter an array by the given filter function</p>
+<p>Filters an array by the given filter function(s), may provide a function, an
+array, or an object with filtering functions</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'filter'</span>, (value, filterFunc) -&gt;
   <span class="keyword">return</span> [] <span class="keyword">unless</span> Array.isArray value
   <span class="keyword">return</span> value <span class="keyword">unless</span> filterFunc
-  value.filter(filterFunc, <span class="keyword">this</span>)</pre></div></div>
+  <span class="keyword">if</span> <span class="keyword">typeof</span> filterFunc <span class="keyword">is</span> <span class="string">'function'</span>
+    value.filter(filterFunc, <span class="keyword">this</span>)
+  <span class="keyword">else</span> <span class="keyword">if</span> Array.isArray filterFunc
+    <span class="keyword">for</span> func <span class="keyword">in</span> filterFunc
+      value = value.filter(func, <span class="keyword">this</span>)
+    value
+  <span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">typeof</span> filterFunc <span class="keyword">is</span> <span class="string">'object'</span>
+    <span class="keyword">for</span> own key, func <span class="keyword">of</span> filterFunc
+      <span class="keyword">if</span> <span class="keyword">typeof</span> func <span class="keyword">is</span> <span class="string">'function'</span>
+        value = value.filter(func, <span class="keyword">this</span>)
+    value</pre></div></div>
             
         </li>
         

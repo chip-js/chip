@@ -1,11 +1,22 @@
 # # Default Filters
 
 # ## filter
-# Adds a filter to filter an array by the given filter function
+# Filters an array by the given filter function(s), may provide a function, an
+# array, or an object with filtering functions
 chip.filter 'filter', (value, filterFunc) ->
   return [] unless Array.isArray value
   return value unless filterFunc
-  value.filter(filterFunc, this)
+  if typeof filterFunc is 'function'
+    value.filter(filterFunc, this)
+  else if Array.isArray filterFunc
+    for func in filterFunc
+      value = value.filter(func, this)
+    value
+  else if typeof filterFunc is 'object'
+    for own key, func of filterFunc
+      if typeof func is 'function'
+        value = value.filter(func, this)
+    value
 
 # ## map
 # Adds a filter to map an array or value by the given mapping function
