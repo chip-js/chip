@@ -130,6 +130,15 @@ class Controller
   syncLater: (callback) ->
     Observer.syncLater(callback)
     this
+  
+  
+  # Syncs the observers to propogate changes to the HTML for this controller only
+  syncThis: ->
+    @_observers.forEach (observer) ->
+      observer.sync()
+    @_children.forEach (child) ->
+      child.syncThis()
+    this
 
   
   # call callback after the current sync
