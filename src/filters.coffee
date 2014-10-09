@@ -75,19 +75,19 @@ chip.filter 'limit', (value, limit) ->
 
 
 # ## sort
-# Adds a filter to sort an array
-chip.filter 'sort', (value, sortFunc) ->
-  return value unless sortFunc
+# Sorts an array given a field name or sort function, and a direction
+chip.filter 'sort', (value, sortFunc, dir) ->
+  return value unless sortFunc and Array.isArray value
   if typeof sortFunc is 'string'
-    [prop,dir] = sortFunc.split(':')
+    [prop, dir2] = sortFunc.split(':')
+    dir = dir or dir2
     dir = if dir is 'desc' then -1 else 1
     sortFunc = (a, b) ->
       return dir if a[prop] > b[prop]
       return -dir if a[prop] < b[prop]
       return 0
   
-  if Array.isArray value
-    value.slice().sort(sortFunc)
+  value.slice().sort(sortFunc)
   else
     value
 

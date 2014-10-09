@@ -189,24 +189,22 @@ array, or an object with filtering functions</p>
                 <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <h2>sort</h2>
-<p>Adds a filter to sort an array</p>
+<p>Sorts an array given a field name or sort function, and a direction</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'sort'</span>, (value, sortFunc) -&gt;
-  <span class="keyword">return</span> value <span class="keyword">unless</span> sortFunc
+            <div class="content"><div class='highlight'><pre>chip.filter <span class="string">'sort'</span>, (value, sortFunc, dir) -&gt;
+  <span class="keyword">return</span> value <span class="keyword">unless</span> sortFunc <span class="keyword">and</span> Array.isArray value
   <span class="keyword">if</span> <span class="keyword">typeof</span> sortFunc <span class="keyword">is</span> <span class="string">'string'</span>
-    [prop,dir] = sortFunc.split(<span class="string">':'</span>)
+    [prop, dir2] = sortFunc.split(<span class="string">':'</span>)
+    dir = dir <span class="keyword">or</span> dir2
     dir = <span class="keyword">if</span> dir <span class="keyword">is</span> <span class="string">'desc'</span> <span class="keyword">then</span> -<span class="number">1</span> <span class="keyword">else</span> <span class="number">1</span>
     <span class="function"><span class="title">sortFunc</span></span> = (a, b) -&gt;
       <span class="keyword">return</span> dir <span class="keyword">if</span> a[prop] &gt; b[prop]
       <span class="keyword">return</span> -dir <span class="keyword">if</span> a[prop] &lt; b[prop]
       <span class="keyword">return</span> <span class="number">0</span>
   
-  <span class="keyword">if</span> Array.isArray value
-    value.slice().sort(sortFunc)
-  <span class="keyword">else</span>
-    value</pre></div></div>
+  value.slice().sort(sortFunc)</pre></div></div>
             
         </li>
         
