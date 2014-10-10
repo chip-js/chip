@@ -3091,14 +3091,15 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.filter('sort', function(value, sortFunc, dir) {
-    var dir2, prop, _ref;
+    var dir2, origFunc, prop, _ref;
     if (!(sortFunc && Array.isArray(value))) {
       return value;
     }
+    dir = dir === 'desc' ? -1 : 1;
     if (typeof sortFunc === 'string') {
       _ref = sortFunc.split(':'), prop = _ref[0], dir2 = _ref[1];
+      dir2 = dir2 === 'desc' ? -1 : 1;
       dir = dir || dir2;
-      dir = dir === 'desc' ? -1 : 1;
       sortFunc = function(a, b) {
         if (a[prop] > b[prop]) {
           return dir;
@@ -3107,6 +3108,11 @@ if (!Date.prototype.toISOString) {
           return -dir;
         }
         return 0;
+      };
+    } else if (dir === -1) {
+      origFunc = sortFunc;
+      sortFunc = function(a, b) {
+        return -origFunc(a, b);
       };
     }
     return value.slice().sort(sortFunc);
