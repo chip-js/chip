@@ -203,7 +203,7 @@ portion of the URL.</p>
 
 
   getRoutesMatchingPath: (path) -&gt;
-    path = @getUrlParts(path)?.path if path.charAt(0) isnt '/'
+    path = @getUrlParts(path)?.path
     return [] unless path?
     @routes.filter (route) -&gt; route.match path</pre></div></div>
             

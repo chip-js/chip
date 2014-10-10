@@ -732,9 +732,7 @@ if (!Date.prototype.toISOString) {
 
     Router.prototype.getRoutesMatchingPath = function(path) {
       var _ref;
-      if (path.charAt(0) !== '/') {
-        path = (_ref = this.getUrlParts(path)) != null ? _ref.path : void 0;
-      }
+      path = (_ref = this.getUrlParts(path)) != null ? _ref.path : void 0;
       if (path == null) {
         return [];
       }

@@ -118,7 +118,7 @@ class Router
 
 
   getRoutesMatchingPath: (path) ->
-    path = @getUrlParts(path)?.path if path.charAt(0) isnt '/'
+    path = @getUrlParts(path)?.path
     return [] unless path?
     @routes.filter (route) -> route.match path
   
