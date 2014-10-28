@@ -225,6 +225,7 @@ class App
                 container.html @template(name)
                 parentController = container.parent().controller() or @rootController
                 @createController element: container, parent: parentController, name: name
+                @trigger 'routeComplete'
               @rootController.sync()
               window.scrollTo(0, 0)
               next(req, next) if subroutes
