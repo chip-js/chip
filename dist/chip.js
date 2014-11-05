@@ -1821,6 +1821,7 @@ if (!Date.prototype.toISOString) {
                     parent: parentController,
                     name: name
                   });
+                  _this.trigger('routeComplete');
                 }
                 _this.rootController.sync();
                 window.scrollTo(0, 0);
