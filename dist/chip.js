@@ -1150,7 +1150,7 @@ if (!Date.prototype.toISOString) {
     };
 
     Controller.prototype.closeController = function() {
-      var child, listener, observer, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3;
+      var child, index, listener, observer, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3;
       if (this._closed) {
         return;
       }
@@ -1162,7 +1162,10 @@ if (!Date.prototype.toISOString) {
         child.closeController();
       }
       if ((_ref1 = this.parent) != null ? _ref1._children : void 0) {
-        this.parent._children.remove(this);
+        index = this.parent._children.indexOf(this);
+        if (index !== -1) {
+          this.parent._children.splice(index, 1);
+        }
       }
       if (this.hasOwnProperty('beforeClose')) {
         this.beforeClose();

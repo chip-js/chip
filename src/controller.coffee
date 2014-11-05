@@ -106,7 +106,8 @@ class Controller
       child.parent = null
       child.closeController()
     if @parent?._children
-      @parent._children.remove this
+      index = @parent._children.indexOf this
+      @parent._children.splice(index, 1) if index isnt -1
 
     @beforeClose() if @hasOwnProperty('beforeClose')
     if @_syncListeners

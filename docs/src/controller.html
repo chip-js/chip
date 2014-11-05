@@ -270,7 +270,8 @@ console.log(controller.name) <span class="comment">// equals "Jacob Wright"</spa
       child.parent = <span class="literal">null</span>
       child.closeController()
     <span class="keyword">if</span> <span class="property">@parent</span>?._children
-      <span class="property">@parent</span>._children.remove <span class="keyword">this</span>
+      index = <span class="property">@parent</span>._children.indexOf <span class="keyword">this</span>
+      <span class="property">@parent</span>._children.splice(index, <span class="number">1</span>) <span class="keyword">if</span> index <span class="keyword">isnt</span> -<span class="number">1</span>
 
     <span class="property">@beforeClose</span>() <span class="keyword">if</span> <span class="property">@hasOwnProperty</span>(<span class="string">'beforeClose'</span>)
     <span class="keyword">if</span> <span class="property">@_syncListeners</span>
