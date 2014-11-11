@@ -2458,7 +2458,7 @@ if (!Date.prototype.toISOString) {
   });
 
   chip.binding('bind-value', function(element, attr, controller) {
-    var events, expr, fieldExpr, getValue, observer, selectValueField, setValue, watchExpr;
+    var checkedAttr, checkedValue, events, expr, fieldExpr, getValue, observer, selectValueField, setValue, uncheckedAttr, uncheckedValue, watchExpr;
     expr = attr.value;
     watchExpr = expr;
     fieldExpr = element.attr('bind-value-field');
@@ -2475,8 +2475,16 @@ if (!Date.prototype.toISOString) {
       }
       watchExpr += '.' + selectValueField;
     }
+    if (element.attr('type') === 'checkbox') {
+      checkedAttr = element.attr('checked-value') || 'true';
+      uncheckedAttr = element.attr('unchecked-value') || 'false';
+      element.removeAttr('checked-value');
+      element.removeAttr('unchecked-value');
+      checkedValue = controller["eval"](checkedAttr);
+      uncheckedValue = controller["eval"](uncheckedAttr);
+    }
     getValue = element.attr('type') === 'checkbox' ? function() {
-      return element.prop('checked');
+      return element.prop('checked') && checkedValue || uncheckedValue;
     } : element.attr('type') === 'file' ? function() {
       var _ref;
       return (_ref = element.get(0).files) != null ? _ref[0] : void 0;
@@ -2492,7 +2500,7 @@ if (!Date.prototype.toISOString) {
       return element.val();
     };
     setValue = element.attr('type') === 'checkbox' ? function(value) {
-      return element.prop('checked', value);
+      return element.prop('checked', value === checkedValue);
     } : element.attr('type') === 'file' ? function(value) {} : element.is(':not(input,select,textarea,option)') ? function(value) {
       element.find('input:radio:checked').prop('checked', false);
       return element.find('input:radio[value="' + value + '"]').prop('checked', true);
