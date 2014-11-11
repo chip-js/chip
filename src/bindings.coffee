@@ -340,10 +340,18 @@ chip.binding 'bind-value', (element, attr, controller) ->
       selectValueField = chip.lastSelectValueField
     watchExpr += '.' + selectValueField
 
+  if element.attr('type') is 'checkbox'
+    checkedAttr = element.attr('checked-value') or 'true'
+    uncheckedAttr = element.attr('unchecked-value') or 'false'
+    element.removeAttr('checked-value')
+    element.removeAttr('unchecked-value')
+    checkedValue = controller.eval(checkedAttr)
+    uncheckedValue = controller.eval(uncheckedAttr)
+
   # Handles input (checkboxes, radios), select, textarea, option
   getValue =
     if element.attr('type') is 'checkbox' # Handles checkboxes
-      -> element.prop('checked')
+      -> element.prop('checked') and checkedValue or uncheckedValue
     else if element.attr('type') is 'file'
       -> element.get(0).files?[0]
     else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
@@ -359,7 +367,7 @@ chip.binding 'bind-value', (element, attr, controller) ->
   
   setValue =
     if element.attr('type') is 'checkbox'
-      (value) -> element.prop('checked', value)
+      (value) -> element.prop('checked', value is checkedValue)
     else if element.attr('type') is 'file'
       (value) -> # "get" only
     else if element.is(':not(input,select,textarea,option)') # Handles a group of radio inputs
