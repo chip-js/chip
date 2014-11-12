@@ -1961,9 +1961,15 @@ if (!Date.prototype.toISOString) {
       return entry;
     };
 
+    Binding.getBinding = function(name) {
+      if (this.bindings.hasOwnProperty(name)) {
+        return this.bindings[name];
+      }
+    };
+
     Binding.removeBinding = function(name) {
       var entry;
-      entry = this.bindings[name];
+      entry = this.getBinding(name);
       if (!entry) {
         return;
       }
@@ -2092,19 +2098,19 @@ if (!Date.prototype.toISOString) {
 
   getBoundAttributes = function(attr) {
     var binding, parts;
-    binding = Binding.bindings[attr.name];
+    binding = Binding.getBinding(attr.name);
     if (!binding) {
       parts = attr.name.split('-');
       while (parts.length > 1) {
         parts.pop();
-        if ((binding = Binding.bindings[parts.join('-') + '-*'])) {
+        if ((binding = Binding.getBinding(parts.join('-') + '-*'))) {
           break;
         }
       }
     }
     if (!binding) {
       if (expression.isInverted(attr.value)) {
-        binding = Binding.bindings['attr-*'];
+        binding = Binding.getBinding('attr-*');
       }
     }
     if (binding) {
