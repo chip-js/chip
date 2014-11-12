@@ -2982,13 +2982,14 @@ if (!Date.prototype.toISOString) {
         return controller[prop] = value;
       });
       if (expr.slice(-1) !== ')') {
-        return controller.watch(prop, true, function(value) {
+        controller.watch(prop, true, function(value) {
           return controller.parent.passthrough().evalSetter(expr, value);
         });
       }
     } else {
-      return controller[prop] = true;
+      controller[prop] = true;
     }
+    return controller.syncLater();
   });
 
   chip.binding('bind-content', {

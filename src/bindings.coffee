@@ -917,6 +917,7 @@ chip.binding 'local-*', priority: 20, (element, attr, controller) ->
         controller.parent.passthrough().evalSetter expr, value
   else
     controller[prop] = true
+  controller.syncLater() #run sync so the partial can get these values
 
 
 # ## bind-content

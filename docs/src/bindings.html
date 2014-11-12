@@ -1255,7 +1255,8 @@ will be converted to camelCase and the value will be set locally. Examples:
             
             <div class="content"><div class='highlight'><pre>        controller.parent.passthrough().evalSetter expr, value
   <span class="keyword">else</span>
-    controller[prop] = <span class="literal">true</span></pre></div></div>
+    controller[prop] = <span class="literal">true</span>
+  controller.syncLater() <span class="comment">#run sync so the partial can get these values</span></pre></div></div>
             
         </li>
         
