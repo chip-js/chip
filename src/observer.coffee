@@ -92,8 +92,7 @@ class Observer
   @max: 10
   @timeout: null
   
-  # Runs the observer sync cycle which checks all the observers to see if they've changed. Pass in true for
-  # `synchronous` to run the syncronization immediately rather than on the next code cycle.
+  # Runs the observer sync cycle which checks all the observers to see if they've changed.
   @sync: (callback) ->
     @afterSync(callback) if typeof callback is 'function'
     
