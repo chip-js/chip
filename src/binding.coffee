@@ -57,6 +57,11 @@ class Binding
     @bindings.sort bindingSort
     entry
   
+
+  # Returns a binding object that was added with `addBinding()`.
+  @getBinding: (name) ->
+    @bindings[name] if @bindings.hasOwnProperty(name)
+
   
   # Removes a binding handler that was added with `addBinding()`.
   # 
@@ -69,7 +74,7 @@ class Binding
   # <p my-pirate="post.body">This text will not be replaced.</p>
   # ```
   @removeBinding: (name) ->
-    entry = @bindings[name]
+    entry = @getBinding(name)
     return unless entry
     delete @bindings[name]
     @bindings.splice @bindings.indexOf(entry), 1
@@ -207,15 +212,15 @@ class Binding
 
 getBoundAttributes = (attr) ->
   # If a binding is registered for the exact name or for prefix-* use that
-  binding = Binding.bindings[attr.name]
+  binding = Binding.getBinding(attr.name)
   unless binding
     parts = attr.name.split('-')
     while parts.length > 1
       parts.pop()
-      break if (binding = Binding.bindings[parts.join('-') + '-*'])
+      break if (binding = Binding.getBinding(parts.join('-') + '-*'))
   unless binding
     if expression.isInverted attr.value
-      binding = Binding.bindings['attr-*']
+      binding = Binding.getBinding('attr-*')
   # Cache in an object since attr.value will empty once it is removed
   if binding
     binding: binding, name: attr.name, value: attr.value
