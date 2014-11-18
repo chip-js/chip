@@ -2903,15 +2903,9 @@ if (!Date.prototype.toISOString) {
     var childController, expr, properties;
     expr = attr.value;
     childController = null;
-    if (element.children().length) {
-      properties = {
-        _partialContent: element.children().remove()
-      };
-    } else {
-      properties = {
-        _partialContent: null
-      };
-    }
+    properties = {
+      _partialContent: element.html()
+    };
     if (element.is('iframe')) {
       element.css({
         border: 'none',

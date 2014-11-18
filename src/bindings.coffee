@@ -848,10 +848,7 @@ chip.binding 'bind-each', priority: 100, (element, attr, controller) ->
 chip.binding 'bind-partial', priority: 40, (element, attr, controller) ->
   expr = attr.value
   childController = null
-  if element.children().length
-    properties = _partialContent: element.children().remove()
-  else
-    properties = _partialContent: null
+  properties = _partialContent: element.html()
   
   if element.is('iframe')
       element.css

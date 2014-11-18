@@ -1150,10 +1150,7 @@ to pass data into a partial.</p>
             <div class="content"><div class='highlight'><pre>chip.binding 'bind-partial', priority: 40, (element, attr, controller) -&gt;
   expr = attr.value
   childController = null
-  if element.children().length
-    properties = _partialContent: element.children().remove()
-  else
-    properties = _partialContent: null
+  properties = _partialContent: element.html()
   
   if element.is('iframe')
       element.css
