@@ -163,7 +163,7 @@ class Binding
     processed = []
     walker.onElementDone = (node) ->
       if processed.length and processed[processed.length - 1].get(0) is node
-        processed.pop().trigger('processed')
+        processed.pop().triggerHandler('processed')
 
     while node = walker.next()
       element = $ node if node isnt walker.root
@@ -205,6 +205,7 @@ class Binding
         # If the binding returns false it signifies a new controller has taken over
         if result is false
           walker.skip()
+          processed.pop()
           break
 
     element

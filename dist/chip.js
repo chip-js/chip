@@ -2054,7 +2054,7 @@ if (!Date.prototype.toISOString) {
       processed = [];
       walker.onElementDone = function(node) {
         if (processed.length && processed[processed.length - 1].get(0) === node) {
-          return processed.pop().trigger('processed');
+          return processed.pop().triggerHandler('processed');
         }
       };
       while (node = walker.next()) {
@@ -2085,6 +2085,7 @@ if (!Date.prototype.toISOString) {
           }
           if (result === false) {
             walker.skip();
+            processed.pop();
             break;
           }
         }
