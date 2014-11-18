@@ -260,7 +260,7 @@ e.g. <code>Binding.addAttributeToggleBinding(&#39;attr-checked&#39;)</code>.</p>
     processed = []
     walker.<span class="function"><span class="title">onElementDone</span></span> = (node) -&gt;
       <span class="keyword">if</span> processed.length <span class="keyword">and</span> processed[processed.length - <span class="number">1</span>].get(<span class="number">0</span>) <span class="keyword">is</span> node
-        processed.pop().trigger(<span class="string">'processed'</span>)
+        processed.pop().triggerHandler(<span class="string">'processed'</span>)
 
     <span class="keyword">while</span> node = walker.next()
       element = $ node <span class="keyword">if</span> node <span class="keyword">isnt</span> walker.root
@@ -387,6 +387,7 @@ This is used for bind-if and bind-each etc.</p>
             
             <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> result <span class="keyword">is</span> <span class="literal">false</span>
           walker.skip()
+          processed.pop()
           <span class="keyword">break</span>
 
     element
