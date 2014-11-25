@@ -1,13 +1,38 @@
 # ## validate-*
 chip.binding 'validate-*', (element,attr,controller) ->
-  controller.parent.hasValidation = true
-  controller.parent.validation = {}
+  controllerSearching = true
+  validationController = controller
+  # Traverses controller stack looking for the form's controller. If not found,
+  # the validation result object is placed in this element's controller. This
+  # should address the issue of nested elements / partials within a form.
+  while controllerSearching
+    # Looking for an element with an attribute of `chip-validation`, whose
+    # value will hold all validation results of any child element with a
+    # `validate-*` attribute.
+    if validationController.element.children('[chip-validation]').length
+      validationGroup = validationController.element.
+      children('[chip-validation]').attr('chip-validation')
+      controllerSearching = false
+    else
+      if validationController is app.rootController
+        # Made it to root controller without finding a validation group,
+        # therefore validation results will be added to element controller
+        # under default object name.
+        validationController = controller
+        validationGroup = 'chipValidationGroup'
+        controllerSearching = false
+      else
+        validationController = validationController.parent
+
+  unless validationController[validationGroup]
+    validationController[validationGroup] = {}
+
   type = attr.camel
   # Initially tested for a validation object with typeof, but that felt too
   # rigid, so I simplfied it a bit.
   if attr.value.indexOf(':') < 1
     # Loading options as an object passed from the controller
-    options = controller.eval attr.value
+    options = controller.eval(attr.value)
   else
     # Attempt to parse options directly from validation attribute
     # We will probably need to spend more time working out the best format here
@@ -66,17 +91,20 @@ chip.binding 'validate-*', (element,attr,controller) ->
     validResponse = validateField(value,type,options)
     if validResponse.valid
       # Do some happy, positive things
-      console.log 'Hey Slugger, you did it right!'
       element.removeClass('chip_validation_invalid')
       element.addClass('chip_validation_valid')
     else
       # Scorch the earth with shameful red error messages
-      console.log 'Nope, not even close. Here\'s where you went wrong, Sparky:'
       console.error validResponse.errorMsgs
       element.removeClass('chip_validation_valid')
       element.addClass('chip_validation_invalid')
-    controller.validation.valid = validResponse.valid
-    controller.validation.errorMsgs = validResponse.errorMsgs
+    # In addition to adding / removing CSS classes to elements being validated,
+    # a validation object is added to the `validationController` under the
+    # named `validationGroup` by the element name.
+    # (will only work with simple field names)
+    unless validationController[validationGroup][element.attr('name')]
+      validationController[validationGroup][element.attr('name')] = {}
+    validationController[validationGroup][element.attr('name')] = validResponse
 
   validateField = (value,type,options) ->
     response = {
