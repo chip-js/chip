@@ -12,7 +12,8 @@ module.exports = function(grunt) {
 		'src/filter.coffee',
 		'src/bindings.coffee',
 		'src/filters.coffee',
-		'src/diff.coffee'
+		'src/diff.coffee',
+		'src/validation.coffee'
 	];
 	
 	var libFiles = [
