@@ -3423,97 +3423,101 @@ if (!Date.prototype.toISOString) {
 
   chip.binding('validate-*', function(element, attr, controller) {
     var opt, optArry, optionKey, optionValMsg, options, optsArry, type, validateField, validations, _i, _len, _ref;
-    validations = app.rootController.validations;
-    type = attr.camel;
-    if (attr.value === '') {
-      options = {};
-      options["default"] = true;
+    validations = app.rootController.validations != null;
+    if (!validations) {
+      return console.warn('No validation rules found.');
     } else {
-      if (attr.value.indexOf(':') < 1) {
-        options = controller["eval"](attr.value);
-        if (typeof options !== 'object') {
-          options = {};
-          options[attr.value] = true;
-        }
-      } else {
+      type = attr.camel;
+      if (attr.value === '') {
         options = {};
-        optsArry = attr.value.split('|');
-        for (_i = 0, _len = optsArry.length; _i < _len; _i++) {
-          opt = optsArry[_i];
-          optArry = opt.split(':');
-          optionKey = optArry[0].trim();
-          optionValMsg = optArry[1].split('-e');
-          options[optionKey] = {};
-          options[optionKey].value = optionValMsg[0].trim();
-          options[optionKey].errorMessage = (_ref = optionValMsg[1]) != null ? _ref.trim() : void 0;
-        }
-      }
-    }
-    element.on('change', function() {
-      var validResponse, value;
-      value = element.val();
-      validResponse = validateField(value, type, options);
-      if (validResponse.valid) {
-        element.removeClass('chip_validation_invalid');
-        element.addClass('chip_validation_valid');
+        options["default"] = true;
       } else {
-        console.error(validResponse.errorMsgs);
-        element.removeClass('chip_validation_valid');
-        element.addClass('chip_validation_invalid');
-      }
-      if (!controller[controller.validationGroup][element.attr('name')]) {
-        controller[controller.validationGroup][element.attr('name')] = {};
-      }
-      return controller[controller.validationGroup][element.attr('name')] = validResponse;
-    });
-    return validateField = function(value, type, options) {
-      var errorMsgs, isValid, optionName, optionValue, response, rule, validateMsg, validateVal, validation;
-      response = {
-        valid: true,
-        message: '',
-        errorMsgs: []
-      };
-      validateVal = function(validation) {
-        if (validation.value != null) {
-          return validation.value;
-        } else {
-          return validation;
-        }
-      };
-      validateMsg = function(validation) {
-        if (validation.message != null) {
-          return validation.message;
-        } else {
-          return null;
-        }
-      };
-      isValid = true;
-      errorMsgs = [];
-      for (optionName in options) {
-        optionValue = options[optionName];
-        validation = validations[type][optionName] || validations.all[optionName];
-        if (validation != null) {
-          rule = validation.evaluation.replace('{x}', '"' + value + '"').replace('{y}', optionValue.value);
-          if (eval(rule)) {
-            isValid = true;
-          } else {
-            isValid = false;
-            if (validation.errorMessage) {
-              errorMsgs.push(validation.errorMessage.replace('{y}', optionValue.value));
-            } else {
-              validation.errorMessage('Input for this field is invalid.');
-            }
+        if (attr.value.indexOf(':') < 1) {
+          options = controller["eval"](attr.value);
+          if (typeof options !== 'object') {
+            options = {};
+            options[attr.value] = true;
           }
         } else {
-          'validation missing';
-          response.valid = true;
-          console.warn('Validation method: ' + optionName + ' not found!');
+          options = {};
+          optsArry = attr.value.split('|');
+          for (_i = 0, _len = optsArry.length; _i < _len; _i++) {
+            opt = optsArry[_i];
+            optArry = opt.split(':');
+            optionKey = optArry[0].trim();
+            optionValMsg = optArry[1].split('-e');
+            options[optionKey] = {};
+            options[optionKey].value = optionValMsg[0].trim();
+            options[optionKey].errorMessage = (_ref = optionValMsg[1]) != null ? _ref.trim() : void 0;
+          }
         }
       }
-      response.valid = isValid;
-      response.errorMsgs = errorMsgs;
-      return response;
-    };
+      element.on('change', function() {
+        var validResponse, value;
+        value = element.val();
+        validResponse = validateField(value, type, options);
+        if (validResponse.valid) {
+          element.removeClass('chip_validation_invalid');
+          element.addClass('chip_validation_valid');
+        } else {
+          console.error(validResponse.errorMsgs);
+          element.removeClass('chip_validation_valid');
+          element.addClass('chip_validation_invalid');
+        }
+        if (!controller[controller.validationGroup][element.attr('name')]) {
+          controller[controller.validationGroup][element.attr('name')] = {};
+        }
+        return controller[controller.validationGroup][element.attr('name')] = validResponse;
+      });
+      return validateField = function(value, type, options) {
+        var errorMsgs, isValid, optionName, optionValue, response, rule, validateMsg, validateVal, validation, _ref1, _ref2;
+        response = {
+          valid: true,
+          message: '',
+          errorMsgs: []
+        };
+        validateVal = function(validation) {
+          if (validation.value != null) {
+            return validation.value;
+          } else {
+            return validation;
+          }
+        };
+        validateMsg = function(validation) {
+          if (validation.message != null) {
+            return validation.message;
+          } else {
+            return null;
+          }
+        };
+        isValid = true;
+        errorMsgs = [];
+        for (optionName in options) {
+          optionValue = options[optionName];
+          validation = ((_ref1 = validations[type]) != null ? _ref1[optionName] : void 0) || ((_ref2 = validations.all) != null ? _ref2[optionName] : void 0);
+          if (validation != null) {
+            rule = validation.evaluation.replace('{x}', '"' + value + '"').replace('{y}', optionValue.value);
+            if (eval(rule)) {
+              isValid = true;
+            } else {
+              isValid = false;
+              if (validation.errorMessage) {
+                errorMsgs.push(validation.errorMessage.replace('{y}', optionValue.value));
+              } else {
+                validation.errorMessage('Input for this field is invalid.');
+              }
+            }
+          } else {
+            'validation missing';
+            response.valid = true;
+            console.warn('Validation method: ' + optionName + ' not found!');
+          }
+        }
+        response.valid = isValid;
+        response.errorMsgs = errorMsgs;
+        return response;
+      };
+    }
   });
 
 }).call(this);
