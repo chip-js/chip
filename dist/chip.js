@@ -601,7 +601,7 @@ if (!Date.prototype.toISOString) {
       if (typeof callback !== 'function') {
         throw new Error('route must have a callback of type "function". Got ' + callback + '.');
       }
-      if (path.charAt(0) !== '/') {
+      if (typeof path === 'string' && path.charAt(0) !== '/') {
         path = '/' + path;
       }
       this.routes.push(new Route(path, callback));
@@ -1854,7 +1854,16 @@ if (!Date.prototype.toISOString) {
         } else {
           throw new Error('route handler must be a string path or a function');
         }
-        return _this.router.route(path, callback);
+        return _this.router.route(path, function(req, next) {
+          var event;
+          event = $.Event('routeChanging', {
+            req: req
+          });
+          _this.trigger(event);
+          if (!event.isDefaultPrevented()) {
+            return callback(req, next);
+          }
+        });
       };
       handleRoute(path, handler, subroutes, 0);
       return this;
@@ -2572,6 +2581,18 @@ if (!Date.prototype.toISOString) {
           element: element
         });
       }
+    });
+  });
+
+  chip.binding('native-*', function(element, attr, controller) {
+    var eventName, expr;
+    eventName = attr.match;
+    expr = attr.value;
+    return element.on(eventName, function(event) {
+      return controller["eval"](expr, {
+        event: event,
+        element: element
+      });
     });
   });
 

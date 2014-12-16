@@ -27,7 +27,8 @@ class Router
     unless typeof callback is 'function'
       throw new Error 'route must have a callback of type "function". Got ' + callback + '.'
     
-    path = '/' + path unless path.charAt(0) is '/'
+    if typeof path is 'string' and path.charAt(0) isnt '/'
+      path = '/' + path
     @routes.push new Route path, callback
     this
   

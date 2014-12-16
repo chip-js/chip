@@ -449,6 +449,41 @@ chip.binding 'on-*', (element, attr, controller) ->
       controller.eval expr, event: event, element: element
 
 
+
+# ## native-[event]
+# Adds a handler for each event name in the array. When the event is triggered the expression will be run.
+# It will not call event.preventDefault() like on-* or withold when disabled.
+# 
+# **Example Events:**
+# 
+# * native-click
+# * native-dblclick
+# * native-submit
+# * native-change
+# * native-focus
+# * native-blur
+#
+# **Example:**
+# ```xml
+# <form native-submit="saveUser(event)">
+#   <input name="firstName" value="Jacob">
+#   <button>Save</button>
+# </form>
+# ```
+# *Result (events don't affect the HTML):*
+# ```xml
+# <form>
+#   <input name="firstName" value="Jacob">
+#   <button>Save</button>
+# </form>
+# ```
+chip.binding 'native-*', (element, attr, controller) ->
+  eventName = attr.match
+  expr = attr.value
+  element.on eventName, (event) ->
+    controller.eval expr, event: event, element: element
+
+
 # ## on-[key event]
 # Adds a handler which is triggered when the keydown event's `keyCode` property matches.
 # 
