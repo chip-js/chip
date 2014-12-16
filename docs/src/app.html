@@ -623,7 +623,11 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="property">@router</span>.route path, callback
+            <div class="content"><div class='highlight'><pre>      <span class="property">@router</span>.route path, (req, next) =&gt;
+        event = $.Event(<span class="string">'routeChanging'</span>, req: req)
+        <span class="property">@trigger</span>(event)
+        <span class="keyword">unless</span> event.isDefaultPrevented()
+          callback(req, next)
     
     handleRoute(path, handler, subroutes, <span class="number">0</span>)
     <span class="keyword">this</span>

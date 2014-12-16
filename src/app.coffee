@@ -252,7 +252,11 @@ class App
         throw new Error('route handler must be a string path or a function')
       
       # Adds the callback to the route (unless subroutes existed).
-      @router.route path, callback
+      @router.route path, (req, next) =>
+        event = $.Event('routeChanging', req: req)
+        @trigger(event)
+        unless event.isDefaultPrevented()
+          callback(req, next)
     
     handleRoute(path, handler, subroutes, 0)
     this
