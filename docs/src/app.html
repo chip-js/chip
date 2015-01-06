@@ -496,11 +496,13 @@ before the bindings are set up.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  param: (name, callback) -&gt;
-    <span class="function"><span class="title">wrappedCallback</span></span> = (req, next) =&gt;
-      <span class="property">@rootController</span>.params = req.params
-      <span class="property">@rootController</span>.query = req.query
-      callback <span class="property">@rootController</span>, next
-    <span class="property">@router</span>.param name, wrappedCallback
+    <span class="keyword">if</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
+      origCallback = callback
+      <span class="function"><span class="title">callback</span></span> = (req, next) =&gt;
+        <span class="property">@rootController</span>.params = req.params
+        <span class="property">@rootController</span>.query = req.query
+        origCallback <span class="property">@rootController</span>, next
+    <span class="property">@router</span>.param name, callback
     <span class="keyword">this</span></pre></div></div>
             
         </li>

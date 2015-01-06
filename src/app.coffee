@@ -174,11 +174,13 @@ class App
   
   # Registers a `callback` function to be called when the given param `name` is matched in a URL
   param: (name, callback) ->
-    wrappedCallback = (req, next) =>
-      @rootController.params = req.params
-      @rootController.query = req.query
-      callback @rootController, next
-    @router.param name, wrappedCallback
+    if typeof callback is 'function'
+      origCallback = callback
+      callback = (req, next) =>
+        @rootController.params = req.params
+        @rootController.query = req.query
+        origCallback @rootController, next
+    @router.param name, callback
     this
   
   # Create a route to be run when the given URL `path` is hit in the browser URL. The route `name` is used to load the

@@ -44,6 +44,7 @@
             <div class="content"><div class='highlight'><pre>  constructor: -&gt;
     <span class="property">@routes</span> = []
     <span class="property">@params</span> = {}
+    <span class="property">@paramsExp</span> = {}
     <span class="property">@prefix</span> = <span class="string">''</span>
     makeEventEmitter <span class="keyword">this</span></pre></div></div>
             
@@ -61,9 +62,12 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>  param: (name, callback) -&gt;
-    <span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
-      <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'param must have a callback of type "function". Got '</span> + callback + <span class="string">'.'</span>
-    (<span class="property">@params</span>[name] <span class="keyword">or</span> <span class="property">@params</span>[name] = []).push(callback)
+    <span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span> <span class="keyword">or</span> callback <span class="keyword">instanceof</span> RegExp
+      <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'param must have a callback of type "function" or RegExp. Got '</span> + callback + <span class="string">'.'</span>
+    <span class="keyword">if</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
+      (<span class="property">@params</span>[name] <span class="keyword">or</span> <span class="property">@params</span>[name] = []).push(callback)
+    <span class="keyword">else</span>
+      <span class="property">@paramsExp</span>[name] = callback
     <span class="keyword">this</span></pre></div></div>
             
         </li>
@@ -84,24 +88,25 @@ portion of the URL.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  route: (path, callback) -&gt;
-    <span class="keyword">unless</span> <span class="keyword">typeof</span> callback <span class="keyword">is</span> <span class="string">'function'</span>
-      <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">'route must have a callback of type "function". Got '</span> + callback + <span class="string">'.'</span>
+    unless typeof callback is 'function'
+      throw new Error 'route must have a callback of type "function". Got ' + callback + '.'
     
-    <span class="keyword">if</span> <span class="keyword">typeof</span> path <span class="keyword">is</span> <span class="string">'string'</span> <span class="keyword">and</span> path.charAt(<span class="number">0</span>) <span class="keyword">isnt</span> <span class="string">'/'</span>
-      path = <span class="string">'/'</span> + path
-    <span class="property">@routes</span>.push <span class="keyword">new</span> Route path, callback
-    <span class="keyword">this</span>
+    if typeof path is 'string'
+      path = '/' + path
+      path = path.replace /\/{2,}/g, '/'
+    @routes.push new Route path, callback
+    this
   
   
-  redirect: (url, replace = <span class="literal">false</span>) -&gt;
-    <span class="keyword">if</span> url.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'.'</span> <span class="keyword">or</span> url.split(<span class="string">'//'</span>).length &gt; <span class="number">1</span>
-      pathParts = document.createElement(<span class="string">'a'</span>)
+  redirect: (url, replace = false) -&gt;
+    if url.charAt(0) is '.' or url.split('//').length &gt; 1
+      pathParts = document.createElement('a')
       pathParts.href = url
       url = pathname(pathParts) + pathParts.search
-    <span class="keyword">else</span>
-      url = <span class="property">@prefix</span> + url
+    else
+      url = @prefix + url
     
-    <span class="keyword">return</span> <span class="keyword">if</span> <span class="property">@currentUrl</span> <span class="keyword">is</span> url</pre></div></div>
+    return if @currentUrl is url</pre></div></div>
             
         </li>
         
@@ -199,14 +204,19 @@ portion of the URL.</p>
     urlParts.href = url
     path = pathname(urlParts)
     return null if path.indexOf(@prefix) isnt 0
-    path.replace @prefix, ''
+    path = path.replace @prefix, ''
+    path = '/' + path if path.charAt(0) isnt '/'
     path: path, query: urlParts.search
 
 
   getRoutesMatchingPath: (path) -&gt;
-    path = @getUrlParts(path)?.path
     return [] unless path?
-    @routes.filter (route) -&gt; route.match path</pre></div></div>
+    @routes.filter (route) =&gt;
+      return false unless route.match(path)
+      for key, value of route.params
+        continue unless @paramsExp[key]
+        return false unless @paramsExp[key].test value
+      return true</pre></div></div>
             
         </li>
         

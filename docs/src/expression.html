@@ -494,9 +494,13 @@ If the expression is a setter the value will be run through the filters</p>
 <span class="function"><span class="title">parseExpr</span></span> = (expr) -&gt;
   <span class="keyword">if</span> setterExpr.test(expr)
     [ setter, value ] = expr.split <span class="string">' = '</span>
+    negate = <span class="string">''</span>
+    <span class="keyword">if</span> setter.charAt(<span class="number">0</span>) <span class="keyword">is</span> <span class="string">'!'</span>
+      negate = <span class="string">'!'</span>
+      setter = setter.slice(<span class="number">1</span>)
     setter = parsePropertyChains(setter).replace(<span class="regexp">/^\(|\)$/g</span>, <span class="string">''</span>) + <span class="string">' = '</span>
     value = parsePropertyChains value
-    setter + value
+    setter + negate + value
   <span class="keyword">else</span>
     parsePropertyChains expr
 
