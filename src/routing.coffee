@@ -6,15 +6,19 @@ class Router
   constructor: ->
     @routes = []
     @params = {}
+    @paramsExp = {}
     @prefix = ''
     makeEventEmitter this
   
   
   # Registers a `callback` function to be called when the given param `name` is matched in a URL
   param: (name, callback) ->
-    unless typeof callback is 'function'
-      throw new Error 'param must have a callback of type "function". Got ' + callback + '.'
-    (@params[name] or @params[name] = []).push(callback)
+    unless typeof callback is 'function' or callback instanceof RegExp
+      throw new Error 'param must have a callback of type "function" or RegExp. Got ' + callback + '.'
+    if typeof callback is 'function'
+      (@params[name] or @params[name] = []).push(callback)
+    else
+      @paramsExp[name] = callback
     this
     
   
@@ -27,8 +31,9 @@ class Router
     unless typeof callback is 'function'
       throw new Error 'route must have a callback of type "function". Got ' + callback + '.'
     
-    if typeof path is 'string' and path.charAt(0) isnt '/'
+    if typeof path is 'string'
       path = '/' + path
+      path = path.replace /\/{2,}/g, '/'
     @routes.push new Route path, callback
     this
   
@@ -114,14 +119,20 @@ class Router
     urlParts.href = url
     path = pathname(urlParts)
     return null if path.indexOf(@prefix) isnt 0
-    path.replace @prefix, ''
+    path = path.replace @prefix, ''
+    path = '/' + path if path.charAt(0) isnt '/'
     path: path, query: urlParts.search
 
 
   getRoutesMatchingPath: (path) ->
-    path = @getUrlParts(path)?.path
     return [] unless path?
-    @routes.filter (route) -> route.match path
+    @routes.filter (route) =>
+      return false unless route.match(path)
+      for key, value of route.params
+        continue unless @paramsExp[key]
+        return false unless @paramsExp[key].test value
+      return true
+
   
   
   # Dispatches all callbacks which match the `url`. `url` should be the full pathname of the location and should not

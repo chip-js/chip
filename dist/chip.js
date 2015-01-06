@@ -585,15 +585,20 @@ if (!Date.prototype.toISOString) {
     function Router() {
       this.routes = [];
       this.params = {};
+      this.paramsExp = {};
       this.prefix = '';
       makeEventEmitter(this);
     }
 
     Router.prototype.param = function(name, callback) {
-      if (typeof callback !== 'function') {
-        throw new Error('param must have a callback of type "function". Got ' + callback + '.');
+      if (!(typeof callback === 'function' || callback instanceof RegExp)) {
+        throw new Error('param must have a callback of type "function" or RegExp. Got ' + callback + '.');
       }
-      (this.params[name] || (this.params[name] = [])).push(callback);
+      if (typeof callback === 'function') {
+        (this.params[name] || (this.params[name] = [])).push(callback);
+      } else {
+        this.paramsExp[name] = callback;
+      }
       return this;
     };
 
@@ -601,8 +606,9 @@ if (!Date.prototype.toISOString) {
       if (typeof callback !== 'function') {
         throw new Error('route must have a callback of type "function". Got ' + callback + '.');
       }
-      if (typeof path === 'string' && path.charAt(0) !== '/') {
+      if (typeof path === 'string') {
         path = '/' + path;
+        path = path.replace(/\/{2,}/g, '/');
       }
       this.routes.push(new Route(path, callback));
       return this;
@@ -723,7 +729,10 @@ if (!Date.prototype.toISOString) {
       if (path.indexOf(this.prefix) !== 0) {
         return null;
       }
-      path.replace(this.prefix, '');
+      path = path.replace(this.prefix, '');
+      if (path.charAt(0) !== '/') {
+        path = '/' + path;
+      }
       return {
         path: path,
         query: urlParts.search
@@ -731,13 +740,26 @@ if (!Date.prototype.toISOString) {
     };
 
     Router.prototype.getRoutesMatchingPath = function(path) {
-      var _ref;
-      path = (_ref = this.getUrlParts(path)) != null ? _ref.path : void 0;
+      var _this = this;
       if (path == null) {
         return [];
       }
       return this.routes.filter(function(route) {
-        return route.match(path);
+        var key, value, _ref;
+        if (!route.match(path)) {
+          return false;
+        }
+        _ref = route.params;
+        for (key in _ref) {
+          value = _ref[key];
+          if (!_this.paramsExp[key]) {
+            continue;
+          }
+          if (!_this.paramsExp[key].test(value)) {
+            return false;
+          }
+        }
+        return true;
       });
     };
 
@@ -1758,14 +1780,17 @@ if (!Date.prototype.toISOString) {
     };
 
     App.prototype.param = function(name, callback) {
-      var wrappedCallback,
+      var origCallback,
         _this = this;
-      wrappedCallback = function(req, next) {
-        _this.rootController.params = req.params;
-        _this.rootController.query = req.query;
-        return callback(_this.rootController, next);
-      };
-      this.router.param(name, wrappedCallback);
+      if (typeof callback === 'function') {
+        origCallback = callback;
+        callback = function(req, next) {
+          _this.rootController.params = req.params;
+          _this.rootController.query = req.query;
+          return origCallback(_this.rootController, next);
+        };
+      }
+      this.router.param(name, callback);
       return this;
     };
 
