@@ -1435,12 +1435,17 @@ if (!Date.prototype.toISOString) {
   };
 
   parseExpr = function(expr) {
-    var setter, value, _ref;
+    var negate, setter, value, _ref;
     if (setterExpr.test(expr)) {
       _ref = expr.split(' = '), setter = _ref[0], value = _ref[1];
+      negate = '';
+      if (setter.charAt(0) === '!') {
+        negate = '!';
+        setter = setter.slice(1);
+      }
       setter = parsePropertyChains(setter).replace(/^\(|\)$/g, '') + ' = ';
       value = parsePropertyChains(value);
-      return setter + value;
+      return setter + negate + value;
     } else {
       return parsePropertyChains(expr);
     }
