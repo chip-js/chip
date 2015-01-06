@@ -175,9 +175,13 @@ parseFilters = (expr) ->
 parseExpr = (expr) ->
   if setterExpr.test(expr)
     [ setter, value ] = expr.split ' = '
+    negate = ''
+    if setter.charAt(0) is '!'
+      negate = '!'
+      setter = setter.slice(1)
     setter = parsePropertyChains(setter).replace(/^\(|\)$/g, '') + ' = '
     value = parsePropertyChains value
-    setter + value
+    setter + negate + value
   else
     parsePropertyChains expr
 
