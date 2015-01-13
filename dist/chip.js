@@ -1656,13 +1656,13 @@ if (!Date.prototype.toISOString) {
 
     App.prototype.template = function(name, content) {
       if (arguments.length > 1) {
-        this.templates[name] = content;
+        this.templates[name] = $(content.trim());
         return this;
       } else {
         if (!this.templates.hasOwnProperty(name)) {
           throw 'Template "' + name + '" does not exist';
         }
-        return $(this.templates[name].trim());
+        return this.templates[name].clone();
       }
     };
 
