@@ -46,12 +46,12 @@ class App
   # instance of a defined template. This instance is a jQuery element.
   template: (name, content) ->
     if arguments.length > 1
-      @templates[name] = content
+      @templates[name] = $(content.trim())
       this
     else
       unless @templates.hasOwnProperty name
         throw 'Template "' + name + '" does not exist'
-      $ @templates[name].trim()
+      @templates[name].clone()
   
   
   # Translations
