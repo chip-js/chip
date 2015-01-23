@@ -1907,7 +1907,7 @@ if (!Date.prototype.toISOString) {
     };
 
     App.prototype.hasMatchingRoutes = function(url) {
-      return this.router.getRoutesMatchingPath(url).length > 0;
+      return this.router.getRoutesMatchingPath(this.router.getUrlParts(url).path).length > 0;
     };
 
     App.prototype.mount = function(path, app) {};
