@@ -269,7 +269,7 @@ class App
   
   
   hasMatchingRoutes: (url) ->
-    @router.getRoutesMatchingPath(url).length > 0
+    @router.getRoutesMatchingPath(@router.getUrlParts(url).path).length > 0
   
   
   # Mounts an app to a URL prefix.
