@@ -139,12 +139,12 @@ instance of a defined template. This instance is a jQuery element.</p>
             
             <div class="content"><div class='highlight'><pre>  template: (name, content) -&gt;
     <span class="keyword">if</span> arguments.length &gt; <span class="number">1</span>
-      <span class="property">@templates</span>[name] = content
+      <span class="property">@templates</span>[name] = $(content.trim())
       <span class="keyword">this</span>
     <span class="keyword">else</span>
       <span class="keyword">unless</span> <span class="property">@templates</span>.hasOwnProperty name
         <span class="keyword">throw</span> <span class="string">'Template "'</span> + name + <span class="string">'" does not exist'</span>
-      $ <span class="property">@templates</span>[name].trim()</pre></div></div>
+      <span class="property">@templates</span>[name].clone()</pre></div></div>
             
         </li>
         
@@ -640,7 +640,7 @@ template and controller by the same name. This template will be placed in the fi
   
   
   hasMatchingRoutes: (url) -&gt;
-    <span class="property">@router</span>.getRoutesMatchingPath(url).length &gt; <span class="number">0</span></pre></div></div>
+    <span class="property">@router</span>.getRoutesMatchingPath(<span class="property">@router</span>.getUrlParts(url).path).length &gt; <span class="number">0</span></pre></div></div>
             
         </li>
         
