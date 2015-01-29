@@ -103,11 +103,12 @@ class Controller
     @_closed = true
     
     for child in @_children
-      child.parent = null
+      child._parent = null
       child.closeController()
-    if @parent?._children
-      index = @parent._children.indexOf this
-      @parent._children.splice(index, 1) if index isnt -1
+    if @_parent?._children
+      index = @_parent._children.indexOf this
+      @_parent._children.splice(index, 1) if index isnt -1
+    @_parent = null
 
     @beforeClose() if @hasOwnProperty('beforeClose')
     if @_syncListeners
