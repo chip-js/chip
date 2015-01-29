@@ -1180,15 +1180,16 @@ if (!Date.prototype.toISOString) {
       _ref = this._children;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
-        child.parent = null;
+        child._parent = null;
         child.closeController();
       }
-      if ((_ref1 = this.parent) != null ? _ref1._children : void 0) {
-        index = this.parent._children.indexOf(this);
+      if ((_ref1 = this._parent) != null ? _ref1._children : void 0) {
+        index = this._parent._children.indexOf(this);
         if (index !== -1) {
-          this.parent._children.splice(index, 1);
+          this._parent._children.splice(index, 1);
         }
       }
+      this._parent = null;
       if (this.hasOwnProperty('beforeClose')) {
         this.beforeClose();
       }
