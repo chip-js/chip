@@ -7,52 +7,48 @@
 		<link rel="stylesheet" href="bower_components/todomvc-common/base.css">
 		<!-- CSS overrides - remove if you don't need it -->
 		<link rel="stylesheet" href="css/app.css">
-		<script src="js/jquery.js"></script>
-		<script src="../../dist/chip.js"></script>
-		<script src="js/app.js"></script>
-		<script src="js/models/todo.js"></script>
-		<script src="js/controllers/todos.js"></script>
-		<script src="js/controllers/todo.js"></script>
 	</head>
-	<body bind-controller="todos">
+	<body [controller]="todos">
 		<section id="todoapp">
 			<header id="header">
 				<h1>todos</h1>
-				<input id="new-todo" placeholder="What needs to be done?" autofocus bind-value="newDescription" on-enter="createTodo()">
+				<input id="new-todo" placeholder="What needs to be done?" autofocus [value]="{{newDescription}}" (enter)="{{createTodo()}}">
 			</header>
 			<!-- This section should be hidden by default and shown when there are todos -->
-			<section id="main" bind-if="todos.length">
-				<input id="toggle-all" type="checkbox" attr-checked="todos.every(filters.done)" on-change="toggleAll()">
+			<section id="main" [if]="{{todos.length}}">
+				<input id="toggle-all" type="checkbox" checked?="{{todos.every(filters.done)}}" (change)="{{toggleAll()}}">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-					<li bind-each="todo in todos | filter:filter" bind-controller="todo" attr-class="{editing:editing,completed:todo.done}">
+					<li [repeat]="{{todo in todos | filter(filter)}}" [controller]="todo" [class:editing]="{{editing}}" [class:completed]="{{todo.done}}">
 						<div class="view">
-							<input class="toggle" type="checkbox" on-change="toggleDone(todo)" attr-checked="todo.done">
-							<label on-dblclick="editTodo(todo)" bind-text="todo.description">Create a TodoMVC template</label>
-							<button class="destroy" on-click="removeTodo(todo)"></button>
+							<input class="toggle" type="checkbox" (change)="{{toggleDone(todo)}}" checked?="{{todo.done}}">
+							<label (dblclick)="{{editTodo(todo)}}" [text]="{{todo.description}}"></label>
+							<button class="destroy" (click)="{{removeTodo(todo)}}"></button>
 						</div>
-						<input class="edit" bind-value="editDescription" on-esc="cancelEditing()" on-blur="cancelEditing()" on-enter="saveTodo()">
+						<input class="edit" [value]="{{editDescription}}" (esc)="{{cancelEditing()}}" (blur)="{{cancelEditing()}}" (enter)="{{saveTodo()}}">
 					</li>
 				</ul>
 			</section>
 			<!-- This footer should hidden by default and shown when there are todos -->
-			<footer id="footer" bind-if="todos.length">
+			<footer id="footer" [if]="{{todos.length}}">
 				<!-- This should be `0 items left` by default -->
-				<span id="todo-count"><strong bind-text="todos.filter(filters.undone).length">1</strong> <span bind-text="todos.filter(filters.undone).length == 1 ? 'item':'items'">item</span> left</span>
+				<span id="todo-count">
+					<strong [text]="{{todos.filter(filters.undone).length}}">1</strong> <span [text]="{{todos.filter(filters.undone).length == 1 ? 'item' : 'items'}}"></span> left
+				</span>
 				<!-- Remove this if you don't implement routing -->
 				<ul id="filters">
 					<li>
-						<a class="selected" href="#/" attr-class="{selected:filter == filters.none}">All</a>
+						<a class="selected" href="#/" [class:selected]="{{filter == filters.none}}">All</a>
 					</li>
 					<li>
-						<a href="#/active" attr-class="{selected:filter == filters.undone}">Active</a>
+						<a href="#/active" [class:selected]="{{filter == filters.undone}}">Active</a>
 					</li>
 					<li>
-						<a href="#/completed" attr-class="{selected:filter == filters.done}">Completed</a>
+						<a href="#/completed" [class:selected]="{{filter == filters.done}}">Completed</a>
 					</li>
 				</ul>
 				<!-- Hidden if no completed items are left ↓ -->
-				<button id="clear-completed" bind-if="todos.filter(filters.done).length" on-click="clearCompleted()">Clear completed (<span bind-text="todos.filter(filters.done).length">0</span>)</button>
+				<button id="clear-completed" [if]="{{todos.filter(filters.done).length}}" (click)="{{clearCompleted()}}">Clear completed (<span [text]="{{todos.filter(filters.done).length}}"></span>)</button>
 			</footer>
 		</section>
 		<footer id="info">
@@ -64,6 +60,11 @@
 			<p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
 		</footer>
 		<!-- Scripts here. Don't remove this ↓ -->
+		<script src="../../dist/chip.js"></script>
+		<script src="js/app.js"></script>
+		<script src="js/models/todo.js"></script>
+		<script src="js/controllers/todos.js"></script>
+		<script src="js/controllers/todo.js"></script>
 		<script src="bower_components/todomvc-common/base.js"></script>
 	</body>
 </html>

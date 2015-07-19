@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>binders.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+              
+                
+                <a class="source" href="app.html">
+                  app.js
+                </a>
+              
+                
+                <a class="source" href="binders.html">
+                  binders.js
+                </a>
+              
+                
+                <a class="source" href="chip.html">
+                  chip.js
+                </a>
+              
+                
+                <a class="source" href="controller.html">
+                  controller.js
+                </a>
+              
+                
+                <a class="source" href="events.html">
+                  events.js
+                </a>
+              
+                
+                <a class="source" href="router.html">
+                  router.js
+                </a>
+              
+            </div>
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>binders.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = registerBinders;
+<span class="hljs-keyword">var</span> compile = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-js/src/compile'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">registerBinders</span>(<span class="hljs-params">app</span>) </span>{
+  <span class="hljs-keyword">var</span> fragments = app.fragments;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h2 id="bind-partial">bind-partial</h2>
+<p>Adds a handler to set the contents of the element with the template and controller by that name. The expression may
+be just the name of the template/controller, or it may be of the format <code>partialName</code>. Use the local-* binding
+to pass data into a partial.</p>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p><strong>Example:</strong></p>
+<pre><code class="lang-html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> [<span class="hljs-attribute">partial</span>]=<span class="hljs-value">"userInfo"</span> {<span class="hljs-attribute">user</span>}=<span class="hljs-value">"{{getUser()}}"</span> [<span class="hljs-attribute">class</span>]=<span class="hljs-value">"{{ { administrator: user.isAdmin } }}"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+
+<span class="hljs-tag">&lt;<span class="hljs-title">script</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"userInfo"</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text/html"</span>&gt;</span><span class="handlebars"><span class="xml">
+  <span class="hljs-tag">&lt;<span class="hljs-title">strong</span>&gt;</span></span><span class="hljs-expression">{{ <span class="hljs-variable">user.name</span> }}</span><span class="xml"><span class="hljs-tag">&lt;/<span class="hljs-title">strong</span>&gt;</span>
+</span></span><span class="hljs-tag">&lt;/<span class="hljs-title">script</span>&gt;</span>
+</code></pre>
+<p><em>Result:</em></p>
+<pre><code class="lang-html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">class</span>=<span class="hljs-value">"administrator"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">span</span>&gt;</span>Jacob<span class="hljs-tag">&lt;/<span class="hljs-title">span</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+</code></pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> PartialBinder = fragments.registerAttribute(<span class="hljs-string">'[partial]'</span>, {
+    animated: <span class="hljs-literal">true</span>,
+    priority: <span class="hljs-number">40</span>,
+
+    compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.element.childNodes.length) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Use the contents of this partial as the default when no route matches</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.content = <span class="hljs-built_in">document</span>.createDocumentFragment();
+
+        <span class="hljs-keyword">while</span> (<span class="hljs-keyword">this</span>.element.firstChild) {
+          <span class="hljs-keyword">this</span>.content.appendChild(<span class="hljs-keyword">this</span>.element.firstChild);
+        }
+        fragments.createTemplate(<span class="hljs-keyword">this</span>.content);
+      }
+    },
+
+    bound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.context._partialContent = <span class="hljs-keyword">this</span>.content;
+      <span class="hljs-keyword">this</span>.lastContext = <span class="hljs-keyword">this</span>.context;
+    },
+
+    unbound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">delete</span> <span class="hljs-keyword">this</span>.lastContext._partialContent;
+      <span class="hljs-keyword">this</span>.lastContext = <span class="hljs-literal">null</span>;
+    },
+
+    updated: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">value</span>) </span>{
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.animate) {
+        <span class="hljs-keyword">this</span>.updatedAnimated(value);
+      } <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">this</span>.updatedRegular(value);
+      }
+    },
+
+    updatedRegular: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">value</span>) </span>{
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.showing) {
+        <span class="hljs-keyword">this</span>.showing.dispose();
+        <span class="hljs-keyword">this</span>.controller.closeController();
+        <span class="hljs-keyword">this</span>.showing = <span class="hljs-literal">null</span>;
+        <span class="hljs-keyword">this</span>.controller = <span class="hljs-literal">null</span>;
+      }
+
+      <span class="hljs-keyword">var</span> template = app.template(value);
+
+      <span class="hljs-keyword">if</span> (template) {
+        <span class="hljs-keyword">this</span>.controller = <span class="hljs-keyword">this</span>.context.createController({ element: <span class="hljs-keyword">this</span>.element, name: value });
+        <span class="hljs-keyword">this</span>.showing = template.createView();
+        <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.showing);
+        <span class="hljs-keyword">this</span>.showing.bind(<span class="hljs-keyword">this</span>.controller);
+        <span class="hljs-keyword">this</span>.context.sync();
+      }
+    },
+
+    updatedAnimated: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">value</span>) </span>{
+      <span class="hljs-keyword">this</span>.lastValue = value;
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.animating) {
+        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.showing) {
+        <span class="hljs-keyword">this</span>.animating = <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">this</span>.animateOut(<span class="hljs-keyword">this</span>.element, <span class="hljs-literal">true</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+          <span class="hljs-keyword">this</span>.animating = <span class="hljs-literal">false</span>;
+
+          <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.showing) {
+            <span class="hljs-keyword">this</span>.showing.dispose();
+            <span class="hljs-keyword">this</span>.controller.closeController();
+            <span class="hljs-keyword">this</span>.showing = <span class="hljs-literal">null</span>;
+            <span class="hljs-keyword">this</span>.controller = <span class="hljs-literal">null</span>;
+          }
+
+          <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.context) {
+            <span class="hljs-keyword">this</span>.updatedAnimated(<span class="hljs-keyword">this</span>.lastValue);
+          }
+        });
+      }
+
+      <span class="hljs-keyword">var</span> template = <span class="hljs-keyword">this</span>.template(value) || <span class="hljs-keyword">this</span>.defaultTemplate;
+
+      <span class="hljs-keyword">if</span> (template) {
+        <span class="hljs-keyword">this</span>.controller = <span class="hljs-keyword">this</span>.context.createController({ element: <span class="hljs-keyword">this</span>.element, name: value });
+        <span class="hljs-keyword">this</span>.showing = template.createView();
+        <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.showing);
+        <span class="hljs-keyword">this</span>.showing.bind(<span class="hljs-keyword">this</span>.controller);
+        <span class="hljs-keyword">this</span>.context.sync();
+
+        <span class="hljs-keyword">this</span>.animating = <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">this</span>.animateIn(<span class="hljs-keyword">this</span>.element, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+          <span class="hljs-keyword">this</span>.animating = <span class="hljs-literal">false</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>if the value changed while this was animating run it again</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.lastValue !== value) {
+            <span class="hljs-keyword">this</span>.updatedAnimated(<span class="hljs-keyword">this</span>.lastValue);
+          }
+        });
+      }
+    }
+  });</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2 id="-">{*}</h2>
+<p>You may pass data into [partial] or [repeat] using this wildcard binding. The attribute name portion within the
+bracktes will be converted to camelCase and the value will be set locally. Examples:
+<code>{link}=&quot;{{user.addressUrl}}&quot;</code> will pass the value of <code>user.addressUrl</code> into the partial as <code>link</code>.
+<code>{post-body}=&quot;{{user.description}}&quot;</code> will pass the value of <code>user.description</code> into the partial as <code>postBody</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  fragments.registerAttribute(<span class="hljs-string">'{*}'</span>, {
+    created: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.twoWayObserver = <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.camelCase, <span class="hljs-keyword">this</span>.sendUpdate, <span class="hljs-keyword">this</span>);
+    },
+    bound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.twoWayObserver.bind(<span class="hljs-keyword">this</span>.element, <span class="hljs-literal">true</span>);
+    },
+    unbound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.twoWayObserver.unbind();
+    },
+    sendUpdate: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">value</span>) </span>{
+      <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>.skipSend) {
+        <span class="hljs-keyword">this</span>.observer.set(value);
+        <span class="hljs-keyword">this</span>.skipSend = <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">var</span> _this = <span class="hljs-keyword">this</span>;
+        setImmediate(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+          _this.skipSend = <span class="hljs-literal">false</span>;
+        });
+      }
+    },
+    updated: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">value</span>) </span>{
+      <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>.skipSend &amp;&amp; value !== <span class="hljs-literal">undefined</span>) {
+        <span class="hljs-keyword">this</span>.element[<span class="hljs-keyword">this</span>.camelCase] = value;
+        <span class="hljs-keyword">this</span>.skipSend = <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">var</span> _this = <span class="hljs-keyword">this</span>;
+        setImmediate(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+          _this.skipSend = <span class="hljs-literal">false</span>;
+        });
+      }
+    }
+  });</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <h2 id="bind-content">bind-content</h2>
+<p>Allows an element with a <code>[partial]</code> attribute to include HTML within it that may be inserted somewhere
+inside the partial’s template.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  fragments.registerAttribute(<span class="hljs-string">'[content]'</span>, {
+    priority: <span class="hljs-number">40</span>,
+    bound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.context._partialContent) {
+        <span class="hljs-keyword">this</span>.content = <span class="hljs-keyword">this</span>.context._partialContent.createView();
+        <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.content);
+        <span class="hljs-keyword">this</span>.content.bind(<span class="hljs-keyword">this</span>.context);
+      }
+    },
+    unbound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.content) {
+        <span class="hljs-keyword">this</span>.content.dispose();
+      }
+    }
+  });
+
+
+
+  fragments.registerAttribute(<span class="hljs-string">'[route]'</span>, PartialBinder.extend({
+    compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      PartialBinder.prototype.compiled.call(<span class="hljs-keyword">this</span>);
+      <span class="hljs-keyword">this</span>.expression = <span class="hljs-string">'routePath[routeDepth]'</span>;
+    },
+
+    bound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>Delete any depth existing on the controller and set its depth to 1 more than its parent controllers.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">delete</span> <span class="hljs-keyword">this</span>.context.routeDepth;
+      <span class="hljs-keyword">this</span>.context.routeDepth = <span class="hljs-keyword">this</span>.context.routeDepth == <span class="hljs-literal">null</span> ? <span class="hljs-number">0</span> : <span class="hljs-keyword">this</span>.context.routeDepth + <span class="hljs-number">1</span>;
+    }
+  }));
+
+
+
+  fragments.registerAttribute(<span class="hljs-string">'[controller]'</span>, PartialBinder.extend({
+    priority: <span class="hljs-number">30</span>,
+
+    compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.bindings = compile(fragments, <span class="hljs-keyword">this</span>.element);
+    },
+
+    created: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.bindings = <span class="hljs-keyword">this</span>.bindings.map(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">binding</span>) </span>{
+        <span class="hljs-keyword">return</span> binding.cloneForView(<span class="hljs-keyword">this</span>.element);
+      }, <span class="hljs-keyword">this</span>);
+    },
+
+    bound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">var</span> context = <span class="hljs-keyword">this</span>.context.createController({ element: <span class="hljs-keyword">this</span>.element, name: <span class="hljs-keyword">this</span>.observer.get() });
+      <span class="hljs-keyword">this</span>.childContext = context;
+      <span class="hljs-keyword">this</span>.bindings.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">binding</span>) </span>{
+        binding.bind(context);
+      });
+    },
+
+    unbound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.bindings.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">binding</span>) </span>{
+        binding.unbind();
+      });
+      <span class="hljs-keyword">this</span>.childContext.closeController();
+      <span class="hljs-keyword">this</span>.childContext = <span class="hljs-literal">null</span>;
+    }
+  }));
+
+
+
+
+  fragments.registerAttribute(<span class="hljs-string">'[debug]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'debug'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[text]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'text'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[html]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'html'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[class:*]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'class-*'</span>));
+
+  <span class="hljs-keyword">var</span> ValueBinder = fragments.registerAttribute(<span class="hljs-string">'[value]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'value'</span>));
+  ValueBinder.prototype.eventsAttrName = <span class="hljs-string">'[value-events]'</span>;
+  ValueBinder.prototype.fieldAttrName = <span class="hljs-string">'[value-field]'</span>;
+
+  fragments.registerAttribute(<span class="hljs-string">'(*)'</span>, fragments.unregisterAttribute(<span class="hljs-string">'on-*'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(enter)'</span>, fragments.unregisterAttribute(<span class="hljs-string">'on-enter'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(ctrl-enter)'</span>, fragments.unregisterAttribute(<span class="hljs-string">'on-ctrl-enter'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(esc)'</span>, fragments.unregisterAttribute(<span class="hljs-string">'on-esc'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(escape)'</span>, fragments.getAttributeBinder(<span class="hljs-string">'(esc)'</span>));
+
+  fragments.registerAttribute(<span class="hljs-string">'[*]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'*$'</span>));
+  <span class="hljs-comment">/*
+  fragments.registerAttribute('*?', fragments.unregisterAttribute('*?'));
+  fragments.registerAttribute('checked?', fragments.getAttributeBinder('value'));
+  */</span>
+
+  <span class="hljs-keyword">var</span> IfBinding = fragments.registerAttribute(<span class="hljs-string">'[if]'</span>, fragments.getAttributeBinder(<span class="hljs-string">'if'</span>));
+  IfBinding.prototype.unlessAttrName = <span class="hljs-string">'[unless]'</span>;
+  IfBinding.prototype.elseIfAttrName = <span class="hljs-string">'[else-if]'</span>;
+  IfBinding.prototype.elseUnlessAttrName = <span class="hljs-string">'[else-unless]'</span>;
+  IfBinding.prototype.elseAttrName = <span class="hljs-string">'[else]'</span>;
+  fragments.registerAttribute(<span class="hljs-string">'[unless]'</span>, IfBinding);
+
+  fragments.registerAttribute(<span class="hljs-string">'[repeat]'</span>, fragments.getAttributeBinder(<span class="hljs-string">'repeat'</span>));
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
