@@ -1,13 +1,21 @@
 {
   "name": "chip",
-  "version": "0.1.0",
+  "version": "2.0.0",
+  "dependencies": {
+    "fragments-js": "~0.2.5"
+  },
+  "scripts": {
+    "build": "browserify --debug --standalone chip index.js -o dist/chip.js",
+    "watch": "watchify --debug --standalone chip index.js -o dist/chip.js",
+    "compress": "uglifyjs dist/chip.js -c -o dist/chip.min.js",
+    "docs": "docco -o docs src/*.js",
+    "prepublish": "npm run build",
+    "postbuild": "npm run compress && npm run docs"
+  },
   "devDependencies": {
-    "grunt": "~0.4.1",
-    "grunt-contrib-coffee": "~0.7.0",
-    "grunt-contrib-concat": "~0.3.0",
-    "grunt-contrib-uglify": "~0.2.2",
-    "grunt-contrib-clean": "~0.5.0",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-docco2": "~0.1.5"
+    "browserify": "^10.2.1",
+    "watchify": "^3.2.1",
+    "uglify-js": "^2.4.23",
+    "docco": "^0.7.0"
   }
 }
