@@ -1,5 +1,5 @@
 {
-  "name": "chip",
+  "name": "chip-js",
   "version": "2.0.0",
   "dependencies": {
     "fragments-js": "~0.2.5"
