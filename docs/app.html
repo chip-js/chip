@@ -218,7 +218,8 @@ instance of a defined template. This instance is a document fragment.</p>
 App.prototype.component = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">elementName, templateName</span>) </span>{
   <span class="hljs-keyword">var</span> fragments = <span class="hljs-keyword">this</span>.fragments;
   fragments.registerElement(elementName, {
-    created: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    priority: <span class="hljs-number">200</span>,
+    compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
       <span class="hljs-keyword">var</span> elem = <span class="hljs-keyword">this</span>.element;
       <span class="hljs-keyword">var</span> defaultBinder = fragments.getAttributeBinder(<span class="hljs-string">'__default__'</span>);
 
@@ -892,7 +893,7 @@ App.prototype.hasMatchingRoutes = <span class="hljs-function"><span class="hljs-
       <span class="hljs-keyword">if</span> (element.matches(selector)) {
         <span class="hljs-keyword">return</span> element;
       }
-    } <span class="hljs-keyword">while</span> (element = element.parentNode);
+    } <span class="hljs-keyword">while</span> ((element = element.parentNode) &amp;&amp; element.nodeType === Node.ELEMENT_NODE);
     <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
   }
 }</pre></div></div>

@@ -77,7 +77,9 @@
 <span class="hljs-keyword">var</span> compile = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-js/src/compile'</span>);
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">registerBinders</span>(<span class="hljs-params">app</span>) </span>{
-  <span class="hljs-keyword">var</span> fragments = app.fragments;</pre></div></div>
+  <span class="hljs-keyword">var</span> fragments = app.fragments;
+
+  fragments.animateAttribute = <span class="hljs-string">'[animate]'</span>;</pre></div></div>
             
         </li>
         
@@ -207,9 +209,10 @@ to pass data into a partial.</p>
             <span class="hljs-keyword">this</span>.updatedAnimated(<span class="hljs-keyword">this</span>.lastValue);
           }
         });
+        <span class="hljs-keyword">return</span>;
       }
 
-      <span class="hljs-keyword">var</span> template = <span class="hljs-keyword">this</span>.template(value) || <span class="hljs-keyword">this</span>.defaultTemplate;
+      <span class="hljs-keyword">var</span> template = app.template(value);
 
       <span class="hljs-keyword">if</span> (template) {
         <span class="hljs-keyword">this</span>.controller = <span class="hljs-keyword">this</span>.context.createController({ element: <span class="hljs-keyword">this</span>.element, name: value });
