@@ -155,7 +155,7 @@ App.prototype.createController = function(options) {
   // property only sets it on the child and does not change the parent. The child cannot set data on the parent, only
   // read it or call methods on it.
   controller = Object.create(parent);
-  controller.parent = parent;
+  controller._parent = parent;
   Controller.call(controller);
   parent._children.push(controller);
 

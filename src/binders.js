@@ -30,15 +30,26 @@ function registerBinders(app) {
     priority: 40,
 
     compiled: function() {
-      if (this.element.childNodes.length) {
-        // Use the contents of this partial as the default when no route matches
-        this.content = document.createDocumentFragment();
+      var parent = this.element.parentNode;
+      var placeholder = document.createTextNode('');
+      parent.insertBefore(placeholder, this.element);
 
-        while (this.element.firstChild) {
-          this.content.appendChild(this.element.firstChild);
-        }
-        fragments.createTemplate(this.content);
+      if (this.element.childNodes.length) {
+        // Use the contents of this partial as the default when no route matches or allow to be inserted
+        // within
+        this.content = fragments.createTemplate(this.element.childNodes);
       }
+
+      this.template = fragments.createTemplate(this.element);
+      this.element = placeholder;
+    },
+
+    created: function() {
+      var placeholder = this.element;
+      this.container = this.template.createView();
+      placeholder.parentNode.insertBefore(this.container, placeholder.nextSibling);
+      this.element = placeholder.nextSibling;
+      placeholder.remove();
     },
 
     bound: function() {
@@ -49,6 +60,10 @@ function registerBinders(app) {
     unbound: function() {
       delete this.lastContext._partialContent;
       this.lastContext = null;
+    },
+
+    add: function(view) {
+      this.element.parentNode.insertBefore(view, this.element.nextSibling);
     },
 
     updated: function(value) {
@@ -62,6 +77,7 @@ function registerBinders(app) {
     updatedRegular: function(value) {
       if (this.showing) {
         this.showing.dispose();
+        this.container.unbind();
         this.controller.closeController();
         this.showing = null;
         this.controller = null;
@@ -73,8 +89,8 @@ function registerBinders(app) {
         this.controller = this.context.createController({ element: this.element, name: value });
         this.showing = template.createView();
         this.element.appendChild(this.showing);
+        this.container.bind(this.controller);
         this.showing.bind(this.controller);
-        this.context.sync();
       }
     },
 
@@ -86,11 +102,12 @@ function registerBinders(app) {
 
       if (this.showing) {
         this.animating = true;
-        this.animateOut(this.element, true, function() {
+        this.animateOut(this.container, true, function() {
           this.animating = false;
 
           if (this.showing) {
             this.showing.dispose();
+            this.container.unbind();
             this.controller.closeController();
             this.showing = null;
             this.controller = null;
@@ -109,11 +126,12 @@ function registerBinders(app) {
         this.controller = this.context.createController({ element: this.element, name: value });
         this.showing = template.createView();
         this.element.appendChild(this.showing);
+        this.container.bind(this.controller);
         this.showing.bind(this.controller);
         this.context.sync();
 
         this.animating = true;
-        this.animateIn(this.element, function() {
+        this.animateIn(this.container, function() {
           this.animating = false;
           // if the value changed while this was animating run it again
           if (this.lastValue !== value) {
@@ -125,6 +143,9 @@ function registerBinders(app) {
   });
 
 
+  var Binding = require('fragments-js/src/binding');
+  var _super = Binding.prototype;
+
   // ## {*}
   // You may pass data into [partial] or [repeat] using this wildcard binding. The attribute name portion within the
   // bracktes will be converted to camelCase and the value will be set locally. Examples:
@@ -134,8 +155,16 @@ function registerBinders(app) {
     created: function() {
       this.twoWayObserver = this.observe(this.camelCase, this.sendUpdate, this);
     },
-    bound: function() {
-      this.twoWayObserver.bind(this.element, true);
+    // Bind this to the given context object
+    bind: function(context) {
+      if (this.childContext == context) {
+        return;
+      }
+
+      // Bind against the parent context
+      this.childContext = context;
+      _super.bind.call(this, context._parent);
+      this.twoWayObserver.bind(context, true);
     },
     unbound: function() {
       this.twoWayObserver.unbind();
@@ -145,17 +174,17 @@ function registerBinders(app) {
         this.observer.set(value);
         this.skipSend = true;
         var _this = this;
-        setImmediate(function() {
+        setTimeout(function() {
           _this.skipSend = false;
         });
       }
     },
     updated: function(value) {
       if (!this.skipSend && value !== undefined) {
-        this.element[this.camelCase] = value;
+        this.childContext[this.camelCase] = value;
         this.skipSend = true;
         var _this = this;
-        setImmediate(function() {
+        setTimeout(function() {
           _this.skipSend = false;
         });
       }

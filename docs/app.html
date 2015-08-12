@@ -357,7 +357,7 @@ read it or call methods on it.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  controller = <span class="hljs-built_in">Object</span>.create(parent);
-  controller.parent = parent;
+  controller._parent = parent;
   Controller.call(controller);
   parent._children.push(controller);</pre></div></div>
             
