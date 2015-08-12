@@ -82,7 +82,8 @@ App.prototype.template = function(name, content) {
 App.prototype.component = function(elementName, templateName) {
   var fragments = this.fragments;
   fragments.registerElement(elementName, {
-    created: function() {
+    priority: 200,
+    compiled: function() {
       var elem = this.element;
       var defaultBinder = fragments.getAttributeBinder('__default__');
 
@@ -406,7 +407,7 @@ if (!Element.prototype.closest) {
       if (element.matches(selector)) {
         return element;
       }
-    } while (element = element.parentNode);
+    } while ((element = element.parentNode) && element.nodeType === Node.ELEMENT_NODE);
     return null;
   }
 }
