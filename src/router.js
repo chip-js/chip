@@ -215,14 +215,14 @@ Router.prototype.dispatch = function(url) {
     });
 
     Object.keys(route.params).forEach(function(key) {
-      var paramCallbacks = route.params[key];
+      var paramCallbacks = this.params[key];
       if (paramCallbacks) {
         callbacks.push.apply(callbacks, paramCallbacks);
       }
-    });
+    }, this);
 
     callbacks.push(route.callback);
-  });
+  }, this);
 
   // Calls each callback one by one until either there is an error or we call all of them.
   var next = function(err) {

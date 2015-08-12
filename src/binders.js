@@ -4,6 +4,8 @@ var compile = require('fragments-js/src/compile');
 function registerBinders(app) {
   var fragments = app.fragments;
 
+  fragments.animateAttribute = '[animate]';
+
   // ## bind-partial
   // Adds a handler to set the contents of the element with the template and controller by that name. The expression may
   // be just the name of the template/controller, or it may be of the format `partialName`. Use the local-* binding
@@ -98,9 +100,10 @@ function registerBinders(app) {
             this.updatedAnimated(this.lastValue);
           }
         });
+        return;
       }
 
-      var template = this.template(value) || this.defaultTemplate;
+      var template = app.template(value);
 
       if (template) {
         this.controller = this.context.createController({ element: this.element, name: value });

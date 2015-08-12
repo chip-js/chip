@@ -389,14 +389,14 @@ be used by your application. Use <code>redirect()</code> instead.</p>
     });
 
     <span class="hljs-built_in">Object</span>.keys(route.params).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">key</span>) </span>{
-      <span class="hljs-keyword">var</span> paramCallbacks = route.params[key];
+      <span class="hljs-keyword">var</span> paramCallbacks = <span class="hljs-keyword">this</span>.params[key];
       <span class="hljs-keyword">if</span> (paramCallbacks) {
         callbacks.push.apply(callbacks, paramCallbacks);
       }
-    });
+    }, <span class="hljs-keyword">this</span>);
 
     callbacks.push(route.callback);
-  });</pre></div></div>
+  }, <span class="hljs-keyword">this</span>);</pre></div></div>
             
         </li>
         
