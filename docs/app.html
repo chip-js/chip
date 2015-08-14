@@ -216,14 +216,14 @@ instance of a defined template. This instance is a document fragment.</p>
 
 
 App.prototype.component = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">elementName, templateName</span>) </span>{
+  <span class="hljs-keyword">var</span> app = <span class="hljs-keyword">this</span>;
   <span class="hljs-keyword">var</span> fragments = <span class="hljs-keyword">this</span>.fragments;
+
   fragments.registerElement(elementName, {
     priority: <span class="hljs-number">200</span>,
-    compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-      <span class="hljs-keyword">var</span> elem = <span class="hljs-keyword">this</span>.element;
-      <span class="hljs-keyword">var</span> defaultBinder = fragments.getAttributeBinder(<span class="hljs-string">'__default__'</span>);
 
-      slice.call(elem.attributes).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">attr</span>) </span>{</pre></div></div>
+    compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.element.childNodes.length) {</pre></div></div>
             
         </li>
         
@@ -234,18 +234,33 @@ App.prototype.component = <span class="hljs-function"><span class="hljs-keyword"
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
-              <p>Convert non-binding attributes into local bindings</p>
+              <p>Save the contents of this component to insert within</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">var</span> Binder = fragments.findBinder(<span class="hljs-string">'attribute'</span>, attr.name, attr.value);
-        <span class="hljs-keyword">if</span> (!Binder || Binder === defaultBinder) {
-          elem.setAttribute(<span class="hljs-string">'{'</span> + attr.name + <span class="hljs-string">'}'</span>);
-          elem.removeAttributeNode(attr);
-        }
-      });
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.content = fragments.createTemplate(<span class="hljs-keyword">this</span>.element.childNodes);
+      }
+    },
+
+    created: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.view = app.template(templateName).createView();
+      <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.view);
+    },
+
+    bound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.context._partialContent = <span class="hljs-keyword">this</span>.content;
+      <span class="hljs-keyword">this</span>.lastContext = <span class="hljs-keyword">this</span>.context;
+      <span class="hljs-keyword">this</span>.view.bind(<span class="hljs-keyword">this</span>.context);
+    },
+
+    unbound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">delete</span> <span class="hljs-keyword">this</span>.lastContext._partialContent;
+      <span class="hljs-keyword">this</span>.lastContext = <span class="hljs-literal">null</span>;
+      <span class="hljs-keyword">this</span>.view.unbind();
     }
-  })
+
+  });
+
 };</pre></div></div>
             
         </li>

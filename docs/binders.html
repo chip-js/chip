@@ -171,10 +171,6 @@ within</p>
       <span class="hljs-keyword">this</span>.lastContext = <span class="hljs-literal">null</span>;
     },
 
-    add: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">view</span>) </span>{
-      <span class="hljs-keyword">this</span>.element.parentNode.insertBefore(view, <span class="hljs-keyword">this</span>.element.nextSibling);
-    },
-
     updated: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">value</span>) </span>{
       <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.animate) {
         <span class="hljs-keyword">this</span>.updatedAnimated(value);
@@ -367,9 +363,15 @@ inside the partial’s template.</p>
             
             <div class="content"><div class='highlight'><pre>  fragments.registerAttribute(<span class="hljs-string">'[content]'</span>, {
     priority: <span class="hljs-number">40</span>,
+    compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.element.childNodes.length) {
+        <span class="hljs-keyword">this</span>.defaultContent = fragments.createTemplate(<span class="hljs-keyword">this</span>.element.childNodes);
+      }
+    },
     bound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.context._partialContent) {
-        <span class="hljs-keyword">this</span>.content = <span class="hljs-keyword">this</span>.context._partialContent.createView();
+      <span class="hljs-keyword">var</span> template = <span class="hljs-keyword">this</span>.context._partialContent || <span class="hljs-keyword">this</span>.defaultContent;
+      <span class="hljs-keyword">if</span> (template) {
+        <span class="hljs-keyword">this</span>.content = template.createView();
         <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.content);
         <span class="hljs-keyword">this</span>.content.bind(<span class="hljs-keyword">this</span>.context);
       }
@@ -377,6 +379,7 @@ inside the partial’s template.</p>
     unbound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
       <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.content) {
         <span class="hljs-keyword">this</span>.content.dispose();
+        <span class="hljs-keyword">this</span>.content = <span class="hljs-literal">null</span>;
       }
     }
   });
