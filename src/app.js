@@ -80,23 +80,38 @@ App.prototype.template = function(name, content) {
 
 
 App.prototype.component = function(elementName, templateName) {
+  var app = this;
   var fragments = this.fragments;
+
   fragments.registerElement(elementName, {
     priority: 200,
-    compiled: function() {
-      var elem = this.element;
-      var defaultBinder = fragments.getAttributeBinder('__default__');
 
-      slice.call(elem.attributes).forEach(function(attr) {
-        // Convert non-binding attributes into local bindings
-        var Binder = fragments.findBinder('attribute', attr.name, attr.value);
-        if (!Binder || Binder === defaultBinder) {
-          elem.setAttribute('{' + attr.name + '}');
-          elem.removeAttributeNode(attr);
-        }
-      });
+    compiled: function() {
+      if (this.element.childNodes.length) {
+        // Save the contents of this component to insert within
+        this.content = fragments.createTemplate(this.element.childNodes);
+      }
+    },
+
+    created: function() {
+      this.view = app.template(templateName).createView();
+      this.element.appendChild(this.view);
+    },
+
+    bound: function() {
+      this.context._partialContent = this.content;
+      this.lastContext = this.context;
+      this.view.bind(this.context);
+    },
+
+    unbound: function() {
+      delete this.lastContext._partialContent;
+      this.lastContext = null;
+      this.view.unbind();
     }
-  })
+
+  });
+
 };
 
 
