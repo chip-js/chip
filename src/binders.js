@@ -62,10 +62,6 @@ function registerBinders(app) {
       this.lastContext = null;
     },
 
-    add: function(view) {
-      this.element.parentNode.insertBefore(view, this.element.nextSibling);
-    },
-
     updated: function(value) {
       if (this.animate) {
         this.updatedAnimated(value);
