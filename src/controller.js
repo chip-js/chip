@@ -22,12 +22,12 @@ Controller.prototype.constructor = Controller;
 // value in the expression changes. An expression can be as simple as `name` or as complex as `user.firstName + ' ' +
 // user.lastName + ' - ' + user.getPostfix()`
 Controller.prototype.watch = function(expr, skipUpdate, callback) {
-  if (Array.isArray(expr)) {
-    if (typeof skipUpdate === 'function') {
-      callback = skipUpdate;
-      skipUpdate = false;
-    }
+  if (typeof skipUpdate === 'function') {
+    callback = skipUpdate;
+    skipUpdate = false;
+  }
 
+  if (Array.isArray(expr)) {
     var origCallback = callback;
     var calledThisRound = false;
 
