@@ -197,9 +197,15 @@ function registerBinders(app) {
   // inside the partial's template.
   fragments.registerAttribute('[content]', {
     priority: 40,
+    compiled: function() {
+      if (this.element.childNodes.length) {
+        this.defaultContent = fragments.createTemplate(this.element.childNodes);
+      }
+    },
     bound: function() {
-      if (this.context._partialContent) {
-        this.content = this.context._partialContent.createView();
+      var template = this.context._partialContent || this.defaultContent;
+      if (template) {
+        this.content = template.createView();
         this.element.appendChild(this.content);
         this.content.bind(this.context);
       }
@@ -207,6 +213,7 @@ function registerBinders(app) {
     unbound: function() {
       if (this.content) {
         this.content.dispose();
+        this.content = null;
       }
     }
   });
