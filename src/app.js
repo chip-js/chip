@@ -265,16 +265,9 @@ App.prototype.route = function(path, handler, subroutes, runBefore) {
     var name = handler;
     callback = function(req, next) {
       // Run a previous route first and allow it to then run this one again after
-      if (runBefore && !runBefore.ran) {
-        runBefore.ran = true;
-        runBefore(req, callback);
-        return;
-      }
-
       if (runBefore) {
-        delete runBefore.ran;
+        runBefore(req, callback);
       }
-
       app.routePath.push(name);
       app.sync();
     };
