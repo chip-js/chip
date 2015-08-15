@@ -222,10 +222,11 @@ function registerBinders(app) {
       this.expression = 'routePath[routeDepth]';
     },
 
-    bound: function() {
+    bind: function(context) {
       // Delete any depth existing on the controller and set its depth to 1 more than its parent controllers.
-      delete this.context.routeDepth;
-      this.context.routeDepth = this.context.routeDepth == null ? 0 : this.context.routeDepth + 1;
+      delete context.routeDepth;
+      context.routeDepth = context.routeDepth == null ? 0 : context.routeDepth + 1;
+      return PartialBinder.prototype.bind.apply(this, arguments);
     }
   }));
 
