@@ -327,7 +327,8 @@ a function on the global scope with the name <code>name + &#39;Controller&#39;</
     <span class="hljs-keyword">this</span>.controllers[name] = initFunction;
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   } <span class="hljs-keyword">else</span> {
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.controllers[name] || <span class="hljs-built_in">window</span>[name + <span class="hljs-string">'Controller'</span>];
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.controllers[name] ||
+      (<span class="hljs-keyword">typeof</span> <span class="hljs-built_in">window</span>[name + <span class="hljs-string">'Controller'</span>] === <span class="hljs-string">'function'</span> ? <span class="hljs-built_in">window</span>[name + <span class="hljs-string">'Controller'</span>] : <span class="hljs-literal">null</span>);
   }
 };</pre></div></div>
             
@@ -603,7 +604,9 @@ template and controller by the same name. This template will be placed in the fi
             
             <div class="content"><div class='highlight'><pre>    callback = handler;
 
-  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> handler === <span class="hljs-string">'string'</span>) {</pre></div></div>
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> handler === <span class="hljs-string">'string'</span>) {
+    <span class="hljs-keyword">var</span> parts = path.split(<span class="hljs-string">'/'</span>);
+    <span class="hljs-keyword">var</span> length = parts[parts.length - <span class="hljs-number">1</span>] === <span class="hljs-string">'*'</span> ? <span class="hljs-literal">Infinity</span> : parts.length;</pre></div></div>
             
         </li>
         
@@ -634,17 +637,11 @@ template and controller by the same name. This template will be placed in the fi
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> (runBefore &amp;&amp; !runBefore.ran) {
-        runBefore.ran = <span class="hljs-literal">true</span>;
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> (runBefore) {
         runBefore(req, callback);
-        <span class="hljs-keyword">return</span>;
       }
-
-      <span class="hljs-keyword">if</span> (runBefore) {
-        <span class="hljs-keyword">delete</span> runBefore.ran;
-      }
-
-      app.routePath.push(name);
+      <span class="hljs-keyword">var</span> matchingPath = req.path.split(<span class="hljs-string">'/'</span>).slice(<span class="hljs-number">0</span>, length).join(<span class="hljs-string">'/'</span>);
+      app.routePath.push({ name: name, path: matchingPath });
       app.sync();
     };</pre></div></div>
             
