@@ -148,7 +148,8 @@ App.prototype.controller = function(name, initFunction) {
     this.controllers[name] = initFunction;
     return this;
   } else {
-    return this.controllers[name] || window[name + 'Controller'];
+    return this.controllers[name] ||
+      (typeof window[name + 'Controller'] === 'function' ? window[name + 'Controller'] : null);
   }
 };
 
@@ -260,6 +261,8 @@ App.prototype.route = function(path, handler, subroutes, runBefore) {
     callback = handler;
 
   } else if (typeof handler === 'string') {
+    var parts = path.split('/');
+    var length = parts[parts.length - 1] === '*' ? Infinity : parts.length;
 
     // If the handler is a string load the controller/template by that name.
     var name = handler;
@@ -268,7 +271,8 @@ App.prototype.route = function(path, handler, subroutes, runBefore) {
       if (runBefore) {
         runBefore(req, callback);
       }
-      app.routePath.push(name);
+      var matchingPath = req.path.split('/').slice(0, length).join('/');
+      app.routePath.push({ name: name, path: matchingPath });
       app.sync();
     };
 

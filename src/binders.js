@@ -62,8 +62,12 @@ function registerBinders(app) {
       this.lastContext = null;
     },
 
+    getName: function(value) {
+      return value;
+    },
+
     updated: function(value) {
-      if (this.animate) {
+      if (this.animate && this.context) {
         this.updatedAnimated(value);
       } else {
         this.updatedRegular(value);
@@ -79,10 +83,11 @@ function registerBinders(app) {
         this.controller = null;
       }
 
-      var template = app.template(value);
+      var name = this.getName(value);
+      var template = app.template(name);
 
       if (template) {
-        this.controller = this.context.createController({ element: this.element, name: value });
+        this.controller = this.context.createController({ element: this.element, name: name });
         this.showing = template.createView();
         this.element.appendChild(this.showing);
         this.container.bind(this.controller);
@@ -93,12 +98,15 @@ function registerBinders(app) {
     updatedAnimated: function(value) {
       this.lastValue = value;
       if (this.animating) {
+        // Obsoleted, will change after animation is finished.
+        this.showing.unbind();
         return;
       }
 
       if (this.showing) {
         this.animating = true;
-        this.animateOut(this.container, true, function() {
+        this.showing.unbind();
+        this.animateOut(this.container, function() {
           this.animating = false;
 
           if (this.showing) {
@@ -116,10 +124,11 @@ function registerBinders(app) {
         return;
       }
 
-      var template = app.template(value);
+      var name = this.getName(value);
+      var template = app.template(name);
 
       if (template) {
-        this.controller = this.context.createController({ element: this.element, name: value });
+        this.controller = this.context.createController({ element: this.element, name: name });
         this.showing = template.createView();
         this.element.appendChild(this.showing);
         this.container.bind(this.controller);
@@ -135,6 +144,14 @@ function registerBinders(app) {
           }
         });
       }
+    },
+
+    unbound: function() {
+      if (this.showing) {
+        this.showing.unbind();
+      }
+      this.lastValue = null;
+      this.animating = false;
     }
   });
 
@@ -227,12 +244,16 @@ function registerBinders(app) {
       delete context.routeDepth;
       context.routeDepth = context.routeDepth == null ? 0 : context.routeDepth + 1;
       return PartialBinder.prototype.bind.apply(this, arguments);
+    },
+
+    getName: function(value) {
+      return value ? value.name : undefined;
     }
   }));
 
 
 
-  fragments.registerAttribute('[controller]', PartialBinder.extend({
+  fragments.registerAttribute('[controller]', {
     priority: 30,
 
     compiled: function() {
@@ -259,8 +280,14 @@ function registerBinders(app) {
       });
       this.childContext.closeController();
       this.childContext = null;
+    },
+
+    disposed: function() {
+      this.bindings.forEach(function(binding) {
+        binding.dispose();
+      });
     }
-  }));
+  });
 
 
 
