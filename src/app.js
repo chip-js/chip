@@ -304,7 +304,7 @@ App.prototype.route = function(path, handler, subroutes, runBefore) {
       app.path = req.path;
       app.dispatchEvent(new CustomEvent('routeChange', { detail: req }));
       app.routePath.length = 0;
-      callback(req, next);
+      callback(app.appController, next);
       app.dispatchEvent(new CustomEvent('routeChanged', { detail: req }));
     }
   });
