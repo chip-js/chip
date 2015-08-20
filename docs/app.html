@@ -685,7 +685,7 @@ template and controller by the same name. This template will be placed in the fi
       app.path = req.path;
       app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'routeChange'</span>, { detail: req }));
       app.routePath.length = <span class="hljs-number">0</span>;
-      callback(req, next);
+      callback(app.appController, next);
       app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'routeChanged'</span>, { detail: req }));
     }
   });
