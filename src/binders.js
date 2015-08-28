@@ -316,7 +316,9 @@ function registerBinders(app) {
   fragments.registerAttribute('(esc)', fragments.unregisterAttribute('on-esc'));
   fragments.registerAttribute('(escape)', fragments.getAttributeBinder('(esc)'));
 
-  fragments.registerAttribute('[*]', fragments.unregisterAttribute('*$'));
+  var AttrBinder = fragments.unregisterAttribute('*$');
+  AttrBinder.prototype.priority = -1;
+  fragments.registerAttribute('[*]', AttrBinder);
   /*
   fragments.registerAttribute('*?', fragments.unregisterAttribute('*?'));
   fragments.registerAttribute('checked?', fragments.getAttributeBinder('value'));
