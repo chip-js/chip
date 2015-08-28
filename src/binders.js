@@ -3,6 +3,7 @@ var compile = require('fragments-js/src/compile');
 
 function registerBinders(app) {
   var fragments = app.fragments;
+  var pageLoadedEventQueued = false;
 
   fragments.animateAttribute = '[animate]';
 
@@ -134,6 +135,14 @@ function registerBinders(app) {
         this.container.bind(this.controller);
         this.showing.bind(this.controller);
         this.context.sync();
+
+        if (!pageLoadedEventQueued) {
+          pageLoadedEventQueued = true;
+          this.context.afterSync(function() {
+            pageLoadedEventQueued = false;
+            app.dispatchEvent(new CustomEvent('pageLoaded', { detail: app.path }));
+          });
+        }
 
         this.animating = true;
         this.animateIn(this.container, function() {
