@@ -21,10 +21,10 @@ Controller.prototype.constructor = Controller;
 // Watches an expression for changes. Calls the `callback` immediately with the initial value and then every time the
 // value in the expression changes. An expression can be as simple as `name` or as complex as `user.firstName + ' ' +
 // user.lastName + ' - ' + user.getPostfix()`
-Controller.prototype.watch = function(expr, skipUpdate, callback) {
-  if (typeof skipUpdate === 'function') {
-    callback = skipUpdate;
-    skipUpdate = false;
+Controller.prototype.watch = function(expr, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
   }
 
   if (Array.isArray(expr)) {
@@ -50,17 +50,17 @@ Controller.prototype.watch = function(expr, skipUpdate, callback) {
 
 
     var observers = expr.map(function(expr) {
-      this.watch(expr, true, callback);
+      this.watch(expr, options, callback);
     }, this);
 
-    if (!skipUpdate) {
+    if (!options.skipInitial) {
       callback();
     }
 
     return observers;
   } else {
     var observer = new Observer(expr, callback, this);
-    observer.bind(this, skipUpdate);
+    observer.bind(this, options.skipInitial);
 
     // Store the observers with the controller so when it is closed we can clean up all observers as well
     this._observers.push(observer);
