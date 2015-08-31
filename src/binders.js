@@ -1,5 +1,6 @@
 module.exports = registerBinders;
 var compile = require('fragments-js/src/compile');
+var forEach = Array.prototype.forEach;
 
 function registerBinders(app) {
   var fragments = app.fragments;
@@ -31,6 +32,11 @@ function registerBinders(app) {
     priority: 40,
 
     compiled: function() {
+      this.isIframe = this.element.nodeName === 'IFRAME';
+      if (this.isIframe && this.element.src) {
+        this.element.removeAttribute('src');
+      }
+
       var parent = this.element.parentNode;
       var placeholder = document.createTextNode('');
       parent.insertBefore(placeholder, this.element);
@@ -48,6 +54,23 @@ function registerBinders(app) {
     created: function() {
       var placeholder = this.element;
       this.container = this.template.createView();
+
+      if (this.isIframe) {
+        setTimeout(function() {
+          var doc = this.element.contentDocument;
+          var head = doc.querySelector('head');
+
+          forEach.call(document.querySelectorAll('link[rel="stylesheet"][href], style'), function(style) {
+            head.appendChild(style.cloneNode(true));
+          });
+
+          // Add reset for common styles on body
+          var style = doc.createElement('style');
+          style.innerHTML = 'body { background: none transparent; width: auto; min-width: 0; margin: 0; padding: 0; }';
+          head.appendChild(style);
+        }.bind(this));
+      }
+
       placeholder.parentNode.insertBefore(this.container, placeholder.nextSibling);
       this.element = placeholder.nextSibling;
       placeholder.remove();
@@ -90,7 +113,11 @@ function registerBinders(app) {
       if (template) {
         this.controller = this.context.createController({ element: this.element, name: name });
         this.showing = template.createView();
-        this.element.appendChild(this.showing);
+        if (this.isIframe) {
+          this.element.contentDocument.body.appendChild(this.showing);
+        } else {
+          this.element.appendChild(this.showing);
+        }
         this.container.bind(this.controller);
         this.showing.bind(this.controller);
       }
@@ -131,7 +158,11 @@ function registerBinders(app) {
       if (template) {
         this.controller = this.context.createController({ element: this.element, name: name });
         this.showing = template.createView();
-        this.element.appendChild(this.showing);
+        if (this.isIframe) {
+          this.body.appendChild(this.showing);
+        } else {
+          this.element.appendChild(this.showing);
+        }
         this.container.bind(this.controller);
         this.showing.bind(this.controller);
         this.context.sync();
