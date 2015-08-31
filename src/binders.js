@@ -336,6 +336,8 @@ function registerBinders(app) {
   fragments.registerAttribute('[text]', fragments.unregisterAttribute('text'));
   fragments.registerAttribute('[html]', fragments.unregisterAttribute('html'));
   fragments.registerAttribute('[class:*]', fragments.unregisterAttribute('class-*'));
+  fragments.registerAttribute('[autofocus]', fragments.unregisterAttribute('autofocus'));
+  fragments.registerAttribute('[autoselect]', fragments.unregisterAttribute('autoselect'));
 
   var ValueBinder = fragments.registerAttribute('[value]', fragments.unregisterAttribute('value'));
   ValueBinder.prototype.eventsAttrName = '[value-events]';
