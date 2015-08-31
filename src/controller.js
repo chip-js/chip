@@ -60,6 +60,7 @@ Controller.prototype.watch = function(expr, options, callback) {
     return observers;
   } else {
     var observer = new Observer(expr, callback, this);
+    observer.getChangeRecords = options.getChangeRecords;
     observer.bind(this, options.skipInitial);
 
     // Store the observers with the controller so when it is closed we can clean up all observers as well
