@@ -137,10 +137,10 @@ user.lastName + &#39; - &#39; + user.getPostfix()</code></p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>Controller.prototype.watch = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">expr, skipUpdate, callback</span>) </span>{
-  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> skipUpdate === <span class="hljs-string">'function'</span>) {
-    callback = skipUpdate;
-    skipUpdate = <span class="hljs-literal">false</span>;
+            <div class="content"><div class='highlight'><pre>Controller.prototype.watch = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">expr, options, callback</span>) </span>{
+  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> options === <span class="hljs-string">'function'</span>) {
+    callback = options;
+    options = {};
   }
 
   <span class="hljs-keyword">if</span> (<span class="hljs-built_in">Array</span>.isArray(expr)) {
@@ -178,17 +178,18 @@ user.lastName + &#39; - &#39; + user.getPostfix()</code></p>
 
 
     <span class="hljs-keyword">var</span> observers = expr.map(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">expr</span>) </span>{
-      <span class="hljs-keyword">this</span>.watch(expr, <span class="hljs-literal">true</span>, callback);
+      <span class="hljs-keyword">this</span>.watch(expr, options, callback);
     }, <span class="hljs-keyword">this</span>);
 
-    <span class="hljs-keyword">if</span> (!skipUpdate) {
+    <span class="hljs-keyword">if</span> (!options.skipInitial) {
       callback();
     }
 
     <span class="hljs-keyword">return</span> observers;
   } <span class="hljs-keyword">else</span> {
     <span class="hljs-keyword">var</span> observer = <span class="hljs-keyword">new</span> Observer(expr, callback, <span class="hljs-keyword">this</span>);
-    observer.bind(<span class="hljs-keyword">this</span>, skipUpdate);</pre></div></div>
+    observer.getChangeRecords = options.getChangeRecords;
+    observer.bind(<span class="hljs-keyword">this</span>, options.skipInitial);</pre></div></div>
             
         </li>
         
