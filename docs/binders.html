@@ -75,9 +75,11 @@
             
             <div class="content"><div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = registerBinders;
 <span class="hljs-keyword">var</span> compile = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-js/src/compile'</span>);
+<span class="hljs-keyword">var</span> forEach = <span class="hljs-built_in">Array</span>.prototype.forEach;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">registerBinders</span>(<span class="hljs-params">app</span>) </span>{
   <span class="hljs-keyword">var</span> fragments = app.fragments;
+  <span class="hljs-keyword">var</span> pageLoadedEventQueued = <span class="hljs-literal">false</span>;
 
   fragments.animateAttribute = <span class="hljs-string">'[animate]'</span>;</pre></div></div>
             
@@ -126,6 +128,11 @@ to pass data into a partial.</p>
     priority: <span class="hljs-number">40</span>,
 
     compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">this</span>.isIframe = <span class="hljs-keyword">this</span>.element.nodeName === <span class="hljs-string">'IFRAME'</span>;
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.isIframe &amp;&amp; <span class="hljs-keyword">this</span>.element.src) {
+        <span class="hljs-keyword">this</span>.element.removeAttribute(<span class="hljs-string">'src'</span>);
+      }
+
       <span class="hljs-keyword">var</span> parent = <span class="hljs-keyword">this</span>.element.parentNode;
       <span class="hljs-keyword">var</span> placeholder = <span class="hljs-built_in">document</span>.createTextNode(<span class="hljs-string">''</span>);
       parent.insertBefore(placeholder, <span class="hljs-keyword">this</span>.element);
@@ -156,6 +163,35 @@ within</p>
     created: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
       <span class="hljs-keyword">var</span> placeholder = <span class="hljs-keyword">this</span>.element;
       <span class="hljs-keyword">this</span>.container = <span class="hljs-keyword">this</span>.template.createView();
+
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.isIframe) {
+        setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+          <span class="hljs-keyword">var</span> doc = <span class="hljs-keyword">this</span>.element.contentDocument;
+          <span class="hljs-keyword">var</span> head = doc.querySelector(<span class="hljs-string">'head'</span>);
+
+          forEach.call(<span class="hljs-built_in">document</span>.querySelectorAll(<span class="hljs-string">'link[rel="stylesheet"][href], style'</span>), <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">style</span>) </span>{
+            head.appendChild(style.cloneNode(<span class="hljs-literal">true</span>));
+          });</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Add reset for common styles on body</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">var</span> style = doc.createElement(<span class="hljs-string">'style'</span>);
+          style.innerHTML = <span class="hljs-string">'body { background: none transparent; width: auto; min-width: 0; margin: 0; padding: 0; }'</span>;
+          head.appendChild(style);
+        }.bind(<span class="hljs-keyword">this</span>));
+      }
+
       placeholder.parentNode.insertBefore(<span class="hljs-keyword">this</span>.container, placeholder.nextSibling);
       <span class="hljs-keyword">this</span>.element = placeholder.nextSibling;
       placeholder.remove();
@@ -198,7 +234,11 @@ within</p>
       <span class="hljs-keyword">if</span> (template) {
         <span class="hljs-keyword">this</span>.controller = <span class="hljs-keyword">this</span>.context.createController({ element: <span class="hljs-keyword">this</span>.element, name: name });
         <span class="hljs-keyword">this</span>.showing = template.createView();
-        <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.showing);
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.isIframe) {
+          <span class="hljs-keyword">this</span>.element.contentDocument.body.appendChild(<span class="hljs-keyword">this</span>.showing);
+        } <span class="hljs-keyword">else</span> {
+          <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.showing);
+        }
         <span class="hljs-keyword">this</span>.container.bind(<span class="hljs-keyword">this</span>.controller);
         <span class="hljs-keyword">this</span>.showing.bind(<span class="hljs-keyword">this</span>.controller);
       }
@@ -211,11 +251,11 @@ within</p>
         </li>
         
         
-        <li id="section-5">
+        <li id="section-6">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-5">&#182;</a>
+                <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <p>Obsoleted, will change after animation is finished.</p>
 
@@ -252,10 +292,22 @@ within</p>
       <span class="hljs-keyword">if</span> (template) {
         <span class="hljs-keyword">this</span>.controller = <span class="hljs-keyword">this</span>.context.createController({ element: <span class="hljs-keyword">this</span>.element, name: name });
         <span class="hljs-keyword">this</span>.showing = template.createView();
-        <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.showing);
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.isIframe) {
+          <span class="hljs-keyword">this</span>.body.appendChild(<span class="hljs-keyword">this</span>.showing);
+        } <span class="hljs-keyword">else</span> {
+          <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.showing);
+        }
         <span class="hljs-keyword">this</span>.container.bind(<span class="hljs-keyword">this</span>.controller);
         <span class="hljs-keyword">this</span>.showing.bind(<span class="hljs-keyword">this</span>.controller);
         <span class="hljs-keyword">this</span>.context.sync();
+
+        <span class="hljs-keyword">if</span> (!pageLoadedEventQueued) {
+          pageLoadedEventQueued = <span class="hljs-literal">true</span>;
+          <span class="hljs-keyword">this</span>.context.afterSync(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+            pageLoadedEventQueued = <span class="hljs-literal">false</span>;
+            app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'pageLoaded'</span>, { detail: app.path }));
+          });
+        }
 
         <span class="hljs-keyword">this</span>.animating = <span class="hljs-literal">true</span>;
         <span class="hljs-keyword">this</span>.animateIn(<span class="hljs-keyword">this</span>.container, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
@@ -264,11 +316,11 @@ within</p>
         </li>
         
         
-        <li id="section-6">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <p>if the value changed while this was animating run it again</p>
 
@@ -297,11 +349,11 @@ within</p>
         </li>
         
         
-        <li id="section-7">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <h2 id="-">{*}</h2>
 <p>You may pass data into [partial] or [repeat] using this wildcard binding. The attribute name portion within the
@@ -319,11 +371,11 @@ bracktes will be converted to camelCase and the value will be set locally. Examp
         </li>
         
         
-        <li id="section-8">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <p>Bind this to the given context object</p>
 
@@ -337,11 +389,11 @@ bracktes will be converted to camelCase and the value will be set locally. Examp
         </li>
         
         
-        <li id="section-9">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <p>Bind against the parent context</p>
 
@@ -379,11 +431,11 @@ bracktes will be converted to camelCase and the value will be set locally. Examp
         </li>
         
         
-        <li id="section-10">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <h2 id="bind-content">bind-content</h2>
 <p>Allows an element with a <code>[partial]</code> attribute to include HTML within it that may be inserted somewhere
@@ -427,11 +479,11 @@ inside the partial’s template.</p>
         </li>
         
         
-        <li id="section-11">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>Delete any depth existing on the controller and set its depth to 1 more than its parent controllers.</p>
 
@@ -492,6 +544,8 @@ inside the partial’s template.</p>
   fragments.registerAttribute(<span class="hljs-string">'[text]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'text'</span>));
   fragments.registerAttribute(<span class="hljs-string">'[html]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'html'</span>));
   fragments.registerAttribute(<span class="hljs-string">'[class:*]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'class-*'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[autofocus]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'autofocus'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[autoselect]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'autoselect'</span>));
 
   <span class="hljs-keyword">var</span> ValueBinder = fragments.registerAttribute(<span class="hljs-string">'[value]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'value'</span>));
   ValueBinder.prototype.eventsAttrName = <span class="hljs-string">'[value-events]'</span>;
@@ -503,7 +557,9 @@ inside the partial’s template.</p>
   fragments.registerAttribute(<span class="hljs-string">'(esc)'</span>, fragments.unregisterAttribute(<span class="hljs-string">'on-esc'</span>));
   fragments.registerAttribute(<span class="hljs-string">'(escape)'</span>, fragments.getAttributeBinder(<span class="hljs-string">'(esc)'</span>));
 
-  fragments.registerAttribute(<span class="hljs-string">'[*]'</span>, fragments.unregisterAttribute(<span class="hljs-string">'*$'</span>));
+  <span class="hljs-keyword">var</span> AttrBinder = fragments.unregisterAttribute(<span class="hljs-string">'*$'</span>);
+  AttrBinder.prototype.priority = -<span class="hljs-number">1</span>;
+  fragments.registerAttribute(<span class="hljs-string">'[*]'</span>, AttrBinder);
   <span class="hljs-comment">/*
   fragments.registerAttribute('*?', fragments.unregisterAttribute('*?'));
   fragments.registerAttribute('checked?', fragments.getAttributeBinder('value'));

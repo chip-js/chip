@@ -865,53 +865,6 @@ App.prototype.hasMatchingRoutes = <span class="hljs-function"><span class="hljs-
             
         </li>
         
-        
-        <li id="section-36">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
-              </div>
-              <p>Polyfill matches</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (!Element.prototype.matches) {
-  Element.prototype.matches =
-    Element.prototype.matchesSelector ||
-    Element.prototype.webkitMatchesSelector ||
-    Element.prototype.mozMatchesSelector ||
-    Element.prototype.msMatchesSelector ||
-    Element.prototype.oMatchesSelector;
-}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-37">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-37">&#182;</a>
-              </div>
-              <p>Polyfill closest</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (!Element.prototype.closest) {
-  Element.prototype.closest = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">closest</span>(<span class="hljs-params">selector</span>) </span>{
-    <span class="hljs-keyword">var</span> element = <span class="hljs-keyword">this</span>;
-    <span class="hljs-keyword">do</span> {
-      <span class="hljs-keyword">if</span> (element.matches(selector)) {
-        <span class="hljs-keyword">return</span> element;
-      }
-    } <span class="hljs-keyword">while</span> ((element = element.parentNode) &amp;&amp; element.nodeType === Node.ELEMENT_NODE);
-    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
-  }
-}</pre></div></div>
-            
-        </li>
-        
     </ul>
   </div>
 </body>
