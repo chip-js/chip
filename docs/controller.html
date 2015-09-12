@@ -176,12 +176,14 @@ user.lastName + &#39; - &#39; + user.getPostfix()</code></p>
       origCallback.apply(<span class="hljs-literal">null</span>, values);
     };
 
+    <span class="hljs-keyword">var</span> clonedOptions = Observer.expression.diff.clone(options);
+    clonedOptions.skip = <span class="hljs-literal">true</span>;
 
     <span class="hljs-keyword">var</span> observers = expr.map(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">expr</span>) </span>{
-      <span class="hljs-keyword">this</span>.watch(expr, options, callback);
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.watch(expr, clonedOptions, callback);
     }, <span class="hljs-keyword">this</span>);
 
-    <span class="hljs-keyword">if</span> (!options.skipInitial) {
+    <span class="hljs-keyword">if</span> (!options.skip) {
       callback();
     }
 
@@ -189,7 +191,7 @@ user.lastName + &#39; - &#39; + user.getPostfix()</code></p>
   } <span class="hljs-keyword">else</span> {
     <span class="hljs-keyword">var</span> observer = <span class="hljs-keyword">new</span> Observer(expr, callback, <span class="hljs-keyword">this</span>);
     observer.getChangeRecords = options.getChangeRecords;
-    observer.bind(<span class="hljs-keyword">this</span>, options.skipInitial);</pre></div></div>
+    observer.bind(<span class="hljs-keyword">this</span>, options.skip);</pre></div></div>
             
         </li>
         
