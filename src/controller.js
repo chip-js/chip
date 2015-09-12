@@ -53,7 +53,7 @@ Controller.prototype.watch = function(expr, options, callback) {
       this.watch(expr, options, callback);
     }, this);
 
-    if (!options.skipInitial) {
+    if (!options.skip) {
       callback();
     }
 
@@ -61,7 +61,7 @@ Controller.prototype.watch = function(expr, options, callback) {
   } else {
     var observer = new Observer(expr, callback, this);
     observer.getChangeRecords = options.getChangeRecords;
-    observer.bind(this, options.skipInitial);
+    observer.bind(this, options.skip);
 
     // Store the observers with the controller so when it is closed we can clean up all observers as well
     this._observers.push(observer);
