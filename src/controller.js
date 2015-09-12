@@ -48,9 +48,11 @@ Controller.prototype.watch = function(expr, options, callback) {
       origCallback.apply(null, values);
     };
 
+    var clonedOptions = Observer.expression.diff.clone(options);
+    clonedOptions.skip = true;
 
     var observers = expr.map(function(expr) {
-      this.watch(expr, options, callback);
+      return this.watch(expr, clonedOptions, callback);
     }, this);
 
     if (!options.skip) {
