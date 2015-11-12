@@ -366,6 +366,7 @@ bracktes will be converted to camelCase and the value will be set locally. Examp
             <div class="content"><div class='highlight'><pre>  fragments.registerAttribute(<span class="hljs-string">'{*}'</span>, {
     created: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
       <span class="hljs-keyword">this</span>.twoWayObserver = <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.camelCase, <span class="hljs-keyword">this</span>.sendUpdate, <span class="hljs-keyword">this</span>);
+      <span class="hljs-keyword">this</span>.setterObserver = <span class="hljs-keyword">this</span>.observe(<span class="hljs-keyword">this</span>.expression);
     },</pre></div></div>
             
         </li>
@@ -400,7 +401,8 @@ bracktes will be converted to camelCase and the value will be set locally. Examp
             </div>
             
             <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">this</span>.childContext = context;
-      _super.bind.call(<span class="hljs-keyword">this</span>, context._parent);
+      _super.bind.call(<span class="hljs-keyword">this</span>, context);
+      <span class="hljs-keyword">this</span>.setterObserver.bind(<span class="hljs-keyword">this</span>.getClosestParentContext(context));
       <span class="hljs-keyword">this</span>.twoWayObserver.bind(context, <span class="hljs-literal">true</span>);
     },
     unbound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
@@ -408,7 +410,7 @@ bracktes will be converted to camelCase and the value will be set locally. Examp
     },
     sendUpdate: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">value</span>) </span>{
       <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>.skipSend) {
-        <span class="hljs-keyword">this</span>.observer.set(value);
+        <span class="hljs-keyword">this</span>.setterObserver.set(value);
         <span class="hljs-keyword">this</span>.skipSend = <span class="hljs-literal">true</span>;
         <span class="hljs-keyword">var</span> _this = <span class="hljs-keyword">this</span>;
         setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
@@ -424,6 +426,13 @@ bracktes will be converted to camelCase and the value will be set locally. Examp
         setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
           _this.skipSend = <span class="hljs-literal">false</span>;
         });
+      }
+    },
+    getClosestParentContext: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">context</span>) </span>{
+      <span class="hljs-keyword">if</span> (context.hasOwnProperty(<span class="hljs-string">'_origContext_'</span>)) {
+        <span class="hljs-keyword">return</span> context._origContext_;
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (context.hasOwnProperty(<span class="hljs-string">'_parent'</span>)) {
+        <span class="hljs-keyword">return</span> context._parent;
       }
     }
   });</pre></div></div>

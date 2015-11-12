@@ -207,6 +207,7 @@ function registerBinders(app) {
   fragments.registerAttribute('{*}', {
     created: function() {
       this.twoWayObserver = this.observe(this.camelCase, this.sendUpdate, this);
+      this.setterObserver = this.observe(this.expression);
     },
     // Bind this to the given context object
     bind: function(context) {
@@ -216,7 +217,8 @@ function registerBinders(app) {
 
       // Bind against the parent context
       this.childContext = context;
-      _super.bind.call(this, context._parent);
+      _super.bind.call(this, context);
+      this.setterObserver.bind(this.getClosestParentContext(context));
       this.twoWayObserver.bind(context, true);
     },
     unbound: function() {
@@ -224,7 +226,7 @@ function registerBinders(app) {
     },
     sendUpdate: function(value) {
       if (!this.skipSend) {
-        this.observer.set(value);
+        this.setterObserver.set(value);
         this.skipSend = true;
         var _this = this;
         setTimeout(function() {
@@ -240,6 +242,13 @@ function registerBinders(app) {
         setTimeout(function() {
           _this.skipSend = false;
         });
+      }
+    },
+    getClosestParentContext: function(context) {
+      if (context.hasOwnProperty('_origContext_')) {
+        return context._origContext_;
+      } else if (context.hasOwnProperty('_parent')) {
+        return context._parent;
       }
     }
   });

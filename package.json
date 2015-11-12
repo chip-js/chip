@@ -1,8 +1,8 @@
 {
   "name": "chip-js",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "dependencies": {
-    "fragments-js": "~0.3.8"
+    "fragments-js": "~0.3.14"
   },
   "scripts": {
     "build": "browserify --debug --standalone chip index.js -o dist/chip.js",

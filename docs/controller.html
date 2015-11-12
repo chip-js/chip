@@ -69,6 +69,8 @@
             
             <div class="content"><div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = Controller;
 <span class="hljs-keyword">var</span> Observer = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-js/src/observer'</span>);
+<span class="hljs-keyword">var</span> expressions = Observer.expressions;
+<span class="hljs-keyword">var</span> diff = expressions.diff;
 <span class="hljs-keyword">var</span> EventEmitter = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./events'</span>);</pre></div></div>
             
         </li>
@@ -176,7 +178,7 @@ user.lastName + &#39; - &#39; + user.getPostfix()</code></p>
       origCallback.apply(<span class="hljs-literal">null</span>, values);
     };
 
-    <span class="hljs-keyword">var</span> clonedOptions = Observer.expression.diff.clone(options);
+    <span class="hljs-keyword">var</span> clonedOptions = diff.clone(options);
     clonedOptions.skip = <span class="hljs-literal">true</span>;
 
     <span class="hljs-keyword">var</span> observers = expr.map(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">expr</span>) </span>{
@@ -249,10 +251,10 @@ user.lastName + &#39; - &#39; + user.getPostfix()</code></p>
             
             <div class="content"><div class='highlight'><pre>Controller.prototype.eval = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">expr, args</span>) </span>{
   <span class="hljs-keyword">if</span> (args) {
-    options = { args: <span class="hljs-built_in">Object</span>.keys(args) };
-    values = options.args.map(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">key</span>) </span>{ <span class="hljs-keyword">return</span> args[key]; });
+    <span class="hljs-keyword">var</span> keys = <span class="hljs-built_in">Object</span>.keys(args);
+    <span class="hljs-keyword">var</span> values = options.args.map(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">key</span>) </span>{ <span class="hljs-keyword">return</span> args[key]; });
   }
-  <span class="hljs-keyword">return</span> Observer.expression.get(expr, options).apply(<span class="hljs-keyword">this</span>, values);
+  <span class="hljs-keyword">return</span> expressions.parse(expr, Observer.globals, Observer.formatters, keys).apply(<span class="hljs-keyword">this</span>, values);
 };</pre></div></div>
             
         </li>
@@ -287,7 +289,7 @@ user.lastName + &#39; - &#39; + user.getPostfix()</code></p>
             </div>
             
             <div class="content"><div class='highlight'><pre>Controller.prototype.cloneValue = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">property</span>) </span>{
-  Observer.expression.diff.clone(<span class="hljs-keyword">this</span>[property]);
+  diff.clone(<span class="hljs-keyword">this</span>[property]);
 };</pre></div></div>
             
         </li>
