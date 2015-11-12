@@ -1,5 +1,7 @@
 module.exports = Controller;
 var Observer = require('fragments-js/src/observer');
+var expressions = Observer.expressions;
+var diff = expressions.diff;
 var EventEmitter = require('./events');
 
 // # Chip Controller
@@ -48,7 +50,7 @@ Controller.prototype.watch = function(expr, options, callback) {
       origCallback.apply(null, values);
     };
 
-    var clonedOptions = Observer.expression.diff.clone(options);
+    var clonedOptions = diff.clone(options);
     clonedOptions.skip = true;
 
     var observers = expr.map(function(expr) {
@@ -85,10 +87,10 @@ Controller.prototype.unwatch = function(expr, callback) {
 // Evaluates an expression immediately, returning the result
 Controller.prototype.eval = function(expr, args) {
   if (args) {
-    options = { args: Object.keys(args) };
-    values = options.args.map(function(key) { return args[key]; });
+    var keys = Object.keys(args);
+    var values = options.args.map(function(key) { return args[key]; });
   }
-  return Observer.expression.get(expr, options).apply(this, values);
+  return expressions.parse(expr, Observer.globals, Observer.formatters, keys).apply(this, values);
 };
 
 
@@ -101,7 +103,7 @@ Controller.prototype.evalSetter = function(expr, value) {
 
 // Clones the object at the given property name for processing forms
 Controller.prototype.cloneValue = function(property) {
-  Observer.expression.diff.clone(this[property]);
+  diff.clone(this[property]);
 };
 
 
