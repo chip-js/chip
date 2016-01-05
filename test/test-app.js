@@ -1,3 +1,4 @@
+var chip = require('../index');
 
 describe('App', function() {
   var app
