@@ -1,10 +1,11 @@
+var EventEmitter = require('../src/events');
 
 describe('EventEmitter', function() {
 	var obj
 
 	beforeEach(function() {
 		obj = {}
-		chip.EventEmitter(obj)
+		EventEmitter(obj)
 	})
 
 	it('should provide event functions on an object', function() {
