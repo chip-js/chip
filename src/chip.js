@@ -29,5 +29,3 @@ function chip(options) {
 }
 
 chip.App = App;
-chip.EventEmitter = require('./events');
-chip.Router = require('./router');

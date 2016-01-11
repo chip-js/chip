@@ -1,8 +1,9 @@
 module.exports = App;
 var componentBinding = require('fragments-built-ins/binders/component');
-var routes = require('routes-js');
+var Location = require('routes-js').Location;
 var EventTarget = require('chip-utils/event-target');
 var createFragments = require('./fragments');
+var defaultMixin = require('./mixins/default');
 var slice = Array.prototype.slice;
 
 // # Chip App
@@ -12,8 +13,9 @@ function App(options) {
   options = options || {};
   EventTarget.call(this);
   this.fragments = createFragments();
-  this.router = routes.create(options);
-  this.components = {};
+  this.fragments.app = this;
+  this.location = Location.create(options);
+  this.defaultMixin = defaultMixin(this);
 
   this.rootElement = options.rootElement || document.documentElement;
   this.sync = this.fragments.sync;
@@ -21,9 +23,7 @@ function App(options) {
   this.afterSync = this.fragments.afterSync;
   this.onSync = this.fragments.onSync;
   this.offSync = this.fragments.offSync;
-  this.router.on('error', function(event) {
-    this.dispatchEvent(new CustomEvent('routeError', { detail: event.detail }));
-  }, this);
+  this.location.on('change', this.sync);
 }
 
 EventTarget.extend(App, {
@@ -53,128 +53,32 @@ EventTarget.extend(App, {
 
   // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
   // then returns a new instance of a defined template. This instance is a document fragment.
-  registerComponent: function(name, ComponentClass) {
-    this.fragments.registerElement(name, ComponentClass.getBinder(this));
-    this.components[name] = ComponentClass;
+  component: function(name, definition) {
+    var definitions = slice.call(arguments, 1);
+    definitions.unshift(this.defaultMixin);
+    this.fragments.registerElement(name, componentBinding.apply(null, definitions));
     return this;
-  },
-
-  createComponent: function(name) {
-    var component = this.components[name];
-    if (typeof component !== 'function') {
-      throw new TypeError('a component has not been registered by the name "' + name + '"');
-    }
-  },
-
-
-  // Routing
-  // ------
-
-  // When the given URL `path` is hit in the browser URL the `component` will be loaded into the available [route]. The
-  // route `name` is used to load the template and controller by the same name. This template will be placed in the
-  // first element on page with a `bind-route` attribute.
-  route: function(path, component, subroutes, runBefore) {
-    var app = this.app;
-    var callback;
-
-    if (typeof path !== 'string' || path.charAt(0) !== '/') {
-      throw new TypeError('route path must be a string-based path e.g. "/" or "/foo/:bar"');
-    }
-
-    if (typeof component !== 'string') {
-      throw new TypeError('route component must be the name of a registered component');
-    }
-
-
-
-    if (typeof handler === 'string') {
-      var parts = path.split('/');
-      var length = parts[parts.length - 1] === '*' ? Infinity : parts.length;
-
-      // If the handler is a string load the controller/template by that name.
-      var name = handler;
-      callback = function(req, next) {
-        // Run a previous route first and allow it to then run this one again after
-        if (runBefore) {
-          runBefore(req, callback);
-        }
-        var matchingPath = req.path.split('/').slice(0, length).join('/');
-        app.routePath.push({ name: name, path: matchingPath });
-        app.sync();
-      };
-
-      // Adds the subroutes and only calls this callback before they get called when they match.
-      if (subroutes) {
-        subroutes(function(subpath, handler, subroutes) {
-          if (subpath === '/') {
-            subpath = '';
-          }
-          app.route(path + subpath, handler, subroutes, callback);
-        });
-      }
-
-    } else {
-      throw new TypeError('route handler must be a string path or a function');
-    }
-
-
-    this.router.route(path, function(req, next) {
-      var event = new CustomEvent('routeChanging', { cancelable: true });
-      app.dispatchEvent(event);
-
-      if (!event.defaultPrevented) {
-        app.params = req.params;
-        app.query = req.query;
-        if (app.path === req.path) {
-          req.isSamePath = true;
-        }
-        app.path = req.path;
-        app.dispatchEvent(new CustomEvent('routeChange', { detail: req }));
-        app.routePath.length = 0;
-        callback(app.appController, next);
-        app.dispatchEvent(new CustomEvent('routeChanged', { detail: req }));
-      }
-    });
-
   },
 
 
   // Redirects to the provided URL
   redirect: function(url) {
-    return this.router.redirect(url);
+    return this.location.url = url;
   },
 
 
   // Listen to URL changes
-  listen: function(options) {
-    if (!options) {
-      options = {};
-    }
+  listen: function() {
+    var app = this;
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', this.listen.bind(this, options));
+      document.addEventListener('DOMContentLoaded', this.listen.bind(this));
       return this;
     }
 
-    // Stop listening if requested
-    if (options.stop) {
-      if (this._routeHandler) {
-        this.router.off('change', this._routeHandler);
-      }
-
-      if (this._clickHandler) {
-        this.rootElement.removeEventListener('click', this._clickHandler);
-      }
-
-      return this.router.listen(options);
-    }
-
-    // Start listening
-    var app = this;
-
     // Add handler for when the route changes
-    this._routeHandler = function(event, path) {
-      app.dispatchEvent(new CustomEvent('urlChange', { detail: path }));
+    this._locationChangeHandler = function(event) {
+      app.dispatchEvent(new CustomEvent('urlChange', { detail: event.detail }));
     };
 
     // Add handler for clicking links
@@ -196,11 +100,7 @@ EventTarget.extend(App, {
         return;
       }
 
-      if (event.metaKey || event.ctrlKey || anchor.getAttribute('target')) {
-        return;
-      }
-
-      if (options.dontHandle404s && !app.hasMatchingRoutes(url)) {
+      if (event.metaKey || event.ctrlKey || anchor.hasAttribute('target')) {
         return;
       }
 
@@ -214,11 +114,14 @@ EventTarget.extend(App, {
       }
     };
 
-    this.router.on('change', this._routeHandler);
+    this.location.on('change', this._locationChangeHandler);
     this.rootElement.addEventListener('click', this._clickHandler);
-    this.router.listen(options);
+  },
 
-    return this;
+  // Stop listening
+  stop: function() {
+    this.location.off('change', this._locationChangeHandler);
+    this.rootElement.removeEventListener('click', this._clickHandler);
   }
 
 });

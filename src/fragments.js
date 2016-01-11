@@ -37,5 +37,7 @@ module.exports = function() {
   fragments.registerAttribute('[if]', IfBinding);
   fragments.registerAttribute('[unless]', IfBinding);
 
+  fragments.registerAttribute('[route]', require('./binders/route')());
+
   return fragments;
 };
