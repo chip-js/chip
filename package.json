@@ -1,10 +1,9 @@
 {
   "name": "chip-js",
   "version": "2.0.9",
-  "dependencies": {
-    "fragments-js": "~0.3.14"
-  },
   "scripts": {
+    "test": "karma start --singleRun=true",
+    "tdd": "karma start",
     "build": "browserify --debug --standalone chip index.js -o dist/chip.js",
     "watch": "watchify --debug --standalone chip index.js -o dist/chip.js",
     "compress": "uglifyjs dist/chip.js -c -o dist/chip.min.js",
@@ -12,10 +11,24 @@
     "prepublish": "npm run build",
     "postbuild": "npm run compress && npm run docs"
   },
+  "dependencies": {
+    "chip-utils": "~0.2.1",
+    "fragments-js": "~0.5.1",
+    "fragments-built-ins": "~0.4.7",
+    "routes-js": "~0.1.0"
+  },
   "devDependencies": {
     "browserify": "^10.2.1",
-    "watchify": "^3.2.1",
+    "chai": "^3.4.1",
+    "docco": "^0.7.0",
+    "karma": "^0.13.15",
+    "karma-browserify": "^4.4.2",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^0.2.2",
+    "karma-mocha": "^0.2.1",
+    "karma-source-map-support": "^1.1.0",
+    "mocha": "^2.3.4",
     "uglify-js": "^2.4.23",
-    "docco": "^0.7.0"
+    "watchify": "^3.2.1"
   }
 }

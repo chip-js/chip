@@ -22,13 +22,10 @@ var App = require('./app');
 // Creates a new chip app
 module.exports = chip;
 
-function chip(name, root) {
-  var app = new App(name);
-  app.initApp(root);
+function chip(options) {
+  var app = new App(options);
+  app.initApp();
   return app;
 }
 
 chip.App = App;
-chip.EventEmitter = require('./events');
-chip.Controller = require('./controller');
-chip.Router = require('./router');
