@@ -28,13 +28,13 @@ function App(options) {
 
 EventTarget.extend(App, {
 
-  initApp: function(root) {
+  init: function(root) {
     if (this.inited) {
       return;
     }
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', this.initApp.bind(this, root));
+      document.addEventListener('DOMContentLoaded', this.init.bind(this, root));
       return;
     }
 

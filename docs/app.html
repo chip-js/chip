@@ -25,28 +25,13 @@
                 </a>
               
                 
-                <a class="source" href="binders.html">
-                  binders.js
-                </a>
-              
-                
                 <a class="source" href="chip.html">
                   chip.js
                 </a>
               
                 
-                <a class="source" href="controller.html">
-                  controller.js
-                </a>
-              
-                
-                <a class="source" href="events.html">
-                  events.js
-                </a>
-              
-                
-                <a class="source" href="router.html">
-                  router.js
+                <a class="source" href="fragments.html">
+                  fragments.js
                 </a>
               
             </div>
@@ -68,11 +53,11 @@
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = App;
-<span class="hljs-keyword">var</span> Router = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./router'</span>);
-<span class="hljs-keyword">var</span> EventEmitter = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./events'</span>);
-<span class="hljs-keyword">var</span> createFragments = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-js'</span>).create;
-<span class="hljs-keyword">var</span> Controller = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./controller'</span>);
-<span class="hljs-keyword">var</span> forEach = <span class="hljs-built_in">Array</span>.prototype.forEach;
+<span class="hljs-keyword">var</span> componentBinding = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component'</span>);
+<span class="hljs-keyword">var</span> Location = <span class="hljs-built_in">require</span>(<span class="hljs-string">'routes-js'</span>).Location;
+<span class="hljs-keyword">var</span> EventTarget = <span class="hljs-built_in">require</span>(<span class="hljs-string">'chip-utils/event-target'</span>);
+<span class="hljs-keyword">var</span> createFragments = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./fragments'</span>);
+<span class="hljs-keyword">var</span> defaultMixin = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./mixins/default'</span>);
 <span class="hljs-keyword">var</span> slice = <span class="hljs-built_in">Array</span>.prototype.slice;</pre></div></div>
             
         </li>
@@ -101,27 +86,43 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">App</span>(<span class="hljs-params">name</span>) </span>{
-  Controller.call(<span class="hljs-keyword">this</span>);
-  EventEmitter.call(<span class="hljs-keyword">this</span>);
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">App</span>(<span class="hljs-params">options</span>) </span>{
+  options = options || {};
+  EventTarget.call(<span class="hljs-keyword">this</span>);
   <span class="hljs-keyword">this</span>.fragments = createFragments();
-  <span class="hljs-keyword">this</span>.app = <span class="hljs-keyword">this</span>;
-  <span class="hljs-keyword">this</span>.name = name;
-  <span class="hljs-keyword">this</span>.controllers = {};
-  <span class="hljs-keyword">this</span>.templates = {};
-  <span class="hljs-keyword">this</span>.router = <span class="hljs-keyword">new</span> Router();
-  <span class="hljs-keyword">this</span>.routePath = [];
-  <span class="hljs-keyword">this</span>.rootElement = <span class="hljs-built_in">document</span>.documentElement;
-  <span class="hljs-keyword">this</span>.sync = <span class="hljs-keyword">this</span>.sync.bind(<span class="hljs-keyword">this</span>);
-  <span class="hljs-keyword">this</span>.router.on(<span class="hljs-string">'error'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{
-    <span class="hljs-keyword">this</span>.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'routeError'</span>, { detail: event.detail }));
-  }, <span class="hljs-keyword">this</span>);
+  <span class="hljs-keyword">this</span>.fragments.app = <span class="hljs-keyword">this</span>;
+  <span class="hljs-keyword">this</span>.location = Location.create(options);
+  <span class="hljs-keyword">this</span>.defaultMixin = defaultMixin(<span class="hljs-keyword">this</span>);
 
-  <span class="hljs-built_in">require</span>(<span class="hljs-string">'./binders'</span>)(<span class="hljs-keyword">this</span>);
+  <span class="hljs-keyword">this</span>.rootElement = options.rootElement || <span class="hljs-built_in">document</span>.documentElement;
+  <span class="hljs-keyword">this</span>.sync = <span class="hljs-keyword">this</span>.fragments.sync;
+  <span class="hljs-keyword">this</span>.syncNow = <span class="hljs-keyword">this</span>.fragments.syncNow;
+  <span class="hljs-keyword">this</span>.afterSync = <span class="hljs-keyword">this</span>.fragments.afterSync;
+  <span class="hljs-keyword">this</span>.onSync = <span class="hljs-keyword">this</span>.fragments.onSync;
+  <span class="hljs-keyword">this</span>.offSync = <span class="hljs-keyword">this</span>.fragments.offSync;
+  <span class="hljs-keyword">this</span>.location.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>.sync);
 }
 
-App.prototype = <span class="hljs-built_in">Object</span>.create(Controller.prototype);
-App.prototype.constructor = App;</pre></div></div>
+EventTarget.extend(App, {
+
+  init: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">root</span>) </span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.inited) {
+      <span class="hljs-keyword">return</span>;
+    }
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">'loading'</span>) {
+      <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.init.bind(<span class="hljs-keyword">this</span>, root));
+      <span class="hljs-keyword">return</span>;
+    }
+
+    <span class="hljs-keyword">this</span>.inited = <span class="hljs-literal">true</span>
+    <span class="hljs-keyword">if</span> (root) {
+      <span class="hljs-keyword">this</span>.rootElement = root;
+    }
+
+    <span class="hljs-keyword">this</span>.fragments.bindElement(<span class="hljs-keyword">this</span>.rootElement, <span class="hljs-keyword">this</span>);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },</pre></div></div>
             
         </li>
         
@@ -132,39 +133,9 @@ App.prototype.constructor = App;</pre></div></div>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
-              <p>Initializes templates and controllers from the entire page or the <code>root</code> element if provided.</p>
+              <h2 id="components">Components</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>App.prototype.initApp = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">root</span>) </span>{
-  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.constructor !== App) {
-    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'initApp must be called from the app instance, not a controller'</span>);
-  }
-
-  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">'loading'</span>) {
-    <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.initApp.bind(<span class="hljs-keyword">this</span>, root));
-    <span class="hljs-keyword">return</span>;
-  }
-
-  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.inited) {
-    <span class="hljs-keyword">return</span>;
-  }
-
-  <span class="hljs-keyword">this</span>.inited = <span class="hljs-literal">true</span>
-  <span class="hljs-keyword">if</span> (root) {
-    <span class="hljs-keyword">this</span>.rootElement = root;
-  }
-
-  forEach.call(<span class="hljs-keyword">this</span>.rootElement.querySelectorAll(<span class="hljs-string">'script[type="text/html"], template'</span>), <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">script</span>) </span>{
-    <span class="hljs-keyword">var</span> name = script.getAttribute(<span class="hljs-string">'name'</span>) || script.id;
-    <span class="hljs-keyword">if</span> (name) {
-      <span class="hljs-keyword">this</span>.template(name, script);
-      script.parentNode.removeChild(script);
-    }
-  }, <span class="hljs-keyword">this</span>);
-
-  <span class="hljs-keyword">this</span>.appController = <span class="hljs-keyword">this</span>.createController({ element: <span class="hljs-keyword">this</span>.rootElement, name: <span class="hljs-string">'application'</span> });
-};</pre></div></div>
             
         </li>
         
@@ -175,8 +146,7 @@ App.prototype.constructor = App;</pre></div></div>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
-              <h2 id="templates">Templates</h2>
-
+              
             </div>
             
         </li>
@@ -188,8 +158,17 @@ App.prototype.constructor = App;</pre></div></div>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
-              
+              <p>Registers a new component by name with the given definition. provided <code>content</code> string. If no <code>content</code> is given
+then returns a new instance of a defined template. This instance is a document fragment.</p>
+
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  component: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, definition</span>) </span>{
+    <span class="hljs-keyword">var</span> definitions = slice.call(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>);
+    definitions.unshift(<span class="hljs-keyword">this</span>.defaultMixin);
+    <span class="hljs-keyword">this</span>.fragments.registerElement(name, componentBinding.apply(<span class="hljs-literal">null</span>, definitions));
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },</pre></div></div>
             
         </li>
         
@@ -200,30 +179,13 @@ App.prototype.constructor = App;</pre></div></div>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
-              <p>Registers a new template by name with the provided <code>content</code> string. If no <code>content</code> is given then returns a new
-instance of a defined template. This instance is a document fragment.</p>
+              <p>Redirects to the provided URL</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>App.prototype.template = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, content</span>) </span>{
-  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">arguments</span>.length &gt; <span class="hljs-number">1</span>) {
-    <span class="hljs-keyword">this</span>.templates[name] = <span class="hljs-keyword">this</span>.fragments.createTemplate(content);
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-  } <span class="hljs-keyword">else</span> {
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.templates[name];
-  }
-};
-
-
-App.prototype.component = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">elementName, templateName</span>) </span>{
-  <span class="hljs-keyword">var</span> app = <span class="hljs-keyword">this</span>;
-  <span class="hljs-keyword">var</span> fragments = <span class="hljs-keyword">this</span>.fragments;
-
-  fragments.registerElement(elementName, {
-    priority: <span class="hljs-number">200</span>,
-
-    compiled: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.element.childNodes.length) {</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  redirect: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">url</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.location.url = url;
+  },</pre></div></div>
             
         </li>
         
@@ -234,34 +196,17 @@ App.prototype.component = <span class="hljs-function"><span class="hljs-keyword"
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
-              <p>Save the contents of this component to insert within</p>
+              <p>Listen to URL changes</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.content = fragments.createTemplate(<span class="hljs-keyword">this</span>.element.childNodes);
-      }
-    },
+            <div class="content"><div class='highlight'><pre>  listen: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">var</span> app = <span class="hljs-keyword">this</span>;
 
-    created: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-      <span class="hljs-keyword">this</span>.view = app.template(templateName).createView();
-      <span class="hljs-keyword">this</span>.element.appendChild(<span class="hljs-keyword">this</span>.view);
-    },
-
-    bound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-      <span class="hljs-keyword">this</span>.context._partialContent = <span class="hljs-keyword">this</span>.content;
-      <span class="hljs-keyword">this</span>.lastContext = <span class="hljs-keyword">this</span>.context;
-      <span class="hljs-keyword">this</span>.view.bind(<span class="hljs-keyword">this</span>.context);
-    },
-
-    unbound: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-      <span class="hljs-keyword">delete</span> <span class="hljs-keyword">this</span>.lastContext._partialContent;
-      <span class="hljs-keyword">this</span>.lastContext = <span class="hljs-literal">null</span>;
-      <span class="hljs-keyword">this</span>.view.unbind();
-    }
-
-  });
-
-};</pre></div></div>
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">'loading'</span>) {
+      <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.listen.bind(<span class="hljs-keyword">this</span>));
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+    }</pre></div></div>
             
         </li>
         
@@ -272,9 +217,13 @@ App.prototype.component = <span class="hljs-function"><span class="hljs-keyword"
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
-              <h2 id="controllers">Controllers</h2>
+              <p>Add handler for when the route changes</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>._locationChangeHandler = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{
+      app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { detail: event.detail }));
+    };</pre></div></div>
             
         </li>
         
@@ -285,8 +234,17 @@ App.prototype.component = <span class="hljs-function"><span class="hljs-keyword"
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
-              
+              <p>Add handler for clicking links</p>
+
             </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>._clickHandler = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{
+      <span class="hljs-keyword">var</span> anchor;
+      <span class="hljs-keyword">if</span> ( !(anchor = event.target.closest(<span class="hljs-string">'a[href]'</span>)) ) {
+        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">if</span> (event.defaultPrevented) {</pre></div></div>
             
         </li>
         
@@ -297,40 +255,37 @@ App.prototype.component = <span class="hljs-function"><span class="hljs-keyword"
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
-              <p>Defines a controller initialization function. Registers the <code>initFunction</code> function with <code>name</code>. The function will
-be called with an instance of a controller as its only parameter every time a controller is created with that
-name.</p>
-<p>If no <code>initFunction</code> is provided, returns the <code>initFunction</code> previously registered or if none has been registered
-a function on the global scope with the name <code>name + &#39;Controller&#39;</code> (e.g. <code>function blogController(){}</code>).</p>
-<p><strong>Example:</strong></p>
-<pre><code class="lang-javascript">app.controller(<span class="hljs-string">'home'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">controller</span>) </span>{
-  <span class="hljs-comment">// do something as soon as it is instantiated</span>
-  MyAppAPI.loadUser(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err, user</span>) </span>{
-    controller.user = user
-    controller.sync()
-  })
-
-  <span class="hljs-comment">// provide a function for the view to call. E.g. &lt;button on-click="logout"&gt;Logout&lt;/button&gt;</span>
-  controller.logout = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-    MyAppAPI.logout(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err</span>) </span>{
-      controller.user = <span class="hljs-literal">null</span>
-      controller.sync()
-    })
-  }
-})
-</code></pre>
+              <p>if something else already handled this, we won’t</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>App.prototype.controller = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, initFunction</span>) </span>{
-  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">arguments</span>.length &gt; <span class="hljs-number">1</span>) {
-    <span class="hljs-keyword">this</span>.controllers[name] = initFunction;
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-  } <span class="hljs-keyword">else</span> {
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.controllers[name] ||
-      (<span class="hljs-keyword">typeof</span> <span class="hljs-built_in">window</span>[name + <span class="hljs-string">'Controller'</span>] === <span class="hljs-string">'function'</span> ? <span class="hljs-built_in">window</span>[name + <span class="hljs-string">'Controller'</span>] : <span class="hljs-literal">null</span>);
-  }
-};</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">var</span> linkHost = anchor.host.replace(<span class="hljs-regexp">/:80$|:443$/</span>, <span class="hljs-string">''</span>);
+      <span class="hljs-keyword">var</span> url = anchor.getAttribute(<span class="hljs-string">'href'</span>).replace(<span class="hljs-regexp">/^#/</span>, <span class="hljs-string">''</span>);
+
+      <span class="hljs-keyword">if</span> (linkHost &amp;&amp; linkHost !== location.host) {
+        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">if</span> (event.metaKey || event.ctrlKey || anchor.hasAttribute(<span class="hljs-string">'target'</span>)) {
+        <span class="hljs-keyword">return</span>;
+      }
+
+      event.preventDefault();
+      <span class="hljs-keyword">if</span> (anchor.href === location.href + <span class="hljs-string">'#'</span>) {
+        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">if</span> (!anchor.disabled) {
+        app.redirect(url);
+      }
+    };
+
+    <span class="hljs-keyword">this</span>.location.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>._locationChangeHandler);
+    <span class="hljs-keyword">this</span>.rootElement.addEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
+  },</pre></div></div>
             
         </li>
         
@@ -341,527 +296,16 @@ a function on the global scope with the name <code>name + &#39;Controller&#39;</
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
-              <p>Creates a new controller. Sets <code>options.parent</code> as the parent controller to this one. Sets <code>options.properties</code>
-properties onto the controller before binding and initialization. Binds <code>options.element</code> to the controller which
-updates HTML as data updates. Initializes the new controller with the <code>options.name</code> function set in
-<code>app.controller()</code>. Sets the new controller as a passthrough controller if <code>options.passthrough</code> is true.</p>
+              <p>Stop listening</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>App.prototype.createController = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">options</span>) </span>{
-  <span class="hljs-keyword">if</span> (!options) {
-    options = {};
+            <div class="content"><div class='highlight'><pre>  stop: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">this</span>.location.off(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>._locationChangeHandler);
+    <span class="hljs-keyword">this</span>.rootElement.removeEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
   }
 
-  <span class="hljs-keyword">var</span> controller;
-  <span class="hljs-keyword">var</span> parent = options.parent || <span class="hljs-keyword">this</span>;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-13">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
-              </div>
-              <p>If <code>options.parent</code> is provided, the new controller will extend it. Any data or methods on the parent controller
-will be available to the child unless overwritten by the child. This uses the prototype chain, thus overwriting a
-property only sets it on the child and does not change the parent. The child cannot set data on the parent, only
-read it or call methods on it.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  controller = <span class="hljs-built_in">Object</span>.create(parent);
-  controller._parent = parent;
-  Controller.call(controller);
-  parent._children.push(controller);</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-14">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
-              </div>
-              <p>If <code>properties</code> is provided, all properties from that object will be copied over to the controller before it is
-initialized by its definition or bound to its element.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (options.properties) {
-    <span class="hljs-built_in">Object</span>.keys(options.properties).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">key</span>) </span>{
-      controller[key] = options.properties[key];
-    });
-  }
-
-  <span class="hljs-keyword">if</span> (options.element) {</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-15">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
-              </div>
-              <p>Clean up old controller if one exists</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (options.element.controller) {
-      options.element.unbind();
-      options.element.controller.closeController();
-    }</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-16">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
-              </div>
-              <p>Assign element</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    controller.element = options.element;
-    controller.element.controller = controller;
-  }</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-17">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
-              </div>
-              <p>If <code>name</code> is supplied the controller definition by that name will be run to initialize this controller before the
-bindings are set up.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (options.name) {
-    <span class="hljs-keyword">var</span> initFunction = <span class="hljs-keyword">this</span>.controller(options.name);
-    <span class="hljs-keyword">if</span> (initFunction) {
-      initFunction(controller);
-    }
-  }</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-18">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
-              </div>
-              <p>Binds the element to the new controller</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (options.element) {
-    <span class="hljs-keyword">this</span>.fragments.bindElement(options.element, controller);
-  }
-
-  <span class="hljs-keyword">return</span> controller;
-};</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-19">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
-              </div>
-              <p>Syncs the observers to propogate changes to the HTML, call callback after</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>App.prototype.sync = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">callback</span>) </span>{
-  <span class="hljs-keyword">this</span>.fragments.sync(callback);
-  <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-};</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-20">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
-              </div>
-              <h2 id="routing">Routing</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-21">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
-              </div>
-              
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-22">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
-              </div>
-              <p>Registers a <code>callback</code> function to be called when the given param <code>name</code> is matched in a URL</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>App.prototype.param = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, callback</span>) </span>{
-  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> callback === <span class="hljs-string">'function'</span>) {
-    <span class="hljs-keyword">var</span> origCallback = callback, app = <span class="hljs-keyword">this</span>;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-23">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
-              </div>
-              <p>Set the params and query onto the app before running the callback</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">req, next</span>) </span>{
-      app.params = req.params;
-      app.query = req.query
-      origCallback(app.appController, next);
-    };
-  }
-
-  <span class="hljs-keyword">this</span>.router.param(name, callback);
-  <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-};</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-24">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
-              </div>
-              <p>Create a route to be run when the given URL <code>path</code> is hit in the browser URL. The route <code>name</code> is used to load the
-template and controller by the same name. This template will be placed in the first element on page with a
-<code>bind-route</code> attribute.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>App.prototype.route = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">path, handler, subroutes, runBefore</span>) </span>{
-  <span class="hljs-keyword">var</span> app = <span class="hljs-keyword">this</span>.app;
-  <span class="hljs-keyword">var</span> callback;
-
-  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> handler === <span class="hljs-string">'function'</span> &amp;&amp; handler.toString().match(<span class="hljs-regexp">/\(route\)/</span>)) {
-    subroutes = handler;
-    handler = <span class="hljs-literal">null</span>;
-  }
-
-  <span class="hljs-keyword">if</span> (!handler) {
-    handler = path.replace(<span class="hljs-regexp">/^\//</span>, <span class="hljs-string">''</span>);
-  }
-
-  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> handler === <span class="hljs-string">'function'</span>) {</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-25">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
-              </div>
-              <p>Subroutes not supported with callbacks, only with string handlers.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    callback = handler;
-
-  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> handler === <span class="hljs-string">'string'</span>) {
-    <span class="hljs-keyword">var</span> parts = path.split(<span class="hljs-string">'/'</span>);
-    <span class="hljs-keyword">var</span> length = parts[parts.length - <span class="hljs-number">1</span>] === <span class="hljs-string">'*'</span> ? <span class="hljs-literal">Infinity</span> : parts.length;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-26">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
-              </div>
-              <p>If the handler is a string load the controller/template by that name.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">var</span> name = handler;
-    callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">req, next</span>) </span>{</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-27">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
-              </div>
-              <p>Run a previous route first and allow it to then run this one again after</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> (runBefore) {
-        runBefore(req, callback);
-      }
-      <span class="hljs-keyword">var</span> matchingPath = req.path.split(<span class="hljs-string">'/'</span>).slice(<span class="hljs-number">0</span>, length).join(<span class="hljs-string">'/'</span>);
-      app.routePath.push({ name: name, path: matchingPath });
-      app.sync();
-    };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-28">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
-              </div>
-              <p>Adds the subroutes and only calls this callback before they get called when they match.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (subroutes) {
-      subroutes(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">subpath, handler, subroutes</span>) </span>{
-        <span class="hljs-keyword">if</span> (subpath === <span class="hljs-string">'/'</span>) {
-          subpath = <span class="hljs-string">''</span>;
-        }
-        app.route(path + subpath, handler, subroutes, callback);
-      });
-    }
-
-  } <span class="hljs-keyword">else</span> {
-    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">'route handler must be a string path or a function'</span>);
-  }
-
-
-  <span class="hljs-keyword">this</span>.router.route(path, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">req, next</span>) </span>{
-    <span class="hljs-keyword">var</span> event = <span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'routeChanging'</span>, { cancelable: <span class="hljs-literal">true</span> });
-    app.dispatchEvent(event);
-
-    <span class="hljs-keyword">if</span> (!event.defaultPrevented) {
-      app.params = req.params;
-      app.query = req.query;
-      <span class="hljs-keyword">if</span> (app.path === req.path) {
-        req.isSamePath = <span class="hljs-literal">true</span>;
-      }
-      app.path = req.path;
-      app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'routeChange'</span>, { detail: req }));
-      app.routePath.length = <span class="hljs-number">0</span>;
-      callback(app.appController, next);
-      app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'routeChanged'</span>, { detail: req }));
-    }
-  });
-
-};</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-29">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
-              </div>
-              <p>Redirects to the provided URL</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>App.prototype.redirect = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">url, replace</span>) </span>{
-  <span class="hljs-keyword">this</span>.router.redirect(url, replace);
-};
-
-
-App.prototype.hasMatchingRoutes = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">url</span>) </span>{
-  <span class="hljs-keyword">this</span>.router.getRoutesMatchingPath(<span class="hljs-keyword">this</span>.router.getUrlParts(url).path).length &gt; <span class="hljs-number">0</span>;
-};</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-30">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
-              </div>
-              <p>Listen to URL changes</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>App.prototype.listen = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">options</span>) </span>{
-  <span class="hljs-keyword">if</span> (!options) {
-    options = {};
-  }
-
-  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">'loading'</span>) {
-    <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.listen.bind(<span class="hljs-keyword">this</span>, options));
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-  }</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-31">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
-              </div>
-              <p>Stop listening if requested</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (options.stop) {
-    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>._routeHandler) {
-      <span class="hljs-keyword">this</span>.router.off(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>._routeHandler);
-    }
-
-    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>._clickHandler) {
-      <span class="hljs-keyword">this</span>.rootElement.removeEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
-    }
-
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.router.listen(options);
-  }</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-32">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
-              </div>
-              <p>Start listening</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> app = <span class="hljs-keyword">this</span>;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-33">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
-              </div>
-              <p>Add handler for when the route changes</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>._routeHandler = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event, path</span>) </span>{
-    app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { detail: path }));
-  };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-34">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
-              </div>
-              <p>Add handler for clicking links</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">this</span>._clickHandler = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{
-    <span class="hljs-keyword">var</span> anchor;
-    <span class="hljs-keyword">if</span> ( !(anchor = event.target.closest(<span class="hljs-string">'a[href]'</span>)) ) {
-      <span class="hljs-keyword">return</span>;
-    }
-
-    <span class="hljs-keyword">if</span> (event.defaultPrevented) {</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-35">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
-              </div>
-              <p>if something else already handled this, we won’t</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">return</span>;
-    }
-
-    <span class="hljs-keyword">var</span> linkHost = anchor.host.replace(<span class="hljs-regexp">/:80$|:443$/</span>, <span class="hljs-string">''</span>);
-    <span class="hljs-keyword">var</span> url = anchor.getAttribute(<span class="hljs-string">'href'</span>).replace(<span class="hljs-regexp">/^#/</span>, <span class="hljs-string">''</span>);
-
-    <span class="hljs-keyword">if</span> (linkHost &amp;&amp; linkHost !== location.host) {
-      <span class="hljs-keyword">return</span>;
-    }
-
-    <span class="hljs-keyword">if</span> (event.metaKey || event.ctrlKey || anchor.getAttribute(<span class="hljs-string">'target'</span>)) {
-      <span class="hljs-keyword">return</span>;
-    }
-
-    <span class="hljs-keyword">if</span> (options.dontHandle404s &amp;&amp; !app.hasMatchingRoutes(url)) {
-      <span class="hljs-keyword">return</span>;
-    }
-
-    event.preventDefault();
-    <span class="hljs-keyword">if</span> (anchor.href === location.href + <span class="hljs-string">'#'</span>) {
-      <span class="hljs-keyword">return</span>;
-    }
-
-    <span class="hljs-keyword">if</span> (!anchor.disabled) {
-      app.redirect(url);
-    }
-  };
-
-  <span class="hljs-keyword">this</span>.router.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>._routeHandler);
-  <span class="hljs-keyword">this</span>.rootElement.addEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
-  <span class="hljs-keyword">this</span>.router.listen(options);
-
-  <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
-};</pre></div></div>
+});</pre></div></div>
             
         </li>
         

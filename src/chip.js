@@ -24,7 +24,7 @@ module.exports = chip;
 
 function chip(options) {
   var app = new App(options);
-  app.initApp();
+  app.init();
   return app;
 }
 
