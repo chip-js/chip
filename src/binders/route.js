@@ -5,16 +5,19 @@ module.exports = function() {
   var ifBinder = IfBinder();
 
   ifBinder.compiled = function() {
+    this.app = this.fragments.app;
     this.routes = [];
-
-    // Save index 0 for when no routes match
-    this.templates = [ null ];
+    this.templates = [];
     this.expression = '';
 
     // each child with a [path] attribute will display only when its path matches the URL
     while (this.element.firstChild) {
       var child = this.element.firstChild;
       this.element.removeChild(child);
+
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        continue;
+      }
 
       if (child.hasAttribute('[path]')) {
         var path = child.getAttribute('[path]');
@@ -43,14 +46,16 @@ module.exports = function() {
     while (node && node.matchedRoutePath) {
       node = node.parentNode;
     }
-    this.baseURI = node.matchedRoutePath || this.app.location.baseURI;
+    this.baseURI = node.matchedRoutePath || '';
     this.app.on('urlChange', this.onUrlChange);
-    this.onUrlChange();
+    if (this.app.listening) {
+      this.onUrlChange();
+    }
   };
 
   ifBinder.onUrlChange = function() {
     var url = this.app.location.url;
-    var newIndex = 0;
+    var newIndex = undefined;
 
     if (url.indexOf(this.baseURI) === 0) {
       url = url.replace(this.baseURI, '');

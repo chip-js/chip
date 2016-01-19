@@ -16,6 +16,7 @@ function App(options) {
   this.fragments.app = this;
   this.location = Location.create(options);
   this.defaultMixin = defaultMixin(this);
+  this._listening = false;
 
   this.rootElement = options.rootElement || document.documentElement;
   this.sync = this.fragments.sync;
@@ -67,9 +68,14 @@ EventTarget.extend(App, {
   },
 
 
+  get listening() {
+    return this._listening;
+  },
+
   // Listen to URL changes
   listen: function() {
     var app = this;
+    this._listening = true;
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', this.listen.bind(this));
@@ -116,6 +122,7 @@ EventTarget.extend(App, {
 
     this.location.on('change', this._locationChangeHandler);
     this.rootElement.addEventListener('click', this._clickHandler);
+    this.dispatchEvent(new CustomEvent('urlChange', { detail: { url: this.location.url }}));
   },
 
   // Stop listening

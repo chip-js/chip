@@ -1,6 +1,6 @@
 {
   "name": "chip-js",
-  "version": "2.0.11",
+  "version": "2.0.12",
   "scripts": {
     "test": "karma start --singleRun=true",
     "tdd": "karma start",
@@ -12,10 +12,10 @@
     "postbuild": "npm run compress && npm run docs"
   },
   "dependencies": {
-    "chip-utils": "~0.2.1",
-    "fragments-js": "~0.5.1",
-    "fragments-built-ins": "~0.4.10",
-    "routes-js": "~0.1.0"
+    "chip-utils": "~0.2.2",
+    "fragments-js": "~0.5.4",
+    "fragments-built-ins": "~0.4.11",
+    "routes-js": "~0.1.2"
   },
   "devDependencies": {
     "browserify": "^10.2.1",

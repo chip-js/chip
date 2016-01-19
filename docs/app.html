@@ -93,6 +93,7 @@
   <span class="hljs-keyword">this</span>.fragments.app = <span class="hljs-keyword">this</span>;
   <span class="hljs-keyword">this</span>.location = Location.create(options);
   <span class="hljs-keyword">this</span>.defaultMixin = defaultMixin(<span class="hljs-keyword">this</span>);
+  <span class="hljs-keyword">this</span>._listening = <span class="hljs-literal">false</span>;
 
   <span class="hljs-keyword">this</span>.rootElement = options.rootElement || <span class="hljs-built_in">document</span>.documentElement;
   <span class="hljs-keyword">this</span>.sync = <span class="hljs-keyword">this</span>.fragments.sync;
@@ -185,6 +186,11 @@ then returns a new instance of a defined template. This instance is a document f
             
             <div class="content"><div class='highlight'><pre>  redirect: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">url</span>) </span>{
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.location.url = url;
+  },
+
+
+  get listening() {
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._listening;
   },</pre></div></div>
             
         </li>
@@ -202,6 +208,7 @@ then returns a new instance of a defined template. This instance is a document f
             
             <div class="content"><div class='highlight'><pre>  listen: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
     <span class="hljs-keyword">var</span> app = <span class="hljs-keyword">this</span>;
+    <span class="hljs-keyword">this</span>._listening = <span class="hljs-literal">true</span>;
 
     <span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">'loading'</span>) {
       <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.listen.bind(<span class="hljs-keyword">this</span>));
@@ -285,6 +292,7 @@ then returns a new instance of a defined template. This instance is a document f
 
     <span class="hljs-keyword">this</span>.location.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>._locationChangeHandler);
     <span class="hljs-keyword">this</span>.rootElement.addEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
+    <span class="hljs-keyword">this</span>.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { detail: { url: <span class="hljs-keyword">this</span>.location.url }}));
   },</pre></div></div>
             
         </li>
