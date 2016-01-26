@@ -55,7 +55,7 @@ module.exports = function() {
 
   ifBinder.onUrlChange = function() {
     var url = this.app.location.url;
-    var newIndex = undefined;
+    var newIndex;
 
     if (url.indexOf(this.baseURI) === 0) {
       url = url.replace(this.baseURI, '');
@@ -67,8 +67,9 @@ module.exports = function() {
     if (url !== null) {
       this.routes.some(function(route, index) {
         if (route.match(url)) {
-          this.matchedRoutePath = url.slice(0, -route.params['*'].length);
-          console.log('matchedRoutePath:', this.matchedRoutePath);
+          var afterLength = route.params['*'].length;
+          this.matchedRoutePath = afterLength ? url.slice(0, -afterLength) : url;
+          this.context.params = route.params;
           newIndex = index;
           return true;
         }
