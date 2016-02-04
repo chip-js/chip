@@ -25,7 +25,7 @@ module.exports = function() {
   fragments.registerAttribute('[src]', require('fragments-built-ins/binders/properties')('src'));
   fragments.registerAttribute('[log]', require('fragments-built-ins/binders/log')());
   fragments.registerAttribute('[.*]', require('fragments-built-ins/binders/classes')());
-  fragments.registerAttribute('[styles.*]', require('fragments-built-ins/binders/styles')());
+  fragments.registerAttribute('[style.*]', require('fragments-built-ins/binders/styles')());
   fragments.registerAttribute('[autofocus]', require('fragments-built-ins/binders/autofocus')());
   fragments.registerAttribute('[autoselect]', require('fragments-built-ins/binders/autoselect')());
   fragments.registerAttribute('[value]', require('fragments-built-ins/binders/value')(
