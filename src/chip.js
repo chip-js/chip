@@ -29,3 +29,6 @@ function chip(options) {
 }
 
 chip.App = App;
+chip.Class = require('chip-utils/class');
+chip.EventTarget = require('chip-utils/event-target');
+chip.routes = require('routes-js');
