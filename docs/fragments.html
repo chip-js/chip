@@ -82,8 +82,10 @@
   <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/animations'</span>)(fragments);
   <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters'</span>)(fragments);
 
-  fragments.registerAttribute(<span class="hljs-string">'(keydown:*)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-literal">null</span>, <span class="hljs-string">'keydown'</span>));
-  fragments.registerAttribute(<span class="hljs-string">'(keyup:*)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-literal">null</span>, <span class="hljs-string">'keyup'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(keydown.*)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-literal">null</span>, <span class="hljs-string">'keydown'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(keyup.*)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-literal">null</span>, <span class="hljs-string">'keyup'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(enter)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-string">'enter'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(esc)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-string">'esc'</span>));
   fragments.registerAttribute(<span class="hljs-string">'(*)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/events'</span>)());
   fragments.registerAttribute(<span class="hljs-string">'{*}'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/properties'</span>)());
   fragments.registerAttribute(<span class="hljs-string">'{{*}}'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/properties-2-way'</span>)());
@@ -96,6 +98,7 @@
   fragments.registerAttribute(<span class="hljs-string">'[html]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/html'</span>)());
   fragments.registerAttribute(<span class="hljs-string">'[src]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/properties'</span>)(<span class="hljs-string">'src'</span>));
   fragments.registerAttribute(<span class="hljs-string">'[log]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/log'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[class]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/class'</span>)());
   fragments.registerAttribute(<span class="hljs-string">'[.*]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/classes'</span>)());
   fragments.registerAttribute(<span class="hljs-string">'[style.*]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/styles'</span>)());
   fragments.registerAttribute(<span class="hljs-string">'[autofocus]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/autofocus'</span>)());
