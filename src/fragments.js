@@ -10,8 +10,10 @@ module.exports = function() {
   require('fragments-built-ins/animations')(fragments);
   require('fragments-built-ins/formatters')(fragments);
 
-  fragments.registerAttribute('(keydown:*)', require('fragments-built-ins/binders/key-events')(null, 'keydown'));
-  fragments.registerAttribute('(keyup:*)', require('fragments-built-ins/binders/key-events')(null, 'keyup'));
+  fragments.registerAttribute('(keydown.*)', require('fragments-built-ins/binders/key-events')(null, 'keydown'));
+  fragments.registerAttribute('(keyup.*)', require('fragments-built-ins/binders/key-events')(null, 'keyup'));
+  fragments.registerAttribute('(enter)', require('fragments-built-ins/binders/key-events')('enter'));
+  fragments.registerAttribute('(esc)', require('fragments-built-ins/binders/key-events')('esc'));
   fragments.registerAttribute('(*)', require('fragments-built-ins/binders/events')());
   fragments.registerAttribute('{*}', require('fragments-built-ins/binders/properties')());
   fragments.registerAttribute('{{*}}', require('fragments-built-ins/binders/properties-2-way')());
@@ -24,6 +26,7 @@ module.exports = function() {
   fragments.registerAttribute('[html]', require('fragments-built-ins/binders/html')());
   fragments.registerAttribute('[src]', require('fragments-built-ins/binders/properties')('src'));
   fragments.registerAttribute('[log]', require('fragments-built-ins/binders/log')());
+  fragments.registerAttribute('[class]', require('fragments-built-ins/binders/class')());
   fragments.registerAttribute('[.*]', require('fragments-built-ins/binders/classes')());
   fragments.registerAttribute('[style.*]', require('fragments-built-ins/binders/styles')());
   fragments.registerAttribute('[autofocus]', require('fragments-built-ins/binders/autofocus')());
