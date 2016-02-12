@@ -691,17 +691,19 @@ module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnle
         this.animating = true;
         this.showing.unbind();
         this.animateOut(this.showing, function() {
-          this.animating = false;
+          if (this.animating) {
+            this.animating = false;
 
-          if (this.showing) {
-            // Make sure this wasn't unbound while we were animating (e.g. by a parent `if` that doesn't animate)
-            this.remove(this.showing);
-            this.showing = null;
-          }
+            if (this.showing) {
+              // Make sure this wasn't unbound while we were animating (e.g. by a parent `if` that doesn't animate)
+              this.remove(this.showing);
+              this.showing = null;
+            }
 
-          if (this.context) {
-            // finish by animating the new element in (if any), unless no longer bound
-            this.updatedAnimated(this.lastValue);
+            if (this.context) {
+              // finish by animating the new element in (if any), unless no longer bound
+              this.updatedAnimated(this.lastValue);
+            }
           }
         });
         return;
@@ -714,10 +716,12 @@ module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnle
         this.add(this.showing);
         this.animating = true;
         this.animateIn(this.showing, function() {
-          this.animating = false;
-          // if the value changed while this was animating run it again
-          if (this.lastValue !== index) {
-            this.updatedAnimated(this.lastValue);
+          if (this.animating) {
+            this.animating = false;
+            // if the value changed while this was animating run it again
+            if (this.lastValue !== index) {
+              this.updatedAnimated(this.lastValue);
+            }
           }
         });
       }
@@ -1049,13 +1053,14 @@ module.exports = function() {
         // The last animation finished will run this
         if (--whenDone.count !== 0) return;
 
-        allRemoved.forEach(this.removeView);
-
-        this.animating = false;
-        if (this.valueWhileAnimating) {
-          var changes = diff.arrays(this.valueWhileAnimating, animatingValue);
-          this.updateChangesAnimated(this.valueWhileAnimating, changes);
-          this.valueWhileAnimating = null;
+        if (this.animating) {
+          allRemoved.forEach(this.removeView);
+          this.animating = false;
+          if (this.valueWhileAnimating) {
+            var changes = diff.arrays(this.valueWhileAnimating, animatingValue);
+            this.updateChangesAnimated(this.valueWhileAnimating, changes);
+            this.valueWhileAnimating = null;
+          }
         }
       }
       whenDone.count = 0;
@@ -1099,6 +1104,7 @@ module.exports = function() {
     unbound: function() {
       this.views.forEach(function(view) {
         view.unbind();
+        view._repeatItem_ = null;
       });
       this.valueWhileAnimating = null;
       this.animating = false;
@@ -1144,9 +1150,12 @@ module.exports = function(isHide) {
 
       this.animating = true;
       function onFinish() {
-        this.animating = false;
-        if (this.lastValue !== value) {
-          this.updatedAnimated(this.lastValue);
+        // If this.animating is false then the element was unbound during the animation
+        if (this.animating) {
+          this.animating = false;
+          if (this.lastValue !== value) {
+            this.updatedAnimated(this.lastValue);
+          }
         }
       }
 
@@ -3740,117 +3749,8 @@ module.exports = create();
 module.exports.create = create;
 
 },{"./src/fragments":74,"observations-js":80}],70:[function(require,module,exports){
-var slice = Array.prototype.slice;
-
-/**
- * Simplifies extending classes and provides static inheritance. Classes that need to be extendable should
- * extend Class which will give them the `extend` static function for their subclasses to use. In addition to
- * a prototype, mixins may be added as well. Example:
- *
- * function MyClass(arg1, arg2) {
- *   SuperClass.call(this, arg1);
- *   this.arg2 = arg2;
- * }
- * SuperClass.extend(MyClass, mixin1, AnotherClass, {
- *   foo: function() {
- *     this._bar++;
- *   },
- *   get bar() {
- *     return this._bar;
- *   }
- * });
- *
- * In addition to extending the superclass, static methods and properties will be copied onto the subclass for
- * static inheritance. This allows the extend function to be copied to the subclass so that it may be
- * subclassed as well. Additionally, static properties may be added by defining them on a special prototype
- * property `static` making the code more readable.
- *
- * @param {function} The subclass constructor.
- * @param {object} [optional] Zero or more mixins. They can be objects or classes (functions).
- * @param {object} The prototype of the subclass.
- */
-function Class() {}
-Class.extend = extend;
-Class.makeInstanceOf = makeInstanceOf;
-module.exports = Class;
-
-function extend(Subclass /* [, prototype [,prototype]] */) {
-  var prototypes;
-
-  // Support no constructor
-  if (typeof Subclass !== 'function') {
-    prototypes = slice.call(arguments);
-    var SuperClass = this;
-    Subclass = function() {
-      SuperClass.apply(this, arguments);
-    };
-  } else {
-    prototypes = slice.call(arguments, 1);
-  }
-
-  extendStatics(this, Subclass);
-
-  prototypes.forEach(function(proto) {
-    if (typeof proto === 'function') {
-      extendStatics(proto, Subclass);
-    } else if (proto.hasOwnProperty('static')) {
-      extendStatics(proto.static, Subclass);
-    }
-  });
-
-  var descriptors = getDescriptors(prototypes);
-  descriptors.constructor = { writable: true, configurable: true, value: Subclass };
-  Subclass.prototype = Object.create(this.prototype, descriptors);
-  return Subclass;
-}
-
-// Get descriptors (allows for getters and setters) and sets functions to be non-enumerable
-function getDescriptors(objects) {
-  var descriptors = {};
-
-  objects.forEach(function(object) {
-    if (typeof object === 'function') object = object.prototype;
-
-    Object.getOwnPropertyNames(object).forEach(function(name) {
-      if (name === 'static') return;
-
-      var descriptor = Object.getOwnPropertyDescriptor(object, name);
-
-      if (typeof descriptor.value === 'function') {
-        descriptor.enumerable = false;
-      }
-
-      descriptors[name] = descriptor;
-    });
-  });
-  return descriptors;
-}
-
-// Copies static methods over for static inheritance
-function extendStatics(Class, Subclass) {
-
-  // static method inheritance (including `extend`)
-  Object.keys(Class).forEach(function(key) {
-    var descriptor = Object.getOwnPropertyDescriptor(Class, key);
-    if (!descriptor.configurable) return;
-
-    Object.defineProperty(Subclass, key, descriptor);
-  });
-}
-
-
-/**
- * Makes a native object pretend to be an instance of class (e.g. adds methods to a DocumentFragment then calls the
- * constructor).
- */
-function makeInstanceOf(object) {
-  var args = slice.call(arguments, 1);
-  Object.defineProperties(object, getDescriptors([this.prototype]));
-  this.apply(object, args);
-  return object;
-}
-
-},{}],71:[function(require,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"dup":54}],71:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -4020,12 +3920,14 @@ Binding.extend(AnimatedBinding, {
 
     node.classList.add(classAnimateName);
     node.classList.remove(classWillName);
+    node.dispatchEvent(new Event('animatestart'));
 
     var whenDone = function() {
       if (animateObject && animateObject[methodDidName]) animateObject[methodDidName](node);
       if (callback) callback.call(_this);
       node.classList.remove(classAnimateName);
       if (className) node.classList.remove(className);
+      node.dispatchEvent(new Event('animateend'));
     };
 
     if (animateObject && animateObject[methodAnimateName]) {
@@ -5219,6 +5121,10 @@ module.exports = toFragment;
 // * A script element with a `type` attribute of `"text/*"` (e.g. `<script type="text/html">My template code!</script>`)
 // * A template element (e.g. `<template>My template code!</template>`)
 function toFragment(html) {
+  if (typeof html === 'function') {
+    html = html();
+  }
+
   if (html instanceof DocumentFragment) {
     return html;
   } else if (typeof html === 'string') {
@@ -5730,8 +5636,117 @@ exports.create = function(options) {
 };
 
 },{"./src/hash-location":86,"./src/location":87,"./src/push-location":88,"./src/route":89,"./src/router":90}],84:[function(require,module,exports){
-arguments[4][70][0].apply(exports,arguments)
-},{"dup":70}],85:[function(require,module,exports){
+var slice = Array.prototype.slice;
+
+/**
+ * Simplifies extending classes and provides static inheritance. Classes that need to be extendable should
+ * extend Class which will give them the `extend` static function for their subclasses to use. In addition to
+ * a prototype, mixins may be added as well. Example:
+ *
+ * function MyClass(arg1, arg2) {
+ *   SuperClass.call(this, arg1);
+ *   this.arg2 = arg2;
+ * }
+ * SuperClass.extend(MyClass, mixin1, AnotherClass, {
+ *   foo: function() {
+ *     this._bar++;
+ *   },
+ *   get bar() {
+ *     return this._bar;
+ *   }
+ * });
+ *
+ * In addition to extending the superclass, static methods and properties will be copied onto the subclass for
+ * static inheritance. This allows the extend function to be copied to the subclass so that it may be
+ * subclassed as well. Additionally, static properties may be added by defining them on a special prototype
+ * property `static` making the code more readable.
+ *
+ * @param {function} The subclass constructor.
+ * @param {object} [optional] Zero or more mixins. They can be objects or classes (functions).
+ * @param {object} The prototype of the subclass.
+ */
+function Class() {}
+Class.extend = extend;
+Class.makeInstanceOf = makeInstanceOf;
+module.exports = Class;
+
+function extend(Subclass /* [, prototype [,prototype]] */) {
+  var prototypes;
+
+  // Support no constructor
+  if (typeof Subclass !== 'function') {
+    prototypes = slice.call(arguments);
+    var SuperClass = this;
+    Subclass = function() {
+      SuperClass.apply(this, arguments);
+    };
+  } else {
+    prototypes = slice.call(arguments, 1);
+  }
+
+  extendStatics(this, Subclass);
+
+  prototypes.forEach(function(proto) {
+    if (typeof proto === 'function') {
+      extendStatics(proto, Subclass);
+    } else if (proto.hasOwnProperty('static')) {
+      extendStatics(proto.static, Subclass);
+    }
+  });
+
+  var descriptors = getDescriptors(prototypes);
+  descriptors.constructor = { writable: true, configurable: true, value: Subclass };
+  Subclass.prototype = Object.create(this.prototype, descriptors);
+  return Subclass;
+}
+
+// Get descriptors (allows for getters and setters) and sets functions to be non-enumerable
+function getDescriptors(objects) {
+  var descriptors = {};
+
+  objects.forEach(function(object) {
+    if (typeof object === 'function') object = object.prototype;
+
+    Object.getOwnPropertyNames(object).forEach(function(name) {
+      if (name === 'static') return;
+
+      var descriptor = Object.getOwnPropertyDescriptor(object, name);
+
+      if (typeof descriptor.value === 'function') {
+        descriptor.enumerable = false;
+      }
+
+      descriptors[name] = descriptor;
+    });
+  });
+  return descriptors;
+}
+
+// Copies static methods over for static inheritance
+function extendStatics(Class, Subclass) {
+
+  // static method inheritance (including `extend`)
+  Object.keys(Class).forEach(function(key) {
+    var descriptor = Object.getOwnPropertyDescriptor(Class, key);
+    if (!descriptor.configurable) return;
+
+    Object.defineProperty(Subclass, key, descriptor);
+  });
+}
+
+
+/**
+ * Makes a native object pretend to be an instance of class (e.g. adds methods to a DocumentFragment then calls the
+ * constructor).
+ */
+function makeInstanceOf(object) {
+  var args = slice.call(arguments, 1);
+  Object.defineProperties(object, getDescriptors([this.prototype]));
+  this.apply(object, args);
+  return object;
+}
+
+},{}],85:[function(require,module,exports){
 arguments[4][55][0].apply(exports,arguments)
 },{"./class":84,"dup":55}],86:[function(require,module,exports){
 module.exports = HashLocation;
