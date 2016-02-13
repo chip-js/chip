@@ -420,6 +420,37 @@ module.exports = function() {
 };
 
 },{}],14:[function(require,module,exports){
+/**
+ * An element binder that gets filled with the contents put inside a component.
+ */
+module.exports = function() {
+  return {
+
+    compiled: function() {
+      if (this.element.childNodes.length) {
+        this.defaultContent = this.fragments.createTemplate(this.element.childNodes);
+      }
+    },
+
+    bound: function() {
+      var template = this.context._componentContent || this.defaultContent;
+      if (template) {
+        this.content = template.createView();
+        this.element.appendChild(this.content);
+        this.content.bind(this.context);
+      }
+    },
+
+    unbound: function() {
+      if (this.content) {
+        this.content.dispose();
+        this.content = null;
+      }
+    }
+  };
+};
+
+},{}],15:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -452,17 +483,14 @@ module.exports = function(definition) {
     },
 
     created: function() {
-      if (this.contentTemplate) {
-        this.content = this.contentTemplate.createView();
-      }
-
       if (definition.template) {
         this.view = definition.template.createView();
         this.element.appendChild(this.view);
-        if (this.content) {
-          this._componentContent = this.content;
+        if (this.contentTemplate) {
+          this.element._componentContent = this.contentTemplate;
         }
-      } else if (this.content) {
+      } else if (this.contentTemplate) {
+        this.content = this.contentTemplate.createView();
         this.element.appendChild(this.content);
       }
 
@@ -481,6 +509,7 @@ module.exports = function(definition) {
     },
 
     bound: function() {
+      this.element._parentContext = this.context;
       if (this.view) this.view.bind(this.element);
       if (this.content) this.content.bind(this.context);
 
@@ -505,7 +534,7 @@ module.exports = function(definition) {
   };
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * A binder for adding event listeners. When the event is triggered the expression will be executed. The properties
  * `event` (the event object) and `element` (the element the binder is on) will be available to the expression.
@@ -581,7 +610,7 @@ module.exports = function(specificEventName) {
   };
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * A binder that displays unescaped HTML inside an element. Be sure it's trusted! This should be used with formatters
  * which create HTML from something safe.
@@ -592,7 +621,7 @@ module.exports = function() {
   };
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * if, unless, else-if, else-unless, else
  * A binder init function that creates a binder that shows or hides the element if the value is truthy or falsey.
@@ -674,8 +703,8 @@ module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnle
       var template = this.templates[index];
       if (template) {
         this.showing = template.createView();
-        this.showing.bind(this.context);
         this.add(this.showing);
+        this.showing.bind(this.context);
       }
     },
 
@@ -749,7 +778,7 @@ function wrapIfExp(expr, isUnless) {
   }
 }
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var keys = {
   backspace: 8,
   tab: 9,
@@ -809,7 +838,7 @@ module.exports = function(specificKeyName, specificEventName) {
   };
 };
 
-},{"./events":15}],19:[function(require,module,exports){
+},{"./events":16}],20:[function(require,module,exports){
 /**
  * A binder that prints out the value of the expression to the console.
  */
@@ -830,7 +859,7 @@ module.exports = function() {
   };
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * A binder that sets the property of an element to the value of the expression in a 2-way binding.
  */
@@ -873,7 +902,7 @@ module.exports = function(specificPropertyName) {
   };
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * A binder that sets the property of an element to the value of the expression.
  */
@@ -887,7 +916,7 @@ module.exports = function(specificPropertyName) {
   };
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * A binder that sets a reference to the element when it is bound.
  */
@@ -903,7 +932,7 @@ module.exports = function () {
   };
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var diff = require('differences-js');
 
 /**
@@ -1112,7 +1141,7 @@ module.exports = function() {
   };
 };
 
-},{"differences-js":52}],24:[function(require,module,exports){
+},{"differences-js":53}],25:[function(require,module,exports){
 /**
  * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
  * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
@@ -1183,7 +1212,7 @@ module.exports = function(isHide) {
   };
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var units = {
   '%': true,
   'em': true,
@@ -1223,7 +1252,7 @@ module.exports = function(specificStyleName, specificUnit) {
   };
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * ## text
  * A binder that displays escaped text inside an element. This can be done with binding directly in text nodes but
@@ -1252,7 +1281,7 @@ module.exports = function() {
   };
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var inputMethods, defaultInputMethod;
 
 /**
@@ -1382,7 +1411,7 @@ inputMethods = {
 };
 
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /**
  * Takes the input URL and adds (or replaces) the field in the query.
  * E.g. 'http://example.com?user=default&resource=foo' | addQuery('user', username)
@@ -1414,7 +1443,7 @@ module.exports = function(value, queryField, queryValue) {
   return url;
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
 var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$))/gim;
 /**
@@ -1439,7 +1468,7 @@ module.exports = function(value, target) {
   });
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /**
  * Formats the value into a boolean.
  */
@@ -1447,7 +1476,7 @@ module.exports = function(value) {
   return value && value !== '0' && value !== 'false';
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1462,7 +1491,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":34}],32:[function(require,module,exports){
+},{"./escape":35}],33:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1482,7 +1511,7 @@ module.exports = function(value) {
   return value.toLocaleString();
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1502,7 +1531,7 @@ module.exports = function(value) {
   return value.toLocaleDateString();
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var div = document.createElement('div');
 
 /**
@@ -1518,7 +1547,7 @@ module.exports = function (value, setter) {
   }
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /**
  * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
  * functions.
@@ -1547,7 +1576,7 @@ module.exports = function(value, filterFunc) {
   return value;
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Formats the value into a float or null.
  */
@@ -1556,7 +1585,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * Formats the value something returned by a formatting function passed. Use for custom or one-off formats.
  */
@@ -1564,7 +1593,7 @@ module.exports = function(value, formatter, isSetter) {
   return formatter(value, isSetter);
 };
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /**
  * Adds all built-in formatters with default names
  */
@@ -1598,7 +1627,7 @@ module.exports = function(fragments) {
   fragments.registerFormatter('upper', require('./upper'));
 };
 
-},{"./add-query":28,"./autolink":29,"./bool":30,"./br":31,"./date":33,"./date-time":32,"./escape":34,"./filter":35,"./float":36,"./format":37,"./int":39,"./json":40,"./limit":41,"./log":42,"./lower":43,"./map":44,"./newline":45,"./p":46,"./reduce":47,"./slice":48,"./sort":49,"./time":50,"./upper":51}],39:[function(require,module,exports){
+},{"./add-query":29,"./autolink":30,"./bool":31,"./br":32,"./date":34,"./date-time":33,"./escape":35,"./filter":36,"./float":37,"./format":38,"./int":40,"./json":41,"./limit":42,"./log":43,"./lower":44,"./map":45,"./newline":46,"./p":47,"./reduce":48,"./slice":49,"./sort":50,"./time":51,"./upper":52}],40:[function(require,module,exports){
 /**
  * Formats the value into an integer or null.
  */
@@ -1607,7 +1636,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Formats the value into JSON.
  */
@@ -1627,7 +1656,7 @@ module.exports = function(value, isSetter) {
   }
 };
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Adds a formatter to limit the length of an array or string
  */
@@ -1643,7 +1672,7 @@ module.exports = function(value, limit) {
   }
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Adds a formatter to log the value of the expression, useful for debugging
  */
@@ -1655,7 +1684,7 @@ module.exports = function(value, prefix) {
   return value;
 };
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 /**
  * Formats the value into lower case.
  */
@@ -1663,7 +1692,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toLowerCase() : value;
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /**
  * Adds a formatter to map an array or value by the given mapping function
  */
@@ -1678,7 +1707,7 @@ module.exports = function(value, mapFunc) {
   }
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1697,7 +1726,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":34}],46:[function(require,module,exports){
+},{"./escape":35}],47:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1713,7 +1742,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":34}],47:[function(require,module,exports){
+},{"./escape":35}],48:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -1732,7 +1761,7 @@ module.exports = function(value, reduceFunc, initialValue) {
   }
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -1744,7 +1773,7 @@ module.exports = function(value, index, endIndex) {
   }
 };
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 /**
  * Sorts an array given a field name or sort function, and a direction
  */
@@ -1772,7 +1801,7 @@ module.exports = function(value, sortFunc, dir) {
   return value.slice().sort(sortFunc.bind(this));
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1792,7 +1821,7 @@ module.exports = function(value) {
   return value.toLocaleTimeString();
 };
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /**
  * Formats the value into upper case.
  */
@@ -1800,10 +1829,10 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toUpperCase() : value;
 };
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 module.exports = require('./src/diff');
 
-},{"./src/diff":53}],53:[function(require,module,exports){
+},{"./src/diff":54}],54:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -2199,7 +2228,7 @@ var diff = exports;
   }
 })();
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -2314,7 +2343,7 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 module.exports = EventTarget;
 var Class = require('./class');
 
@@ -2371,10 +2400,10 @@ Class.extend(EventTarget, {
   }
 });
 
-},{"./class":54}],56:[function(require,module,exports){
+},{"./class":55}],57:[function(require,module,exports){
 module.exports = require('./src/chip');
 
-},{"./src/chip":59}],57:[function(require,module,exports){
+},{"./src/chip":60}],58:[function(require,module,exports){
 module.exports = App;
 var componentBinding = require('fragments-built-ins/binders/component');
 var Location = require('routes-js').Location;
@@ -2509,14 +2538,17 @@ EventTarget.extend(App, {
   }
 
 });
-},{"./fragments":60,"./mixins/default":61,"chip-utils/event-target":55,"fragments-built-ins/binders/component":14,"routes-js":83}],58:[function(require,module,exports){
+},{"./fragments":61,"./mixins/default":62,"chip-utils/event-target":56,"fragments-built-ins/binders/component":15,"routes-js":84}],59:[function(require,module,exports){
 var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
 module.exports = function() {
   var ifBinder = IfBinder();
+  var bound = ifBinder.bound;
+  var unbound = ifBinder.unbound;
 
   ifBinder.compiled = function() {
+    var noRoute;
     this.app = this.fragments.app;
     this.routes = [];
     this.templates = [];
@@ -2534,12 +2566,16 @@ module.exports = function() {
       if (child.hasAttribute('[path]')) {
         var path = child.getAttribute('[path]');
         child.removeAttribute('[path]');
-        this.routes.push(new Route(path + '*'));
+        this.routes.push(new Route(path));
         this.templates.push(this.fragments.createTemplate(child));
       } else if (child.hasAttribute('[noroute]')) {
         child.removeAttribute('[noroute]');
-        this.templates[0] = this.fragments.createTemplate(child);
+        noRoute = this.fragments.createTemplate(child);
       }
+    }
+
+    if (noRoute) {
+      this.templates.push(noRoute);
     }
   };
 
@@ -2551,36 +2587,46 @@ module.exports = function() {
     this.onUrlChange = this.onUrlChange.bind(this);
   };
 
-  var bound = ifBinder.bound;
+
   ifBinder.bound = function() {
     bound.call(this);
     var node = this.element.parentNode;
-    while (node && node.matchedRoutePath) {
+    while (node && !node.matchedRoutePath) {
       node = node.parentNode;
     }
-    this.baseURI = node.matchedRoutePath || '';
+    this.baseURI = node && node.matchedRoutePath || '';
+    console.log(this.element, 'baseURI', this.baseURI);
     this.app.on('urlChange', this.onUrlChange);
     if (this.app.listening) {
       this.onUrlChange();
     }
   };
 
-  ifBinder.onUrlChange = function() {
-    var url = this.app.location.url;
-    var newIndex;
+  ifBinder.unbound = function() {
+    unbound.call(this);
+    this.currentIndex = undefined;
+    this.app.off('urlChange', this.onUrlChange);
+  };
 
-    if (url.indexOf(this.baseURI) === 0) {
-      url = url.replace(this.baseURI, '');
-    } else {
-      // no routes should match this url since it isn't within our subpath
-      url = null;
+  ifBinder.onUrlChange = function() {
+    var fullUrl = this.app.location.url;
+    var localUrl = null;
+    var newIndex = this.routes.length;
+
+    if (fullUrl.indexOf(this.baseURI) === 0) {
+      localUrl = fullUrl.replace(this.baseURI, '');
     }
 
-    if (url !== null) {
+    if (localUrl !== null) {
       this.routes.some(function(route, index) {
-        if (route.match(url)) {
-          var afterLength = route.params['*'].length;
-          this.matchedRoutePath = afterLength ? url.slice(0, -afterLength) : url;
+        if (route.match(localUrl)) {
+          if (route.params.hasOwnProperty('*') && route.params['*']) {
+            var afterLength = route.params['*'].length;
+            this.element.matchedRoutePath = this.baseURI + localUrl.slice(0, -afterLength);
+          } else {
+            this.element.matchedRoutePath = fullUrl;
+          }
+          console.log(this.element, 'matched', this.element.matchedRoutePath);
           this.context.params = route.params;
           newIndex = index;
           return true;
@@ -2597,7 +2643,7 @@ module.exports = function() {
   return ifBinder;
 };
 
-},{"fragments-built-ins/binders/if":17,"routes-js":83}],59:[function(require,module,exports){
+},{"fragments-built-ins/binders/if":18,"routes-js":84}],60:[function(require,module,exports){
 var App = require('./app');
 
 // # Chip
@@ -2633,7 +2679,7 @@ chip.Class = require('chip-utils/class');
 chip.EventTarget = require('chip-utils/event-target');
 chip.routes = require('routes-js');
 
-},{"./app":57,"chip-utils/class":54,"chip-utils/event-target":55,"routes-js":83}],60:[function(require,module,exports){
+},{"./app":58,"chip-utils/class":55,"chip-utils/event-target":56,"routes-js":84}],61:[function(require,module,exports){
 var createFragments = require('fragments-js').create;
 
 module.exports = function() {
@@ -2654,6 +2700,7 @@ module.exports = function() {
   fragments.registerAttribute('{*}', require('fragments-built-ins/binders/properties')());
   fragments.registerAttribute('{{*}}', require('fragments-built-ins/binders/properties-2-way')());
   fragments.registerAttribute('*?', require('fragments-built-ins/binders/attribute-names')());
+  fragments.registerAttribute('[content]', require('fragments-built-ins/binders/component-content')());
   fragments.registerAttribute('[show]', require('fragments-built-ins/binders/show')(false));
   fragments.registerAttribute('[hide]', require('fragments-built-ins/binders/show')(true));
   fragments.registerAttribute('[for]', require('fragments-built-ins/binders/repeat')());
@@ -2681,7 +2728,7 @@ module.exports = function() {
   return fragments;
 };
 
-},{"./binders/route":58,"fragments-built-ins/animations":2,"fragments-built-ins/binders/attribute-names":9,"fragments-built-ins/binders/autofocus":10,"fragments-built-ins/binders/autoselect":11,"fragments-built-ins/binders/class":12,"fragments-built-ins/binders/classes":13,"fragments-built-ins/binders/events":15,"fragments-built-ins/binders/html":16,"fragments-built-ins/binders/if":17,"fragments-built-ins/binders/key-events":18,"fragments-built-ins/binders/log":19,"fragments-built-ins/binders/properties":21,"fragments-built-ins/binders/properties-2-way":20,"fragments-built-ins/binders/ref":22,"fragments-built-ins/binders/repeat":23,"fragments-built-ins/binders/show":24,"fragments-built-ins/binders/styles":25,"fragments-built-ins/binders/text":26,"fragments-built-ins/binders/value":27,"fragments-built-ins/formatters":38,"fragments-js":69}],61:[function(require,module,exports){
+},{"./binders/route":59,"fragments-built-ins/animations":2,"fragments-built-ins/binders/attribute-names":9,"fragments-built-ins/binders/autofocus":10,"fragments-built-ins/binders/autoselect":11,"fragments-built-ins/binders/class":12,"fragments-built-ins/binders/classes":13,"fragments-built-ins/binders/component-content":14,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/ref":23,"fragments-built-ins/binders/repeat":24,"fragments-built-ins/binders/show":25,"fragments-built-ins/binders/styles":26,"fragments-built-ins/binders/text":27,"fragments-built-ins/binders/value":28,"fragments-built-ins/formatters":39,"fragments-js":70}],62:[function(require,module,exports){
 
 module.exports = function(app) {
 
@@ -2772,9 +2819,9 @@ module.exports = function(app) {
   };
 };
 
-},{}],62:[function(require,module,exports){
-arguments[4][52][0].apply(exports,arguments)
-},{"./src/diff":63,"dup":52}],63:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"./src/diff":64,"dup":53}],64:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -3180,10 +3227,10 @@ var diff = exports;
   }
 })();
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports = require('./src/expressions');
 
-},{"./src/expressions":65}],65:[function(require,module,exports){
+},{"./src/expressions":66}],66:[function(require,module,exports){
 var slice = Array.prototype.slice;
 var strings = require('./strings');
 var formatterParser = require('./formatters');
@@ -3282,7 +3329,7 @@ function bindArguments(func) {
   }
 }
 
-},{"./formatters":66,"./property-chains":67,"./strings":68}],66:[function(require,module,exports){
+},{"./formatters":67,"./property-chains":68,"./strings":69}],67:[function(require,module,exports){
 
 // finds pipes that are not ORs (i.e. ` | ` not ` || `) for formatters
 var pipeRegex = /\|(\|)?/g;
@@ -3354,7 +3401,7 @@ exports.parseFormatters = function(expr) {
   return setter + value;
 };
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var referenceCount = 0;
 var currentReference = 0;
 var currentIndex = 0;
@@ -3683,7 +3730,7 @@ function addReferences(expr) {
   return expr;
 }
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 // finds all quoted strings
 var quoteRegex = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -3729,7 +3776,7 @@ exports.putInStrings = function(expr) {
   return expr;
 };
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var Fragments = require('./src/fragments');
 var Observations = require('observations-js');
 
@@ -3748,9 +3795,9 @@ function create() {
 module.exports = create();
 module.exports.create = create;
 
-},{"./src/fragments":74,"observations-js":80}],70:[function(require,module,exports){
-arguments[4][54][0].apply(exports,arguments)
-},{"dup":54}],71:[function(require,module,exports){
+},{"./src/fragments":75,"observations-js":81}],71:[function(require,module,exports){
+arguments[4][55][0].apply(exports,arguments)
+},{"dup":55}],72:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -3997,7 +4044,7 @@ function onAnimationEnd(node, duration, callback) {
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":72,"./util/animation":76}],72:[function(require,module,exports){
+},{"./binding":73,"./util/animation":77}],73:[function(require,module,exports){
 module.exports = Binding;
 var Class = require('chip-utils/class');
 
@@ -4161,7 +4208,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"chip-utils/class":70}],73:[function(require,module,exports){
+},{"chip-utils/class":71}],74:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4329,7 +4376,7 @@ function notEmpty(value) {
   return Boolean(value);
 }
 
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -4391,7 +4438,7 @@ Class.extend(Fragments, {
   createTemplate: function(html) {
     var fragment = toFragment(html);
     if (fragment.childNodes.length === 0) {
-      throw new Error('Cannot create a template from ' + html);
+      throw new Error('Cannot create a template from ' + html + ' because it is empty.');
     }
     var template = Template.makeInstanceOf(fragment);
     template.bindings = compile(this, template);
@@ -4953,7 +5000,7 @@ function escapeRegExp(text) {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 }
 
-},{"./animatedBinding":71,"./binding":72,"./compile":73,"./template":75,"./util/animation":76,"./util/polyfills":77,"./util/toFragment":78,"./view":79,"chip-utils/class":70}],75:[function(require,module,exports){
+},{"./animatedBinding":72,"./binding":73,"./compile":74,"./template":76,"./util/animation":77,"./util/polyfills":78,"./util/toFragment":79,"./view":80,"chip-utils/class":71}],76:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -4992,7 +5039,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":79,"chip-utils/class":70}],76:[function(require,module,exports){
+},{"./view":80,"chip-utils/class":71}],77:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5083,7 +5130,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 
 
 
@@ -5110,7 +5157,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5233,7 +5280,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],79:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5321,7 +5368,7 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":70}],80:[function(require,module,exports){
+},{"chip-utils/class":71}],81:[function(require,module,exports){
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
@@ -5329,7 +5376,7 @@ exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observations":81,"./src/observer":82}],81:[function(require,module,exports){
+},{"./src/observations":82,"./src/observer":83}],82:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -5497,7 +5544,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./observer":82,"chip-utils/class":54}],82:[function(require,module,exports){
+},{"./observer":83,"chip-utils/class":55}],83:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -5624,7 +5671,7 @@ Class.extend(Observer, {
   }
 });
 
-},{"chip-utils/class":54,"differences-js":62,"expressions-js":64}],83:[function(require,module,exports){
+},{"chip-utils/class":55,"differences-js":63,"expressions-js":65}],84:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -5635,7 +5682,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":86,"./src/location":87,"./src/push-location":88,"./src/route":89,"./src/router":90}],84:[function(require,module,exports){
+},{"./src/hash-location":87,"./src/location":88,"./src/push-location":89,"./src/route":90,"./src/router":91}],85:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -5746,9 +5793,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],85:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"./class":84,"dup":55}],86:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"./class":85,"dup":56}],87:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -5775,7 +5822,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":87}],87:[function(require,module,exports){
+},{"./location":88}],88:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -5856,7 +5903,7 @@ EventTarget.extend(Location, {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":86,"./push-location":88,"chip-utils/event-target":85}],88:[function(require,module,exports){
+},{"./hash-location":87,"./push-location":89,"chip-utils/event-target":86}],89:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -5892,7 +5939,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":87}],89:[function(require,module,exports){
+},{"./location":88}],90:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -5977,7 +6024,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":84}],90:[function(require,module,exports){
+},{"chip-utils/class":85}],91:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -6158,6 +6205,6 @@ function parseQuery(search) {
   return query;
 }
 
-},{"./location":87,"./route":89,"chip-utils/event-target":85}]},{},[56])(56)
+},{"./location":88,"./route":90,"chip-utils/event-target":86}]},{},[57])(57)
 });
 //# sourceMappingURL=chip.js.map

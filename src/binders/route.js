@@ -3,8 +3,11 @@ var IfBinder = require('fragments-built-ins/binders/if');
 
 module.exports = function() {
   var ifBinder = IfBinder();
+  var bound = ifBinder.bound;
+  var unbound = ifBinder.unbound;
 
   ifBinder.compiled = function() {
+    var noRoute;
     this.app = this.fragments.app;
     this.routes = [];
     this.templates = [];
@@ -22,12 +25,16 @@ module.exports = function() {
       if (child.hasAttribute('[path]')) {
         var path = child.getAttribute('[path]');
         child.removeAttribute('[path]');
-        this.routes.push(new Route(path + '*'));
+        this.routes.push(new Route(path));
         this.templates.push(this.fragments.createTemplate(child));
       } else if (child.hasAttribute('[noroute]')) {
         child.removeAttribute('[noroute]');
-        this.templates[0] = this.fragments.createTemplate(child);
+        noRoute = this.fragments.createTemplate(child);
       }
+    }
+
+    if (noRoute) {
+      this.templates.push(noRoute);
     }
   };
 
@@ -39,36 +46,46 @@ module.exports = function() {
     this.onUrlChange = this.onUrlChange.bind(this);
   };
 
-  var bound = ifBinder.bound;
+
   ifBinder.bound = function() {
     bound.call(this);
     var node = this.element.parentNode;
-    while (node && node.matchedRoutePath) {
+    while (node && !node.matchedRoutePath) {
       node = node.parentNode;
     }
-    this.baseURI = node.matchedRoutePath || '';
+    this.baseURI = node && node.matchedRoutePath || '';
+    console.log(this.element, 'baseURI', this.baseURI);
     this.app.on('urlChange', this.onUrlChange);
     if (this.app.listening) {
       this.onUrlChange();
     }
   };
 
-  ifBinder.onUrlChange = function() {
-    var url = this.app.location.url;
-    var newIndex;
+  ifBinder.unbound = function() {
+    unbound.call(this);
+    this.currentIndex = undefined;
+    this.app.off('urlChange', this.onUrlChange);
+  };
 
-    if (url.indexOf(this.baseURI) === 0) {
-      url = url.replace(this.baseURI, '');
-    } else {
-      // no routes should match this url since it isn't within our subpath
-      url = null;
+  ifBinder.onUrlChange = function() {
+    var fullUrl = this.app.location.url;
+    var localUrl = null;
+    var newIndex = this.routes.length;
+
+    if (fullUrl.indexOf(this.baseURI) === 0) {
+      localUrl = fullUrl.replace(this.baseURI, '');
     }
 
-    if (url !== null) {
+    if (localUrl !== null) {
       this.routes.some(function(route, index) {
-        if (route.match(url)) {
-          var afterLength = route.params['*'].length;
-          this.matchedRoutePath = afterLength ? url.slice(0, -afterLength) : url;
+        if (route.match(localUrl)) {
+          if (route.params.hasOwnProperty('*') && route.params['*']) {
+            var afterLength = route.params['*'].length;
+            this.element.matchedRoutePath = this.baseURI + localUrl.slice(0, -afterLength);
+          } else {
+            this.element.matchedRoutePath = fullUrl;
+          }
+          console.log(this.element, 'matched', this.element.matchedRoutePath);
           this.context.params = route.params;
           newIndex = index;
           return true;

@@ -18,6 +18,7 @@ module.exports = function() {
   fragments.registerAttribute('{*}', require('fragments-built-ins/binders/properties')());
   fragments.registerAttribute('{{*}}', require('fragments-built-ins/binders/properties-2-way')());
   fragments.registerAttribute('*?', require('fragments-built-ins/binders/attribute-names')());
+  fragments.registerAttribute('[content]', require('fragments-built-ins/binders/component-content')());
   fragments.registerAttribute('[show]', require('fragments-built-ins/binders/show')(false));
   fragments.registerAttribute('[hide]', require('fragments-built-ins/binders/show')(true));
   fragments.registerAttribute('[for]', require('fragments-built-ins/binders/repeat')());
