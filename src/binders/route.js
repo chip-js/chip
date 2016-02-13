@@ -54,7 +54,6 @@ module.exports = function() {
       node = node.parentNode;
     }
     this.baseURI = node && node.matchedRoutePath || '';
-    console.log(this.element, 'baseURI', this.baseURI);
     this.app.on('urlChange', this.onUrlChange);
     if (this.app.listening) {
       this.onUrlChange();
@@ -85,7 +84,6 @@ module.exports = function() {
           } else {
             this.element.matchedRoutePath = fullUrl;
           }
-          console.log(this.element, 'matched', this.element.matchedRoutePath);
           this.context.params = route.params;
           newIndex = index;
           return true;
