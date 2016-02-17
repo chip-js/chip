@@ -101,6 +101,7 @@
   <span class="hljs-keyword">this</span>.afterSync = <span class="hljs-keyword">this</span>.fragments.afterSync;
   <span class="hljs-keyword">this</span>.onSync = <span class="hljs-keyword">this</span>.fragments.onSync;
   <span class="hljs-keyword">this</span>.offSync = <span class="hljs-keyword">this</span>.fragments.offSync;
+  <span class="hljs-keyword">this</span>.observe = <span class="hljs-keyword">this</span>.fragments.observe.bind(<span class="hljs-keyword">this</span>.fragments);
   <span class="hljs-keyword">this</span>.location.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>.sync);
 }
 

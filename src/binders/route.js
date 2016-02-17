@@ -40,6 +40,7 @@ module.exports = function() {
 
   ifBinder.add = function(view) {
     this.element.appendChild(view);
+    view.bind(this.context);
   };
 
   ifBinder.created = function() {

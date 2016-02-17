@@ -24,6 +24,7 @@ function App(options) {
   this.afterSync = this.fragments.afterSync;
   this.onSync = this.fragments.onSync;
   this.offSync = this.fragments.offSync;
+  this.observe = this.fragments.observe.bind(this.fragments);
   this.location.on('change', this.sync);
 }
 

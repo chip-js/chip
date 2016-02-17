@@ -687,6 +687,7 @@ module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnle
     },
 
     add: function(view) {
+      view.bind(this.context);
       this.element.parentNode.insertBefore(view, this.element.nextSibling);
     },
 
@@ -704,7 +705,6 @@ module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnle
       if (template) {
         this.showing = template.createView();
         this.add(this.showing);
-        this.showing.bind(this.context);
       }
     },
 
@@ -741,7 +741,6 @@ module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnle
       var template = this.templates[index];
       if (template) {
         this.showing = template.createView();
-        this.showing.bind(this.context);
         this.add(this.showing);
         this.animating = true;
         this.animateIn(this.showing, function() {
@@ -2430,6 +2429,7 @@ function App(options) {
   this.afterSync = this.fragments.afterSync;
   this.onSync = this.fragments.onSync;
   this.offSync = this.fragments.offSync;
+  this.observe = this.fragments.observe.bind(this.fragments);
   this.location.on('change', this.sync);
 }
 
@@ -2581,6 +2581,7 @@ module.exports = function() {
 
   ifBinder.add = function(view) {
     this.element.appendChild(view);
+    view.bind(this.context);
   };
 
   ifBinder.created = function() {
