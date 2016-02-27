@@ -39,8 +39,8 @@ module.exports = function() {
   };
 
   ifBinder.add = function(view) {
-    this.element.appendChild(view);
     view.bind(this.context);
+    this.element.appendChild(view);
   };
 
   ifBinder.created = function() {
@@ -50,11 +50,16 @@ module.exports = function() {
 
   ifBinder.bound = function() {
     bound.call(this);
-    var node = this.element.parentNode;
-    while (node && !node.matchedRoutePath) {
-      node = node.parentNode;
-    }
-    this.baseURI = node && node.matchedRoutePath || '';
+
+    // Wait until everything is put in the DOM
+    setTimeout(function() {
+      var node = this.element.parentNode;
+      while (node && !node.matchedRoutePath) {
+        node = node.parentNode;
+      }
+      this.baseURI = node && node.matchedRoutePath || '';
+    }.bind(this));
+
     this.app.on('urlChange', this.onUrlChange);
     if (this.app.listening) {
       this.onUrlChange();
@@ -68,6 +73,16 @@ module.exports = function() {
   };
 
   ifBinder.onUrlChange = function() {
+    if (this.element.baseURI === null) {
+      // element.baseURI is null if it isn't in the DOM yet
+      // If this is just getting inserted into the DOM wait for this.baseURI to be set
+      setTimeout(this.checkForChange.bind(this));
+    } else {
+      this.checkForChange();
+    }
+  };
+
+  ifBinder.checkForChange = function() {
     var fullUrl = this.app.location.url;
     var localUrl = null;
     var newIndex = this.routes.length;
