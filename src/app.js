@@ -13,6 +13,7 @@ function App(options) {
   options = options || {};
   EventTarget.call(this);
   this.fragments = createFragments();
+  this.components = {};
   this.fragments.app = this;
   this.location = Location.create(options);
   this.defaultMixin = defaultMixin(this);
@@ -56,8 +57,13 @@ EventTarget.extend(App, {
   // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
   // then returns a new instance of a defined template. This instance is a document fragment.
   component: function(name, definition) {
+    if (arguments.length === 1) {
+      return this.components[name];
+    }
+
     var definitions = slice.call(arguments, 1);
     definitions.unshift(this.defaultMixin);
+    this.components[name] = definitions;
     this.fragments.registerElement(name, componentBinding.apply(null, definitions));
     return this;
   },

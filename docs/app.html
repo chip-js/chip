@@ -90,6 +90,7 @@
   options = options || {};
   EventTarget.call(<span class="hljs-keyword">this</span>);
   <span class="hljs-keyword">this</span>.fragments = createFragments();
+  <span class="hljs-keyword">this</span>.components = {};
   <span class="hljs-keyword">this</span>.fragments.app = <span class="hljs-keyword">this</span>;
   <span class="hljs-keyword">this</span>.location = Location.create(options);
   <span class="hljs-keyword">this</span>.defaultMixin = defaultMixin(<span class="hljs-keyword">this</span>);
@@ -166,8 +167,13 @@ then returns a new instance of a defined template. This instance is a document f
             </div>
             
             <div class="content"><div class='highlight'><pre>  component: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, definition</span>) </span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">arguments</span>.length === <span class="hljs-number">1</span>) {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.components[name];
+    }
+
     <span class="hljs-keyword">var</span> definitions = slice.call(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>);
     definitions.unshift(<span class="hljs-keyword">this</span>.defaultMixin);
+    <span class="hljs-keyword">this</span>.components[name] = definitions;
     <span class="hljs-keyword">this</span>.fragments.registerElement(name, componentBinding.apply(<span class="hljs-literal">null</span>, definitions));
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },</pre></div></div>

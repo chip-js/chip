@@ -454,14 +454,11 @@ module.exports = function() {
 var slice = Array.prototype.slice;
 
 /**
- * An element binder that binds the template on the definition to fill the contents of the element that matches.
+ * An element binder that binds the template on the definition to fill the contents of the element that matches. Can be
+ * used as an attribute binder as well.
  */
 module.exports = function(definition) {
   var definitions = slice.call(arguments);
-
-  if (!definition) {
-    throw new TypeError('Must provide a definition object to define the custom component');
-  }
 
   // The last definition is the most important, any others are mixins
   definition = definitions[definitions.length - 1];
@@ -469,11 +466,10 @@ module.exports = function(definition) {
   return {
 
     compiled: function() {
-      if (definition.template && !definition.template.pool && !definition._compiling) {
-        // Set this before compiling so we don't get into infinite loops if there is template recursion
-        definition._compiling = true;
-        definition.template = this.fragments.createTemplate(definition.template);
-        delete definition._compiling;
+      if (definition) {
+        this.definition = definition;
+        this.definitions = definitions;
+        this.compileTemplate();
       }
 
       if (this.element.childNodes.length) {
@@ -483,8 +479,55 @@ module.exports = function(definition) {
     },
 
     created: function() {
-      if (definition.template) {
-        this.view = definition.template.createView();
+      this.make();
+    },
+
+    updated: function(definition) {
+      this.detached();
+      this.unmake();
+
+      if (Array.isArray(definition)) {
+        this.definitions = definition;
+        this.definition = definition[definition.length - 1];
+      } else if (definition) {
+        this.definitions = [definition];
+        this.definition = definition;
+      } else {
+        this.definitions = [];
+        this.definition = null;
+      }
+
+      this.make();
+      this.attached();
+    },
+
+    bound: function() {
+      this.element._parentContext = this.context;
+      this.attached();
+    },
+
+    unbound: function() {
+      this.detached();
+    },
+
+    compileTemplate: function() {
+      if (this.definition.template && !this.definition.template.pool && !this.definition._compiling) {
+        // Set this before compiling so we don't get into infinite loops if there is template recursion
+        this.definition._compiling = true;
+        this.definition.template = this.fragments.createTemplate(this.definition.template);
+        delete this.definition._compiling;
+      }
+    },
+
+    make: function() {
+      if (!this.definition) {
+        return;
+      }
+
+      this.compileTemplate();
+
+      if (this.definition.template) {
+        this.view = this.definition.template.createView();
         this.element.appendChild(this.view);
         if (this.contentTemplate) {
           this.element._componentContent = this.contentTemplate;
@@ -494,26 +537,51 @@ module.exports = function(definition) {
         this.element.appendChild(this.content);
       }
 
-      definitions.forEach(function(definition) {
+      this.definitions.forEach(function(definition) {
         Object.keys(definition).forEach(function(key) {
           this.element[key] = definition[key];
         }, this);
       }, this);
 
       // Don't call created until after all definitions have been copied over
-      definitions.forEach(function(definition) {
+      this.definitions.forEach(function(definition) {
         if (typeof definition.created === 'function') {
           definition.created.call(this.element);
         }
       }, this);
     },
 
-    bound: function() {
-      this.element._parentContext = this.context;
+    unmake: function() {
+      if (!this.definition) {
+        return;
+      }
+
+      if (this.content) {
+        this.content.dispose();
+        this.content = null;
+      }
+
+      if (this.view) {
+        this.view.dispose();
+        this.view = null;
+      }
+
+      this.definitions.forEach(function(definition) {
+        Object.keys(definition).forEach(function(key) {
+          delete this.element[key];
+        }, this);
+      }, this);
+    },
+
+    attached: function() {
+      if (!this.definition) {
+        return;
+      }
+
       if (this.view) this.view.bind(this.element);
       if (this.content) this.content.bind(this.context);
 
-      definitions.forEach(function(definition) {
+      this.definitions.forEach(function(definition) {
         if (typeof definition.attached === 'function') {
           definition.attached.call(this.element);
           this.fragments.sync();
@@ -521,16 +589,21 @@ module.exports = function(definition) {
       }, this);
     },
 
-    unbound: function() {
+    detached: function() {
+      if (!this.definition) {
+        return;
+      }
+
       if (this.content) this.content.unbind();
       if (this.view) this.view.unbind();
 
-      definitions.forEach(function(definition) {
+      this.definitions.forEach(function(definition) {
         if (typeof definition.detached === 'function') {
           definition.detached.call(this.element);
         }
       }, this);
     }
+
   };
 };
 
@@ -2419,6 +2492,7 @@ function App(options) {
   options = options || {};
   EventTarget.call(this);
   this.fragments = createFragments();
+  this.components = {};
   this.fragments.app = this;
   this.location = Location.create(options);
   this.defaultMixin = defaultMixin(this);
@@ -2462,8 +2536,13 @@ EventTarget.extend(App, {
   // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
   // then returns a new instance of a defined template. This instance is a document fragment.
   component: function(name, definition) {
+    if (arguments.length === 1) {
+      return this.components[name];
+    }
+
     var definitions = slice.call(arguments, 1);
     definitions.unshift(this.defaultMixin);
+    this.components[name] = definitions;
     this.fragments.registerElement(name, componentBinding.apply(null, definitions));
     return this;
   },
@@ -2719,6 +2798,7 @@ module.exports = function() {
   fragments.registerAttribute('{*}', require('fragments-built-ins/binders/properties')());
   fragments.registerAttribute('{{*}}', require('fragments-built-ins/binders/properties-2-way')());
   fragments.registerAttribute('*?', require('fragments-built-ins/binders/attribute-names')());
+  fragments.registerAttribute('[component]', require('fragments-built-ins/binders/component')());
   fragments.registerAttribute('[content]', require('fragments-built-ins/binders/component-content')());
   fragments.registerAttribute('[show]', require('fragments-built-ins/binders/show')(false));
   fragments.registerAttribute('[hide]', require('fragments-built-ins/binders/show')(true));
@@ -2747,7 +2827,7 @@ module.exports = function() {
   return fragments;
 };
 
-},{"./binders/route":59,"fragments-built-ins/animations":2,"fragments-built-ins/binders/attribute-names":9,"fragments-built-ins/binders/autofocus":10,"fragments-built-ins/binders/autoselect":11,"fragments-built-ins/binders/class":12,"fragments-built-ins/binders/classes":13,"fragments-built-ins/binders/component-content":14,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/ref":23,"fragments-built-ins/binders/repeat":24,"fragments-built-ins/binders/show":25,"fragments-built-ins/binders/styles":26,"fragments-built-ins/binders/text":27,"fragments-built-ins/binders/value":28,"fragments-built-ins/formatters":39,"fragments-js":70}],62:[function(require,module,exports){
+},{"./binders/route":59,"fragments-built-ins/animations":2,"fragments-built-ins/binders/attribute-names":9,"fragments-built-ins/binders/autofocus":10,"fragments-built-ins/binders/autoselect":11,"fragments-built-ins/binders/class":12,"fragments-built-ins/binders/classes":13,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":14,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/ref":23,"fragments-built-ins/binders/repeat":24,"fragments-built-ins/binders/show":25,"fragments-built-ins/binders/styles":26,"fragments-built-ins/binders/text":27,"fragments-built-ins/binders/value":28,"fragments-built-ins/formatters":39,"fragments-js":70}],62:[function(require,module,exports){
 
 module.exports = function(app) {
 
