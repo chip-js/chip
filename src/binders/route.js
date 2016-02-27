@@ -53,6 +53,7 @@ module.exports = function() {
 
     // Wait until everything is put in the DOM
     setTimeout(function() {
+      if (!this.context) return;
       var node = this.element.parentNode;
       while (node && !node.matchedRoutePath) {
         node = node.parentNode;
@@ -76,7 +77,10 @@ module.exports = function() {
     if (this.element.baseURI === null) {
       // element.baseURI is null if it isn't in the DOM yet
       // If this is just getting inserted into the DOM wait for this.baseURI to be set
-      setTimeout(this.checkForChange.bind(this));
+      setTimeout(function() {
+        if (!this.context) return;
+        this.checkForChange();
+      }.bind(this));
     } else {
       this.checkForChange();
     }
