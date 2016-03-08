@@ -1,4 +1,183 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.chip = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = require('./src/chip');
+
+},{"./src/chip":82}],2:[function(require,module,exports){
+var slice = Array.prototype.slice;
+
+/**
+ * Simplifies extending classes and provides static inheritance. Classes that need to be extendable should
+ * extend Class which will give them the `extend` static function for their subclasses to use. In addition to
+ * a prototype, mixins may be added as well. Example:
+ *
+ * function MyClass(arg1, arg2) {
+ *   SuperClass.call(this, arg1);
+ *   this.arg2 = arg2;
+ * }
+ * SuperClass.extend(MyClass, mixin1, AnotherClass, {
+ *   foo: function() {
+ *     this._bar++;
+ *   },
+ *   get bar() {
+ *     return this._bar;
+ *   }
+ * });
+ *
+ * In addition to extending the superclass, static methods and properties will be copied onto the subclass for
+ * static inheritance. This allows the extend function to be copied to the subclass so that it may be
+ * subclassed as well. Additionally, static properties may be added by defining them on a special prototype
+ * property `static` making the code more readable.
+ *
+ * @param {function} The subclass constructor.
+ * @param {object} [optional] Zero or more mixins. They can be objects or classes (functions).
+ * @param {object} The prototype of the subclass.
+ */
+function Class() {}
+Class.extend = extend;
+Class.makeInstanceOf = makeInstanceOf;
+module.exports = Class;
+
+function extend(Subclass /* [, prototype [,prototype]] */) {
+  var prototypes, SuperClass = this;
+
+  // Support no constructor
+  if (typeof Subclass !== 'function') {
+    prototypes = slice.call(arguments);
+    Subclass = function() {
+      SuperClass.apply(this, arguments);
+    };
+  } else {
+    prototypes = slice.call(arguments, 1);
+  }
+
+  if (Object.setPrototypeOf) {
+    Object.setPrototypeOf(Subclass, this);
+  } else {
+    Subclass.__proto__ = this;
+  }
+
+  prototypes.forEach(function(proto) {
+    if (typeof proto === 'function') {
+      addStatics(proto, Subclass);
+    } else if (proto.hasOwnProperty('static')) {
+      addStatics(proto.static, Subclass);
+    }
+  });
+
+  var descriptors = getDescriptors(prototypes);
+  descriptors.constructor = { writable: true, configurable: true, value: Subclass };
+  descriptors.super = { configurable: true, value: SuperClass.prototype };
+  Subclass.prototype = Object.create(this.prototype, descriptors);
+  if (typeof SuperClass.onExtend === 'function') {
+    // Allow for customizing the definitions of your child classes
+    SuperClass.onExtend(Subclass, prototypes);
+  }
+  return Subclass;
+}
+
+// Get descriptors (allows for getters and setters) and sets functions to be non-enumerable
+function getDescriptors(objects) {
+  var descriptors = {};
+
+  objects.forEach(function(object) {
+    if (typeof object === 'function') object = object.prototype;
+
+    Object.getOwnPropertyNames(object).forEach(function(name) {
+      if (name === 'static') return;
+
+      var descriptor = Object.getOwnPropertyDescriptor(object, name);
+
+      if (typeof descriptor.value === 'function') {
+        descriptor.enumerable = false;
+      }
+
+      descriptors[name] = descriptor;
+    });
+  });
+  return descriptors;
+}
+
+// Copies static methods over for static inheritance
+function addStatics(statics, Subclass) {
+
+  // static method inheritance (including `extend`)
+  Object.keys(statics).forEach(function(key) {
+    var descriptor = Object.getOwnPropertyDescriptor(statics, key);
+    if (!descriptor.configurable) return;
+
+    Object.defineProperty(Subclass, key, descriptor);
+  });
+}
+
+
+/**
+ * Makes a native object pretend to be an instance of class (e.g. adds methods to a DocumentFragment then calls the
+ * constructor).
+ */
+function makeInstanceOf(object) {
+  var args = slice.call(arguments, 1);
+  Object.defineProperties(object, getDescriptors([this.prototype]));
+  this.apply(object, args);
+  return object;
+}
+
+},{}],3:[function(require,module,exports){
+module.exports = EventTarget;
+var Class = require('./class');
+
+/**
+ * A browser-based event emitter that takes advantage of the built-in C++ eventing the browser provides, giving a
+ * consistent eventing mechanism everywhere in your front-end app.
+ */
+function EventTarget() {
+  Object.defineProperty(this, '__event_node', { value: document.createDocumentFragment() });
+}
+
+
+Class.extend(EventTarget, {
+  // Add event listener
+  addEventListener: function addEventListener(type, listener) {
+    this.__event_node.addEventListener(type, listener);
+  },
+
+  on: function on(type, listener) {
+    this.addEventListener(type, listener);
+  },
+
+  // Removes event listener
+  removeEventListener: function removeEventListener(type, listener) {
+    this.__event_node.removeEventListener(type, listener);
+    if (listener && listener.__event_one) {
+      this.__event_node.removeEventListener(type, listener.__event_one);
+    }
+  },
+
+  off: function off(type, listener) {
+    this.removeEventListener(type, listener);
+  },
+
+  // Add event listener to only get called once, returns wrapped method for removing if needed
+  one: function one(type, listener) {
+    if (typeof listener !== 'function') return;
+
+    if (!listener.__event_one) {
+      var self = this;
+      Object.defineProperty(listener, '__event_one', { value: function(event) {
+        self.removeEventListener(type, listener.__event_one);
+        listener.call(self, event);
+      }});
+    }
+
+    this.addEventListener(type, listener.__event_one);
+  },
+
+  // Dispatch event and trigger listeners
+  dispatchEvent: function dispatchEvent(event) {
+    Object.defineProperty(event, 'target', { value: this });
+    return this.__event_node.dispatchEvent(event);
+  }
+});
+
+},{"./class":2}],4:[function(require,module,exports){
 /**
  * Fade in and out
  */
@@ -24,7 +203,7 @@ module.exports = function(options) {
   };
 };
 
-},{}],2:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /**
  * Adds all built-in animations with default names
  */
@@ -42,7 +221,7 @@ module.exports = function(fragments) {
   fragments.registerAnimation('slide-fade-h', require('./slide-fade-horizontal')());
 };
 
-},{"./fade":1,"./slide":8,"./slide-fade":4,"./slide-fade-horizontal":3,"./slide-horizontal":5,"./slide-move":7,"./slide-move-horizontal":6}],3:[function(require,module,exports){
+},{"./fade":4,"./slide":11,"./slide-fade":7,"./slide-fade-horizontal":6,"./slide-horizontal":8,"./slide-move":10,"./slide-move-horizontal":9}],6:[function(require,module,exports){
 /**
  * Slide left and right
  */
@@ -52,7 +231,7 @@ module.exports = function(options) {
   return require('./slide-fade')(options);
 };
 
-},{"./slide-fade":4}],4:[function(require,module,exports){
+},{"./slide-fade":7}],7:[function(require,module,exports){
 /**
  * Slide down and up and fade in and out
  */
@@ -110,7 +289,7 @@ module.exports = function(options) {
   };
 };
 
-},{}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /**
  * Slide left and right
  */
@@ -120,7 +299,7 @@ module.exports = function(options) {
   return require('./slide')(options);
 };
 
-},{"./slide":8}],6:[function(require,module,exports){
+},{"./slide":11}],9:[function(require,module,exports){
 /**
  * Move items left and right in a list
  */
@@ -130,7 +309,7 @@ module.exports = function(fragments, options) {
   return require('./slide-move')(fragments, options);
 };
 
-},{"./slide-move":7}],7:[function(require,module,exports){
+},{"./slide-move":10}],10:[function(require,module,exports){
 var slideAnimation = require('./slide');
 var animating = new Map();
 
@@ -249,7 +428,7 @@ module.exports = function(fragments, options) {
   };
 };
 
-},{"./slide":8}],8:[function(require,module,exports){
+},{"./slide":11}],11:[function(require,module,exports){
 /**
  * Slide down and up
  */
@@ -306,7 +485,7 @@ module.exports = function(options) {
   };
 };
 
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /**
  * A binder that toggles an attribute on or off if the expression is truthy or falsey. Use for attributes without
  * values such as `selected`, `disabled`, or `readonly`.
@@ -322,7 +501,7 @@ module.exports = function(specificAttrName) {
   };
 };
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /**
  * A binder that automatically focuses the input when it is displayed on screen.
  */
@@ -339,7 +518,7 @@ module.exports = function() {
   };
 };
 
-},{}],11:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /**
  * Automatically selects the contents of an input when it receives focus.
  */
@@ -372,7 +551,7 @@ module.exports = function() {
   };
 };
 
-},{}],12:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 /**
  * A binder that ensures anything bound to the class attribute won't overrite the classes binder. Should always be bound
  * to "class".
@@ -405,7 +584,7 @@ module.exports = function() {
   };
 };
 
-},{}],13:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * A binder that adds classes to an element dependent on whether the expression is true or false.
  */
@@ -419,7 +598,7 @@ module.exports = function() {
   };
 };
 
-},{}],14:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * An element binder that gets filled with the contents put inside a component.
  */
@@ -450,7 +629,7 @@ module.exports = function() {
   };
 };
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -612,7 +791,7 @@ module.exports = function(definition) {
   };
 };
 
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * A binder for adding event listeners. When the event is triggered the expression will be executed. The properties
  * `event` (the event object) and `element` (the element the binder is on) will be available to the expression.
@@ -688,7 +867,7 @@ module.exports = function(specificEventName) {
   };
 };
 
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /**
  * A binder that displays unescaped HTML inside an element. Be sure it's trusted! This should be used with formatters
  * which create HTML from something safe.
@@ -699,7 +878,7 @@ module.exports = function() {
   };
 };
 
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * if, unless, else-if, else-unless, else
  * A binder init function that creates a binder that shows or hides the element if the value is truthy or falsey.
@@ -855,7 +1034,7 @@ function wrapIfExp(expr, isUnless) {
   }
 }
 
-},{}],19:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var keys = {
   backspace: 8,
   tab: 9,
@@ -915,7 +1094,7 @@ module.exports = function(specificKeyName, specificEventName) {
   };
 };
 
-},{"./events":16}],20:[function(require,module,exports){
+},{"./events":19}],23:[function(require,module,exports){
 /**
  * A binder that prints out the value of the expression to the console.
  */
@@ -936,7 +1115,7 @@ module.exports = function() {
   };
 };
 
-},{}],21:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * A binder that sets the property of an element to the value of the expression in a 2-way binding.
  */
@@ -979,7 +1158,7 @@ module.exports = function(specificPropertyName) {
   };
 };
 
-},{}],22:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * A binder that sets the property of an element to the value of the expression.
  */
@@ -993,7 +1172,7 @@ module.exports = function(specificPropertyName) {
   };
 };
 
-},{}],23:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /**
  * A binder for radio buttons specifically
  */
@@ -1042,7 +1221,7 @@ module.exports = function(valueName) {
 };
 
 
-},{}],24:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * A binder that sets a reference to the element when it is bound.
  */
@@ -1058,7 +1237,7 @@ module.exports = function () {
   };
 };
 
-},{}],25:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var diff = require('differences-js');
 
 /**
@@ -1268,7 +1447,7 @@ module.exports = function() {
   };
 };
 
-},{"differences-js":55}],26:[function(require,module,exports){
+},{"differences-js":58}],29:[function(require,module,exports){
 /**
  * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
  * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
@@ -1339,7 +1518,7 @@ module.exports = function(isHide) {
   };
 };
 
-},{}],27:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var units = {
   '%': true,
   'em': true,
@@ -1379,7 +1558,7 @@ module.exports = function(specificStyleName, specificUnit) {
   };
 };
 
-},{}],28:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /**
  * ## text
  * A binder that displays escaped text inside an element. This can be done with binding directly in text nodes but
@@ -1408,7 +1587,7 @@ module.exports = function() {
   };
 };
 
-},{}],29:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var inputMethods, defaultInputMethod;
 
 /**
@@ -1538,7 +1717,7 @@ inputMethods = {
 };
 
 
-},{}],30:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /**
  * Takes the input URL and adds (or replaces) the field in the query.
  * E.g. 'http://example.com?user=default&resource=foo' | addQuery('user', username)
@@ -1570,7 +1749,7 @@ module.exports = function(value, queryField, queryValue) {
   return url;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
 var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$))/gim;
 /**
@@ -1595,7 +1774,7 @@ module.exports = function(value, target) {
   });
 };
 
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /**
  * Formats the value into a boolean.
  */
@@ -1603,7 +1782,7 @@ module.exports = function(value) {
   return value && value !== '0' && value !== 'false';
 };
 
-},{}],33:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1618,7 +1797,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":36}],34:[function(require,module,exports){
+},{"./escape":39}],37:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1638,7 +1817,7 @@ module.exports = function(value) {
   return value.toLocaleString();
 };
 
-},{}],35:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1658,7 +1837,7 @@ module.exports = function(value) {
   return value.toLocaleDateString();
 };
 
-},{}],36:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var div = document.createElement('div');
 
 /**
@@ -1674,7 +1853,7 @@ module.exports = function (value, setter) {
   }
 };
 
-},{}],37:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /**
  * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
  * functions.
@@ -1703,7 +1882,7 @@ module.exports = function(value, filterFunc) {
   return value;
 };
 
-},{}],38:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Formats the value into a float or null.
  */
@@ -1712,7 +1891,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Formats the value something returned by a formatting function passed. Use for custom or one-off formats.
  */
@@ -1720,7 +1899,7 @@ module.exports = function(value, formatter, isSetter) {
   return formatter(value, isSetter);
 };
 
-},{}],40:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Adds all built-in formatters with default names
  */
@@ -1755,7 +1934,7 @@ module.exports = function(fragments) {
   fragments.registerFormatter('upper', require('./upper'));
 };
 
-},{"./add-query":30,"./autolink":31,"./bool":32,"./br":33,"./date":35,"./date-time":34,"./escape":36,"./filter":37,"./float":38,"./format":39,"./int":41,"./json":42,"./limit":43,"./log":44,"./lower":45,"./map":46,"./newline":47,"./p":48,"./reduce":49,"./reverse":50,"./slice":51,"./sort":52,"./time":53,"./upper":54}],41:[function(require,module,exports){
+},{"./add-query":33,"./autolink":34,"./bool":35,"./br":36,"./date":38,"./date-time":37,"./escape":39,"./filter":40,"./float":41,"./format":42,"./int":44,"./json":45,"./limit":46,"./log":47,"./lower":48,"./map":49,"./newline":50,"./p":51,"./reduce":52,"./reverse":53,"./slice":54,"./sort":55,"./time":56,"./upper":57}],44:[function(require,module,exports){
 /**
  * Formats the value into an integer or null.
  */
@@ -1764,7 +1943,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /**
  * Formats the value into JSON.
  */
@@ -1784,7 +1963,7 @@ module.exports = function(value, isSetter) {
   }
 };
 
-},{}],43:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /**
  * Adds a formatter to limit the length of an array or string
  */
@@ -1800,7 +1979,7 @@ module.exports = function(value, limit) {
   }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /**
  * Adds a formatter to log the value of the expression, useful for debugging
  */
@@ -1812,7 +1991,7 @@ module.exports = function(value, prefix) {
   return value;
 };
 
-},{}],45:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /**
  * Formats the value into lower case.
  */
@@ -1820,7 +1999,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toLowerCase() : value;
 };
 
-},{}],46:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /**
  * Adds a formatter to map an array or value by the given mapping function
  */
@@ -1835,7 +2014,7 @@ module.exports = function(value, mapFunc) {
   }
 };
 
-},{}],47:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1854,7 +2033,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":36}],48:[function(require,module,exports){
+},{"./escape":39}],51:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1870,7 +2049,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":36}],49:[function(require,module,exports){
+},{"./escape":39}],52:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -1889,7 +2068,7 @@ module.exports = function(value, reduceFunc, initialValue) {
   }
 };
 
-},{}],50:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /**
  * Adds a formatter to reverse an array
  */
@@ -1901,7 +2080,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],51:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -1913,7 +2092,7 @@ module.exports = function(value, index, endIndex) {
   }
 };
 
-},{}],52:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 /**
  * Sorts an array given a field name or sort function, and a direction
  */
@@ -1941,7 +2120,7 @@ module.exports = function(value, sortFunc, dir) {
   return value.slice().sort(sortFunc.bind(this));
 };
 
-},{}],53:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1961,7 +2140,7 @@ module.exports = function(value) {
   return value.toLocaleTimeString();
 };
 
-},{}],54:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 /**
  * Formats the value into upper case.
  */
@@ -1969,10 +2148,10 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toUpperCase() : value;
 };
 
-},{}],55:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 module.exports = require('./src/diff');
 
-},{"./src/diff":56}],56:[function(require,module,exports){
+},{"./src/diff":59}],59:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -2368,1040 +2547,41 @@ var diff = exports;
   }
 })();
 
-},{}],57:[function(require,module,exports){
-var slice = Array.prototype.slice;
-
-/**
- * Simplifies extending classes and provides static inheritance. Classes that need to be extendable should
- * extend Class which will give them the `extend` static function for their subclasses to use. In addition to
- * a prototype, mixins may be added as well. Example:
- *
- * function MyClass(arg1, arg2) {
- *   SuperClass.call(this, arg1);
- *   this.arg2 = arg2;
- * }
- * SuperClass.extend(MyClass, mixin1, AnotherClass, {
- *   foo: function() {
- *     this._bar++;
- *   },
- *   get bar() {
- *     return this._bar;
- *   }
- * });
- *
- * In addition to extending the superclass, static methods and properties will be copied onto the subclass for
- * static inheritance. This allows the extend function to be copied to the subclass so that it may be
- * subclassed as well. Additionally, static properties may be added by defining them on a special prototype
- * property `static` making the code more readable.
- *
- * @param {function} The subclass constructor.
- * @param {object} [optional] Zero or more mixins. They can be objects or classes (functions).
- * @param {object} The prototype of the subclass.
- */
-function Class() {}
-Class.extend = extend;
-Class.makeInstanceOf = makeInstanceOf;
-module.exports = Class;
-
-function extend(Subclass /* [, prototype [,prototype]] */) {
-  var prototypes, SuperClass = this;
-
-  // Support no constructor
-  if (typeof Subclass !== 'function') {
-    prototypes = slice.call(arguments);
-    Subclass = function() {
-      SuperClass.apply(this, arguments);
-    };
-  } else {
-    prototypes = slice.call(arguments, 1);
-  }
-
-  if (Object.setPrototypeOf) {
-    Object.setPrototypeOf(Subclass, this);
-  } else {
-    Subclass.__proto__ = this;
-  }
-
-  prototypes.forEach(function(proto) {
-    if (typeof proto === 'function') {
-      addStatics(proto, Subclass);
-    } else if (proto.hasOwnProperty('static')) {
-      addStatics(proto.static, Subclass);
-    }
-  });
-
-  var descriptors = getDescriptors(prototypes);
-  descriptors.constructor = { writable: true, configurable: true, value: Subclass };
-  descriptors.super = { configurable: true, value: SuperClass.prototype };
-  Subclass.prototype = Object.create(this.prototype, descriptors);
-  if (typeof SuperClass.onExtend === 'function') {
-    // Allow for customizing the definitions of your child classes
-    SuperClass.onExtend(Subclass, prototypes);
-  }
-  return Subclass;
-}
-
-// Get descriptors (allows for getters and setters) and sets functions to be non-enumerable
-function getDescriptors(objects) {
-  var descriptors = {};
-
-  objects.forEach(function(object) {
-    if (typeof object === 'function') object = object.prototype;
-
-    Object.getOwnPropertyNames(object).forEach(function(name) {
-      if (name === 'static') return;
-
-      var descriptor = Object.getOwnPropertyDescriptor(object, name);
-
-      if (typeof descriptor.value === 'function') {
-        descriptor.enumerable = false;
-      }
-
-      descriptors[name] = descriptor;
-    });
-  });
-  return descriptors;
-}
-
-// Copies static methods over for static inheritance
-function addStatics(statics, Subclass) {
-
-  // static method inheritance (including `extend`)
-  Object.keys(statics).forEach(function(key) {
-    var descriptor = Object.getOwnPropertyDescriptor(statics, key);
-    if (!descriptor.configurable) return;
-
-    Object.defineProperty(Subclass, key, descriptor);
-  });
-}
-
-
-/**
- * Makes a native object pretend to be an instance of class (e.g. adds methods to a DocumentFragment then calls the
- * constructor).
- */
-function makeInstanceOf(object) {
-  var args = slice.call(arguments, 1);
-  Object.defineProperties(object, getDescriptors([this.prototype]));
-  this.apply(object, args);
-  return object;
-}
-
-},{}],58:[function(require,module,exports){
-module.exports = EventTarget;
-var Class = require('./class');
-
-/**
- * A browser-based event emitter that takes advantage of the built-in C++ eventing the browser provides, giving a
- * consistent eventing mechanism everywhere in your front-end app.
- */
-function EventTarget() {
-  Object.defineProperty(this, '__event_node', { value: document.createDocumentFragment() });
-}
-
-
-Class.extend(EventTarget, {
-  // Add event listener
-  addEventListener: function addEventListener(type, listener) {
-    this.__event_node.addEventListener(type, listener);
-  },
-
-  on: function on(type, listener) {
-    this.addEventListener(type, listener);
-  },
-
-  // Removes event listener
-  removeEventListener: function removeEventListener(type, listener) {
-    this.__event_node.removeEventListener(type, listener);
-    if (listener && listener.__event_one) {
-      this.__event_node.removeEventListener(type, listener.__event_one);
-    }
-  },
-
-  off: function off(type, listener) {
-    this.removeEventListener(type, listener);
-  },
-
-  // Add event listener to only get called once, returns wrapped method for removing if needed
-  one: function one(type, listener) {
-    if (typeof listener !== 'function') return;
-
-    if (!listener.__event_one) {
-      var self = this;
-      Object.defineProperty(listener, '__event_one', { value: function(event) {
-        self.removeEventListener(type, listener.__event_one);
-        listener.call(self, event);
-      }});
-    }
-
-    this.addEventListener(type, listener.__event_one);
-  },
-
-  // Dispatch event and trigger listeners
-  dispatchEvent: function dispatchEvent(event) {
-    Object.defineProperty(event, 'target', { value: this });
-    return this.__event_node.dispatchEvent(event);
-  }
-});
-
-},{"./class":57}],59:[function(require,module,exports){
-module.exports = require('./src/chip');
-
-},{"./src/chip":62}],60:[function(require,module,exports){
-module.exports = App;
-var componentBinding = require('fragments-built-ins/binders/component');
-var Location = require('routes-js').Location;
-var EventTarget = require('chip-utils/event-target');
-var createFragments = require('./fragments');
-var defaultMixin = require('./mixins/default');
-var slice = Array.prototype.slice;
-
-// # Chip App
-
-// An App represents an app or module that can have routes, controllers, and templates defined.
-function App(options) {
-  options = options || {};
-  EventTarget.call(this);
-  this.fragments = createFragments();
-  this.components = {};
-  this.fragments.app = this;
-  this.location = Location.create(options);
-  this.defaultMixin = defaultMixin(this);
-  this._listening = false;
-
-  this.rootElement = options.rootElement || document.documentElement;
-  this.sync = this.fragments.sync;
-  this.syncNow = this.fragments.syncNow;
-  this.afterSync = this.fragments.afterSync;
-  this.onSync = this.fragments.onSync;
-  this.offSync = this.fragments.offSync;
-  this.observe = this.fragments.observe.bind(this.fragments);
-  this.location.on('change', this.sync);
-}
-
-EventTarget.extend(App, {
-
-  init: function(root) {
-    if (this.inited) {
-      return;
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', this.init.bind(this, root));
-      return;
-    }
-
-    this.inited = true
-    if (root) {
-      this.rootElement = root;
-    }
-
-    this.fragments.bindElement(this.rootElement, this);
-    return this;
-  },
-
-
-  // Components
-  // ----------
-
-  // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
-  // then returns a new instance of a defined template. This instance is a document fragment.
-  component: function(name, definition) {
-    if (arguments.length === 1) {
-      return this.components[name];
-    }
-
-    var definitions = slice.call(arguments, 1);
-    definitions.unshift(this.defaultMixin);
-    this.components[name] = definitions;
-    this.fragments.registerElement(name, componentBinding.apply(null, definitions));
-    return this;
-  },
-
-
-  // Redirects to the provided URL
-  redirect: function(url) {
-    return this.location.url = url;
-  },
-
-
-  get listening() {
-    return this._listening;
-  },
-
-  // Listen to URL changes
-  listen: function() {
-    var app = this;
-    this._listening = true;
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', this.listen.bind(this));
-      return this;
-    }
-
-    // Add handler for when the route changes
-    this._locationChangeHandler = function(event) {
-      app.dispatchEvent(new CustomEvent('urlChange', { detail: event.detail }));
-    };
-
-    // Add handler for clicking links
-    this._clickHandler = function(event) {
-      var anchor;
-      if ( !(anchor = event.target.closest('a[href]')) ) {
-        return;
-      }
-
-      if (event.defaultPrevented) {
-        // if something else already handled this, we won't
-        return;
-      }
-
-      var linkHost = anchor.host.replace(/:80$|:443$/, '');
-      var url = anchor.getAttribute('href').replace(/^#/, '');
-
-      if (linkHost && linkHost !== location.host) {
-        return;
-      }
-
-      if (event.metaKey || event.ctrlKey || anchor.hasAttribute('target')) {
-        return;
-      }
-
-      event.preventDefault();
-      if (anchor.href === location.href + '#') {
-        return;
-      }
-
-      if (!anchor.disabled) {
-        app.redirect(url);
-      }
-    };
-
-    this.location.on('change', this._locationChangeHandler);
-    this.rootElement.addEventListener('click', this._clickHandler);
-    this.dispatchEvent(new CustomEvent('urlChange', { detail: { url: this.location.url }}));
-  },
-
-  // Stop listening
-  stop: function() {
-    this.location.off('change', this._locationChangeHandler);
-    this.rootElement.removeEventListener('click', this._clickHandler);
-  }
-
-});
-},{"./fragments":63,"./mixins/default":64,"chip-utils/event-target":58,"fragments-built-ins/binders/component":15,"routes-js":86}],61:[function(require,module,exports){
-var Route = require('routes-js').Route;
-var IfBinder = require('fragments-built-ins/binders/if');
-
-module.exports = function() {
-  var ifBinder = IfBinder();
-  var bound = ifBinder.bound;
-  var unbound = ifBinder.unbound;
-
-  ifBinder.compiled = function() {
-    var noRoute;
-    this.app = this.fragments.app;
-    this.routes = [];
-    this.templates = [];
-    this.expression = '';
-
-    // each child with a [path] attribute will display only when its path matches the URL
-    while (this.element.firstChild) {
-      var child = this.element.firstChild;
-      this.element.removeChild(child);
-
-      if (child.nodeType !== Node.ELEMENT_NODE) {
-        continue;
-      }
-
-      if (child.hasAttribute('[path]')) {
-        var path = child.getAttribute('[path]');
-        child.removeAttribute('[path]');
-        this.routes.push(new Route(path));
-        this.templates.push(this.fragments.createTemplate(child));
-      } else if (child.hasAttribute('[noroute]')) {
-        child.removeAttribute('[noroute]');
-        noRoute = this.fragments.createTemplate(child);
-      }
-    }
-
-    if (noRoute) {
-      this.templates.push(noRoute);
-    }
-  };
-
-  ifBinder.add = function(view) {
-    view.bind(this.context);
-    this.element.appendChild(view);
-  };
-
-  ifBinder.created = function() {
-    this.onUrlChange = this.onUrlChange.bind(this);
-  };
-
-
-  ifBinder.bound = function() {
-    bound.call(this);
-
-    // Wait until everything is put in the DOM
-    setTimeout(function() {
-      if (!this.context) return;
-      var node = this.element.parentNode;
-      while (node && !node.matchedRoutePath) {
-        node = node.parentNode;
-      }
-      this.baseURI = node && node.matchedRoutePath || '';
-    }.bind(this));
-
-    this.app.on('urlChange', this.onUrlChange);
-    if (this.app.listening) {
-      this.onUrlChange();
-    }
-  };
-
-  ifBinder.unbound = function() {
-    unbound.call(this);
-    this.currentIndex = undefined;
-    this.app.off('urlChange', this.onUrlChange);
-  };
-
-  ifBinder.onUrlChange = function() {
-    if (this.element.baseURI === null) {
-      // element.baseURI is null if it isn't in the DOM yet
-      // If this is just getting inserted into the DOM wait for this.baseURI to be set
-      setTimeout(function() {
-        if (!this.context) return;
-        this.checkForChange();
-      }.bind(this));
-    } else {
-      this.checkForChange();
-    }
-  };
-
-  ifBinder.checkForChange = function() {
-    var fullUrl = this.app.location.url;
-    var localUrl = null;
-    var newIndex = this.routes.length;
-
-    if (fullUrl.indexOf(this.baseURI) === 0) {
-      localUrl = fullUrl.replace(this.baseURI, '');
-    }
-
-    if (localUrl !== null) {
-      this.routes.some(function(route, index) {
-        if (route.match(localUrl)) {
-          if (route.params.hasOwnProperty('*') && route.params['*']) {
-            var afterLength = route.params['*'].length;
-            this.element.matchedRoutePath = this.baseURI + localUrl.slice(0, -afterLength);
-          } else {
-            this.element.matchedRoutePath = fullUrl;
-          }
-          this.context.params = route.params;
-          newIndex = index;
-          return true;
-        }
-      }, this);
-    }
-
-    if (newIndex !== this.currentIndex) {
-      this.currentIndex = newIndex;
-      this.updated(this.currentIndex);
-    }
-  };
-
-  return ifBinder;
-};
-
-},{"fragments-built-ins/binders/if":18,"routes-js":86}],62:[function(require,module,exports){
-var App = require('./app');
-
-// # Chip
-
-// > Chip.js 2.0.0
-//
-// > (c) 2013 Jacob Wright, TeamSnap
-// Chip may be freely distributed under the MIT license.
-// For all details and documentation:
-// <https://github.com/teamsnap/chip/>
-
-// Contents
-// --------
-// * [chip](chip.html) the namespace, creates apps, and registers bindings and filters
-// * [App](app.html) represents an app that can have routes, controllers, and templates defined
-// * [Controller](controller.html) is used in the binding to attach data and run actions
-// * [Router](router.html) is used for handling URL rounting
-// * [Default binders](binders.html) registers the default binders chip provides
-
-// Create Chip App
-// -------------
-// Creates a new chip app
-module.exports = chip;
-
-function chip(options) {
-  var app = new App(options);
-  app.init();
-  return app;
-}
-
-chip.App = App;
-chip.Class = require('chip-utils/class');
-chip.EventTarget = require('chip-utils/event-target');
-chip.routes = require('routes-js');
-
-},{"./app":60,"chip-utils/class":57,"chip-utils/event-target":58,"routes-js":86}],63:[function(require,module,exports){
-var createFragments = require('fragments-js').create;
-
-module.exports = function() {
-
-  var fragments = createFragments();
-
-  // Configure
-  fragments.setExpressionDelimiters('attribute', '{{', '}}', true);
-  fragments.animateAttribute = '[animate]';
-  require('fragments-built-ins/animations')(fragments);
-  require('fragments-built-ins/formatters')(fragments);
-
-  fragments.registerAttribute('(keydown.*)', require('fragments-built-ins/binders/key-events')(null, 'keydown'));
-  fragments.registerAttribute('(keyup.*)', require('fragments-built-ins/binders/key-events')(null, 'keyup'));
-  fragments.registerAttribute('(enter)', require('fragments-built-ins/binders/key-events')('enter'));
-  fragments.registerAttribute('(esc)', require('fragments-built-ins/binders/key-events')('esc'));
-  fragments.registerAttribute('(*)', require('fragments-built-ins/binders/events')());
-  fragments.registerAttribute('{*}', require('fragments-built-ins/binders/properties')());
-  fragments.registerAttribute('{{*}}', require('fragments-built-ins/binders/properties-2-way')());
-  fragments.registerAttribute('*?', require('fragments-built-ins/binders/attribute-names')());
-  fragments.registerAttribute('[component]', require('fragments-built-ins/binders/component')());
-  fragments.registerAttribute('[content]', require('fragments-built-ins/binders/component-content')());
-  fragments.registerAttribute('[show]', require('fragments-built-ins/binders/show')(false));
-  fragments.registerAttribute('[hide]', require('fragments-built-ins/binders/show')(true));
-  fragments.registerAttribute('[for]', require('fragments-built-ins/binders/repeat')());
-  fragments.registerAttribute('#*', require('fragments-built-ins/binders/ref')());
-  fragments.registerAttribute('[text]', require('fragments-built-ins/binders/text')());
-  fragments.registerAttribute('[html]', require('fragments-built-ins/binders/html')());
-  fragments.registerAttribute('[src]', require('fragments-built-ins/binders/properties')('src'));
-  fragments.registerAttribute('[log]', require('fragments-built-ins/binders/log')());
-  fragments.registerAttribute('[class]', require('fragments-built-ins/binders/class')());
-  fragments.registerAttribute('[.*]', require('fragments-built-ins/binders/classes')());
-  fragments.registerAttribute('[style.*]', require('fragments-built-ins/binders/styles')());
-  fragments.registerAttribute('[autofocus]', require('fragments-built-ins/binders/autofocus')());
-  fragments.registerAttribute('[autoselect]', require('fragments-built-ins/binders/autoselect')());
-  fragments.registerAttribute('[name]', require('fragments-built-ins/binders/radio')('[value]'));
-  fragments.registerAttribute('[value]', require('fragments-built-ins/binders/value')(
-    '[value-events]',
-    '[value-field]'
-  ));
-
-  var IfBinding = require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]');
-  fragments.registerAttribute('[if]', IfBinding);
-  fragments.registerAttribute('[unless]', IfBinding);
-
-  fragments.registerAttribute('[route]', require('./binders/route')());
-
+},{}],60:[function(require,module,exports){
+var Fragments = require('./src/fragments');
+var Observations = require('observations-js');
+
+function create() {
+  var observations = Observations.create();
+  var fragments = new Fragments(observations);
+  fragments.sync = observations.sync.bind(observations);
+  fragments.syncNow = observations.syncNow.bind(observations);
+  fragments.afterSync = observations.afterSync.bind(observations);
+  fragments.onSync = observations.onSync.bind(observations);
+  fragments.offSync = observations.offSync.bind(observations);
   return fragments;
+}
+
+// Create an instance of fragments with the default observer
+module.exports = create();
+module.exports.create = create;
+
+},{"./src/fragments":74,"observations-js":61}],61:[function(require,module,exports){
+
+exports.Observations = require('./src/observations');
+exports.Observer = require('./src/observer');
+exports.create = function() {
+  return new exports.Observations();
 };
 
-},{"./binders/route":61,"fragments-built-ins/animations":2,"fragments-built-ins/binders/attribute-names":9,"fragments-built-ins/binders/autofocus":10,"fragments-built-ins/binders/autoselect":11,"fragments-built-ins/binders/class":12,"fragments-built-ins/binders/classes":13,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":14,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/radio":23,"fragments-built-ins/binders/ref":24,"fragments-built-ins/binders/repeat":25,"fragments-built-ins/binders/show":26,"fragments-built-ins/binders/styles":27,"fragments-built-ins/binders/text":28,"fragments-built-ins/binders/value":29,"fragments-built-ins/formatters":40,"fragments-js":72}],64:[function(require,module,exports){
-
-module.exports = function(app) {
-
-  return {
-
-    app: app,
-    sync: app.sync,
-    syncNow: app.syncNow,
-    afterSync: app.afterSync,
-    onSync: app.onSync,
-    offSync: app.offSync,
-
-    created: function() {
-      Object.defineProperties(this, {
-        _observers: { configurable: true, value: [] },
-        _listeners: { configurable: true, value: [] },
-        _attached: { configurable: true, value: false },
-      });
-    },
-
-
-    attached: function() {
-      this._attached = true;
-      this._observers.forEach(function(observer) {
-        observer.bind(this);
-      }, this);
-
-      this._listeners.forEach(function(item) {
-        item.target.addEventListener(item.eventName, item.listener);
-      });
-    },
-
-
-    detached: function() {
-      this._attached = false;
-      this._observers.forEach(function(observer) {
-        observer.unbind();
-      });
-
-      this._listeners.forEach(function(item) {
-        item.target.removeEventListener(item.eventName, item.listener);
-      });
-    },
-
-
-    observe: function(expr, callback) {
-      if (typeof callback !== 'function') {
-        throw new TypeError('callback must be a function');
-      }
-
-      var observer = app.observe(expr, callback, this);
-      this._observers.push(observer);
-      if (this._attached) {
-        // If not attached will bind on attachment
-        observer.bind(this);
-      }
-      return observer;
-    },
-
-
-    listen: function(target, eventName, listener, context) {
-      if (typeof target === 'string') {
-        context = listener;
-        listener = eventName;
-        eventName = target;
-        target = this;
-      }
-
-      if (typeof listener !== 'function') {
-        throw new TypeError('listener must be a function');
-      }
-
-      listener = listener.bind(context || this);
-
-      var listenerData = {
-        target: target,
-        eventName: eventName,
-        listener: listener
-      };
-
-      this._listeners.push(listenerData);
-
-      if (this._attached) {
-        // If not attached will add on attachment
-        target.addEventListener(eventName, listener);
-      }
-    },
-  };
-};
-
-},{}],65:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"./src/diff":66,"dup":55}],66:[function(require,module,exports){
-/*
-Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-// # Diff
-// > Based on work from Google's observe-js polyfill: https://github.com/Polymer/observe-js
-
-// A namespace to store the functions on
-var diff = exports;
-
-(function() {
-
-  diff.clone = clone;
-  diff.values = diffValues;
-  diff.basic = diffBasic;
-  diff.objects = diffObjects;
-  diff.arrays = diffArrays;
-
-
-  // A change record for the object changes
-  function ChangeRecord(object, type, name, oldValue) {
-    this.object = object;
-    this.type = type;
-    this.name = name;
-    this.oldValue = oldValue;
-  }
-
-  // A splice record for the array changes
-  function Splice(object, index, removed, addedCount) {
-    ChangeRecord.call(this, object, 'splice', String(index));
-    this.index = index;
-    this.removed = removed;
-    this.addedCount = addedCount;
-  }
-
-  Splice.prototype = Object.create(ChangeRecord.prototype);
-
-
-  // Creates a clone or copy of an array or object (or simply returns a string/number/boolean which are immutable)
-  // Does not provide deep copies.
-  function clone(value, deep) {
-    if (Array.isArray(value)) {
-      if (deep) {
-        return value.map(function(value) {
-          return clone(value, deep);
-        });
-      } else {
-        return value.slice();
-      }
-    } else if (value && typeof value === 'object') {
-      if (value.valueOf() !== value) {
-        return new value.constructor(value.valueOf());
-      } else {
-        var copy = {};
-        for (var key in value) {
-          var objValue = value[key];
-          if (deep) {
-            objValue = clone(objValue, deep);
-          }
-          copy[key] = objValue;
-        }
-        return copy;
-      }
-    } else {
-      return value;
-    }
-  }
-
-
-  // Diffs two values, returning a truthy value if there are changes or `false` if there are no changes. If the two
-  // values are both arrays or both objects, an array of changes (splices or change records) between the two will be
-  // returned. Otherwise  `true` will be returned.
-  function diffValues(value, oldValue) {
-    // Shortcut out for values that are exactly equal
-    if (value === oldValue) return false;
-
-    if (Array.isArray(value) && Array.isArray(oldValue)) {
-      // If an array has changed calculate the splices
-      var splices = diffArrays(value, oldValue);
-      return splices.length ? splices : false;
-    } else if (value && oldValue && typeof value === 'object' && typeof oldValue === 'object') {
-      // If an object has changed calculate the chnages and call the callback
-      // Allow dates and Number/String objects to be compared
-      var valueValue = value.valueOf();
-      var oldValueValue = oldValue.valueOf();
-
-      // Allow dates and Number/String objects to be compared
-      if (typeof valueValue !== 'object' && typeof oldValueValue !== 'object') {
-        return valueValue !== oldValueValue;
-      } else {
-        var changeRecords = diffObjects(value, oldValue);
-        return changeRecords.length ? changeRecords : false;
-      }
-    } else {
-      // If a value has changed call the callback
-      return diffBasic(value, oldValue);
-    }
-  }
-
-
-  // Diffs two basic types, returning true if changed or false if not
-  function diffBasic(value, oldValue) {
-    if (value && oldValue && typeof value === 'object' && typeof oldValue === 'object') {
-      // Allow dates and Number/String objects to be compared
-      var valueValue = value.valueOf();
-      var oldValueValue = oldValue.valueOf();
-
-      // Allow dates and Number/String objects to be compared
-      if (typeof valueValue !== 'object' && typeof oldValueValue !== 'object') {
-        return diffBasic(valueValue, oldValueValue);
-      }
-    }
-
-    // If a value has changed call the callback
-    if (typeof value === 'number' && typeof oldValue === 'number' && isNaN(value) && isNaN(oldValue)) {
-      return false;
-    } else {
-      return value !== oldValue;
-    }
-  }
-
-
-  // Diffs two objects returning an array of change records. The change record looks like:
-  // ```javascript
-  // {
-  //   object: object,
-  //   type: 'deleted|updated|new',
-  //   name: 'propertyName',
-  //   oldValue: oldValue
-  // }
-  // ```
-  function diffObjects(value, oldValue) {
-    if ( !(value && oldValue && typeof value === 'object' && typeof oldValue === 'object')) {
-      throw new TypeError('Both values for diff.object must be objects');
-    }
-    var changeRecords = [];
-    var prop, propOldValue, propValue;
-
-    // Goes through the old object (should be a clone) and look for things that are now gone or changed
-    for (prop in oldValue) {
-      propOldValue = oldValue[prop];
-      propValue = value[prop];
-
-      // Allow for the case of obj.prop = undefined (which is a new property, even if it is undefined)
-      if (propValue !== undefined && !diffBasic(propValue, propOldValue)) {
-        continue;
-      }
-
-      // If the property is gone it was removed
-      if (! (prop in value)) {
-        changeRecords.push(new ChangeRecord(value, 'delete', prop, propOldValue));
-      } else if (diffBasic(propValue, propOldValue)) {
-        changeRecords.push(new ChangeRecord(value, 'update', prop, propOldValue));
-      }
-    }
-
-    // Goes through the old object and looks for things that are new
-    for (prop in value) {
-      propValue = value[prop];
-      if (! (prop in oldValue)) {
-        changeRecords.push(new ChangeRecord(value, 'add', prop));
-      }
-    }
-
-    if (Array.isArray(value) && value.length !== oldValue.length) {
-      changeRecords.push(new ChangeRecord(value, 'update', 'length', oldValue.length));
-    }
-
-    return changeRecords;
-  }
-
-
-
-
-
-  var EDIT_LEAVE = 0;
-  var EDIT_UPDATE = 1;
-  var EDIT_ADD = 2;
-  var EDIT_DELETE = 3;
-
-
-  // Diffs two arrays returning an array of splices. A splice object looks like:
-  // ```javascript
-  // {
-  //   index: 3,
-  //   removed: [item, item],
-  //   addedCount: 0
-  // }
-  // ```
-  function diffArrays(value, oldValue) {
-    if (!Array.isArray(value) || !Array.isArray(oldValue)) {
-      throw new TypeError('Both values for diff.array must be arrays');
-    }
-
-    var currentStart = 0;
-    var currentEnd = value.length;
-    var oldStart = 0;
-    var oldEnd = oldValue.length;
-
-    var minLength = Math.min(currentEnd, oldEnd);
-    var prefixCount = sharedPrefix(value, oldValue, minLength);
-    var suffixCount = sharedSuffix(value, oldValue, minLength - prefixCount);
-
-    currentStart += prefixCount;
-    oldStart += prefixCount;
-    currentEnd -= suffixCount;
-    oldEnd -= suffixCount;
-
-    if (currentEnd - currentStart === 0 && oldEnd - oldStart === 0) {
-      return [];
-    }
-
-    // if nothing was added, only removed from one spot
-    if (currentStart === currentEnd) {
-      return [ new Splice(value, currentStart, oldValue.slice(oldStart, oldEnd), 0) ];
-    }
-
-    // if nothing was removed, only added to one spot
-    if (oldStart === oldEnd) {
-      return [ new Splice(value, currentStart, [], currentEnd - currentStart) ];
-    }
-
-    // a mixture of adds and removes
-    var distances = calcEditDistances(value, currentStart, currentEnd, oldValue, oldStart, oldEnd);
-    var ops = spliceOperationsFromEditDistances(distances);
-
-    var splice = null;
-    var splices = [];
-    var index = currentStart;
-    var oldIndex = oldStart;
-
-    for (var i = 0, l = ops.length; i < l; i++) {
-      var op = ops[i];
-      if (op === EDIT_LEAVE) {
-        if (splice) {
-          splices.push(splice);
-          splice = null;
-        }
-
-        index++;
-        oldIndex++;
-      } else if (op === EDIT_UPDATE) {
-        if (!splice) {
-          splice = new Splice(value, index, [], 0);
-        }
-
-        splice.addedCount++;
-        index++;
-
-        splice.removed.push(oldValue[oldIndex]);
-        oldIndex++;
-      } else if (op === EDIT_ADD) {
-        if (!splice) {
-          splice = new Splice(value, index, [], 0);
-        }
-
-        splice.addedCount++;
-        index++;
-      } else if (op === EDIT_DELETE) {
-        if (!splice) {
-          splice = new Splice(value, index, [], 0);
-        }
-
-        splice.removed.push(oldValue[oldIndex]);
-        oldIndex++;
-      }
-    }
-
-    if (splice) {
-      splices.push(splice);
-    }
-
-    return splices;
-  }
-
-
-
-
-  // find the number of items at the beginning that are the same
-  function sharedPrefix(current, old, searchLength) {
-    for (var i = 0; i < searchLength; i++) {
-      if (diffBasic(current[i], old[i])) {
-        return i;
-      }
-    }
-    return searchLength;
-  }
-
-
-  // find the number of items at the end that are the same
-  function sharedSuffix(current, old, searchLength) {
-    var index1 = current.length;
-    var index2 = old.length;
-    var count = 0;
-    while (count < searchLength && !diffBasic(current[--index1], old[--index2])) {
-      count++;
-    }
-    return count;
-  }
-
-
-  function spliceOperationsFromEditDistances(distances) {
-    var i = distances.length - 1;
-    var j = distances[0].length - 1;
-    var current = distances[i][j];
-    var edits = [];
-    while (i > 0 || j > 0) {
-      if (i === 0) {
-        edits.push(EDIT_ADD);
-        j--;
-        continue;
-      }
-
-      if (j === 0) {
-        edits.push(EDIT_DELETE);
-        i--;
-        continue;
-      }
-
-      var northWest = distances[i - 1][j - 1];
-      var west = distances[i - 1][j];
-      var north = distances[i][j - 1];
-      var min;
-
-      if (west < north) {
-        min = west < northWest ? west : northWest;
-      } else {
-        min = north < northWest ? north : northWest;
-      }
-
-      if (min === northWest) {
-        if (northWest === current) {
-          edits.push(EDIT_LEAVE);
-        } else {
-          edits.push(EDIT_UPDATE);
-          current = northWest;
-        }
-        i--;
-        j--;
-      } else if (min === west) {
-        edits.push(EDIT_DELETE);
-        i--;
-        current = west;
-      } else {
-        edits.push(EDIT_ADD);
-        j--;
-        current = north;
-      }
-    }
-    edits.reverse();
-    return edits;
-  }
-
-
-  function calcEditDistances(current, currentStart, currentEnd, old, oldStart, oldEnd) {
-    // "Deletion" columns
-    var rowCount = oldEnd - oldStart + 1;
-    var columnCount = currentEnd - currentStart + 1;
-    var distances = new Array(rowCount);
-    var i, j;
-
-    // "Addition" rows. Initialize null column.
-    for (i = 0; i < rowCount; i++) {
-      distances[i] = new Array(columnCount);
-      distances[i][0] = i;
-    }
-
-    // Initialize null row
-    for (j = 0; j < columnCount; j++) {
-      distances[0][j] = j;
-    }
-
-    for (i = 1; i < rowCount; i++) {
-      for (j = 1; j < columnCount; j++) {
-        if (!diffBasic(current[currentStart + j - 1], old[oldStart + i - 1])) {
-          distances[i][j] = distances[i - 1][j - 1];
-        } else {
-          var north = distances[i - 1][j] + 1;
-          var west = distances[i][j - 1] + 1;
-          distances[i][j] = north < west ? north : west;
-        }
-      }
-    }
-
-    return distances;
-  }
-})();
-
-},{}],67:[function(require,module,exports){
+},{"./src/observations":69,"./src/observer":70}],62:[function(require,module,exports){
+arguments[4][58][0].apply(exports,arguments)
+},{"./src/diff":63,"dup":58}],63:[function(require,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"dup":59}],64:[function(require,module,exports){
 module.exports = require('./src/expressions');
 
-},{"./src/expressions":68}],68:[function(require,module,exports){
+},{"./src/expressions":65}],65:[function(require,module,exports){
 var slice = Array.prototype.slice;
 var strings = require('./strings');
 var formatterParser = require('./formatters');
@@ -3500,7 +2680,7 @@ function bindArguments(func) {
   }
 }
 
-},{"./formatters":69,"./property-chains":70,"./strings":71}],69:[function(require,module,exports){
+},{"./formatters":66,"./property-chains":67,"./strings":68}],66:[function(require,module,exports){
 
 // finds pipes that are not ORs (i.e. ` | ` not ` || `) for formatters
 var pipeRegex = /\|(\|)?/g;
@@ -3572,7 +2752,7 @@ exports.parseFormatters = function(expr) {
   return setter + value;
 };
 
-},{}],70:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 var referenceCount = 0;
 var currentReference = 0;
 var currentIndex = 0;
@@ -3901,7 +3081,7 @@ function addReferences(expr) {
   return expr;
 }
 
-},{}],71:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 // finds all quoted strings
 var quoteRegex = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -3947,141 +3127,302 @@ exports.putInStrings = function(expr) {
   return expr;
 };
 
-},{}],72:[function(require,module,exports){
-var Fragments = require('./src/fragments');
-var Observations = require('observations-js');
+},{}],69:[function(require,module,exports){
+(function (global){
+module.exports = Observations;
+var Class = require('chip-utils/class');
+var Observer = require('./observer');
+var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
+var cancelAnimationFrame = global.cancelAnimationFrame || clearTimeout;
 
-function create() {
-  var observations = Observations.create();
-  var fragments = new Fragments(observations);
-  fragments.sync = observations.sync.bind(observations);
-  fragments.syncNow = observations.syncNow.bind(observations);
-  fragments.afterSync = observations.afterSync.bind(observations);
-  fragments.onSync = observations.onSync.bind(observations);
-  fragments.offSync = observations.offSync.bind(observations);
-  return fragments;
+
+function Observations() {
+  this.globals = {};
+  this.formatters = {};
+  this.observers = [];
+  this.callbacks = [];
+  this.listeners = [];
+  this.syncing = false;
+  this.callbacksRunning = false;
+  this.rerun = false;
+  this.cycles = 0;
+  this.maxCycles = 10;
+  this.timeout = null;
+  this.pendingSync = null;
+  this.syncNow = this.syncNow.bind(this);
 }
 
-// Create an instance of fragments with the default observer
-module.exports = create();
-module.exports.create = create;
 
-},{"./src/fragments":77,"observations-js":83}],73:[function(require,module,exports){
-var slice = Array.prototype.slice;
+Class.extend(Observations, {
 
-/**
- * Simplifies extending classes and provides static inheritance. Classes that need to be extendable should
- * extend Class which will give them the `extend` static function for their subclasses to use. In addition to
- * a prototype, mixins may be added as well. Example:
- *
- * function MyClass(arg1, arg2) {
- *   SuperClass.call(this, arg1);
- *   this.arg2 = arg2;
- * }
- * SuperClass.extend(MyClass, mixin1, AnotherClass, {
- *   foo: function() {
- *     this._bar++;
- *   },
- *   get bar() {
- *     return this._bar;
- *   }
- * });
- *
- * In addition to extending the superclass, static methods and properties will be copied onto the subclass for
- * static inheritance. This allows the extend function to be copied to the subclass so that it may be
- * subclassed as well. Additionally, static properties may be added by defining them on a special prototype
- * property `static` making the code more readable.
- *
- * @param {function} The subclass constructor.
- * @param {object} [optional] Zero or more mixins. They can be objects or classes (functions).
- * @param {object} The prototype of the subclass.
- */
-function Class() {}
-Class.extend = extend;
-Class.makeInstanceOf = makeInstanceOf;
-module.exports = Class;
+  // Creates a new observer attached to this observations object. When the observer is bound to a context it will be added
+  // to this `observations` and synced when this `observations.sync` is called.
+  createObserver: function(expr, callback, callbackContext) {
+    return new Observer(this, expr, callback, callbackContext);
+  },
 
-function extend(Subclass /* [, prototype [,prototype]] */) {
-  var prototypes, SuperClass = this;
 
-  // Support no constructor
-  if (typeof Subclass !== 'function') {
-    prototypes = slice.call(arguments);
-    Subclass = function() {
-      SuperClass.apply(this, arguments);
-    };
-  } else {
-    prototypes = slice.call(arguments, 1);
-  }
-
-  extendStatics(this, Subclass);
-
-  prototypes.forEach(function(proto) {
-    if (typeof proto === 'function') {
-      extendStatics(proto, Subclass);
-    } else if (proto.hasOwnProperty('static')) {
-      extendStatics(proto.static, Subclass);
+  // Schedules an observer sync cycle which checks all the observers to see if they've changed.
+  sync: function(callback) {
+    if (typeof callback === 'function') {
+      this.afterSync(callback);
     }
-  });
 
-  var descriptors = getDescriptors(prototypes);
-  descriptors.constructor = { writable: true, configurable: true, value: Subclass };
-  descriptors.super = { configurable: true, value: SuperClass.prototype };
-  Subclass.prototype = Object.create(this.prototype, descriptors);
-  if (typeof SuperClass.onExtend === 'function') {
-    // Allow for customizing the definitions of your child classes
-    SuperClass.onExtend(Subclass, prototypes);
-  }
-  return Subclass;
-}
+    if (this.pendingSync) {
+      return false;
+    }
 
-// Get descriptors (allows for getters and setters) and sets functions to be non-enumerable
-function getDescriptors(objects) {
-  var descriptors = {};
+    this.pendingSync = requestAnimationFrame(this.syncNow);
+    return true;
+  },
 
-  objects.forEach(function(object) {
-    if (typeof object === 'function') object = object.prototype;
 
-    Object.getOwnPropertyNames(object).forEach(function(name) {
-      if (name === 'static') return;
+  // Runs the observer sync cycle which checks all the observers to see if they've changed.
+  syncNow: function(callback) {
+    if (typeof callback === 'function') {
+      this.afterSync(callback);
+    }
 
-      var descriptor = Object.getOwnPropertyDescriptor(object, name);
+    cancelAnimationFrame(this.pendingSync);
+    this.pendingSync = null;
 
-      if (typeof descriptor.value === 'function') {
-        descriptor.enumerable = false;
+    if (this.syncing) {
+      this.rerun = true;
+      return false;
+    }
+
+    this.runSync();
+    return true;
+  },
+
+
+  runSync: function() {
+    this.syncing = true;
+    this.rerun = true;
+    this.cycles = 0;
+
+    var i, l;
+
+    // Allow callbacks to run the sync cycle again immediately, but stop at `maxCyles` (default 10) cycles so we don't
+    // run infinite loops
+    while (this.rerun) {
+      if (++this.cycles === this.maxCycles) {
+        throw new Error('Infinite observer syncing, an observer is calling Observer.sync() too many times');
       }
+      this.rerun = false;
+      // the observer array may increase or decrease in size (remaining observers) during the sync
+      for (i = 0; i < this.observers.length; i++) {
+        this.observers[i].sync();
+      }
+    }
 
-      descriptors[name] = descriptor;
-    });
-  });
-  return descriptors;
+    this.callbacksRunning = true;
+
+    var callbacks = this.callbacks;
+    this.callbacks = [];
+    while (callbacks.length) {
+      callbacks.shift()();
+    }
+
+    for (i = 0, l = this.listeners.length; i < l; i++) {
+      var listener = this.listeners[i];
+      listener();
+    }
+
+    this.callbacksRunning = false;
+    this.syncing = false;
+    this.cycles = 0;
+  },
+
+
+  // After the next sync (or the current if in the middle of one), run the provided callback
+  afterSync: function(callback) {
+    if (typeof callback !== 'function') {
+      throw new TypeError('callback must be a function');
+    }
+
+    if (this.callbacksRunning) {
+      this.sync();
+    }
+
+    this.callbacks.push(callback);
+  },
+
+
+  onSync: function(listener) {
+    if (typeof listener !== 'function') {
+      throw new TypeError('listener must be a function');
+    }
+
+    this.listeners.push(listener);
+  },
+
+
+  offSync: function(listener) {
+    if (typeof listener !== 'function') {
+      throw new TypeError('listener must be a function');
+    }
+
+    var index = this.listeners.indexOf(listener);
+    if (index !== -1) {
+      this.listeners.splice(index, 1).pop();
+    }
+  },
+
+
+  // Adds a new observer to be synced with changes. If `skipUpdate` is true then the callback will only be called when a
+  // change is made, not initially.
+  add: function(observer, skipUpdate) {
+    this.observers.push(observer);
+    if (!skipUpdate) {
+      observer.forceUpdateNextSync = true;
+      observer.sync();
+    }
+  },
+
+
+  // Removes an observer, stopping it from being run
+  remove: function(observer) {
+    var index = this.observers.indexOf(observer);
+    if (index !== -1) {
+      this.observers.splice(index, 1);
+      return true;
+    } else {
+      return false;
+    }
+  },
+});
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"./observer":70,"chip-utils/class":2}],70:[function(require,module,exports){
+module.exports = Observer;
+var Class = require('chip-utils/class');
+var expressions = require('expressions-js');
+var diff = require('differences-js');
+
+// # Observer
+
+// Defines an observer class which represents an expression. Whenever that expression returns a new value the `callback`
+// is called with the value.
+//
+// If the old and new values were either an array or an object, the `callback` also
+// receives an array of splices (for an array), or an array of change objects (for an object) which are the same
+// format that `Array.observe` and `Object.observe` return
+// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/observe>.
+function Observer(observations, expr, callback, callbackContext) {
+  if (typeof expr === 'function') {
+    this.getter = expr;
+    this.setter = expr;
+  } else {
+    this.getter = expressions.parse(expr, observations.globals, observations.formatters);
+  }
+  this.observations = observations;
+  this.expr = expr;
+  this.callback = callback;
+  this.callbackContext = callbackContext;
+  this.skip = false;
+  this.forceUpdateNextSync = false;
+  this.context = null;
+  this.oldValue = undefined;
 }
 
-// Copies static methods over for static inheritance
-function extendStatics(Class, Subclass) {
+Class.extend(Observer, {
 
-  // static method inheritance (including `extend`)
-  Object.keys(Class).forEach(function(key) {
-    var descriptor = Object.getOwnPropertyDescriptor(Class, key);
-    if (!descriptor.configurable) return;
+  // Binds this expression to a given context
+  bind: function(context, skipUpdate) {
+    this.context = context;
+    if (this.callback) {
+      this.observations.add(this, skipUpdate);
+    }
+  },
 
-    Object.defineProperty(Subclass, key, descriptor);
-  });
-}
+  // Unbinds this expression
+  unbind: function() {
+    this.observations.remove(this);
+    this.context = null;
+  },
+
+  // Closes the observer, cleaning up any possible memory-leaks
+  close: function() {
+    this.unbind();
+    this.callback = null;
+    this.callbackContext = null;
+  },
+
+  // Returns the current value of this observer
+  get: function() {
+    if (this.context) {
+      return this.getter.call(this.context);
+    }
+  },
+
+  // Sets the value of this expression
+  set: function(value) {
+    if (!this.context) return;
+    if (this.setter === false) return;
+    if (!this.setter) {
+      try {
+        this.setter = typeof this.expr === 'string'
+          ? expressions.parseSetter(this.expr, this.observations.globals, this.observations.formatters)
+          : false;
+      } catch (e) {
+        this.setter = false;
+      }
+      if (!this.setter) return;
+    }
+
+    try {
+      var result = this.setter.call(this.context, value);
+    } catch(e) {
+      return;
+    }
+
+    // We can't expect code in fragments outside Observer to be aware of "sync" since observer can be replaced by other
+    // types (e.g. one without a `sync()` method, such as one that uses `Object.observe`) in other systems.
+    this.sync();
+    this.observations.sync();
+    return result;
+  },
 
 
-/**
- * Makes a native object pretend to be an instance of class (e.g. adds methods to a DocumentFragment then calls the
- * constructor).
- */
-function makeInstanceOf(object) {
-  var args = slice.call(arguments, 1);
-  Object.defineProperties(object, getDescriptors([this.prototype]));
-  this.apply(object, args);
-  return object;
-}
+  // Instructs this observer to not call its `callback` on the next sync, whether the value has changed or not
+  skipNextSync: function() {
+    this.skip = true;
+  },
 
-},{}],74:[function(require,module,exports){
+
+  // Syncs this observer now, calling the callback immediately if there have been changes
+  sync: function() {
+    var value = this.get();
+
+    // Don't call the callback if `skipNextSync` was called on the observer
+    if (this.skip || !this.callback) {
+      this.skip = false;
+    } else {
+      // If an array has changed calculate the splices and call the callback. This
+      var changed = diff.values(value, this.oldValue);
+      if (!changed && !this.forceUpdateNextSync) return;
+      this.forceUpdateNextSync = false;
+      if (Array.isArray(changed)) {
+        this.callback.call(this.callbackContext, value, this.oldValue, changed);
+      } else {
+        this.callback.call(this.callbackContext, value, this.oldValue);
+      }
+    }
+
+    if (this.getChangeRecords) {
+      // Store an immutable version of the value, allowing for arrays and objects to change instance but not content and
+      // still refrain from dispatching callbacks (e.g. when using an object in bind-class or when using array formatters
+      // in bind-each)
+      this.oldValue = diff.clone(value);
+    } else {
+      this.oldValue = value;
+    }
+  }
+});
+
+},{"chip-utils/class":2,"differences-js":62,"expressions-js":64}],71:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -4328,7 +3669,7 @@ function onAnimationEnd(node, duration, callback) {
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":75,"./util/animation":79}],75:[function(require,module,exports){
+},{"./binding":72,"./util/animation":76}],72:[function(require,module,exports){
 module.exports = Binding;
 var Class = require('chip-utils/class');
 
@@ -4492,7 +3833,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"chip-utils/class":73}],76:[function(require,module,exports){
+},{"chip-utils/class":2}],73:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4588,9 +3929,11 @@ function getBindingsForNode(fragments, node, view) {
           match = null;
         }
 
-        if (attr && node.hasAttribute(attr.name)) {
+        try {
           node.removeAttribute(attr.name);
-        }
+        } catch(e) {
+          // if the attribute was already removed don't worry
+          }
 
         binding = new Binder({
           node: node,
@@ -4609,8 +3952,6 @@ function getBindingsForNode(fragments, node, view) {
       } else if (attr && Binder !== DefaultBinder && fragments.isBound('attribute', value)) {
         // Revert to default if this binding doesn't take
         bound.push([ DefaultBinder, attr ]);
-      } else if (attr) {
-        node.setAttributeNode(attr);
       }
 
       if (node.parentNode !== parent) {
@@ -4660,7 +4001,7 @@ function notEmpty(value) {
   return Boolean(value);
 }
 
-},{}],77:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -4722,7 +4063,7 @@ Class.extend(Fragments, {
   createTemplate: function(html) {
     var fragment = toFragment(html);
     if (fragment.childNodes.length === 0) {
-      throw new Error('Cannot create a template from ' + html + ' because it is empty.');
+      throw new Error('Cannot create a template from ' + html);
     }
     var template = Template.makeInstanceOf(fragment);
     template.bindings = compile(this, template);
@@ -5284,7 +4625,7 @@ function escapeRegExp(text) {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 }
 
-},{"./animatedBinding":74,"./binding":75,"./compile":76,"./template":78,"./util/animation":79,"./util/polyfills":80,"./util/toFragment":81,"./view":82,"chip-utils/class":73}],78:[function(require,module,exports){
+},{"./animatedBinding":71,"./binding":72,"./compile":73,"./template":75,"./util/animation":76,"./util/polyfills":77,"./util/toFragment":78,"./view":79,"chip-utils/class":2}],75:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5323,7 +4664,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":82,"chip-utils/class":73}],79:[function(require,module,exports){
+},{"./view":79,"chip-utils/class":2}],76:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5414,7 +4755,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],80:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 
 
 
@@ -5441,7 +4782,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],81:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5564,7 +4905,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],82:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5652,310 +4993,459 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":73}],83:[function(require,module,exports){
+},{"chip-utils/class":2}],80:[function(require,module,exports){
+module.exports = App;
+var componentBinding = require('fragments-built-ins/binders/component');
+var Location = require('routes-js').Location;
+var EventTarget = require('chip-utils/event-target');
+var createFragments = require('./fragments');
+var defaultMixin = require('./mixins/default');
+var slice = Array.prototype.slice;
 
-exports.Observations = require('./src/observations');
-exports.Observer = require('./src/observer');
-exports.create = function() {
-  return new exports.Observations();
-};
+// # Chip App
 
-},{"./src/observations":84,"./src/observer":85}],84:[function(require,module,exports){
-(function (global){
-module.exports = Observations;
-var Class = require('chip-utils/class');
-var Observer = require('./observer');
-var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
-var cancelAnimationFrame = global.cancelAnimationFrame || clearTimeout;
+// An App represents an app or module that can have routes, controllers, and templates defined.
+function App(options) {
+  options = options || {};
+  EventTarget.call(this);
+  this.fragments = createFragments();
+  this.components = {};
+  this.fragments.app = this;
+  this.location = Location.create(options);
+  this.defaultMixin = defaultMixin(this);
+  this._listening = false;
 
-
-function Observations() {
-  this.globals = {};
-  this.formatters = {};
-  this.observers = [];
-  this.callbacks = [];
-  this.listeners = [];
-  this.syncing = false;
-  this.callbacksRunning = false;
-  this.rerun = false;
-  this.cycles = 0;
-  this.maxCycles = 10;
-  this.timeout = null;
-  this.pendingSync = null;
-  this.syncNow = this.syncNow.bind(this);
+  this.rootElement = options.rootElement || document.documentElement;
+  this.sync = this.fragments.sync;
+  this.syncNow = this.fragments.syncNow;
+  this.afterSync = this.fragments.afterSync;
+  this.onSync = this.fragments.onSync;
+  this.offSync = this.fragments.offSync;
+  this.observe = this.fragments.observe.bind(this.fragments);
+  this.location.on('change', this.sync);
 }
 
+EventTarget.extend(App, {
 
-Class.extend(Observations, {
-
-  // Creates a new observer attached to this observations object. When the observer is bound to a context it will be added
-  // to this `observations` and synced when this `observations.sync` is called.
-  createObserver: function(expr, callback, callbackContext) {
-    return new Observer(this, expr, callback, callbackContext);
-  },
-
-
-  // Schedules an observer sync cycle which checks all the observers to see if they've changed.
-  sync: function(callback) {
-    if (typeof callback === 'function') {
-      this.afterSync(callback);
-    }
-
-    if (this.pendingSync) {
-      return false;
-    }
-
-    this.pendingSync = requestAnimationFrame(this.syncNow);
-    return true;
-  },
-
-
-  // Runs the observer sync cycle which checks all the observers to see if they've changed.
-  syncNow: function(callback) {
-    if (typeof callback === 'function') {
-      this.afterSync(callback);
-    }
-
-    cancelAnimationFrame(this.pendingSync);
-    this.pendingSync = null;
-
-    if (this.syncing) {
-      this.rerun = true;
-      return false;
-    }
-
-    this.runSync();
-    return true;
-  },
-
-
-  runSync: function() {
-    this.syncing = true;
-    this.rerun = true;
-    this.cycles = 0;
-
-    var i, l;
-
-    // Allow callbacks to run the sync cycle again immediately, but stop at `maxCyles` (default 10) cycles so we don't
-    // run infinite loops
-    while (this.rerun) {
-      if (++this.cycles === this.maxCycles) {
-        throw new Error('Infinite observer syncing, an observer is calling Observer.sync() too many times');
-      }
-      this.rerun = false;
-      // the observer array may increase or decrease in size (remaining observers) during the sync
-      for (i = 0; i < this.observers.length; i++) {
-        this.observers[i].sync();
-      }
-    }
-
-    this.callbacksRunning = true;
-
-    var callbacks = this.callbacks;
-    this.callbacks = [];
-    while (callbacks.length) {
-      callbacks.shift()();
-    }
-
-    for (i = 0, l = this.listeners.length; i < l; i++) {
-      var listener = this.listeners[i];
-      listener();
-    }
-
-    this.callbacksRunning = false;
-    this.syncing = false;
-    this.cycles = 0;
-  },
-
-
-  // After the next sync (or the current if in the middle of one), run the provided callback
-  afterSync: function(callback) {
-    if (typeof callback !== 'function') {
-      throw new TypeError('callback must be a function');
-    }
-
-    if (this.callbacksRunning) {
-      this.sync();
-    }
-
-    this.callbacks.push(callback);
-  },
-
-
-  onSync: function(listener) {
-    if (typeof listener !== 'function') {
-      throw new TypeError('listener must be a function');
-    }
-
-    this.listeners.push(listener);
-  },
-
-
-  offSync: function(listener) {
-    if (typeof listener !== 'function') {
-      throw new TypeError('listener must be a function');
-    }
-
-    var index = this.listeners.indexOf(listener);
-    if (index !== -1) {
-      this.listeners.splice(index, 1).pop();
-    }
-  },
-
-
-  // Adds a new observer to be synced with changes. If `skipUpdate` is true then the callback will only be called when a
-  // change is made, not initially.
-  add: function(observer, skipUpdate) {
-    this.observers.push(observer);
-    if (!skipUpdate) {
-      observer.forceUpdateNextSync = true;
-      observer.sync();
-    }
-  },
-
-
-  // Removes an observer, stopping it from being run
-  remove: function(observer) {
-    var index = this.observers.indexOf(observer);
-    if (index !== -1) {
-      this.observers.splice(index, 1);
-      return true;
-    } else {
-      return false;
-    }
-  },
-});
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"./observer":85,"chip-utils/class":57}],85:[function(require,module,exports){
-module.exports = Observer;
-var Class = require('chip-utils/class');
-var expressions = require('expressions-js');
-var diff = require('differences-js');
-
-// # Observer
-
-// Defines an observer class which represents an expression. Whenever that expression returns a new value the `callback`
-// is called with the value.
-//
-// If the old and new values were either an array or an object, the `callback` also
-// receives an array of splices (for an array), or an array of change objects (for an object) which are the same
-// format that `Array.observe` and `Object.observe` return
-// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/observe>.
-function Observer(observations, expr, callback, callbackContext) {
-  if (typeof expr === 'function') {
-    this.getter = expr;
-    this.setter = expr;
-  } else {
-    this.getter = expressions.parse(expr, observations.globals, observations.formatters);
-  }
-  this.observations = observations;
-  this.expr = expr;
-  this.callback = callback;
-  this.callbackContext = callbackContext;
-  this.skip = false;
-  this.forceUpdateNextSync = false;
-  this.context = null;
-  this.oldValue = undefined;
-}
-
-Class.extend(Observer, {
-
-  // Binds this expression to a given context
-  bind: function(context, skipUpdate) {
-    this.context = context;
-    if (this.callback) {
-      this.observations.add(this, skipUpdate);
-    }
-  },
-
-  // Unbinds this expression
-  unbind: function() {
-    this.observations.remove(this);
-    this.context = null;
-  },
-
-  // Closes the observer, cleaning up any possible memory-leaks
-  close: function() {
-    this.unbind();
-    this.callback = null;
-    this.callbackContext = null;
-  },
-
-  // Returns the current value of this observer
-  get: function() {
-    if (this.context) {
-      return this.getter.call(this.context);
-    }
-  },
-
-  // Sets the value of this expression
-  set: function(value) {
-    if (!this.context) return;
-    if (this.setter === false) return;
-    if (!this.setter) {
-      try {
-        this.setter = typeof this.expr === 'string'
-          ? expressions.parseSetter(this.expr, this.observations.globals, this.observations.formatters)
-          : false;
-      } catch (e) {
-        this.setter = false;
-      }
-      if (!this.setter) return;
-    }
-
-    try {
-      var result = this.setter.call(this.context, value);
-    } catch(e) {
+  init: function(root) {
+    if (this.inited) {
       return;
     }
 
-    // We can't expect code in fragments outside Observer to be aware of "sync" since observer can be replaced by other
-    // types (e.g. one without a `sync()` method, such as one that uses `Object.observe`) in other systems.
-    this.sync();
-    this.observations.sync();
-    return result;
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', this.init.bind(this, root));
+      return;
+    }
+
+    this.inited = true
+    if (root) {
+      this.rootElement = root;
+    }
+
+    this.fragments.bindElement(this.rootElement, this);
+    return this;
   },
 
 
-  // Instructs this observer to not call its `callback` on the next sync, whether the value has changed or not
-  skipNextSync: function() {
-    this.skip = true;
+  // Components
+  // ----------
+
+  // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
+  // then returns a new instance of a defined template. This instance is a document fragment.
+  component: function(name, definition) {
+    if (arguments.length === 1) {
+      return this.components[name];
+    }
+
+    var definitions = slice.call(arguments, 1);
+    definitions.unshift(this.defaultMixin);
+    this.components[name] = definitions;
+    this.fragments.registerElement(name, componentBinding.apply(null, definitions));
+    return this;
   },
 
 
-  // Syncs this observer now, calling the callback immediately if there have been changes
-  sync: function() {
-    var value = this.get();
+  // Redirects to the provided URL
+  redirect: function(url) {
+    return this.location.url = url;
+  },
 
-    // Don't call the callback if `skipNextSync` was called on the observer
-    if (this.skip || !this.callback) {
-      this.skip = false;
-    } else {
-      // If an array has changed calculate the splices and call the callback. This
-      var changed = diff.values(value, this.oldValue);
-      if (!changed && !this.forceUpdateNextSync) return;
-      this.forceUpdateNextSync = false;
-      if (Array.isArray(changed)) {
-        this.callback.call(this.callbackContext, value, this.oldValue, changed);
-      } else {
-        this.callback.call(this.callbackContext, value, this.oldValue);
+
+  get listening() {
+    return this._listening;
+  },
+
+  // Listen to URL changes
+  listen: function() {
+    var app = this;
+    this._listening = true;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', this.listen.bind(this));
+      return this;
+    }
+
+    // Add handler for when the route changes
+    this._locationChangeHandler = function(event) {
+      app.url = event.detail.url;
+      app.path = event.detail.path;
+      app.query = event.detail.query;
+      app.dispatchEvent(new CustomEvent('urlChange', { detail: event.detail }));
+    };
+
+    // Add handler for clicking links
+    this._clickHandler = function(event) {
+      var anchor;
+      if ( !(anchor = event.target.closest('a[href]')) ) {
+        return;
+      }
+
+      if (event.defaultPrevented ||
+        location.protocol !== anchor.protocol ||
+        location.host !== anchor.host.replace(/:80$|:443$/, ''))
+      {
+        // if something else already handled this, we won't
+        // if it is for another protocol or domain, we won't
+        return;
+      }
+
+      var url = anchor.getAttribute('href').replace(/^#/, '');
+
+      if (event.metaKey || event.ctrlKey || anchor.hasAttribute('target')) {
+        return;
+      }
+
+      event.preventDefault();
+      if (anchor.href === location.href + '#') {
+        return;
+      }
+
+      if (!anchor.disabled) {
+        app.redirect(url);
+      }
+    };
+
+    this.location.on('change', this._locationChangeHandler);
+    this.rootElement.addEventListener('click', this._clickHandler);
+    this.url = this.location.url;
+    this.path = this.location.path;
+    this.query = this.location.query;
+    this.dispatchEvent(new CustomEvent('urlChange', { detail: {
+      url: this.url,
+      path: this.path,
+      query: this.query
+    }}));
+  },
+
+  // Stop listening
+  stop: function() {
+    this.location.off('change', this._locationChangeHandler);
+    this.rootElement.removeEventListener('click', this._clickHandler);
+  }
+
+});
+},{"./fragments":83,"./mixins/default":84,"chip-utils/event-target":3,"fragments-built-ins/binders/component":18,"routes-js":85}],81:[function(require,module,exports){
+var Route = require('routes-js').Route;
+var IfBinder = require('fragments-built-ins/binders/if');
+
+module.exports = function() {
+  var ifBinder = IfBinder();
+  var bound = ifBinder.bound;
+  var unbound = ifBinder.unbound;
+
+  ifBinder.compiled = function() {
+    var noRoute;
+    this.app = this.fragments.app;
+    this.routes = [];
+    this.templates = [];
+    this.expression = '';
+
+    // each child with a [path] attribute will display only when its path matches the URL
+    while (this.element.firstChild) {
+      var child = this.element.firstChild;
+      this.element.removeChild(child);
+
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        continue;
+      }
+
+      if (child.hasAttribute('[path]')) {
+        var path = child.getAttribute('[path]');
+        child.removeAttribute('[path]');
+        this.routes.push(new Route(path));
+        this.templates.push(this.fragments.createTemplate(child));
+      } else if (child.hasAttribute('[noroute]')) {
+        child.removeAttribute('[noroute]');
+        noRoute = this.fragments.createTemplate(child);
       }
     }
 
-    if (this.getChangeRecords) {
-      // Store an immutable version of the value, allowing for arrays and objects to change instance but not content and
-      // still refrain from dispatching callbacks (e.g. when using an object in bind-class or when using array formatters
-      // in bind-each)
-      this.oldValue = diff.clone(value);
-    } else {
-      this.oldValue = value;
+    if (noRoute) {
+      this.templates.push(noRoute);
     }
-  }
-});
+  };
 
-},{"chip-utils/class":57,"differences-js":65,"expressions-js":67}],86:[function(require,module,exports){
+  ifBinder.add = function(view) {
+    view.bind(this.context);
+    this.element.appendChild(view);
+  };
+
+  ifBinder.created = function() {
+    this.onUrlChange = this.onUrlChange.bind(this);
+  };
+
+
+  ifBinder.bound = function() {
+    bound.call(this);
+
+    // Wait until everything is put in the DOM
+    setTimeout(function() {
+      if (!this.context) return;
+      var node = this.element.parentNode;
+      while (node && !node.matchedRoutePath) {
+        node = node.parentNode;
+      }
+      this.baseURI = node && node.matchedRoutePath || '';
+    }.bind(this));
+
+    this.app.on('urlChange', this.onUrlChange);
+    if (this.app.listening) {
+      this.onUrlChange();
+    }
+  };
+
+  ifBinder.unbound = function() {
+    unbound.call(this);
+    this.currentIndex = undefined;
+    this.app.off('urlChange', this.onUrlChange);
+  };
+
+  ifBinder.onUrlChange = function() {
+    if (this.element.baseURI === null) {
+      // element.baseURI is null if it isn't in the DOM yet
+      // If this is just getting inserted into the DOM wait for this.baseURI to be set
+      setTimeout(function() {
+        if (!this.context) return;
+        this.checkForChange();
+      }.bind(this));
+    } else {
+      this.checkForChange();
+    }
+  };
+
+  ifBinder.checkForChange = function() {
+    var fullUrl = this.app.location.url;
+    var localUrl = null;
+    var newIndex = this.routes.length;
+
+    if (fullUrl.indexOf(this.baseURI) === 0) {
+      localUrl = fullUrl.replace(this.baseURI, '');
+    }
+
+    if (localUrl !== null) {
+      this.routes.some(function(route, index) {
+        if (route.match(localUrl)) {
+          if (route.params.hasOwnProperty('*') && route.params['*']) {
+            var afterLength = route.params['*'].length;
+            this.element.matchedRoutePath = this.baseURI + localUrl.slice(0, -afterLength);
+          } else {
+            this.element.matchedRoutePath = fullUrl;
+          }
+          this.context.params = route.params;
+          newIndex = index;
+          return true;
+        }
+      }, this);
+    }
+
+    if (newIndex !== this.currentIndex) {
+      this.currentIndex = newIndex;
+      this.updated(this.currentIndex);
+    }
+  };
+
+  return ifBinder;
+};
+
+},{"fragments-built-ins/binders/if":21,"routes-js":85}],82:[function(require,module,exports){
+var App = require('./app');
+
+// # Chip
+
+// > Chip.js 2.0.0
+//
+// > (c) 2013 Jacob Wright, TeamSnap
+// Chip may be freely distributed under the MIT license.
+// For all details and documentation:
+// <https://github.com/teamsnap/chip/>
+
+// Contents
+// --------
+// * [chip](chip.html) the namespace, creates apps, and registers bindings and filters
+// * [App](app.html) represents an app that can have routes, controllers, and templates defined
+// * [Controller](controller.html) is used in the binding to attach data and run actions
+// * [Router](router.html) is used for handling URL rounting
+// * [Default binders](binders.html) registers the default binders chip provides
+
+// Create Chip App
+// -------------
+// Creates a new chip app
+module.exports = chip;
+
+function chip(options) {
+  var app = new App(options);
+  app.init();
+  return app;
+}
+
+chip.App = App;
+chip.Class = require('chip-utils/class');
+chip.EventTarget = require('chip-utils/event-target');
+chip.routes = require('routes-js');
+
+},{"./app":80,"chip-utils/class":2,"chip-utils/event-target":3,"routes-js":85}],83:[function(require,module,exports){
+var createFragments = require('fragments-js').create;
+
+module.exports = function() {
+
+  var fragments = createFragments();
+
+  // Configure
+  fragments.setExpressionDelimiters('attribute', '{{', '}}', true);
+  fragments.animateAttribute = '[animate]';
+  require('fragments-built-ins/animations')(fragments);
+  require('fragments-built-ins/formatters')(fragments);
+
+  fragments.registerAttribute('(keydown.*)', require('fragments-built-ins/binders/key-events')(null, 'keydown'));
+  fragments.registerAttribute('(keyup.*)', require('fragments-built-ins/binders/key-events')(null, 'keyup'));
+  fragments.registerAttribute('(enter)', require('fragments-built-ins/binders/key-events')('enter'));
+  fragments.registerAttribute('(esc)', require('fragments-built-ins/binders/key-events')('esc'));
+  fragments.registerAttribute('(*)', require('fragments-built-ins/binders/events')());
+  fragments.registerAttribute('{*}', require('fragments-built-ins/binders/properties')());
+  fragments.registerAttribute('{{*}}', require('fragments-built-ins/binders/properties-2-way')());
+  fragments.registerAttribute('*?', require('fragments-built-ins/binders/attribute-names')());
+  fragments.registerAttribute('[component]', require('fragments-built-ins/binders/component')());
+  fragments.registerAttribute('[content]', require('fragments-built-ins/binders/component-content')());
+  fragments.registerAttribute('[show]', require('fragments-built-ins/binders/show')(false));
+  fragments.registerAttribute('[hide]', require('fragments-built-ins/binders/show')(true));
+  fragments.registerAttribute('[for]', require('fragments-built-ins/binders/repeat')());
+  fragments.registerAttribute('#*', require('fragments-built-ins/binders/ref')());
+  fragments.registerAttribute('[text]', require('fragments-built-ins/binders/text')());
+  fragments.registerAttribute('[html]', require('fragments-built-ins/binders/html')());
+  fragments.registerAttribute('[src]', require('fragments-built-ins/binders/properties')('src'));
+  fragments.registerAttribute('[log]', require('fragments-built-ins/binders/log')());
+  fragments.registerAttribute('[class]', require('fragments-built-ins/binders/class')());
+  fragments.registerAttribute('[.*]', require('fragments-built-ins/binders/classes')());
+  fragments.registerAttribute('[style.*]', require('fragments-built-ins/binders/styles')());
+  fragments.registerAttribute('[autofocus]', require('fragments-built-ins/binders/autofocus')());
+  fragments.registerAttribute('[autoselect]', require('fragments-built-ins/binders/autoselect')());
+  fragments.registerAttribute('[name]', require('fragments-built-ins/binders/radio')('[value]'));
+  fragments.registerAttribute('[value]', require('fragments-built-ins/binders/value')(
+    '[value-events]',
+    '[value-field]'
+  ));
+
+  var IfBinding = require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]');
+  fragments.registerAttribute('[if]', IfBinding);
+  fragments.registerAttribute('[unless]', IfBinding);
+
+  fragments.registerAttribute('[route]', require('./binders/route')());
+
+  return fragments;
+};
+
+},{"./binders/route":81,"fragments-built-ins/animations":5,"fragments-built-ins/binders/attribute-names":12,"fragments-built-ins/binders/autofocus":13,"fragments-built-ins/binders/autoselect":14,"fragments-built-ins/binders/class":15,"fragments-built-ins/binders/classes":16,"fragments-built-ins/binders/component":18,"fragments-built-ins/binders/component-content":17,"fragments-built-ins/binders/events":19,"fragments-built-ins/binders/html":20,"fragments-built-ins/binders/if":21,"fragments-built-ins/binders/key-events":22,"fragments-built-ins/binders/log":23,"fragments-built-ins/binders/properties":25,"fragments-built-ins/binders/properties-2-way":24,"fragments-built-ins/binders/radio":26,"fragments-built-ins/binders/ref":27,"fragments-built-ins/binders/repeat":28,"fragments-built-ins/binders/show":29,"fragments-built-ins/binders/styles":30,"fragments-built-ins/binders/text":31,"fragments-built-ins/binders/value":32,"fragments-built-ins/formatters":43,"fragments-js":60}],84:[function(require,module,exports){
+
+module.exports = function(app) {
+
+  return {
+
+    app: app,
+    sync: app.sync,
+    syncNow: app.syncNow,
+    afterSync: app.afterSync,
+    onSync: app.onSync,
+    offSync: app.offSync,
+
+    created: function() {
+      Object.defineProperties(this, {
+        _observers: { configurable: true, value: [] },
+        _listeners: { configurable: true, value: [] },
+        _attached: { configurable: true, value: false },
+      });
+    },
+
+
+    attached: function() {
+      this._attached = true;
+      this._observers.forEach(function(observer) {
+        observer.bind(this);
+      }, this);
+
+      this._listeners.forEach(function(item) {
+        item.target.addEventListener(item.eventName, item.listener);
+      });
+    },
+
+
+    detached: function() {
+      this._attached = false;
+      this._observers.forEach(function(observer) {
+        observer.unbind();
+      });
+
+      this._listeners.forEach(function(item) {
+        item.target.removeEventListener(item.eventName, item.listener);
+      });
+    },
+
+
+    observe: function(expr, callback) {
+      if (typeof callback !== 'function') {
+        throw new TypeError('callback must be a function');
+      }
+
+      var observer = app.observe(expr, callback, this);
+      this._observers.push(observer);
+      if (this._attached) {
+        // If not attached will bind on attachment
+        observer.bind(this);
+      }
+      return observer;
+    },
+
+
+    listen: function(target, eventName, listener, context) {
+      if (typeof target === 'string') {
+        context = listener;
+        listener = eventName;
+        eventName = target;
+        target = this;
+      }
+
+      if (typeof listener !== 'function') {
+        throw new TypeError('listener must be a function');
+      }
+
+      listener = listener.bind(context || this);
+
+      var listenerData = {
+        target: target,
+        eventName: eventName,
+        listener: listener
+      };
+
+      this._listeners.push(listenerData);
+
+      if (this._attached) {
+        // If not attached will add on attachment
+        target.addEventListener(eventName, listener);
+      }
+    },
+  };
+};
+
+},{}],85:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -5966,7 +5456,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":89,"./src/location":90,"./src/push-location":91,"./src/route":92,"./src/router":93}],87:[function(require,module,exports){
+},{"./src/hash-location":88,"./src/location":89,"./src/push-location":90,"./src/route":91,"./src/router":92}],86:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -6077,9 +5567,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],88:[function(require,module,exports){
-arguments[4][58][0].apply(exports,arguments)
-},{"./class":87,"dup":58}],89:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"./class":86,"dup":3}],88:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -6106,7 +5596,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":90}],90:[function(require,module,exports){
+},{"./location":89}],89:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -6171,9 +5661,21 @@ EventTarget.extend(Location, {
     throw new Error('Abstract method. Override');
   },
 
+  get path() {
+    return this.currentUrl.split('?').shift();
+  },
+
+  get query() {
+    return parseQuery(this.currentUrl.split('?').slice(1).join('?'));
+  },
+
   _changeTo: function(url) {
     this.currentUrl = url;
-    this.dispatchEvent(new CustomEvent('change', { detail: { url: url }}));
+    this.dispatchEvent(new CustomEvent('change', { detail: {
+      url: url,
+      path: this.path,
+      query: this.query
+    }}));
   },
 
   _handleChange: function() {
@@ -6184,10 +5686,25 @@ EventTarget.extend(Location, {
   }
 });
 
+
+// Parses a location.search string into an object with key-value pairs.
+function parseQuery(search) {
+  var query = {};
+
+  search.replace(/^\?/, '').split('&').filter(Boolean).forEach(function(keyValue) {
+    var parts = keyValue.split('=');
+    var key = parts[0];
+    var value = parts[1];
+    query[decodeURIComponent(key)] = decodeURIComponent(value);
+  });
+
+  return query;
+}
+
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":89,"./push-location":91,"chip-utils/event-target":88}],91:[function(require,module,exports){
+},{"./hash-location":88,"./push-location":90,"chip-utils/event-target":87}],90:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -6223,7 +5740,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":90}],92:[function(require,module,exports){
+},{"./location":89}],91:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -6308,7 +5825,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":87}],93:[function(require,module,exports){
+},{"chip-utils/class":86}],92:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -6416,10 +5933,9 @@ EventTarget.extend(Router, {
 
 
   onUrlChange: function(event) {
-    var urlParts = event.detail.url.split('?');
-    var path = urlParts.shift();
-    var query = urlParts.join('?');
-    var req = { url: event.detail.url, path: path, query: parseQuery(query) };
+    var path = event.detail.path;
+    var query = event.detail.query;
+    var req = { url: event.detail.url, path: path, query: query };
     var paramsCalled = {};
 
     var event = new CustomEvent('changing', { detail: req, cancelable: true });
@@ -6471,24 +5987,6 @@ EventTarget.extend(Router, {
 
 });
 
-
-// Parses a location.search string into an object with key-value pairs.
-function parseQuery(search) {
-  var query = {};
-  if (search === '') {
-    return query;
-  }
-
-  search.replace(/^\?/, '').split('&').forEach(function(keyValue) {
-    var parts = keyValue.split('=');
-    var key = parts[0];
-    var value = parts[1];
-    query[decodeURIComponent(key)] = decodeURIComponent(value);
-  });
-
-  return query;
-}
-
-},{"./location":90,"./route":92,"chip-utils/event-target":88}]},{},[59])(59)
+},{"./location":89,"./route":91,"chip-utils/event-target":87}]},{},[1])(1)
 });
 //# sourceMappingURL=chip.js.map

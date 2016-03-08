@@ -91,6 +91,9 @@ EventTarget.extend(App, {
 
     // Add handler for when the route changes
     this._locationChangeHandler = function(event) {
+      app.url = event.detail.url;
+      app.path = event.detail.path;
+      app.query = event.detail.query;
       app.dispatchEvent(new CustomEvent('urlChange', { detail: event.detail }));
     };
 
@@ -101,17 +104,16 @@ EventTarget.extend(App, {
         return;
       }
 
-      if (event.defaultPrevented) {
+      if (event.defaultPrevented ||
+        location.protocol !== anchor.protocol ||
+        location.host !== anchor.host.replace(/:80$|:443$/, ''))
+      {
         // if something else already handled this, we won't
+        // if it is for another protocol or domain, we won't
         return;
       }
 
-      var linkHost = anchor.host.replace(/:80$|:443$/, '');
       var url = anchor.getAttribute('href').replace(/^#/, '');
-
-      if (linkHost && linkHost !== location.host) {
-        return;
-      }
 
       if (event.metaKey || event.ctrlKey || anchor.hasAttribute('target')) {
         return;
@@ -129,7 +131,14 @@ EventTarget.extend(App, {
 
     this.location.on('change', this._locationChangeHandler);
     this.rootElement.addEventListener('click', this._clickHandler);
-    this.dispatchEvent(new CustomEvent('urlChange', { detail: { url: this.location.url }}));
+    this.url = this.location.url;
+    this.path = this.location.path;
+    this.query = this.location.query;
+    this.dispatchEvent(new CustomEvent('urlChange', { detail: {
+      url: this.url,
+      path: this.path,
+      query: this.query
+    }}));
   },
 
   // Stop listening

@@ -236,6 +236,9 @@ then returns a new instance of a defined template. This instance is a document f
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>._locationChangeHandler = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{
+      app.url = event.detail.url;
+      app.path = event.detail.path;
+      app.query = event.detail.query;
       app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { detail: event.detail }));
     };</pre></div></div>
             
@@ -258,7 +261,10 @@ then returns a new instance of a defined template. This instance is a document f
         <span class="hljs-keyword">return</span>;
       }
 
-      <span class="hljs-keyword">if</span> (event.defaultPrevented) {</pre></div></div>
+      <span class="hljs-keyword">if</span> (event.defaultPrevented ||
+        location.protocol !== anchor.protocol ||
+        location.host !== anchor.host.replace(<span class="hljs-regexp">/:80$|:443$/</span>, <span class="hljs-string">''</span>))
+      {</pre></div></div>
             
         </li>
         
@@ -269,19 +275,15 @@ then returns a new instance of a defined template. This instance is a document f
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
-              <p>if something else already handled this, we won’t</p>
+              <p>if something else already handled this, we won’t
+if it is for another protocol or domain, we won’t</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">return</span>;
       }
 
-      <span class="hljs-keyword">var</span> linkHost = anchor.host.replace(<span class="hljs-regexp">/:80$|:443$/</span>, <span class="hljs-string">''</span>);
       <span class="hljs-keyword">var</span> url = anchor.getAttribute(<span class="hljs-string">'href'</span>).replace(<span class="hljs-regexp">/^#/</span>, <span class="hljs-string">''</span>);
-
-      <span class="hljs-keyword">if</span> (linkHost &amp;&amp; linkHost !== location.host) {
-        <span class="hljs-keyword">return</span>;
-      }
 
       <span class="hljs-keyword">if</span> (event.metaKey || event.ctrlKey || anchor.hasAttribute(<span class="hljs-string">'target'</span>)) {
         <span class="hljs-keyword">return</span>;
@@ -299,7 +301,14 @@ then returns a new instance of a defined template. This instance is a document f
 
     <span class="hljs-keyword">this</span>.location.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>._locationChangeHandler);
     <span class="hljs-keyword">this</span>.rootElement.addEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
-    <span class="hljs-keyword">this</span>.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { detail: { url: <span class="hljs-keyword">this</span>.location.url }}));
+    <span class="hljs-keyword">this</span>.url = <span class="hljs-keyword">this</span>.location.url;
+    <span class="hljs-keyword">this</span>.path = <span class="hljs-keyword">this</span>.location.path;
+    <span class="hljs-keyword">this</span>.query = <span class="hljs-keyword">this</span>.location.query;
+    <span class="hljs-keyword">this</span>.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { detail: {
+      url: <span class="hljs-keyword">this</span>.url,
+      path: <span class="hljs-keyword">this</span>.path,
+      query: <span class="hljs-keyword">this</span>.query
+    }}));
   },</pre></div></div>
             
         </li>
