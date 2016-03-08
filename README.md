@@ -30,8 +30,7 @@ increased because of simpler and smaller APIs that do just as much as the big gu
 
 Dan Matthews:
 > FWIW, Chip 2 is seriously excellent stuff. I'm thoroughly impressed. Reels like it felt when I went from KnockoutJS to
-  Angular 1. Orders of magnitude better than what I was doing before.
-
+  Angular 1. Orders of magnitude better than what I was doing before.<br>
   The mixins along with the chainability of `attached`, `detached` and `created` is making my source so freaking clean.
 
 ## The pieces
