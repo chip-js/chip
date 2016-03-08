@@ -2788,7 +2788,7 @@ module.exports = function() {
   };
 
   ifBinder.checkForChange = function() {
-    var fullUrl = this.app.url;
+    var fullUrl = this.app.path;
     var localUrl = null;
     var newIndex = this.routes.length;
 
