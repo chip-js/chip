@@ -87,7 +87,7 @@ module.exports = function() {
   };
 
   ifBinder.checkForChange = function() {
-    var fullUrl = this.app.location.url;
+    var fullUrl = this.app.url;
     var localUrl = null;
     var newIndex = this.routes.length;
 
@@ -104,7 +104,14 @@ module.exports = function() {
           } else {
             this.element.matchedRoutePath = fullUrl;
           }
-          this.context.params = route.params;
+          var params = this.context.params = route.params;
+          var query = this.app.query;
+          Object.keys(query).forEach(function(key) {
+            if (!params.hasOwnProperty(key)) {
+              params[key] = query[key];
+            }
+          });
+
           newIndex = index;
           return true;
         }
