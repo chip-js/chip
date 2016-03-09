@@ -18,7 +18,6 @@ module.exports = function() {
   fragments.registerAttribute('{*}', require('fragments-built-ins/binders/properties')());
   fragments.registerAttribute('{{*}}', require('fragments-built-ins/binders/properties-2-way')());
   fragments.registerAttribute('*?', require('fragments-built-ins/binders/attribute-names')());
-  fragments.registerAttribute('[component]', require('fragments-built-ins/binders/component')());
   fragments.registerAttribute('[content]', require('fragments-built-ins/binders/component-content')());
   fragments.registerAttribute('[show]', require('fragments-built-ins/binders/show')(false));
   fragments.registerAttribute('[hide]', require('fragments-built-ins/binders/show')(true));
@@ -38,6 +37,9 @@ module.exports = function() {
     '[value-events]',
     '[value-field]'
   ));
+  fragments.registerAttribute('[component]', require('fragments-built-ins/binders/component')(function(componentName) {
+    return this.fragments.app.component(componentName);
+  }));
 
   var IfBinding = require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]');
   fragments.registerAttribute('[if]', IfBinding);
