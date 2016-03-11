@@ -7,7 +7,7 @@
     "build": "browserify --debug --standalone chip index.js | exorcist dist/chip.js.map > dist/chip.js",
     "watch": "watchify --debug --standalone chip index.js -o dist/chip.js",
     "compress": "uglifyjs dist/chip.js -c -o dist/chip.min.js",
-    "docs": "docco -o docs src/*.js",
+    "docs": "docco -o api-docs src/*.js",
     "prepublish": "npm run build",
     "postbuild": "npm run compress && npm run docs"
   },
