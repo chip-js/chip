@@ -2772,19 +2772,19 @@ module.exports = function() {
     bound.call(this);
 
     // Wait until everything is put in the DOM
-    setTimeout(function() {
-      if (!this.context) return;
+    this.fragments.afterSync(function() {
       var node = this.element.parentNode;
       while (node && !node.matchedRoutePath) {
         node = node.parentNode;
       }
       this.baseURI = node && node.matchedRoutePath || '';
-    }.bind(this));
 
-    this.app.on('urlChange', this.onUrlChange);
-    if (this.app.listening) {
-      this.onUrlChange();
-    }
+      this.app.on('urlChange', this.onUrlChange);
+      if (this.app.listening) {
+        this.onUrlChange();
+      }
+
+    }.bind(this));
   };
 
   ifBinder.unbound = function() {
@@ -4341,6 +4341,7 @@ Class.extend(Binding, {
         this.observer.bind(context);
       }
     }
+    this.boundComplete();
   },
 
 
@@ -4378,6 +4379,9 @@ Class.extend(Binding, {
 
   // The function to run when the binding is bound
   bound: function() {},
+
+
+  boundComplete: function() {},
 
   // The function to run when the binding is unbound
   unbound: function() {},
@@ -4642,6 +4646,9 @@ Class.extend(Fragments, {
    * clone. Nodes and elements passed in will be removed from the DOM.
    */
   createTemplate: function(html) {
+    if (!html) {
+      throw new TypeError('Invalid html, cannot create a template from: ' + html);
+    }
     var fragment = toFragment(html);
     if (fragment.childNodes.length === 0) {
       throw new Error('Cannot create a template from ' + html + ' because it is empty.');

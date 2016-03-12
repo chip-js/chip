@@ -52,19 +52,19 @@ module.exports = function() {
     bound.call(this);
 
     // Wait until everything is put in the DOM
-    setTimeout(function() {
-      if (!this.context) return;
+    this.fragments.afterSync(function() {
       var node = this.element.parentNode;
       while (node && !node.matchedRoutePath) {
         node = node.parentNode;
       }
       this.baseURI = node && node.matchedRoutePath || '';
-    }.bind(this));
 
-    this.app.on('urlChange', this.onUrlChange);
-    if (this.app.listening) {
-      this.onUrlChange();
-    }
+      this.app.on('urlChange', this.onUrlChange);
+      if (this.app.listening) {
+        this.onUrlChange();
+      }
+
+    }.bind(this));
   };
 
   ifBinder.unbound = function() {
