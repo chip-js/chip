@@ -96,7 +96,8 @@ module.exports = function() {
     }
 
     if (localUrl !== null) {
-      this.routes.some(function(route, index) {
+
+      var matched = this.routes.some(function(route, index) {
         if (route.match(localUrl)) {
           if (route.params.hasOwnProperty('*') && route.params['*']) {
             var afterLength = route.params['*'].length;
@@ -116,6 +117,11 @@ module.exports = function() {
           return true;
         }
       }, this);
+
+      if (matched) {
+        this.element.dispatchEvent(new Event('routed'));
+      }
+
     }
 
     if (newIndex !== this.currentIndex) {

@@ -2816,7 +2816,8 @@ module.exports = function() {
     }
 
     if (localUrl !== null) {
-      this.routes.some(function(route, index) {
+
+      var matched = this.routes.some(function(route, index) {
         if (route.match(localUrl)) {
           if (route.params.hasOwnProperty('*') && route.params['*']) {
             var afterLength = route.params['*'].length;
@@ -2836,6 +2837,11 @@ module.exports = function() {
           return true;
         }
       }, this);
+
+      if (matched) {
+        this.element.dispatchEvent(new Event('routed'));
+      }
+
     }
 
     if (newIndex !== this.currentIndex) {
@@ -4341,7 +4347,6 @@ Class.extend(Binding, {
         this.observer.bind(context);
       }
     }
-    this.boundComplete();
   },
 
 
@@ -4379,9 +4384,6 @@ Class.extend(Binding, {
 
   // The function to run when the binding is bound
   bound: function() {},
-
-
-  boundComplete: function() {},
 
   // The function to run when the binding is unbound
   unbound: function() {},
@@ -6374,9 +6376,8 @@ EventTarget.extend(Router, {
 
 
   onUrlChange: function(event) {
-    var path = event.detail.path;
-    var query = event.detail.query;
-    var req = { url: event.detail.url, path: path, query: query };
+    var req = event.detail;
+    var path = req.path;
     var paramsCalled = {};
 
     var event = new CustomEvent('changing', { detail: req, cancelable: true });
