@@ -90,6 +90,8 @@ module.exports = function() {
     var fullUrl = this.app.path;
     var localUrl = null;
     var newIndex = this.routes.length;
+    var matched;
+    delete this.context.params;
 
     if (fullUrl.indexOf(this.baseURI) === 0) {
       localUrl = fullUrl.replace(this.baseURI, '');
@@ -97,7 +99,7 @@ module.exports = function() {
 
     if (localUrl !== null) {
 
-      var matched = this.routes.some(function(route, index) {
+      matched = this.routes.some(function(route, index) {
         if (route.match(localUrl)) {
           if (route.params.hasOwnProperty('*') && route.params['*']) {
             var afterLength = route.params['*'].length;
@@ -105,7 +107,7 @@ module.exports = function() {
           } else {
             this.element.matchedRoutePath = fullUrl;
           }
-          var params = this.context.params = route.params;
+          var params = this.context.params = Object.create(route.params);
           var query = this.app.query;
           Object.keys(query).forEach(function(key) {
             if (!params.hasOwnProperty(key)) {
@@ -117,11 +119,10 @@ module.exports = function() {
           return true;
         }
       }, this);
+    }
 
-      if (matched) {
-        this.element.dispatchEvent(new Event('routed'));
-      }
-
+    if (matched || newIndex !== this.currentIndex) {
+      this.element.dispatchEvent(new Event('routed'));
     }
 
     if (newIndex !== this.currentIndex) {
