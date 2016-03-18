@@ -70,10 +70,15 @@ module.exports = function() {
   ifBinder.unbound = function() {
     unbound.call(this);
     this.currentIndex = undefined;
+    delete this.context.params;
     this.app.off('urlChange', this.onUrlChange);
   };
 
   ifBinder.onUrlChange = function() {
+    if (!this.context) {
+      return;
+    }
+
     if (this.element.baseURI === null) {
       // element.baseURI is null if it isn't in the DOM yet
       // If this is just getting inserted into the DOM wait for this.baseURI to be set
