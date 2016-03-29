@@ -330,10 +330,15 @@ module.exports = function() {
   return {
 
     bound: function() {
-      var element = this.element;
-      setTimeout(function() {
-        element.focus();
-      });
+      if (!this.expression || this.observer.get()) {
+        this.focus();
+      }
+    },
+
+    focus: function() {
+      this.fragments.afterSync(function() {
+        this.element.focus();
+      }.bind(this));
     }
 
   };
@@ -383,24 +388,31 @@ module.exports = function() {
 
     updated: function(value) {
       var classList = this.element.classList;
-
-      if (this.classes) {
-        this.classes.forEach(function(className) {
-          if (className) {
-            classList.remove(className);
-          }
-        });
-      }
+      var classes = {};
 
       if (value) {
-        this.classes = value.split(/\s+/);
-        this.classes.forEach(function(className) {
-          if (className) {
-            classList.add(className);
-          }
+        if (typeof value === 'string') {
+          value.split(/\s+/).forEach(function(className) {
+            if (className) classes[className] = true;
+          });
+        } else if (typeof value === 'object') {
+          Object.keys(value).forEach(function(className) {
+            if (value[className]) classes[className] = true;
+          });
+        }
+      }
+
+      if (this.classes) {
+        Object.keys(this.classes).forEach(function(className) {
+          if (!classes[className]) classList.remove(className);
         });
       }
 
+      Object.keys(classes).forEach(function(className) {
+        classList.add(className);
+      });
+
+      this.classes = classes;
     }
   };
 };
@@ -472,6 +484,17 @@ module.exports = function(componentLoader) {
   return {
 
     compiled: function() {
+      if(this.element.getAttribute('[unwrap]') !== null) {
+        var parent = this.element.parentNode;
+        var placeholder = document.createTextNode('');
+        parent.insertBefore(placeholder, this.element);
+        parent.removeChild(this.element);
+        this.element = placeholder;
+        this.unwrapped = true;
+      } else {
+        this.unwrapped = false;
+      }
+
       if (definition) {
         this.definition = definition;
         this.definitions = definitions;
@@ -543,7 +566,12 @@ module.exports = function(componentLoader) {
 
       if (this.definition.template) {
         this.view = this.definition.template.createView();
-        this.element.appendChild(this.view);
+        if(this.unwrapped) {
+          var parent = this.element.parentNode;
+          parent.insertBefore(this.view, this.element.nextSibling);
+        } else {
+          this.element.appendChild(this.view);
+        }
         if (this.contentTemplate) {
           this.element._componentContent = this.contentTemplate;
         }
@@ -1117,6 +1145,13 @@ module.exports = function() {
         } else {
           this.updateChanges(value, changes);
         }
+
+        // Keep the array indexesq updated as the array changes
+        if (Array.isArray(value) && this.keyName) {
+          this.views.forEach(function(view, i) {
+            view.context[this.keyName] = i;
+          }, this);
+        }
       }
     },
 
@@ -1170,12 +1205,11 @@ module.exports = function() {
       var addedCount = 0;
 
       changes.forEach(function(splice) {
-        addedCount += splice.addedCount;
-        if (!splice.removed.length) {
-          return;
+        if (splice.removed.length) {
+          var removed = this.views.splice(splice.index - addedCount, splice.removed.length);
+          removed.forEach(this.removeView);
         }
-        var removed = this.views.splice(splice.index - addedCount, splice.removed.length);
-        removed.forEach(this.removeView);
+        addedCount += splice.addedCount;
       }, this);
 
       // Add the new/moved views
@@ -5573,6 +5607,7 @@ Class.extend(View, {
    * Binds a view to a given context.
    */
   bind: function(context) {
+    this.context = context;
     this.bindings.forEach(function(binding) {
       binding.bind(context);
     });
@@ -5583,6 +5618,7 @@ Class.extend(View, {
    * Unbinds a view from any context.
    */
   unbind: function() {
+    this.context = null;
     this.bindings.forEach(function(binding) {
       binding.unbind();
     });
