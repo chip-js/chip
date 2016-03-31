@@ -3,8 +3,9 @@ var IfBinder = require('fragments-built-ins/binders/if');
 
 module.exports = function() {
   var ifBinder = IfBinder();
-  var bound = ifBinder.bound;
+  var attached = ifBinder.attached;
   var unbound = ifBinder.unbound;
+  var detached = ifBinder.detached;
 
   ifBinder.compiled = function() {
     var noRoute;
@@ -41,6 +42,7 @@ module.exports = function() {
   ifBinder.add = function(view) {
     view.bind(this.context);
     this.element.appendChild(view);
+    this.attached();
   };
 
   ifBinder.created = function() {
@@ -48,30 +50,30 @@ module.exports = function() {
   };
 
 
-  ifBinder.bound = function() {
-    bound.call(this);
+  ifBinder.attached = function() {
+    attached.call(this);
 
-    // Wait until everything is put in the DOM
-    this.fragments.afterSync(function() {
-      var node = this.element.parentNode;
-      while (node && !node.matchedRoutePath) {
-        node = node.parentNode;
-      }
-      this.baseURI = node && node.matchedRoutePath || '';
+    var node = this.element.parentNode;
+    while (node && !node.matchedRoutePath) {
+      node = node.parentNode;
+    }
+    this.baseURI = node && node.matchedRoutePath || '';
 
-      this.app.on('urlChange', this.onUrlChange);
-      if (this.app.listening) {
-        this.onUrlChange();
-      }
+    this.app.on('urlChange', this.onUrlChange);
+    if (this.app.listening) {
+      this.onUrlChange();
+    }
+  };
 
-    }.bind(this));
+  ifBinder.detached = function() {
+    detached.call(this);
+    this.currentIndex = undefined;
+    this.app.off('urlChange', this.onUrlChange);
   };
 
   ifBinder.unbound = function() {
     unbound.call(this);
-    this.currentIndex = undefined;
     delete this.context.params;
-    this.app.off('urlChange', this.onUrlChange);
   };
 
   ifBinder.onUrlChange = function() {

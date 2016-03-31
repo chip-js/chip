@@ -47,6 +47,7 @@ EventTarget.extend(App, {
     }
 
     this.fragments.bindElement(this.rootElement, this);
+    this.rootElement.attached();
     return this;
   },
 
