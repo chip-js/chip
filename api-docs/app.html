@@ -54,6 +54,7 @@
             
             <div class="content"><div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = App;
 <span class="hljs-keyword">var</span> componentBinding = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component'</span>);
+<span class="hljs-keyword">var</span> Component = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component-definition'</span>);
 <span class="hljs-keyword">var</span> Location = <span class="hljs-built_in">require</span>(<span class="hljs-string">'routes-js'</span>).Location;
 <span class="hljs-keyword">var</span> EventTarget = <span class="hljs-built_in">require</span>(<span class="hljs-string">'chip-utils/event-target'</span>);
 <span class="hljs-keyword">var</span> createFragments = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./fragments'</span>);
@@ -95,6 +96,7 @@
   <span class="hljs-keyword">this</span>.location = Location.create(options);
   <span class="hljs-keyword">this</span>.defaultMixin = defaultMixin(<span class="hljs-keyword">this</span>);
   <span class="hljs-keyword">this</span>._listening = <span class="hljs-literal">false</span>;
+  <span class="hljs-keyword">this</span>.useCustomElements = options.useCustomElements || <span class="hljs-literal">false</span>;
 
   <span class="hljs-keyword">this</span>.rootElement = options.rootElement || <span class="hljs-built_in">document</span>.documentElement;
   <span class="hljs-keyword">this</span>.sync = <span class="hljs-keyword">this</span>.fragments.sync;
@@ -172,10 +174,25 @@ then returns a new instance of a defined template. This instance is a document f
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.components[name];
     }
 
-    <span class="hljs-keyword">var</span> definitions = slice.call(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>);
-    definitions.unshift(<span class="hljs-keyword">this</span>.defaultMixin);
-    <span class="hljs-keyword">this</span>.components[name] = definitions;
-    <span class="hljs-keyword">this</span>.fragments.registerElement(name, componentBinding.apply(<span class="hljs-literal">null</span>, definitions));
+    <span class="hljs-keyword">var</span> ComponentClass;
+    <span class="hljs-keyword">if</span> (definition.prototype <span class="hljs-keyword">instanceof</span> Component) {
+      ComponentClass = definition;
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">var</span> definitions = slice.call(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>);
+      definitions.unshift(<span class="hljs-keyword">this</span>.defaultMixin);
+      ComponentClass = Component.extend.apply(Component, definitions);
+    }
+
+    ComponentClass.prototype.tagName = name;
+    <span class="hljs-keyword">this</span>.components[name] = ComponentClass;
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.useCustomElements &amp;&amp; <span class="hljs-built_in">document</span>.registerElement) {
+      <span class="hljs-keyword">var</span> proto = createElementPrototype(<span class="hljs-keyword">this</span>, ComponentClass);
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">document</span>.registerElement(name, { prototype: proto });
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">this</span>.fragments.registerElement(name, componentBinding(ComponentClass));
+    }
+
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },</pre></div></div>
             
@@ -330,7 +347,36 @@ if it is for another protocol or domain, we won’t</p>
     <span class="hljs-keyword">this</span>.rootElement.removeEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
   }
 
-});</pre></div></div>
+});
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createElementPrototype</span>(<span class="hljs-params">fragments, ComponentClass</span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Object</span>.create(HTMLElement.prototype, {
+    createdCallback: {
+      value: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+        <span class="hljs-keyword">if</span> (ComponentClass.prototype.template &amp;&amp; !ComponentClass.prototype.template.compiled) {
+          ComponentClass.prototype.template = fragments.createTemplate(ComponentClass.prototype.template);
+        }
+
+        <span class="hljs-keyword">if</span> (!fragments.compiling) {
+          <span class="hljs-keyword">this</span>.component = <span class="hljs-keyword">new</span> ComponentClass(<span class="hljs-keyword">this</span>);
+        }
+      }
+    },
+
+    attachedCallback: {
+      value: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+        <span class="hljs-keyword">this</span>.component.attached();
+      }
+    },
+
+    detachedCallback: {
+      value: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+        <span class="hljs-keyword">this</span>.component.detached();
+      }
+    }
+  });
+
+}</pre></div></div>
             
         </li>
         

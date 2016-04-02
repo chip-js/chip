@@ -1,5 +1,6 @@
 module.exports = App;
 var componentBinding = require('fragments-built-ins/binders/component');
+var Component = require('fragments-built-ins/binders/component-definition');
 var Location = require('routes-js').Location;
 var EventTarget = require('chip-utils/event-target');
 var createFragments = require('./fragments');
@@ -18,6 +19,7 @@ function App(options) {
   this.location = Location.create(options);
   this.defaultMixin = defaultMixin(this);
   this._listening = false;
+  this.useCustomElements = options.useCustomElements || false;
 
   this.rootElement = options.rootElement || document.documentElement;
   this.sync = this.fragments.sync;
@@ -62,10 +64,25 @@ EventTarget.extend(App, {
       return this.components[name];
     }
 
-    var definitions = slice.call(arguments, 1);
-    definitions.unshift(this.defaultMixin);
-    this.components[name] = definitions;
-    this.fragments.registerElement(name, componentBinding.apply(null, definitions));
+    var ComponentClass;
+    if (definition.prototype instanceof Component) {
+      ComponentClass = definition;
+    } else {
+      var definitions = slice.call(arguments, 1);
+      definitions.unshift(this.defaultMixin);
+      ComponentClass = Component.extend.apply(Component, definitions);
+    }
+
+    ComponentClass.prototype.tagName = name;
+    this.components[name] = ComponentClass;
+
+    if (this.useCustomElements && document.registerElement) {
+      var proto = createElementPrototype(this, ComponentClass);
+      return document.registerElement(name, { prototype: proto });
+    } else {
+      this.fragments.registerElement(name, componentBinding(ComponentClass));
+    }
+
     return this;
   },
 
@@ -149,3 +166,32 @@ EventTarget.extend(App, {
   }
 
 });
+
+function createElementPrototype(fragments, ComponentClass) {
+  return Object.create(HTMLElement.prototype, {
+    createdCallback: {
+      value: function() {
+        if (ComponentClass.prototype.template && !ComponentClass.prototype.template.compiled) {
+          ComponentClass.prototype.template = fragments.createTemplate(ComponentClass.prototype.template);
+        }
+
+        if (!fragments.compiling) {
+          this.component = new ComponentClass(this);
+        }
+      }
+    },
+
+    attachedCallback: {
+      value: function() {
+        this.component.attached();
+      }
+    },
+
+    detachedCallback: {
+      value: function() {
+        this.component.detached();
+      }
+    }
+  });
+
+}
