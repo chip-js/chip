@@ -30,8 +30,8 @@
                 </a>
               
                 
-                <a class="source" href="fragments.html">
-                  fragments.js
+                <a class="source" href="default-options.html">
+                  default-options.js
                 </a>
               
             </div>
@@ -57,7 +57,8 @@
 <span class="hljs-keyword">var</span> Component = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component-definition'</span>);
 <span class="hljs-keyword">var</span> Location = <span class="hljs-built_in">require</span>(<span class="hljs-string">'routes-js'</span>).Location;
 <span class="hljs-keyword">var</span> EventTarget = <span class="hljs-built_in">require</span>(<span class="hljs-string">'chip-utils/event-target'</span>);
-<span class="hljs-keyword">var</span> createFragments = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./fragments'</span>);
+<span class="hljs-keyword">var</span> fragments = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-js'</span>);
+<span class="hljs-keyword">var</span> defaultOptions = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./default-options'</span>)
 <span class="hljs-keyword">var</span> defaultMixin = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./mixins/default'</span>);
 <span class="hljs-keyword">var</span> slice = <span class="hljs-built_in">Array</span>.prototype.slice;</pre></div></div>
             
@@ -88,15 +89,21 @@
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">App</span>(<span class="hljs-params">options</span>) </span>{
-  options = options || {};
+  options = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions, options);
+  options.binders = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.binders, options.binders);
+  options.formatters = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.formatters, options.formatters);
+  options.animations = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.animations, options.animations);
+  options.animations = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.animations, options.animations);
+  options.components = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.components, options.components);
+
   EventTarget.call(<span class="hljs-keyword">this</span>);
-  <span class="hljs-keyword">this</span>.fragments = createFragments();
+  <span class="hljs-keyword">this</span>.fragments = fragments.create(options);
   <span class="hljs-keyword">this</span>.components = {};
   <span class="hljs-keyword">this</span>.fragments.app = <span class="hljs-keyword">this</span>;
   <span class="hljs-keyword">this</span>.location = Location.create(options);
   <span class="hljs-keyword">this</span>.defaultMixin = defaultMixin(<span class="hljs-keyword">this</span>);
   <span class="hljs-keyword">this</span>._listening = <span class="hljs-literal">false</span>;
-  <span class="hljs-keyword">this</span>.useCustomElements = options.useCustomElements || <span class="hljs-literal">false</span>;
+  <span class="hljs-keyword">this</span>.useCustomElements = options.useCustomElements;
 
   <span class="hljs-keyword">this</span>.rootElement = options.rootElement || <span class="hljs-built_in">document</span>.documentElement;
   <span class="hljs-keyword">this</span>.sync = <span class="hljs-keyword">this</span>.fragments.sync;
@@ -106,6 +113,13 @@
   <span class="hljs-keyword">this</span>.offSync = <span class="hljs-keyword">this</span>.fragments.offSync;
   <span class="hljs-keyword">this</span>.observe = <span class="hljs-keyword">this</span>.fragments.observe.bind(<span class="hljs-keyword">this</span>.fragments);
   <span class="hljs-keyword">this</span>.location.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>.sync);
+
+  <span class="hljs-keyword">this</span>.fragments.setExpressionDelimiters(<span class="hljs-string">'attribute'</span>, <span class="hljs-string">'{{'</span>, <span class="hljs-string">'}}'</span>, !options.curliesInAttributes);
+  <span class="hljs-keyword">this</span>.fragments.animateAttribute = options.animateAttribute;
+
+  <span class="hljs-built_in">Object</span>.keys(options.components).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name</span>) </span>{
+    <span class="hljs-keyword">this</span>.component(name, options.components[name]);
+  }, <span class="hljs-keyword">this</span>);
 }
 
 EventTarget.extend(App, {
@@ -376,6 +390,30 @@ if it is for another protocol or domain, we won’t</p>
     }
   });
 
+}
+
+<span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> <span class="hljs-built_in">Object</span>.assign !== <span class="hljs-string">'function'</span>) {
+  (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-built_in">Object</span>.assign = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">target</span>) </span>{
+<span class="hljs-pi">      'use strict'</span>;
+      <span class="hljs-keyword">if</span> (target === <span class="hljs-literal">undefined</span> || target === <span class="hljs-literal">null</span>) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">'Cannot convert undefined or null to object'</span>);
+      }
+
+      <span class="hljs-keyword">var</span> output = <span class="hljs-built_in">Object</span>(target);
+      <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> index = <span class="hljs-number">1</span>; index &lt; <span class="hljs-built_in">arguments</span>.length; index++) {
+        <span class="hljs-keyword">var</span> source = <span class="hljs-built_in">arguments</span>[index];
+        <span class="hljs-keyword">if</span> (source !== <span class="hljs-literal">undefined</span> &amp;&amp; source !== <span class="hljs-literal">null</span>) {
+          <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> nextKey <span class="hljs-keyword">in</span> source) {
+            <span class="hljs-keyword">if</span> (source.hasOwnProperty(nextKey)) {
+              output[nextKey] = source[nextKey];
+            }
+          }
+        }
+      }
+      <span class="hljs-keyword">return</span> output;
+    };
+  })();
 }</pre></div></div>
             
         </li>

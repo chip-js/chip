@@ -3,7 +3,8 @@ var componentBinding = require('fragments-built-ins/binders/component');
 var Component = require('fragments-built-ins/binders/component-definition');
 var Location = require('routes-js').Location;
 var EventTarget = require('chip-utils/event-target');
-var createFragments = require('./fragments');
+var fragments = require('fragments-js');
+var defaultOptions = require('./default-options')
 var defaultMixin = require('./mixins/default');
 var slice = Array.prototype.slice;
 
@@ -11,15 +12,21 @@ var slice = Array.prototype.slice;
 
 // An App represents an app or module that can have routes, controllers, and templates defined.
 function App(options) {
-  options = options || {};
+  options = Object.assign({}, defaultOptions, options);
+  options.binders = Object.assign({}, defaultOptions.binders, options.binders);
+  options.formatters = Object.assign({}, defaultOptions.formatters, options.formatters);
+  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
+  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
+  options.components = Object.assign({}, defaultOptions.components, options.components);
+
   EventTarget.call(this);
-  this.fragments = createFragments();
+  this.fragments = fragments.create(options);
   this.components = {};
   this.fragments.app = this;
   this.location = Location.create(options);
   this.defaultMixin = defaultMixin(this);
   this._listening = false;
-  this.useCustomElements = options.useCustomElements || false;
+  this.useCustomElements = options.useCustomElements;
 
   this.rootElement = options.rootElement || document.documentElement;
   this.sync = this.fragments.sync;
@@ -29,6 +36,13 @@ function App(options) {
   this.offSync = this.fragments.offSync;
   this.observe = this.fragments.observe.bind(this.fragments);
   this.location.on('change', this.sync);
+
+  this.fragments.setExpressionDelimiters('attribute', '{{', '}}', !options.curliesInAttributes);
+  this.fragments.animateAttribute = options.animateAttribute;
+
+  Object.keys(options.components).forEach(function(name) {
+    this.component(name, options.components[name]);
+  }, this);
 }
 
 EventTarget.extend(App, {
@@ -194,4 +208,28 @@ function createElementPrototype(fragments, ComponentClass) {
     }
   });
 
+}
+
+if (typeof Object.assign !== 'function') {
+  (function () {
+    Object.assign = function (target) {
+      'use strict';
+      if (target === undefined || target === null) {
+        throw new TypeError('Cannot convert undefined or null to object');
+      }
+
+      var output = Object(target);
+      for (var index = 1; index < arguments.length; index++) {
+        var source = arguments[index];
+        if (source !== undefined && source !== null) {
+          for (var nextKey in source) {
+            if (source.hasOwnProperty(nextKey)) {
+              output[nextKey] = source[nextKey];
+            }
+          }
+        }
+      }
+      return output;
+    };
+  })();
 }

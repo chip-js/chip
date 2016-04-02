@@ -26,24 +26,6 @@ module.exports = function(options) {
 
 },{}],2:[function(require,module,exports){
 /**
- * Adds all built-in animations with default names
- */
-module.exports = function(fragments) {
-  if (!fragments || typeof fragments.registerAnimation !== 'function') {
-    throw new TypeError('formatters requires an instance of fragments to register with');
-  }
-
-  fragments.registerAnimation('fade', require('./fade')());
-  fragments.registerAnimation('slide', require('./slide')());
-  fragments.registerAnimation('slide-h', require('./slide-horizontal')());
-  fragments.registerAnimation('slide-move', require('./slide-move')(fragments));
-  fragments.registerAnimation('slide-move-h', require('./slide-move-horizontal')(fragments));
-  fragments.registerAnimation('slide-fade', require('./slide-fade')());
-  fragments.registerAnimation('slide-fade-h', require('./slide-fade-horizontal')());
-};
-
-},{"./fade":1,"./slide":8,"./slide-fade":4,"./slide-fade-horizontal":3,"./slide-horizontal":5,"./slide-move":7,"./slide-move-horizontal":6}],3:[function(require,module,exports){
-/**
  * Slide left and right
  */
 module.exports = function(options) {
@@ -52,7 +34,7 @@ module.exports = function(options) {
   return require('./slide-fade')(options);
 };
 
-},{"./slide-fade":4}],4:[function(require,module,exports){
+},{"./slide-fade":3}],3:[function(require,module,exports){
 /**
  * Slide down and up and fade in and out
  */
@@ -110,7 +92,7 @@ module.exports = function(options) {
   };
 };
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 /**
  * Slide left and right
  */
@@ -120,24 +102,24 @@ module.exports = function(options) {
   return require('./slide')(options);
 };
 
-},{"./slide":8}],6:[function(require,module,exports){
+},{"./slide":7}],5:[function(require,module,exports){
 /**
  * Move items left and right in a list
  */
-module.exports = function(fragments, options) {
+module.exports = function(options) {
   if (!options) options = {};
   if (!options.property) options.property = 'width';
-  return require('./slide-move')(fragments, options);
+  return require('./slide-move')(options);
 };
 
-},{"./slide-move":7}],7:[function(require,module,exports){
+},{"./slide-move":6}],6:[function(require,module,exports){
 var slideAnimation = require('./slide');
 var animating = new Map();
 
 /**
  * Move items up and down in a list
  */
-module.exports = function(fragments, options) {
+module.exports = function(options) {
   if (!options) options = {};
   if (!options.duration) options.duration = 250;
   if (!options.easing) options.easing = 'ease-in-out';
@@ -225,7 +207,7 @@ module.exports = function(fragments, options) {
       var oldLeft = oldElement.offsetLeft;
       var oldTop = oldElement.offsetTop;
 
-      placeholderElement = fragments.makeElementAnimatable(oldElement.cloneNode(true));
+      placeholderElement = this.fragments.makeElementAnimatable(oldElement.cloneNode(true));
       placeholderElement.style.width = oldElement.style.width = style.width;
       placeholderElement.style.height = oldElement.style.height = style.height;
       placeholderElement.style.opacity = '0';
@@ -249,7 +231,7 @@ module.exports = function(fragments, options) {
   };
 };
 
-},{"./slide":8}],8:[function(require,module,exports){
+},{"./slide":7}],7:[function(require,module,exports){
 /**
  * Slide down and up
  */
@@ -306,7 +288,7 @@ module.exports = function(options) {
   };
 };
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /**
  * A binder that toggles an attribute on or off if the expression is truthy or falsey. Use for attributes without
  * values such as `selected`, `disabled`, or `readonly`.
@@ -322,7 +304,7 @@ module.exports = function(specificAttrName) {
   };
 };
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /**
  * A binder that automatically focuses the input when it is displayed on screen.
  */
@@ -344,7 +326,7 @@ module.exports = function() {
   };
 };
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /**
  * Automatically selects the contents of an input when it receives focus.
  */
@@ -377,7 +359,7 @@ module.exports = function() {
   };
 };
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /**
  * A binder that ensures anything bound to the class attribute won't overrite the classes binder. Should always be bound
  * to "class".
@@ -417,7 +399,7 @@ module.exports = function() {
   };
 };
 
-},{}],13:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /**
  * A binder that adds classes to an element dependent on whether the expression is true or false.
  */
@@ -431,7 +413,7 @@ module.exports = function() {
   };
 };
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /**
  * An element binder that gets filled with the contents put inside a component.
  */
@@ -471,13 +453,14 @@ module.exports = function() {
   };
 };
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
+module.exports = Component;
 var Class = require('chip-utils/class');
 var lifecycle = [ 'created', 'ready', 'attached', 'detached' ];
 
 
 function Component(element, contentTemplate) {
-  this.element = element || document.createElement(this.tagName);
+  this.element = element;
   this.created();
 
   if (this.template) {
@@ -494,6 +477,8 @@ function Component(element, contentTemplate) {
     this.element.appendChild(this._view);
     this._view.attached();
   }
+
+  this.ready();
 }
 
 Component.onExtend = function(Class, mixins) {
@@ -523,12 +508,14 @@ Class.extend(Component, {
 
   attached: function() {
     callOnMixins(this, this.mixins, 'attached', arguments);
+    this._view.attached();
     this._view.sync();
   },
 
   detached: function() {
     callOnMixins(this, this.mixins, 'detached', arguments);
     this._view.sync();
+    this._view.detached();
   }
 
 });
@@ -541,26 +528,29 @@ function callOnMixins(context, mixins, name, args) {
   });
 }
 
-},{"chip-utils/class":57}],16:[function(require,module,exports){
+},{"chip-utils/class":55}],15:[function(require,module,exports){
+var Component = require('./component-definition');
 var slice = Array.prototype.slice;
 
 /**
  * An element binder that binds the template on the definition to fill the contents of the element that matches. Can be
  * used as an attribute binder as well.
  */
-module.exports = function(componentLoader) {
-  var definitions = slice.call(arguments);
+module.exports = function(ComponentClass) {
+  var componentLoader;
 
-  if (typeof componentLoader === 'function') {
-    definitions.shift();
-  } else {
-    componentLoader = null;
+  if (typeof ComponentClass !== 'function') {
+    throw new TypeError('Invalid component, requires a subclass of Component or a function which will return such.');
   }
 
-  // The last definition is the most important, any others are mixins
-  var definition = definitions[definitions.length - 1];
+  if (!(ComponentClass.prototype instanceof Component)) {
+    componentLoader = ComponentClass;
+    ComponentClass = undefined;
+  }
 
   return {
+
+    priority: 20,
 
     compiled: function() {
       if (this.element.getAttribute('[unwrap]') !== null) {
@@ -574,13 +564,9 @@ module.exports = function(componentLoader) {
         this.unwrapped = false;
       }
 
-      if (definition) {
-        this.definition = definition;
-        this.definitions = definitions;
-        this.compileTemplate();
-      } else {
-        this.definitions = [];
-      }
+      this.ComponentClass = ComponentClass;
+
+      this.compileTemplate();
 
       var empty = !this.element.childNodes.length ||
                   (this.element.childNodes.length === 1 &&
@@ -597,140 +583,78 @@ module.exports = function(componentLoader) {
       this.make();
     },
 
-    updated: function(definition) {
+    updated: function(ComponentClass) {
       this.detached();
       this.unmake();
 
-      if (typeof definition === 'string' && componentLoader) {
-        definition = componentLoader.call(this, definition);
+      if (typeof ComponentClass === 'string' && componentLoader) {
+        ComponentClass = componentLoader.call(this, ComponentClass);
       }
 
-      if (Array.isArray(definition)) {
-        this.definitions = definition;
-        this.definition = definition[definition.length - 1];
-      } else if (definition) {
-        this.definitions = [definition];
-        this.definition = definition;
-      } else {
-        this.definitions = [];
-        this.definition = null;
-      }
+      this.ComponentClass = ComponentClass;
 
       this.make();
       this.attached();
     },
 
     bound: function() {
+      // Set for the component-content binder to use
       this.element._parentContext = this.context;
     },
 
     compileTemplate: function() {
-      if (this.definition.template && !this.definition.template.pool && !this.definition._compiling) {
-        // Set this before compiling so we don't get into infinite loops if there is template recursion
-        this.definition._compiling = true;
-        this.definition.template = this.fragments.createTemplate(this.definition.template);
-        delete this.definition._compiling;
+      if (!this.ComponentClass) {
+        return;
+      }
+
+      var proto = this.ComponentClass.prototype;
+      if (proto.template && !proto.template.compiled && !proto._compiling) {
+        proto._compiling = true;
+        proto.template = this.fragments.createTemplate(proto.template);
+        delete proto._compiling;
       }
     },
 
     make: function() {
-      if (!this.definition) {
+      if (!this.ComponentClass) {
         return;
       }
 
       this.compileTemplate();
 
-      if (this.definition.template) {
-        this.componentView = this.definition.template.createView();
-        if(this.unwrapped) {
-          var parent = this.element.parentNode;
-          parent.insertBefore(this.componentView, this.element.nextSibling);
-        } else {
-          this.element.appendChild(this.componentView);
-        }
-        if (this.contentTemplate) {
-          this.element._componentContent = this.contentTemplate;
-        }
-      } else if (this.contentTemplate) {
-        this.content = this.contentTemplate.createView();
-        this.element.appendChild(this.content);
-      }
-
-      this.definitions.forEach(function(definition) {
-        Object.getOwnPropertyNames(definition).forEach(function(key) {
-          Object.defineProperty(this.element, key, Object.getOwnPropertyDescriptor(definition, key));
-        }, this);
-      }, this);
-
-      // Don't call created until after all definitions have been copied over
-      this.definitions.forEach(function(definition) {
-        if (typeof definition.created === 'function') {
-          definition.created.call(this.element);
-        }
-      }, this);
+      this.component = new this.ComponentClass(this.element, this.contentTemplate);
+      this.element.component = this.component;
     },
 
     unmake: function() {
-      if (!this.definition) {
+      if (!this.ComponentClass) {
         return;
       }
 
-      if (this.content) {
-        this.content.dispose();
-        this.content = null;
+      if (this.component) {
+        this.component.componentView.dispose();
+        this.component.element = null;
+        this.element.component = null;
+        this.component = null;
       }
-
-      if (this.componentView) {
-        this.componentView.dispose();
-        this.componentView = null;
-      }
-
-      this.definitions.forEach(function(definition) {
-        Object.keys(definition).forEach(function(key) {
-          delete this.element[key];
-        }, this);
-      }, this);
     },
 
     attached: function() {
-      if (!this.definition) {
-        return;
+      if (this.component) {
+        this.component.attached();
       }
-
-      if (this.componentView) this.componentView.bind(this.element);
-      if (this.content) this.content.bind(this.context);
-
-      this.definitions.forEach(function(definition) {
-        if (typeof definition.attached === 'function') {
-          definition.attached.call(this.element);
-          this.fragments.sync();
-        }
-      }, this);
-
-      if (this.componentView) this.componentView.attached();
     },
 
     detached: function() {
-      if (!this.definition) {
-        return;
+      if (this.component) {
+        this.component.detached();
       }
-
-      if (this.content) this.content.unbind();
-      if (this.componentView) this.componentView.unbind();
-
-      this.definitions.forEach(function(definition) {
-        if (typeof definition.detached === 'function') {
-          definition.detached.call(this.element);
-        }
-      }, this);
-
-      if (this.componentView) this.componentView.detached();
     }
 
   };
 };
 
-},{}],17:[function(require,module,exports){
+},{"./component-definition":14}],16:[function(require,module,exports){
 /**
  * A binder for adding event listeners. When the event is triggered the expression will be executed. The properties
  * `event` (the event object) and `element` (the element the binder is on) will be available to the expression.
@@ -806,7 +730,7 @@ module.exports = function(specificEventName) {
   };
 };
 
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * A binder that displays unescaped HTML inside an element. Be sure it's trusted! This should be used with formatters
  * which create HTML from something safe.
@@ -817,7 +741,7 @@ module.exports = function() {
   };
 };
 
-},{}],19:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * if, unless, else-if, else-unless, else
  * A binder init function that creates a binder that shows or hides the element if the value is truthy or falsey.
@@ -986,7 +910,7 @@ function wrapIfExp(expr, isUnless) {
   }
 }
 
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var keys = {
   backspace: 8,
   tab: 9,
@@ -1046,7 +970,7 @@ module.exports = function(specificKeyName, specificEventName) {
   };
 };
 
-},{"./events":17}],21:[function(require,module,exports){
+},{"./events":16}],20:[function(require,module,exports){
 /**
  * A binder that prints out the value of the expression to the console.
  */
@@ -1067,7 +991,7 @@ module.exports = function() {
   };
 };
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * A binder that sets the property of an element to the value of the expression in a 2-way binding.
  */
@@ -1081,7 +1005,7 @@ module.exports = function(specificPropertyName) {
 
     // Bind this to the given context object
     bound: function() {
-      this.twoWayObserver.bind(this.element);
+      this.twoWayObserver.bind(this.element.component || this.element);
     },
 
     unbound: function() {
@@ -1100,7 +1024,8 @@ module.exports = function(specificPropertyName) {
 
     updated: function(value) {
       if (!this.skipSend && value !== undefined) {
-        this.element[specificPropertyName || this.camelCase] = value;
+        var context = this.element.component || this.element;
+        context[specificPropertyName || this.camelCase] = value;
         this.skipSend = true;
         this.fragments.afterSync(function() {
           this.skipSend = false;
@@ -1110,7 +1035,7 @@ module.exports = function(specificPropertyName) {
   };
 };
 
-},{}],23:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * A binder that sets the property of an element to the value of the expression.
  */
@@ -1119,12 +1044,13 @@ module.exports = function(specificPropertyName) {
     priority: 10,
 
     updated: function(value) {
-      this.element[specificPropertyName || this.camelCase] = value;
+      var context = this.element.component || this.element;
+      context[specificPropertyName || this.camelCase] = value;
     }
   };
 };
 
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * A binder for radio buttons specifically
  */
@@ -1173,7 +1099,7 @@ module.exports = function(valueName) {
 };
 
 
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * A binder that sets a reference to the element when it is bound.
  */
@@ -1189,7 +1115,7 @@ module.exports = function () {
   };
 };
 
-},{}],26:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var diff = require('differences-js');
 
 /**
@@ -1420,7 +1346,7 @@ module.exports = function() {
   };
 };
 
-},{"differences-js":65}],27:[function(require,module,exports){
+},{"differences-js":63}],26:[function(require,module,exports){
 /**
  * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
  * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
@@ -1491,7 +1417,7 @@ module.exports = function(isHide) {
   };
 };
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var units = {
   '%': true,
   'em': true,
@@ -1531,7 +1457,7 @@ module.exports = function(specificStyleName, specificUnit) {
   };
 };
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /**
  * ## text
  * A binder that displays escaped text inside an element. This can be done with binding directly in text nodes but
@@ -1560,7 +1486,7 @@ module.exports = function() {
   };
 };
 
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var inputMethods, defaultInputMethod;
 
 /**
@@ -1690,7 +1616,7 @@ inputMethods = {
 };
 
 
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /**
  * Takes the input URL and adds (or replaces) the field in the query.
  * E.g. 'http://example.com?user=default&resource=foo' | addQuery('user', username)
@@ -1722,7 +1648,7 @@ module.exports = function(value, queryField, queryValue) {
   return url;
 };
 
-},{}],32:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
 var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$))/gim;
 /**
@@ -1747,7 +1673,7 @@ module.exports = function(value, target) {
   });
 };
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /**
  * Formats the value into a boolean.
  */
@@ -1755,7 +1681,7 @@ module.exports = function(value) {
   return value && value !== '0' && value !== 'false';
 };
 
-},{}],34:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1770,7 +1696,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":37}],35:[function(require,module,exports){
+},{"./escape":36}],34:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1790,7 +1716,7 @@ module.exports = function(value) {
   return value.toLocaleString();
 };
 
-},{}],36:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1810,7 +1736,7 @@ module.exports = function(value) {
   return value.toLocaleDateString();
 };
 
-},{}],37:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var div = document.createElement('div');
 
 /**
@@ -1826,7 +1752,7 @@ module.exports = function (value, setter) {
   }
 };
 
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
  * functions.
@@ -1855,7 +1781,7 @@ module.exports = function(value, filterFunc) {
   return value;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * Formats the value into a float or null.
  */
@@ -1864,7 +1790,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /**
  * Formats the value something returned by a formatting function passed. Use for custom or one-off formats.
  */
@@ -1872,43 +1798,7 @@ module.exports = function(value, formatter, isSetter) {
   return formatter.call(this, value, isSetter);
 };
 
-},{}],41:[function(require,module,exports){
-/**
- * Adds all built-in formatters with default names
- */
-module.exports = function(fragments) {
-  if (!fragments || typeof fragments.registerFormatter !== 'function') {
-    throw new TypeError('formatters requires an instance of fragments to register with');
-  }
-
-  fragments.registerFormatter('addQuery', require('./add-query'));
-  fragments.registerFormatter('autolink', require('./autolink'));
-  fragments.registerFormatter('bool', require('./bool'));
-  fragments.registerFormatter('br', require('./br'));
-  fragments.registerFormatter('dateTime', require('./date-time'));
-  fragments.registerFormatter('date', require('./date'));
-  fragments.registerFormatter('escape', require('./escape'));
-  fragments.registerFormatter('filter', require('./filter'));
-  fragments.registerFormatter('float', require('./float'));
-  fragments.registerFormatter('format', require('./format'));
-  fragments.registerFormatter('int', require('./int'));
-  fragments.registerFormatter('json', require('./json'));
-  fragments.registerFormatter('keys', require('./keys'));
-  fragments.registerFormatter('limit', require('./limit'));
-  fragments.registerFormatter('log', require('./log'));
-  fragments.registerFormatter('lower', require('./lower'));
-  fragments.registerFormatter('map', require('./map'));
-  fragments.registerFormatter('newline', require('./newline'));
-  fragments.registerFormatter('p', require('./p'));
-  fragments.registerFormatter('reduce', require('./reduce'));
-  fragments.registerFormatter('reverse', require('./reverse'));
-  fragments.registerFormatter('slice', require('./slice'));
-  fragments.registerFormatter('sort', require('./sort'));
-  fragments.registerFormatter('time', require('./time'));
-  fragments.registerFormatter('upper', require('./upper'));
-};
-
-},{"./add-query":31,"./autolink":32,"./bool":33,"./br":34,"./date":36,"./date-time":35,"./escape":37,"./filter":38,"./float":39,"./format":40,"./int":42,"./json":43,"./keys":44,"./limit":45,"./log":46,"./lower":47,"./map":48,"./newline":49,"./p":50,"./reduce":51,"./reverse":52,"./slice":53,"./sort":54,"./time":55,"./upper":56}],42:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /**
  * Formats the value into an integer or null.
  */
@@ -1917,7 +1807,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],43:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Formats the value into JSON.
  */
@@ -1937,7 +1827,7 @@ module.exports = function(value, isSetter) {
   }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Returns the keys of an object as an array
  */
@@ -1945,7 +1835,7 @@ module.exports = function(value) {
   return value == null ? [] : Object.keys(value);
 };
 
-},{}],45:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Adds a formatter to limit the length of an array or string
  */
@@ -1961,7 +1851,7 @@ module.exports = function(value, limit) {
   }
 };
 
-},{}],46:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 /**
  * Adds a formatter to log the value of the expression, useful for debugging
  */
@@ -1973,7 +1863,7 @@ module.exports = function(value, prefix) {
   return value;
 };
 
-},{}],47:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /**
  * Formats the value into lower case.
  */
@@ -1981,7 +1871,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toLowerCase() : value;
 };
 
-},{}],48:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /**
  * Adds a formatter to map an array or value by the given mapping function
  */
@@ -1996,7 +1886,7 @@ module.exports = function(value, mapFunc) {
   }
 };
 
-},{}],49:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -2015,7 +1905,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":37}],50:[function(require,module,exports){
+},{"./escape":36}],48:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -2031,7 +1921,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":37}],51:[function(require,module,exports){
+},{"./escape":36}],49:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -2050,7 +1940,7 @@ module.exports = function(value, reduceFunc, initialValue) {
   }
 };
 
-},{}],52:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 /**
  * Adds a formatter to reverse an array
  */
@@ -2062,7 +1952,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],53:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -2074,7 +1964,7 @@ module.exports = function(value, index, endIndex) {
   }
 };
 
-},{}],54:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /**
  * Sorts an array given a field name or sort function, and a direction
  */
@@ -2102,7 +1992,7 @@ module.exports = function(value, sortFunc, dir) {
   return value.slice().sort(sortFunc.bind(this));
 };
 
-},{}],55:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -2122,7 +2012,7 @@ module.exports = function(value) {
   return value.toLocaleTimeString();
 };
 
-},{}],56:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /**
  * Formats the value into upper case.
  */
@@ -2130,7 +2020,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toUpperCase() : value;
 };
 
-},{}],57:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -2249,7 +2139,7 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],58:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 module.exports = EventTarget;
 var Class = require('./class');
 
@@ -2306,16 +2196,17 @@ Class.extend(EventTarget, {
   }
 });
 
-},{"./class":57}],59:[function(require,module,exports){
+},{"./class":55}],57:[function(require,module,exports){
 module.exports = require('./src/chip');
 
-},{"./src/chip":62}],60:[function(require,module,exports){
+},{"./src/chip":60}],58:[function(require,module,exports){
 module.exports = App;
 var componentBinding = require('fragments-built-ins/binders/component');
 var Component = require('fragments-built-ins/binders/component-definition');
 var Location = require('routes-js').Location;
 var EventTarget = require('chip-utils/event-target');
-var createFragments = require('./fragments');
+var fragments = require('fragments-js');
+var defaultOptions = require('./default-options')
 var defaultMixin = require('./mixins/default');
 var slice = Array.prototype.slice;
 
@@ -2323,15 +2214,21 @@ var slice = Array.prototype.slice;
 
 // An App represents an app or module that can have routes, controllers, and templates defined.
 function App(options) {
-  options = options || {};
+  options = Object.assign({}, defaultOptions, options);
+  options.binders = Object.assign({}, defaultOptions.binders, options.binders);
+  options.formatters = Object.assign({}, defaultOptions.formatters, options.formatters);
+  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
+  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
+  options.components = Object.assign({}, defaultOptions.components, options.components);
+
   EventTarget.call(this);
-  this.fragments = createFragments();
+  this.fragments = fragments.create(options);
   this.components = {};
   this.fragments.app = this;
   this.location = Location.create(options);
   this.defaultMixin = defaultMixin(this);
   this._listening = false;
-  this.useCustomElements = options.useCustomElements || false;
+  this.useCustomElements = options.useCustomElements;
 
   this.rootElement = options.rootElement || document.documentElement;
   this.sync = this.fragments.sync;
@@ -2341,6 +2238,13 @@ function App(options) {
   this.offSync = this.fragments.offSync;
   this.observe = this.fragments.observe.bind(this.fragments);
   this.location.on('change', this.sync);
+
+  this.fragments.setExpressionDelimiters('attribute', '{{', '}}', !options.curliesInAttributes);
+  this.fragments.animateAttribute = options.animateAttribute;
+
+  Object.keys(options.components).forEach(function(name) {
+    this.component(name, options.components[name]);
+  }, this);
 }
 
 EventTarget.extend(App, {
@@ -2508,7 +2412,31 @@ function createElementPrototype(fragments, ComponentClass) {
 
 }
 
-},{"./fragments":63,"./mixins/default":64,"chip-utils/event-target":58,"fragments-built-ins/binders/component":16,"fragments-built-ins/binders/component-definition":15,"routes-js":86}],61:[function(require,module,exports){
+if (typeof Object.assign !== 'function') {
+  (function () {
+    Object.assign = function (target) {
+      'use strict';
+      if (target === undefined || target === null) {
+        throw new TypeError('Cannot convert undefined or null to object');
+      }
+
+      var output = Object(target);
+      for (var index = 1; index < arguments.length; index++) {
+        var source = arguments[index];
+        if (source !== undefined && source !== null) {
+          for (var nextKey in source) {
+            if (source.hasOwnProperty(nextKey)) {
+              output[nextKey] = source[nextKey];
+            }
+          }
+        }
+      }
+      return output;
+    };
+  })();
+}
+
+},{"./default-options":61,"./mixins/default":62,"chip-utils/event-target":56,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":70,"routes-js":84}],59:[function(require,module,exports){
 var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
@@ -2652,7 +2580,7 @@ module.exports = function() {
   return ifBinder;
 };
 
-},{"fragments-built-ins/binders/if":19,"routes-js":86}],62:[function(require,module,exports){
+},{"fragments-built-ins/binders/if":18,"routes-js":84}],60:[function(require,module,exports){
 var App = require('./app');
 
 // # Chip
@@ -2688,60 +2616,90 @@ chip.Class = require('chip-utils/class');
 chip.EventTarget = require('chip-utils/event-target');
 chip.routes = require('routes-js');
 
-},{"./app":60,"chip-utils/class":57,"chip-utils/event-target":58,"routes-js":86}],63:[function(require,module,exports){
-var createFragments = require('fragments-js').create;
+},{"./app":58,"chip-utils/class":55,"chip-utils/event-target":56,"routes-js":84}],61:[function(require,module,exports){
 
-module.exports = function() {
+module.exports = {
+  useCustomElements: false,
+  curliesInAttributes: false,
+  animateAttribute: '[animate]',
 
-  var fragments = createFragments();
+  binders: {
+    '(keydown.*)': require('fragments-built-ins/binders/key-events')(null, 'keydown'),
+    '(keyup.*)': require('fragments-built-ins/binders/key-events')(null, 'keyup'),
+    '(enter)': require('fragments-built-ins/binders/key-events')('enter'),
+    '(esc)': require('fragments-built-ins/binders/key-events')('esc'),
+    '(*)': require('fragments-built-ins/binders/events')(),
+    '{*}': require('fragments-built-ins/binders/properties')(),
+    '{{*}}': require('fragments-built-ins/binders/properties-2-way')(),
+    '*?': require('fragments-built-ins/binders/attribute-names')(),
+    '[content]': require('fragments-built-ins/binders/component-content')(),
+    '[show]': require('fragments-built-ins/binders/show')(false),
+    '[hide]': require('fragments-built-ins/binders/show')(true),
+    '[for]': require('fragments-built-ins/binders/repeat')(),
+    '#*': require('fragments-built-ins/binders/ref')(),
+    '[text]': require('fragments-built-ins/binders/text')(),
+    '[html]': require('fragments-built-ins/binders/html')(),
+    '[src]': require('fragments-built-ins/binders/properties')('src'),
+    '[log]': require('fragments-built-ins/binders/log')(),
+    '[class]': require('fragments-built-ins/binders/class')(),
+    '[.*]': require('fragments-built-ins/binders/classes')(),
+    '[style.*]': require('fragments-built-ins/binders/styles')(),
+    '[autofocus]': require('fragments-built-ins/binders/autofocus')(),
+    '[autoselect]': require('fragments-built-ins/binders/autoselect')(),
+    '[name]': require('fragments-built-ins/binders/radio')('[value]'),
+    '[value]': require('fragments-built-ins/binders/value')(
+      '[value-events]',
+      '[value-field]'
+    ),
+    '[component]': require('fragments-built-ins/binders/component')(function(componentName) {
+      return this.fragments.app.component(componentName);
+    }),
+    '[if]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
+    '[unless]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
+    '[route]': require('./binders/route')()
+  },
 
-  // Configure
-  fragments.setExpressionDelimiters('attribute', '{{', '}}', true);
-  fragments.animateAttribute = '[animate]';
-  require('fragments-built-ins/animations')(fragments);
-  require('fragments-built-ins/formatters')(fragments);
+  formatters: {
+    addQuery: require('fragments-built-ins/formatters/add-query'),
+    autolink: require('fragments-built-ins/formatters/autolink'),
+    bool: require('fragments-built-ins/formatters/bool'),
+    br: require('fragments-built-ins/formatters/br'),
+    dateTime: require('fragments-built-ins/formatters/date-time'),
+    date: require('fragments-built-ins/formatters/date'),
+    escape: require('fragments-built-ins/formatters/escape'),
+    filter: require('fragments-built-ins/formatters/filter'),
+    float: require('fragments-built-ins/formatters/float'),
+    format: require('fragments-built-ins/formatters/format'),
+    int: require('fragments-built-ins/formatters/int'),
+    json: require('fragments-built-ins/formatters/json'),
+    keys: require('fragments-built-ins/formatters/keys'),
+    limit: require('fragments-built-ins/formatters/limit'),
+    log: require('fragments-built-ins/formatters/log'),
+    lower: require('fragments-built-ins/formatters/lower'),
+    map: require('fragments-built-ins/formatters/map'),
+    newline: require('fragments-built-ins/formatters/newline'),
+    p: require('fragments-built-ins/formatters/p'),
+    reduce: require('fragments-built-ins/formatters/reduce'),
+    reverse: require('fragments-built-ins/formatters/reverse'),
+    slice: require('fragments-built-ins/formatters/slice'),
+    sort: require('fragments-built-ins/formatters/sort'),
+    time: require('fragments-built-ins/formatters/time'),
+    upper: require('fragments-built-ins/formatters/upper')
+  },
 
-  fragments.registerAttribute('(keydown.*)', require('fragments-built-ins/binders/key-events')(null, 'keydown'));
-  fragments.registerAttribute('(keyup.*)', require('fragments-built-ins/binders/key-events')(null, 'keyup'));
-  fragments.registerAttribute('(enter)', require('fragments-built-ins/binders/key-events')('enter'));
-  fragments.registerAttribute('(esc)', require('fragments-built-ins/binders/key-events')('esc'));
-  fragments.registerAttribute('(*)', require('fragments-built-ins/binders/events')());
-  fragments.registerAttribute('{*}', require('fragments-built-ins/binders/properties')());
-  fragments.registerAttribute('{{*}}', require('fragments-built-ins/binders/properties-2-way')());
-  fragments.registerAttribute('*?', require('fragments-built-ins/binders/attribute-names')());
-  fragments.registerAttribute('[content]', require('fragments-built-ins/binders/component-content')());
-  fragments.registerAttribute('[show]', require('fragments-built-ins/binders/show')(false));
-  fragments.registerAttribute('[hide]', require('fragments-built-ins/binders/show')(true));
-  fragments.registerAttribute('[for]', require('fragments-built-ins/binders/repeat')());
-  fragments.registerAttribute('#*', require('fragments-built-ins/binders/ref')());
-  fragments.registerAttribute('[text]', require('fragments-built-ins/binders/text')());
-  fragments.registerAttribute('[html]', require('fragments-built-ins/binders/html')());
-  fragments.registerAttribute('[src]', require('fragments-built-ins/binders/properties')('src'));
-  fragments.registerAttribute('[log]', require('fragments-built-ins/binders/log')());
-  fragments.registerAttribute('[class]', require('fragments-built-ins/binders/class')());
-  fragments.registerAttribute('[.*]', require('fragments-built-ins/binders/classes')());
-  fragments.registerAttribute('[style.*]', require('fragments-built-ins/binders/styles')());
-  fragments.registerAttribute('[autofocus]', require('fragments-built-ins/binders/autofocus')());
-  fragments.registerAttribute('[autoselect]', require('fragments-built-ins/binders/autoselect')());
-  fragments.registerAttribute('[name]', require('fragments-built-ins/binders/radio')('[value]'));
-  fragments.registerAttribute('[value]', require('fragments-built-ins/binders/value')(
-    '[value-events]',
-    '[value-field]'
-  ));
-  fragments.registerAttribute('[component]', require('fragments-built-ins/binders/component')(function(componentName) {
-    return this.fragments.app.component(componentName);
-  }));
+  animations: {
+    'fade': require('fragments-built-ins/animations/fade')(),
+    'slide': require('fragments-built-ins/animations/slide')(),
+    'slide-h': require('fragments-built-ins/animations/slide-horizontal')(),
+    'slide-move': require('fragments-built-ins/animations/slide-move')(),
+    'slide-move-h': require('fragments-built-ins/animations/slide-move-horizontal')(),
+    'slide-fade': require('fragments-built-ins/animations/slide-fade')(),
+    'slide-fade-h': require('fragments-built-ins/animations/slide-fade-horizontal')()
+  }
 
-  var IfBinding = require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]');
-  fragments.registerAttribute('[if]', IfBinding);
-  fragments.registerAttribute('[unless]', IfBinding);
-
-  fragments.registerAttribute('[route]', require('./binders/route')());
-
-  return fragments;
 };
 
-},{"./binders/route":61,"fragments-built-ins/animations":2,"fragments-built-ins/binders/attribute-names":9,"fragments-built-ins/binders/autofocus":10,"fragments-built-ins/binders/autoselect":11,"fragments-built-ins/binders/class":12,"fragments-built-ins/binders/classes":13,"fragments-built-ins/binders/component":16,"fragments-built-ins/binders/component-content":14,"fragments-built-ins/binders/events":17,"fragments-built-ins/binders/html":18,"fragments-built-ins/binders/if":19,"fragments-built-ins/binders/key-events":20,"fragments-built-ins/binders/log":21,"fragments-built-ins/binders/properties":23,"fragments-built-ins/binders/properties-2-way":22,"fragments-built-ins/binders/radio":24,"fragments-built-ins/binders/ref":25,"fragments-built-ins/binders/repeat":26,"fragments-built-ins/binders/show":27,"fragments-built-ins/binders/styles":28,"fragments-built-ins/binders/text":29,"fragments-built-ins/binders/value":30,"fragments-built-ins/formatters":41,"fragments-js":72}],64:[function(require,module,exports){
+},{"./binders/route":59,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/radio":23,"fragments-built-ins/binders/ref":24,"fragments-built-ins/binders/repeat":25,"fragments-built-ins/binders/show":26,"fragments-built-ins/binders/styles":27,"fragments-built-ins/binders/text":28,"fragments-built-ins/binders/value":29,"fragments-built-ins/formatters/add-query":30,"fragments-built-ins/formatters/autolink":31,"fragments-built-ins/formatters/bool":32,"fragments-built-ins/formatters/br":33,"fragments-built-ins/formatters/date":35,"fragments-built-ins/formatters/date-time":34,"fragments-built-ins/formatters/escape":36,"fragments-built-ins/formatters/filter":37,"fragments-built-ins/formatters/float":38,"fragments-built-ins/formatters/format":39,"fragments-built-ins/formatters/int":40,"fragments-built-ins/formatters/json":41,"fragments-built-ins/formatters/keys":42,"fragments-built-ins/formatters/limit":43,"fragments-built-ins/formatters/log":44,"fragments-built-ins/formatters/lower":45,"fragments-built-ins/formatters/map":46,"fragments-built-ins/formatters/newline":47,"fragments-built-ins/formatters/p":48,"fragments-built-ins/formatters/reduce":49,"fragments-built-ins/formatters/reverse":50,"fragments-built-ins/formatters/slice":51,"fragments-built-ins/formatters/sort":52,"fragments-built-ins/formatters/time":53,"fragments-built-ins/formatters/upper":54}],62:[function(require,module,exports){
 
 module.exports = function(app) {
 
@@ -2832,10 +2790,10 @@ module.exports = function(app) {
   };
 };
 
-},{}],65:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 module.exports = require('./src/diff');
 
-},{"./src/diff":66}],66:[function(require,module,exports){
+},{"./src/diff":64}],64:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -3241,10 +3199,10 @@ var diff = exports;
   }
 })();
 
-},{}],67:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports = require('./src/expressions');
 
-},{"./src/expressions":68}],68:[function(require,module,exports){
+},{"./src/expressions":66}],66:[function(require,module,exports){
 var slice = Array.prototype.slice;
 var strings = require('./strings');
 var formatterParser = require('./formatters');
@@ -3343,7 +3301,7 @@ function bindArguments(func) {
   }
 }
 
-},{"./formatters":69,"./property-chains":70,"./strings":71}],69:[function(require,module,exports){
+},{"./formatters":67,"./property-chains":68,"./strings":69}],67:[function(require,module,exports){
 
 // finds pipes that are not ORs (i.e. ` | ` not ` || `) for formatters
 var pipeRegex = /\|(\|)?/g;
@@ -3415,7 +3373,7 @@ exports.parseFormatters = function(expr) {
   return setter + value;
 };
 
-},{}],70:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var referenceCount = 0;
 var currentReference = 0;
 var currentIndex = 0;
@@ -3744,7 +3702,7 @@ function addReferences(expr) {
   return expr;
 }
 
-},{}],71:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 // finds all quoted strings
 var quoteRegex = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -3790,13 +3748,15 @@ exports.putInStrings = function(expr) {
   return expr;
 };
 
-},{}],72:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var Fragments = require('./src/fragments');
 var Observations = require('observations-js');
 
-function create() {
+function create(options) {
+  options = options || {};
   var observations = Observations.create();
-  var fragments = new Fragments(observations);
+  options.observations = observations;
+  var fragments = new Fragments(options);
   fragments.sync = observations.sync.bind(observations);
   fragments.syncNow = observations.syncNow.bind(observations);
   fragments.afterSync = observations.afterSync.bind(observations);
@@ -3806,10 +3766,9 @@ function create() {
 }
 
 // Create an instance of fragments with the default observer
-module.exports = create();
-module.exports.create = create;
+exports.create = create;
 
-},{"./src/fragments":76,"observations-js":82}],73:[function(require,module,exports){
+},{"./src/fragments":74,"observations-js":80}],71:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -3951,6 +3910,7 @@ Binding.extend(AnimatedBinding, {
 
     if (this.animateObject && typeof this.animateObject === 'object') {
       animateObject = this.animateObject;
+      animateObject.fragments = this.fragments;
     } else if (this.animateClassName) {
       className = this.animateClassName;
     } else if (typeof this.animateObject === 'string') {
@@ -4056,7 +4016,7 @@ function onAnimationEnd(node, duration, callback) {
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":74,"./util/animation":78}],74:[function(require,module,exports){
+},{"./binding":72,"./util/animation":76}],72:[function(require,module,exports){
 module.exports = Binding;
 var Class = require('chip-utils/class');
 
@@ -4226,7 +4186,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"chip-utils/class":57}],75:[function(require,module,exports){
+},{"chip-utils/class":55}],73:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4394,7 +4354,7 @@ function notEmpty(value) {
   return Boolean(value);
 }
 
-},{}],76:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -4412,15 +4372,15 @@ var escapedWildcardExpr = /(^|[^\\])\\\*/;
  * A Fragments object serves as a registry for binders and formatters
  * @param {Observations} observations An instance of Observations for tracking changes to the data
  */
-function Fragments(observations) {
-  if (!observations) {
-    throw new TypeError('Must provide an observations instance to Fragments.');
+function Fragments(options) {
+  if (!options || !options.observations) {
+    throw new TypeError('Must provide an observations instance to Fragments in options.');
   }
 
   this.compiling = false;
-  this.observations = observations;
-  this.globals = observations.globals;
-  this.formatters = observations.formatters;
+  this.observations = options.observations;
+  this.globals = options.observations.globals;
+  this.formatters = options.observations.formatters;
   this.animations = {};
   this.animateAttribute = 'animate';
 
@@ -4443,9 +4403,19 @@ function Fragments(observations) {
       this.element.removeAttribute(this.name);
     }
   });
+
+  this.addOptions(options);
 }
 
 Class.extend(Fragments, {
+
+  addOptions: function(options) {
+    if (options) {
+      processOption(options.binders, this, 'registerAttribute');
+      processOption(options.formatters, this, 'registerFormatter');
+      processOption(options.animations, this, 'registerAnimation');
+    }
+  },
 
   /**
    * Takes an HTML string, an element, an array of elements, or a document fragment, and compiles it into a template.
@@ -5041,7 +5011,14 @@ function escapeRegExp(text) {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 }
 
-},{"./animatedBinding":73,"./binding":74,"./compile":75,"./template":77,"./util/animation":78,"./util/polyfills":79,"./util/toFragment":80,"./view":81,"chip-utils/class":57}],77:[function(require,module,exports){
+function processOption(obj, fragments, methodName) {
+  if (obj) {
+    Object.keys(obj).forEach(function(name) {
+      fragments[methodName](name, obj[name]);
+    });
+  }
+}
+},{"./animatedBinding":71,"./binding":72,"./compile":73,"./template":75,"./util/animation":76,"./util/polyfills":77,"./util/toFragment":78,"./view":79,"chip-utils/class":55}],75:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5081,7 +5058,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":81,"chip-utils/class":57}],78:[function(require,module,exports){
+},{"./view":79,"chip-utils/class":55}],76:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5172,7 +5149,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],79:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 
 
 
@@ -5199,7 +5176,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],80:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5322,7 +5299,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],81:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5455,7 +5432,7 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":57}],82:[function(require,module,exports){
+},{"chip-utils/class":55}],80:[function(require,module,exports){
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
@@ -5463,9 +5440,9 @@ exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observations":84,"./src/observer":85}],83:[function(require,module,exports){
-arguments[4][57][0].apply(exports,arguments)
-},{"dup":57}],84:[function(require,module,exports){
+},{"./src/observations":82,"./src/observer":83}],81:[function(require,module,exports){
+arguments[4][55][0].apply(exports,arguments)
+},{"dup":55}],82:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -5633,7 +5610,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./observer":85,"chip-utils/class":83}],85:[function(require,module,exports){
+},{"./observer":83,"chip-utils/class":81}],83:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -5760,7 +5737,7 @@ Class.extend(Observer, {
   }
 });
 
-},{"chip-utils/class":83,"differences-js":65,"expressions-js":67}],86:[function(require,module,exports){
+},{"chip-utils/class":81,"differences-js":63,"expressions-js":65}],84:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -5771,7 +5748,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":89,"./src/location":90,"./src/push-location":91,"./src/route":92,"./src/router":93}],87:[function(require,module,exports){
+},{"./src/hash-location":87,"./src/location":88,"./src/push-location":89,"./src/route":90,"./src/router":91}],85:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -5882,9 +5859,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],88:[function(require,module,exports){
-arguments[4][58][0].apply(exports,arguments)
-},{"./class":87,"dup":58}],89:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"./class":85,"dup":56}],87:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -5911,7 +5888,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":90}],90:[function(require,module,exports){
+},{"./location":88}],88:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -6019,7 +5996,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":89,"./push-location":91,"chip-utils/event-target":88}],91:[function(require,module,exports){
+},{"./hash-location":87,"./push-location":89,"chip-utils/event-target":86}],89:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -6055,7 +6032,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":90}],92:[function(require,module,exports){
+},{"./location":88}],90:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -6140,7 +6117,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":87}],93:[function(require,module,exports){
+},{"chip-utils/class":85}],91:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -6301,6 +6278,6 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":90,"./route":92,"chip-utils/event-target":88}]},{},[59])(59)
+},{"./location":88,"./route":90,"chip-utils/event-target":86}]},{},[57])(57)
 });
 //# sourceMappingURL=chip.js.map

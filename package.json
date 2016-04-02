@@ -1,6 +1,6 @@
 {
   "name": "chip-js",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "scripts": {
     "test": "karma start --singleRun=true",
     "tdd": "karma start",
@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "chip-utils": "~0.2.6",
-    "fragments-js": "~0.6.1",
-    "fragments-built-ins": "~0.6.1",
+    "fragments-js": "~0.6.2",
+    "fragments-built-ins": "~0.6.2",
     "routes-js": "~0.1.3"
   },
   "devDependencies": {
