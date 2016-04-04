@@ -102,8 +102,8 @@ EventTarget.extend(App, {
 
 
   // Redirects to the provided URL
-  redirect: function(url) {
-    return this.location.url = url;
+  redirect: function(url, replace) {
+    return this.location.redirect(url, replace);
   },
 
 

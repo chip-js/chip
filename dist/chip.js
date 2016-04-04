@@ -473,9 +473,7 @@ function Component(element, contentTemplate) {
   }
 
   if (this._view) {
-    this._view.bind(this);
     this.element.appendChild(this._view);
-    this._view.attached();
   }
 
   this.ready();
@@ -507,6 +505,7 @@ Class.extend(Component, {
   },
 
   attached: function() {
+    this._view.bind(this);
     callOnMixins(this, this.mixins, 'attached', arguments);
     this._view.attached();
     this._view.sync();
@@ -516,6 +515,7 @@ Class.extend(Component, {
     callOnMixins(this, this.mixins, 'detached', arguments);
     this._view.sync();
     this._view.detached();
+    this._view.unbind();
   }
 
 });
@@ -700,8 +700,13 @@ module.exports = function(specificEventName) {
       this.priorElementDescriptor = priorElementDescriptor;
       this.lastContext = this.context;
 
+      // DEPRECATE
       this.context.event = event;
       this.context.element = this.element;
+      // END DEPRECATE
+
+      this.context.$event = event;
+      this.context.$element = this.element;
     },
 
     clearEvent: function() {
@@ -724,6 +729,8 @@ module.exports = function(specificEventName) {
         delete context.element;
       }
 
+      delete context.$event;
+      delete context.$element;
       this.event = null;
       this.lastContext = null;
     }
@@ -2304,8 +2311,8 @@ EventTarget.extend(App, {
 
 
   // Redirects to the provided URL
-  redirect: function(url) {
-    return this.location.url = url;
+  redirect: function(url, replace) {
+    return this.location.redirect(url, replace);
   },
 
 
@@ -5879,7 +5886,7 @@ Location.extend(HashLocation, {
   },
 
   set url(value) {
-    if (value.charAt(0) === '.' || value.split('//').length > 1) {
+    if (value.charAt(0) !== '/' || value.split('//').length > 1) {
       value = this.getRelativeUrl(value);
     }
 
@@ -5943,6 +5950,10 @@ EventTarget.extend(Location, {
     var path = anchor.pathname;
     // Fix IE's missing slash prefix
     return (path[0] === '/') ? path : '/' + path;
+  },
+
+  redirect: function(url, replace) {
+    this.url = url;
   },
 
   get url() {
@@ -6015,20 +6026,24 @@ Location.extend(PushLocation, {
 
   historyEventName: 'popstate',
 
+  redirect: function(value, replace) {
+    if (value.charAt(0) !== '/' || value.split('//').length > 1) {
+      value = this.getRelativeUrl(value);
+    }
+
+    if (this.currentUrl !== value) {
+      replace ? history.replaceState({}, '', value) : history.pushState({}, '', value);
+      // Manually change since no event is dispatched when using pushState/replaceState
+      this._changeTo(value);
+    }
+  },
+
   get url() {
     return location.href.replace(this.baseURI, '').split('#').shift();
   },
 
   set url(value) {
-    if (value.charAt(0) === '.' || value.split('//').length > 1) {
-      value = this.getRelativeUrl(value);
-    }
-
-    if (this.currentUrl !== value) {
-      history.pushState({}, '', value);
-      // Manually change since no event is dispatched when using pushState/replaceState
-      this._changeTo(value);
-    }
+    this.redirect(value);
   }
 });
 

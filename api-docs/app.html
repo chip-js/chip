@@ -223,8 +223,8 @@ then returns a new instance of a defined template. This instance is a document f
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  redirect: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">url</span>) </span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.location.url = url;
+            <div class="content"><div class='highlight'><pre>  redirect: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">url, replace</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.location.redirect(url, replace);
   },
 
 
