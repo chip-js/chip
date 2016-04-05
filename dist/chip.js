@@ -640,6 +640,14 @@ module.exports = function(ComponentClass) {
 
       this.component = new this.ComponentClass(this.element, this.contentTemplate);
       this.element.component = this.component;
+      this.element.dispatchEvent(new Event('componentized'));
+
+      var properties = this.element._properties;
+      if (properties) {
+        Object.keys(properties).forEach(function(key) {
+          this.component[key] = properties[key];
+        }, this);
+      }
     },
 
     unmake: function() {
@@ -1012,11 +1020,9 @@ module.exports = function(specificPropertyName) {
 
     created: function() {
       this.twoWayObserver = this.observe(specificPropertyName || this.camelCase, this.sendUpdate, this);
-    },
-
-    // Bind this to the given context object
-    bound: function() {
-      this.twoWayObserver.bind(this.element.component || this.element);
+      this.element.addEventListener('componentized', function() {
+        this.twoWayObserver.bind(this.element.component);
+      }.bind(this));
     },
 
     unbound: function() {
@@ -1025,6 +1031,8 @@ module.exports = function(specificPropertyName) {
 
     sendUpdate: function(value) {
       if (!this.skipSend) {
+        var properties = this.element._properties || (this.element._properties = {});
+        properties[specificPropertyName || this.camelCase] = value;
         this.observer.set(value);
         this.skipSend = true;
         this.fragments.afterSync(function() {
@@ -1035,8 +1043,11 @@ module.exports = function(specificPropertyName) {
 
     updated: function(value) {
       if (!this.skipSend && value !== undefined) {
-        var context = this.element.component || this.element;
-        context[specificPropertyName || this.camelCase] = value;
+        var properties = this.element._properties || (this.element._properties = {});
+        properties[specificPropertyName || this.camelCase] = value;
+        if (this.element.component) {
+          this.element.component[specificPropertyName || this.camelCase] = value;
+        }
         this.skipSend = true;
         this.fragments.afterSync(function() {
           this.skipSend = false;
@@ -1055,8 +1066,11 @@ module.exports = function(specificPropertyName) {
     priority: 10,
 
     updated: function(value) {
-      var context = this.element.component || this.element;
-      context[specificPropertyName || this.camelCase] = value;
+      var properties = this.element._properties || (this.element._properties = {});
+      properties[specificPropertyName || this.camelCase] = value;
+      if (this.element.component) {
+        this.element.component[specificPropertyName || this.camelCase] = value;
+      }
     }
   };
 };
