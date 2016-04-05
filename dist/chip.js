@@ -456,12 +456,11 @@ module.exports = function() {
 },{}],14:[function(require,module,exports){
 module.exports = Component;
 var Class = require('chip-utils/class');
-var lifecycle = [ 'created', 'ready', 'attached', 'detached' ];
+var lifecycle = [ 'created', 'bound', 'attached', 'unbound', 'detached' ];
 
 
 function Component(element, contentTemplate) {
   this.element = element;
-  this.created();
 
   if (this.template) {
     this._view = this.template.createView();
@@ -476,7 +475,7 @@ function Component(element, contentTemplate) {
     this.element.appendChild(this._view);
   }
 
-  this.ready();
+  this.created();
 }
 
 Component.onExtend = function(Class, mixins) {
@@ -492,7 +491,7 @@ Component.onExtend = function(Class, mixins) {
 Class.extend(Component, {
   mixins: [],
 
-  get componentView() {
+  get view() {
     return this._view;
   },
 
@@ -500,22 +499,24 @@ Class.extend(Component, {
     callOnMixins(this, this.mixins, 'created', arguments);
   },
 
-  ready: function() {
-    callOnMixins(this, this.mixins, 'ready', arguments);
+  bound: function() {
+    callOnMixins(this, this.mixins, 'bound', arguments);
+    this._view.bind(this);
   },
 
   attached: function() {
-    this._view.bind(this);
     callOnMixins(this, this.mixins, 'attached', arguments);
     this._view.attached();
-    this._view.sync();
+  },
+
+  unbound: function() {
+    callOnMixins(this, this.mixins, 'unbound', arguments);
+    this._view.unbind();
   },
 
   detached: function() {
     callOnMixins(this, this.mixins, 'detached', arguments);
-    this._view.sync();
     this._view.detached();
-    this._view.unbind();
   }
 
 });
@@ -550,8 +551,6 @@ module.exports = function(ComponentClass) {
 
   return {
 
-    priority: 20,
-
     compiled: function() {
       if (this.element.getAttribute('[unwrap]') !== null) {
         var parent = this.element.parentNode;
@@ -584,6 +583,7 @@ module.exports = function(ComponentClass) {
     },
 
     updated: function(ComponentClass) {
+      this.unbound();
       this.detached();
       this.unmake();
 
@@ -594,12 +594,34 @@ module.exports = function(ComponentClass) {
       this.ComponentClass = ComponentClass;
 
       this.make();
+      this.bound();
       this.attached();
     },
 
     bound: function() {
       // Set for the component-content binder to use
       this.element._parentContext = this.context;
+      if (this.component) {
+        this.component.bound();
+      }
+    },
+
+    unbound: function() {
+      if (this.component) {
+        this.component.unbound();
+      }
+    },
+
+    attached: function() {
+      if (this.component) {
+        this.component.attached();
+      }
+    },
+
+    detached: function() {
+      if (this.component) {
+        this.component.detached();
+      }
     },
 
     compileTemplate: function() {
@@ -632,22 +654,10 @@ module.exports = function(ComponentClass) {
       }
 
       if (this.component) {
-        this.component.componentView.dispose();
+        this.component.view.dispose();
         this.component.element = null;
         this.element.component = null;
         this.component = null;
-      }
-    },
-
-    attached: function() {
-      if (this.component) {
-        this.component.attached();
-      }
-    },
-
-    detached: function() {
-      if (this.component) {
-        this.component.detached();
       }
     }
 
@@ -2296,16 +2306,9 @@ EventTarget.extend(App, {
       ComponentClass = Component.extend.apply(Component, definitions);
     }
 
-    ComponentClass.prototype.tagName = name;
+    ComponentClass.prototype.name = name;
     this.components[name] = ComponentClass;
-
-    if (this.useCustomElements && document.registerElement) {
-      var proto = createElementPrototype(this, ComponentClass);
-      return document.registerElement(name, { prototype: proto });
-    } else {
-      this.fragments.registerElement(name, componentBinding(ComponentClass));
-    }
-
+    this.fragments.registerElement(name, componentBinding(ComponentClass));
     return this;
   },
 
@@ -2389,35 +2392,6 @@ EventTarget.extend(App, {
   }
 
 });
-
-function createElementPrototype(fragments, ComponentClass) {
-  return Object.create(HTMLElement.prototype, {
-    createdCallback: {
-      value: function() {
-        if (ComponentClass.prototype.template && !ComponentClass.prototype.template.compiled) {
-          ComponentClass.prototype.template = fragments.createTemplate(ComponentClass.prototype.template);
-        }
-
-        if (!fragments.compiling) {
-          this.component = new ComponentClass(this);
-        }
-      }
-    },
-
-    attachedCallback: {
-      value: function() {
-        this.component.attached();
-      }
-    },
-
-    detachedCallback: {
-      value: function() {
-        this.component.detached();
-      }
-    }
-  });
-
-}
 
 if (typeof Object.assign !== 'function') {
   (function () {

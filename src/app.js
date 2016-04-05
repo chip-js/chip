@@ -87,16 +87,9 @@ EventTarget.extend(App, {
       ComponentClass = Component.extend.apply(Component, definitions);
     }
 
-    ComponentClass.prototype.tagName = name;
+    ComponentClass.prototype.name = name;
     this.components[name] = ComponentClass;
-
-    if (this.useCustomElements && document.registerElement) {
-      var proto = createElementPrototype(this, ComponentClass);
-      return document.registerElement(name, { prototype: proto });
-    } else {
-      this.fragments.registerElement(name, componentBinding(ComponentClass));
-    }
-
+    this.fragments.registerElement(name, componentBinding(ComponentClass));
     return this;
   },
 
@@ -180,35 +173,6 @@ EventTarget.extend(App, {
   }
 
 });
-
-function createElementPrototype(fragments, ComponentClass) {
-  return Object.create(HTMLElement.prototype, {
-    createdCallback: {
-      value: function() {
-        if (ComponentClass.prototype.template && !ComponentClass.prototype.template.compiled) {
-          ComponentClass.prototype.template = fragments.createTemplate(ComponentClass.prototype.template);
-        }
-
-        if (!fragments.compiling) {
-          this.component = new ComponentClass(this);
-        }
-      }
-    },
-
-    attachedCallback: {
-      value: function() {
-        this.component.attached();
-      }
-    },
-
-    detachedCallback: {
-      value: function() {
-        this.component.detached();
-      }
-    }
-  });
-
-}
 
 if (typeof Object.assign !== 'function') {
   (function () {

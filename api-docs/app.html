@@ -197,16 +197,9 @@ then returns a new instance of a defined template. This instance is a document f
       ComponentClass = Component.extend.apply(Component, definitions);
     }
 
-    ComponentClass.prototype.tagName = name;
+    ComponentClass.prototype.name = name;
     <span class="hljs-keyword">this</span>.components[name] = ComponentClass;
-
-    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.useCustomElements &amp;&amp; <span class="hljs-built_in">document</span>.registerElement) {
-      <span class="hljs-keyword">var</span> proto = createElementPrototype(<span class="hljs-keyword">this</span>, ComponentClass);
-      <span class="hljs-keyword">return</span> <span class="hljs-built_in">document</span>.registerElement(name, { prototype: proto });
-    } <span class="hljs-keyword">else</span> {
-      <span class="hljs-keyword">this</span>.fragments.registerElement(name, componentBinding(ComponentClass));
-    }
-
+    <span class="hljs-keyword">this</span>.fragments.registerElement(name, componentBinding(ComponentClass));
     <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
   },</pre></div></div>
             
@@ -362,35 +355,6 @@ if it is for another protocol or domain, we won’t</p>
   }
 
 });
-
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createElementPrototype</span>(<span class="hljs-params">fragments, ComponentClass</span>) </span>{
-  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Object</span>.create(HTMLElement.prototype, {
-    createdCallback: {
-      value: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-        <span class="hljs-keyword">if</span> (ComponentClass.prototype.template &amp;&amp; !ComponentClass.prototype.template.compiled) {
-          ComponentClass.prototype.template = fragments.createTemplate(ComponentClass.prototype.template);
-        }
-
-        <span class="hljs-keyword">if</span> (!fragments.compiling) {
-          <span class="hljs-keyword">this</span>.component = <span class="hljs-keyword">new</span> ComponentClass(<span class="hljs-keyword">this</span>);
-        }
-      }
-    },
-
-    attachedCallback: {
-      value: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-        <span class="hljs-keyword">this</span>.component.attached();
-      }
-    },
-
-    detachedCallback: {
-      value: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-        <span class="hljs-keyword">this</span>.component.detached();
-      }
-    }
-  });
-
-}
 
 <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> <span class="hljs-built_in">Object</span>.assign !== <span class="hljs-string">'function'</span>) {
   (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{

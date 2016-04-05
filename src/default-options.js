@@ -1,6 +1,5 @@
 
 module.exports = {
-  useCustomElements: false,
   curliesInAttributes: false,
   animateAttribute: '[animate]',
 
