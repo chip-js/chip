@@ -14,13 +14,13 @@ module.exports = function(app) {
       Object.defineProperties(this, {
         _observers: { configurable: true, value: [] },
         _listeners: { configurable: true, value: [] },
-        _attached: { configurable: true, value: false },
+        _bound: { configurable: true, value: false },
       });
     },
 
 
-    attached: function() {
-      this._attached = true;
+    bound: function() {
+      this._bound = true;
       this._observers.forEach(function(observer) {
         observer.bind(this);
       }, this);
@@ -31,8 +31,8 @@ module.exports = function(app) {
     },
 
 
-    detached: function() {
-      this._attached = false;
+    unbound: function() {
+      this._bound = false;
       this._observers.forEach(function(observer) {
         observer.unbind();
       });
@@ -50,8 +50,8 @@ module.exports = function(app) {
 
       var observer = app.observe(expr, callback, this);
       this._observers.push(observer);
-      if (this._attached) {
-        // If not attached will bind on attachment
+      if (this._bound) {
+        // If not bound will bind on attachment
         observer.bind(this);
       }
       return observer;
@@ -80,8 +80,8 @@ module.exports = function(app) {
 
       this._listeners.push(listenerData);
 
-      if (this._attached) {
-        // If not attached will add on attachment
+      if (this._bound) {
+        // If not bound will add on attachment
         target.addEventListener(eventName, listener);
       }
     },

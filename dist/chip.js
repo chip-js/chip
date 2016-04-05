@@ -311,16 +311,10 @@ module.exports = function(specificAttrName) {
 module.exports = function() {
   return {
 
-    bound: function() {
+    attached: function() {
       if (!this.expression || this.observer.get()) {
-        this.focus();
-      }
-    },
-
-    focus: function() {
-      this.fragments.afterSync(function() {
         this.element.focus();
-      }.bind(this));
+      }
     }
 
   };
@@ -2600,7 +2594,6 @@ chip.routes = require('routes-js');
 },{"./app":58,"chip-utils/class":55,"chip-utils/event-target":56,"routes-js":84}],61:[function(require,module,exports){
 
 module.exports = {
-  useCustomElements: false,
   curliesInAttributes: false,
   animateAttribute: '[animate]',
 
@@ -2697,13 +2690,13 @@ module.exports = function(app) {
       Object.defineProperties(this, {
         _observers: { configurable: true, value: [] },
         _listeners: { configurable: true, value: [] },
-        _attached: { configurable: true, value: false },
+        _bound: { configurable: true, value: false },
       });
     },
 
 
-    attached: function() {
-      this._attached = true;
+    bound: function() {
+      this._bound = true;
       this._observers.forEach(function(observer) {
         observer.bind(this);
       }, this);
@@ -2714,8 +2707,8 @@ module.exports = function(app) {
     },
 
 
-    detached: function() {
-      this._attached = false;
+    unbound: function() {
+      this._bound = false;
       this._observers.forEach(function(observer) {
         observer.unbind();
       });
@@ -2733,8 +2726,8 @@ module.exports = function(app) {
 
       var observer = app.observe(expr, callback, this);
       this._observers.push(observer);
-      if (this._attached) {
-        // If not attached will bind on attachment
+      if (this._bound) {
+        // If not bound will bind on attachment
         observer.bind(this);
       }
       return observer;
@@ -2763,8 +2756,8 @@ module.exports = function(app) {
 
       this._listeners.push(listenerData);
 
-      if (this._attached) {
-        // If not attached will add on attachment
+      if (this._bound) {
+        // If not bound will add on attachment
         target.addEventListener(eventName, listener);
       }
     },
