@@ -1,2051 +1,7 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.chip = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/**
- * Fade in and out
- */
-module.exports = function(options) {
-  if (!options) options = {};
-  if (!options.duration) options.duration = 250;
-  if (!options.easing) options.easing = 'ease-in-out';
+module.exports = require('./src/chip');
 
-  return {
-    options: options,
-    animateIn: function(element, done) {
-      element.animate([
-        { opacity: '0' },
-        { opacity: '1' }
-      ], this.options).onfinish = done;
-    },
-    animateOut: function(element, done) {
-      element.animate([
-        { opacity: '1' },
-        { opacity: '0' }
-      ], this.options).onfinish = done;
-    }
-  };
-};
-
-},{}],2:[function(require,module,exports){
-/**
- * Slide left and right
- */
-module.exports = function(options) {
-  if (!options) options = {};
-  if (!options.property) options.property = 'width';
-  return require('./slide-fade')(options);
-};
-
-},{"./slide-fade":3}],3:[function(require,module,exports){
-/**
- * Slide down and up and fade in and out
- */
-module.exports = function(options) {
-  if (!options) options = {};
-  if (!options.duration) options.duration = 250;
-  if (!options.easing) options.easing = 'ease-in-out';
-  if (!options.property) options.property = 'height';
-
-  return {
-    options: options,
-
-    animateIn: function(element, done) {
-      var value = element.getComputedCSS(this.options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var before = { opacity: '0' };
-      var after = { opacity: '1' };
-
-      before[this.options.property] = '0px';
-      after[this.options.property] = value;
-
-      element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
-        element.style.overflow = '';
-        done();
-      };
-    },
-
-    animateOut: function(element, done) {
-      var value = element.getComputedCSS(this.options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var before = { opacity: '1' };
-      var after = { opacity: '0' };
-      before[this.options.property] = value;
-      after[this.options.property] = '0px';
-
-      element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
-        element.style.overflow = '';
-        done();
-      };
-    }
-  };
-};
-
-},{}],4:[function(require,module,exports){
-/**
- * Slide left and right
- */
-module.exports = function(options) {
-  if (!options) options = {};
-  if (!options.property) options.property = 'width';
-  return require('./slide')(options);
-};
-
-},{"./slide":7}],5:[function(require,module,exports){
-/**
- * Move items left and right in a list
- */
-module.exports = function(options) {
-  if (!options) options = {};
-  if (!options.property) options.property = 'width';
-  return require('./slide-move')(options);
-};
-
-},{"./slide-move":6}],6:[function(require,module,exports){
-var slideAnimation = require('./slide');
-var animating = new Map();
-
-/**
- * Move items up and down in a list
- */
-module.exports = function(options) {
-  if (!options) options = {};
-  if (!options.duration) options.duration = 250;
-  if (!options.easing) options.easing = 'ease-in-out';
-  if (!options.property) options.property = 'height';
-
-  return {
-    options: options,
-
-    animateIn: function(element, done) {
-      var value = element.getComputedCSS(options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var item = element.view && element.view._repeatItem_;
-      if (item) {
-        animating.set(item, element);
-        setTimeout(function() {
-          animating.delete(item);
-        });
-      }
-
-      var before = {};
-      var after = {};
-      before[this.options.property] = '0px';
-      after[this.options.property] = value;
-
-      // Do the slide
-      element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
-        element.style.overflow = '';
-        done();
-      };
-    },
-
-    animateOut: function(element, done) {
-      var value = element.getComputedCSS(options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var item = element.view && element.view._repeatItem_;
-      if (item) {
-        var newElement = animating.get(item);
-        if (newElement && newElement.parentNode === element.parentNode) {
-          // This item is being removed in one place and added into another. Make it look like its moving by making both
-          // elements not visible and having a clone move above the items to the new location.
-          element = this.animateMove(element, newElement);
-        }
-      }
-
-      var before = {};
-      var after = {};
-      before[this.options.property] = value;
-      after[this.options.property] = '0px';
-
-      // Do the slide
-      element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
-        element.style.overflow = '';
-        done();
-      };
-    },
-
-    animateMove: function(oldElement, newElement) {
-      var placeholderElement;
-      var parent = newElement.parentNode;
-      if (!parent.__slideMoveHandled) {
-        parent.__slideMoveHandled = true;
-        if (window.getComputedStyle(parent).position === 'static') {
-          parent.style.position = 'relative';
-        }
-      }
-
-      var origStyle = oldElement.getAttribute('style');
-      var style = window.getComputedStyle(oldElement);
-      var marginOffsetLeft = -parseInt(style.marginLeft);
-      var marginOffsetTop = -parseInt(style.marginTop);
-      var oldLeft = oldElement.offsetLeft;
-      var oldTop = oldElement.offsetTop;
-
-      placeholderElement = this.fragments.makeElementAnimatable(oldElement.cloneNode(true));
-      placeholderElement.style.width = oldElement.style.width = style.width;
-      placeholderElement.style.height = oldElement.style.height = style.height;
-      placeholderElement.style.opacity = '0';
-
-      oldElement.style.position = 'absolute';
-      oldElement.style.zIndex = 1000;
-      parent.insertBefore(placeholderElement, oldElement);
-      newElement.style.opacity = '0';
-
-      oldElement.animate([
-        { top: oldTop + marginOffsetTop + 'px', left: oldLeft + marginOffsetLeft + 'px' },
-        { top: newElement.offsetTop + marginOffsetTop + 'px', left: newElement.offsetLeft + marginOffsetLeft + 'px' }
-      ], this.options).onfinish = function() {
-        placeholderElement.remove();
-        origStyle ? oldElement.setAttribute('style', origStyle) : oldElement.removeAttribute('style');
-        newElement.style.opacity = '';
-      };
-
-      return placeholderElement;
-    }
-  };
-};
-
-},{"./slide":7}],7:[function(require,module,exports){
-/**
- * Slide down and up
- */
-module.exports = function(options) {
-  if (!options) options = {};
-  if (!options.duration) options.duration = 250;
-  if (!options.easing) options.easing = 'ease-in-out';
-  if (!options.property) options.property = 'height';
-
-  return {
-    options: options,
-
-    animateIn: function(element, done) {
-      var value = element.getComputedCSS(this.options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var before = {};
-      var after = {};
-      before[this.options.property] = '0px';
-      after[this.options.property] = value;
-
-      element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
-        element.style.overflow = '';
-        done();
-      };
-    },
-
-    animateOut: function(element, done) {
-      var value = element.getComputedCSS(this.options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var before = {};
-      var after = {};
-      before[this.options.property] = value;
-      after[this.options.property] = '0px';
-
-      element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
-        element.style.overflow = '';
-        done();
-      };
-    }
-  };
-};
-
-},{}],8:[function(require,module,exports){
-/**
- * A binder that toggles an attribute on or off if the expression is truthy or falsey. Use for attributes without
- * values such as `selected`, `disabled`, or `readonly`.
- */
-module.exports = function(specificAttrName) {
-  return function(value) {
-    var attrName = specificAttrName || this.match;
-    if (!value) {
-      this.element.removeAttribute(attrName);
-    } else {
-      this.element.setAttribute(attrName, '');
-    }
-  };
-};
-
-},{}],9:[function(require,module,exports){
-/**
- * A binder that automatically focuses the input when it is displayed on screen.
- */
-module.exports = function() {
-  return {
-
-    attached: function() {
-      if (!this.expression || this.observer.get()) {
-        this.element.focus();
-      }
-    }
-
-  };
-};
-
-},{}],10:[function(require,module,exports){
-/**
- * Automatically selects the contents of an input when it receives focus.
- */
-module.exports = function() {
-  return {
-
-    created: function() {
-      var focused, mouseEvent;
-
-      this.element.addEventListener('mousedown', function() {
-        // Use matches since document.activeElement doesn't work well with web components (future compat)
-        focused = this.matches(':focus');
-        mouseEvent = true;
-      });
-
-      this.element.addEventListener('focus', function() {
-        if (!mouseEvent) {
-          this.select();
-        }
-      });
-
-      this.element.addEventListener('mouseup', function() {
-        if (!focused) {
-          this.select();
-        }
-        mouseEvent = false;
-      });
-    }
-
-  };
-};
-
-},{}],11:[function(require,module,exports){
-/**
- * A binder that ensures anything bound to the class attribute won't overrite the classes binder. Should always be bound
- * to "class".
- */
-module.exports = function() {
-  return {
-    onlyWhenBound: true,
-
-    updated: function(value) {
-      var classList = this.element.classList;
-      var classes = {};
-
-      if (value) {
-        if (typeof value === 'string') {
-          value.split(/\s+/).forEach(function(className) {
-            if (className) classes[className] = true;
-          });
-        } else if (typeof value === 'object') {
-          Object.keys(value).forEach(function(className) {
-            if (value[className]) classes[className] = true;
-          });
-        }
-      }
-
-      if (this.classes) {
-        Object.keys(this.classes).forEach(function(className) {
-          if (!classes[className]) classList.remove(className);
-        });
-      }
-
-      Object.keys(classes).forEach(function(className) {
-        classList.add(className);
-      });
-
-      this.classes = classes;
-    }
-  };
-};
-
-},{}],12:[function(require,module,exports){
-/**
- * A binder that adds classes to an element dependent on whether the expression is true or false.
- */
-module.exports = function() {
-  return function(value) {
-    if (value) {
-      this.element.classList.add(this.match);
-    } else {
-      this.element.classList.remove(this.match);
-    }
-  };
-};
-
-},{}],13:[function(require,module,exports){
-/**
- * An element binder that gets filled with the contents put inside a component.
- */
-module.exports = function() {
-  return {
-
-    compiled: function() {
-      if (this.element.childNodes.length) {
-        this.defaultContent = this.fragments.createTemplate(this.element.childNodes);
-      }
-    },
-
-    attached: function() {
-      if (this.content) this.content.attached();
-    },
-
-    detached: function() {
-      if (this.content) this.content.detached();
-    },
-
-    bound: function() {
-      var template = this.context._componentContent || this.defaultContent;
-      if (template) {
-        this.content = template.createView();
-        this.content.bind(this.context);
-        this.element.appendChild(this.content);
-        this.content.attached();
-      }
-    },
-
-    unbound: function() {
-      if (this.content) {
-        this.content.dispose();
-        this.content = null;
-      }
-    }
-  };
-};
-
-},{}],14:[function(require,module,exports){
-module.exports = Component;
-var Class = require('chip-utils/class');
-var lifecycle = [ 'created', 'bound', 'attached', 'unbound', 'detached' ];
-
-
-function Component(element, contentTemplate) {
-  this.element = element;
-
-  if (this.template) {
-    this._view = this.template.createView();
-    if (contentTemplate) {
-      this.element._componentContent = contentTemplate;
-    }
-  } else if (contentTemplate) {
-    this._view = contentTemplate.createView();
-  }
-
-  if (this._view) {
-    this.element.appendChild(this._view);
-  }
-
-  this.created();
-}
-
-Component.onExtend = function(Class, mixins) {
-  Class.prototype.mixins = Class.prototype.mixins.concat(mixins);
-
-  // They will get called via mixins, don't let them override the original methods. To truely override you can define
-  // them after using Class.extend on a component.
-  lifecycle.forEach(function(method) {
-    delete Class.prototype[method];
-  });
-};
-
-Class.extend(Component, {
-  mixins: [],
-
-  get view() {
-    return this._view;
-  },
-
-  created: function() {
-    callOnMixins(this, this.mixins, 'created', arguments);
-  },
-
-  bound: function() {
-    callOnMixins(this, this.mixins, 'bound', arguments);
-    this._view.bind(this);
-  },
-
-  attached: function() {
-    callOnMixins(this, this.mixins, 'attached', arguments);
-    this._view.attached();
-  },
-
-  unbound: function() {
-    callOnMixins(this, this.mixins, 'unbound', arguments);
-    this._view.unbind();
-  },
-
-  detached: function() {
-    callOnMixins(this, this.mixins, 'detached', arguments);
-    this._view.detached();
-  }
-
-});
-
-
-// Calls the method by name on any mixins that have it defined
-function callOnMixins(context, mixins, name, args) {
-  mixins.forEach(function(mixin) {
-    if (typeof mixin[name] === 'function') mixin[name].apply(context, args);
-  });
-}
-
-},{"chip-utils/class":55}],15:[function(require,module,exports){
-var Component = require('./component-definition');
-var slice = Array.prototype.slice;
-
-/**
- * An element binder that binds the template on the definition to fill the contents of the element that matches. Can be
- * used as an attribute binder as well.
- */
-module.exports = function(ComponentClass) {
-  var componentLoader;
-
-  if (typeof ComponentClass !== 'function') {
-    throw new TypeError('Invalid component, requires a subclass of Component or a function which will return such.');
-  }
-
-  if (!(ComponentClass.prototype instanceof Component)) {
-    componentLoader = ComponentClass;
-    ComponentClass = undefined;
-  }
-
-  return {
-
-    compiled: function() {
-      if (this.element.getAttribute('[unwrap]') !== null) {
-        var parent = this.element.parentNode;
-        var placeholder = document.createTextNode('');
-        parent.insertBefore(placeholder, this.element);
-        parent.removeChild(this.element);
-        this.element = placeholder;
-        this.unwrapped = true;
-      } else {
-        this.unwrapped = false;
-      }
-
-      this.ComponentClass = ComponentClass;
-
-      this.compileTemplate();
-
-      var empty = !this.element.childNodes.length ||
-                  (this.element.childNodes.length === 1 &&
-                   this.element.firstChild.nodeType === Node.TEXT_NODE &&
-                   !this.element.firstChild.textContent.trim()
-                  );
-      if (!empty) {
-        // Use the contents of this component to be inserted within it
-        this.contentTemplate = this.fragments.createTemplate(this.element.childNodes);
-      }
-    },
-
-    created: function() {
-      this.make();
-    },
-
-    updated: function(ComponentClass) {
-      this.unbound();
-      this.detached();
-      this.unmake();
-
-      if (typeof ComponentClass === 'string' && componentLoader) {
-        ComponentClass = componentLoader.call(this, ComponentClass);
-      }
-
-      this.ComponentClass = ComponentClass;
-
-      this.make();
-      this.bound();
-      this.attached();
-    },
-
-    bound: function() {
-      // Set for the component-content binder to use
-      this.element._parentContext = this.context;
-      if (this.component) {
-        this.component.bound();
-      }
-    },
-
-    unbound: function() {
-      if (this.component) {
-        this.component.unbound();
-      }
-    },
-
-    attached: function() {
-      if (this.component) {
-        this.component.attached();
-      }
-    },
-
-    detached: function() {
-      if (this.component) {
-        this.component.detached();
-      }
-    },
-
-    compileTemplate: function() {
-      if (!this.ComponentClass) {
-        return;
-      }
-
-      var proto = this.ComponentClass.prototype;
-      if (proto.template && !proto.template.compiled && !proto._compiling) {
-        proto._compiling = true;
-        proto.template = this.fragments.createTemplate(proto.template);
-        delete proto._compiling;
-      }
-    },
-
-    make: function() {
-      if (!this.ComponentClass) {
-        return;
-      }
-
-      this.compileTemplate();
-
-      this.component = new this.ComponentClass(this.element, this.contentTemplate);
-      this.element.component = this.component;
-      this.element.dispatchEvent(new Event('componentized'));
-
-      var properties = this.element._properties;
-      if (properties) {
-        Object.keys(properties).forEach(function(key) {
-          this.component[key] = properties[key];
-        }, this);
-      }
-    },
-
-    unmake: function() {
-      if (!this.ComponentClass) {
-        return;
-      }
-
-      if (this.component) {
-        this.component.view.dispose();
-        this.component.element = null;
-        this.element.component = null;
-        this.component = null;
-      }
-    }
-
-  };
-};
-
-},{"./component-definition":14}],16:[function(require,module,exports){
-/**
- * A binder for adding event listeners. When the event is triggered the expression will be executed. The properties
- * `event` (the event object) and `element` (the element the binder is on) will be available to the expression.
- */
-module.exports = function(specificEventName) {
-  return {
-    created: function() {
-      var eventName = specificEventName || this.match;
-      var _this = this;
-
-      this.element.addEventListener(eventName, function(event) {
-        if (_this.shouldSkip(event)) {
-          return;
-        }
-
-        // Set the event on the context so it may be used in the expression when the event is triggered.
-        var priorEvent = Object.getOwnPropertyDescriptor(_this.context, 'event');
-        var priorElement = Object.getOwnPropertyDescriptor(_this.context, 'element');
-        _this.setEvent(event, priorEvent, priorElement);
-
-        // Let an event binder make the function call with its own arguments
-        _this.observer.get();
-
-        // Reset the context to its prior state
-        _this.clearEvent();
-      });
-    },
-
-    shouldSkip: function(event) {
-      return !this.context || event.currentTarget.hasAttribute('disabled');
-    },
-
-    unbound: function() {
-      this.clearEvent();
-    },
-
-    setEvent: function(event, priorEventDescriptor, priorElementDescriptor) {
-      if (!this.context) {
-        return;
-      }
-      this.event = event;
-      this.priorEventDescriptor = priorEventDescriptor;
-      this.priorElementDescriptor = priorElementDescriptor;
-      this.lastContext = this.context;
-
-      // DEPRECATE
-      this.context.event = event;
-      this.context.element = this.element;
-      // END DEPRECATE
-
-      this.context.$event = event;
-      this.context.$element = this.element;
-    },
-
-    clearEvent: function() {
-      if (!this.event) {
-        return;
-      }
-      var context = this.lastContext;
-
-      if (this.priorEventDescriptor) {
-        Object.defineProperty(context, 'event', this.priorEventDescriptor);
-        this.priorEventDescriptor = null;
-      } else {
-        delete context.event;
-      }
-
-      if (this.priorElementDescriptor) {
-        Object.defineProperty(context, 'element', this.priorElementDescriptor);
-        this.priorElementDescriptor = null;
-      } else {
-        delete context.element;
-      }
-
-      delete context.$event;
-      delete context.$element;
-      this.event = null;
-      this.lastContext = null;
-    }
-  };
-};
-
-},{}],17:[function(require,module,exports){
-/**
- * A binder that displays unescaped HTML inside an element. Be sure it's trusted! This should be used with formatters
- * which create HTML from something safe.
- */
-module.exports = function() {
-  return function(value) {
-    this.element.innerHTML = (value == null ? '' : value);
-  };
-};
-
-},{}],18:[function(require,module,exports){
-/**
- * if, unless, else-if, else-unless, else
- * A binder init function that creates a binder that shows or hides the element if the value is truthy or falsey.
- * Actually removes the element from the DOM when hidden, replacing it with a non-visible placeholder and not needlessly
- * executing bindings inside. Pass in the configuration values for the corresponding partner attributes for unless and
- * else, etc.
- */
-module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnlessAttrName) {
-  return {
-    animated: true,
-    priority: 150,
-
-    compiled: function() {
-      var element = this.element;
-      var expressions = [ wrapIfExp(this.expression, this.name === unlessAttrName) ];
-      var placeholder = document.createTextNode('');
-      var node = element.nextElementSibling;
-      this.element = placeholder;
-      element.parentNode.replaceChild(placeholder, element);
-
-      // Stores a template for all the elements that can go into this spot
-      this.templates = [ this.fragments.createTemplate(element) ];
-
-      // Pull out any other elements that are chained with this one
-      while (node) {
-        var next = node.nextElementSibling;
-        var expression;
-        if (node.hasAttribute(elseIfAttrName)) {
-          expression = this.fragments.codifyExpression('attribute', node.getAttribute(elseIfAttrName));
-          expressions.push(wrapIfExp(expression, false));
-          node.removeAttribute(elseIfAttrName);
-        } else if (node.hasAttribute(elseUnlessAttrName)) {
-          expression = this.fragments.codifyExpression('attribute', node.getAttribute(elseUnlessAttrName));
-          expressions.push(wrapIfExp(expression, true));
-          node.removeAttribute(elseUnlessAttrName);
-        } else if (node.hasAttribute(elseAttrName)) {
-          node.removeAttribute(elseAttrName);
-          next = null;
-        } else {
-          break;
-        }
-
-        node.remove();
-        this.templates.push(this.fragments.createTemplate(node));
-        node = next;
-      }
-
-      // An expression that will return an index. Something like this `expr ? 0 : expr2 ? 1 : expr3 ? 2 : 3`. This will
-      // be used to know which section to show in the if/else-if/else grouping.
-      this.expression = expressions.map(function(expr, index) {
-        return expr + ' ? ' + index + ' : ';
-      }).join('') + expressions.length;
-    },
-
-    updated: function(index) {
-      // For performance provide an alternate code path for animation
-      if (this.animate && this.context && !this.firstUpdate) {
-        this.updatedAnimated(index);
-      } else {
-        this.updatedRegular(index);
-      }
-      this.firstUpdate = false;
-    },
-
-    attached: function() {
-      if (this.showing) {
-        this.showing.attached();
-      }
-    },
-
-    detached: function() {
-      if (this.showing) {
-        this.showing.detached();
-      }
-    },
-
-    add: function(view) {
-      view.bind(this.context);
-      this.element.parentNode.insertBefore(view, this.element.nextSibling);
-      view.attached();
-    },
-
-    // Doesn't do much, but allows sub-classes to alter the functionality.
-    remove: function(view) {
-      view.dispose();
-    },
-
-    updatedRegular: function(index) {
-      if (this.showing) {
-        this.remove(this.showing);
-        this.showing = null;
-      }
-      var template = this.templates[index];
-      if (template) {
-        this.showing = template.createView();
-        this.add(this.showing);
-      }
-    },
-
-    updatedAnimated: function(index) {
-      this.lastValue = index;
-      if (this.animating) {
-        // Obsoleted, will change after animation is finished.
-        this.showing.unbind();
-        return;
-      }
-
-      if (this.showing) {
-        this.animating = true;
-        this.showing.unbind();
-        this.animateOut(this.showing, function() {
-          if (this.animating) {
-            this.animating = false;
-
-            if (this.showing) {
-              // Make sure this wasn't unbound while we were animating (e.g. by a parent `if` that doesn't animate)
-              this.remove(this.showing);
-              this.showing = null;
-            }
-
-            if (this.context) {
-              // finish by animating the new element in (if any), unless no longer bound
-              this.updatedAnimated(this.lastValue);
-            }
-          }
-        });
-        return;
-      }
-
-      var template = this.templates[index];
-      if (template) {
-        this.showing = template.createView();
-        this.add(this.showing);
-        this.animating = true;
-        this.animateIn(this.showing, function() {
-          if (this.animating) {
-            this.animating = false;
-            // if the value changed while this was animating run it again
-            if (this.lastValue !== index) {
-              this.updatedAnimated(this.lastValue);
-            }
-          }
-        });
-      }
-    },
-
-    bound: function() {
-      this.firstUpdate = true;
-    },
-
-    unbound: function() {
-      if (this.showing) {
-        this.showing.unbind();
-      }
-      this.lastValue = null;
-      this.animating = false;
-    }
-  };
-};
-
-function wrapIfExp(expr, isUnless) {
-  if (isUnless) {
-    return '!(' + expr + ')';
-  } else {
-    return expr;
-  }
-}
-
-},{}],19:[function(require,module,exports){
-var keys = {
-  backspace: 8,
-  tab: 9,
-  enter: 13,
-  return: 13,
-  esc: 27,
-  escape: 27,
-  space: 32,
-  left: 37,
-  up: 38,
-  right: 39,
-  down: 40,
-  del: 46,
-  delete: 46
-};
-
-/**
- * Adds a binder which is triggered when a keyboard event's `keyCode` property matches for the above list of keys. If
- * more robust shortcuts are required use the shortcut binder.
- */
-module.exports = function(specificKeyName, specificEventName) {
-  var eventBinder = require('./events')(specificEventName);
-
-  return {
-    compiled: function() {
-      // Split on non-char (e.g. keydown::enter or keyup.esc to handle various styles)
-      var parts = (specificKeyName || this.match).split(/[^a-z]+/);
-      if (this.element.hasOwnProperty('on' + parts[0])) {
-        this.match = parts.shift();
-      } else {
-        this.match = 'keydown';
-      }
-
-      this.ctrlKey = parts[0] === 'ctrl';
-
-      if (this.ctrlKey) {
-        this.keyCode = keys[parts[1]];
-      } else {
-        this.keyCode = keys[parts[0]];
-      }
-    },
-
-    shouldSkip: function(event) {
-      if (this.keyCode) {
-        return eventBinder.shouldSkip.call(this, event) ||
-          this.ctrlKey !== (event.ctrlKey || event.metaKey) ||
-          this.keyCode !== event.keyCode;
-      } else {
-        return eventBinder.shouldSkip.call(this, event);
-      }
-    },
-
-    created: eventBinder.created,
-    unbound: eventBinder.unbound,
-    setEvent: eventBinder.setEvent,
-    clearEvent: eventBinder.clearEvent
-  };
-};
-
-},{"./events":16}],20:[function(require,module,exports){
-/**
- * A binder that prints out the value of the expression to the console.
- */
-module.exports = function() {
-  return {
-    priority: 60,
-    created: function() {
-      if (this.observer) {
-        this.observer.getChangeRecords = true;
-      }
-    },
-
-    updated: function(value) {
-      /*eslint-disable no-console */
-      console.log('%cDebug: %c' + this.expression, 'color:blue;font-weight:bold', 'color:#DF8138', '=', value);
-      /*eslint-enable */
-    }
-  };
-};
-
-},{}],21:[function(require,module,exports){
-/**
- * A binder that sets the property of an element to the value of the expression in a 2-way binding.
- */
-module.exports = function(specificPropertyName) {
-  return {
-    priority: 10,
-
-    created: function() {
-      this.twoWayObserver = this.observe(specificPropertyName || this.camelCase, this.sendUpdate, this);
-      this.element.addEventListener('componentized', function() {
-        this.twoWayObserver.bind(this.element.component);
-      }.bind(this));
-    },
-
-    unbound: function() {
-      this.twoWayObserver.unbind();
-    },
-
-    sendUpdate: function(value) {
-      if (!this.skipSend) {
-        var properties = this.element._properties || (this.element._properties = {});
-        properties[specificPropertyName || this.camelCase] = value;
-        this.observer.set(value);
-        this.skipSend = true;
-        this.fragments.afterSync(function() {
-          this.skipSend = false;
-        }.bind(this));
-      }
-    },
-
-    updated: function(value) {
-      if (!this.skipSend && value !== undefined) {
-        var properties = this.element._properties || (this.element._properties = {});
-        properties[specificPropertyName || this.camelCase] = value;
-        if (this.element.component) {
-          this.element.component[specificPropertyName || this.camelCase] = value;
-        }
-        this.skipSend = true;
-        this.fragments.afterSync(function() {
-          this.skipSend = false;
-        }.bind(this));
-      }
-    }
-  };
-};
-
-},{}],22:[function(require,module,exports){
-/**
- * A binder that sets the property of an element to the value of the expression.
- */
-module.exports = function(specificPropertyName) {
-  return {
-    priority: 10,
-
-    updated: function(value) {
-      var properties = this.element._properties || (this.element._properties = {});
-      properties[specificPropertyName || this.camelCase] = value;
-      if (this.element.component) {
-        this.element.component[specificPropertyName || this.camelCase] = value;
-      }
-    }
-  };
-};
-
-},{}],23:[function(require,module,exports){
-/**
- * A binder for radio buttons specifically
- */
-module.exports = function(valueName) {
-  return {
-    onlyWhenBound: true,
-    priority: 10,
-
-    compiled: function() {
-      var valueExpr;
-      var element = this.element;
-
-      if (valueName && valueName !== 'value' && element.hasAttribute(valueName)) {
-        valueExpr = this.fragments.codifyExpression('attribute', element.getAttribute(valueName), true);
-        element.removeAttribute(valueName);
-      } else if (element.hasAttribute('value')) {
-        valueExpr = this.fragments.codifyExpression('attribute', element.getAttribute('value'), false);
-      } else {
-        return false;
-      }
-
-      element.setAttribute('name', this.expression);
-      this.valueObserver = this.observe(valueExpr);
-    },
-
-    created: function() {
-      this.element.addEventListener('change', function(event) {
-        if (this.element.checked) {
-          this.observer.set(this.valueObserver.get());
-        }
-      }.bind(this));
-    },
-
-    bound: function() {
-      this.valueObserver.bind(this.context);
-    },
-
-    unbound: function() {
-      this.valueObserver.unbind();
-    },
-
-    updated: function(value) {
-      this.element.checked = (value == this.valueObserver.get());
-    }
-  };
-};
-
-
-},{}],24:[function(require,module,exports){
-/**
- * A binder that sets a reference to the element when it is bound.
- */
-module.exports = function () {
-  return {
-    bound: function() {
-      this.context[this.camelCase || this.expression] = this.element;
-    },
-
-    unbound: function() {
-      this.context[this.camelCase || this.expression] = null;
-    }
-  };
-};
-
-},{}],25:[function(require,module,exports){
-var diff = require('differences-js');
-
-/**
- * A binder that duplicate an element for each item in an array. The expression may be of the format `epxr` or
- * `itemName in expr` where `itemName` is the name each item inside the array will be referenced by within bindings
- * inside the element.
- */
-module.exports = function() {
-  return {
-    animated: true,
-    priority: 100,
-
-    compiled: function() {
-      var parent = this.element.parentNode;
-      var placeholder = document.createTextNode('');
-      parent.insertBefore(placeholder, this.element);
-      this.template = this.fragments.createTemplate(this.element);
-      this.element = placeholder;
-
-      var parts = this.expression.split(/\s+in\s+|\s+of\s+/);
-      this.expression = parts.pop();
-      var key = parts.pop();
-      if (key) {
-        parts = key.split(/\s*,\s*/);
-        this.valueName = parts.pop();
-        this.keyName = parts.pop();
-      }
-    },
-
-    created: function() {
-      this.views = [];
-      this.observer.getChangeRecords = true;
-    },
-
-    attached: function() {
-      this.views.forEach(function(view) {
-        view.attached();
-      });
-    },
-
-    detached: function() {
-      this.views.forEach(function(view) {
-        view.detached();
-      });
-    },
-
-    removeView: function(view) {
-      view.dispose();
-      view._repeatItem_ = null;
-    },
-
-    updated: function(value, oldValue, changes) {
-      if (!changes || !this.context) {
-        this.populate(value);
-      } else {
-        if (this.animate) {
-          this.updateChangesAnimated(value, changes);
-        } else {
-          this.updateChanges(value, changes);
-        }
-
-        // Keep the array indexesq updated as the array changes
-        if (Array.isArray(value) && this.keyName) {
-          this.views.forEach(function(view, i) {
-            view.context[this.keyName] = i;
-          }, this);
-        }
-      }
-    },
-
-    // Method for creating and setting up new views for our list
-    createView: function(key, value) {
-      var view = this.template.createView();
-      var context = value;
-      if (this.valueName) {
-        context = Object.create(this.context);
-        if (this.keyName) context[this.keyName] = key;
-        context[this.valueName] = value;
-        context._origContext_ = this.context.hasOwnProperty('_origContext_')
-          ? this.context._origContext_
-          : this.context;
-      }
-      view.bind(context);
-      view._repeatItem_ = value;
-      return view;
-    },
-
-    populate: function(value) {
-      if (this.animating) {
-        this.valueWhileAnimating = value;
-        return;
-      }
-
-      if (this.views.length) {
-        this.views.forEach(this.removeView);
-        this.views.length = 0;
-      }
-
-      if (Array.isArray(value) && value.length) {
-        var frag = document.createDocumentFragment();
-
-        value.forEach(function(item, index) {
-          var view = this.createView(index, item);
-          this.views.push(view);
-          frag.appendChild(view);
-        }, this);
-
-        this.element.parentNode.insertBefore(frag, this.element.nextSibling);
-        if (this.view.inDOM) this.attached();
-      }
-    },
-
-    /**
-     * This un-animated version removes all removed views first so they can be returned to the pool and then adds new
-     * views back in. This is the most optimal method when not animating.
-     */
-    updateChanges: function(value, changes) {
-      // Remove everything first, then add again, allowing for element reuse from the pool
-      var addedCount = 0;
-
-      changes.forEach(function(splice) {
-        if (splice.removed.length) {
-          var removed = this.views.splice(splice.index - addedCount, splice.removed.length);
-          removed.forEach(this.removeView);
-        }
-        addedCount += splice.addedCount;
-      }, this);
-
-      // Add the new/moved views
-      changes.forEach(function(splice) {
-        if (!splice.addedCount) return;
-        var addedViews = [];
-        var fragment = document.createDocumentFragment();
-        var index = splice.index;
-        var endIndex = index + splice.addedCount;
-
-        for (var i = index; i < endIndex; i++) {
-          var item = value[i];
-          var view = this.createView(i, item);
-          addedViews.push(view);
-          fragment.appendChild(view);
-        }
-        this.views.splice.apply(this.views, [ index, 0 ].concat(addedViews));
-        var previousView = this.views[index - 1];
-        var nextSibling = previousView ? previousView.lastViewNode.nextSibling : this.element.nextSibling;
-        this.element.parentNode.insertBefore(fragment, nextSibling);
-        if (this.view.inDOM) this.attached();
-      }, this);
-    },
-
-    /**
-     * This animated version must animate removed nodes out while added nodes are animating in making it less optimal
-     * (but cool looking). It also handles "move" animations for nodes which are moving place within the list.
-     */
-    updateChangesAnimated: function(value, changes) {
-      if (this.animating) {
-        this.valueWhileAnimating = value;
-        return;
-      }
-      var animatingValue = value.slice();
-      var allAdded = [];
-      var allRemoved = [];
-      this.animating = true;
-
-      // Run updates which occured while this was animating.
-      function whenDone() {
-        // The last animation finished will run this
-        if (--whenDone.count !== 0) return;
-
-        allRemoved.forEach(this.removeView);
-
-        if (this.animating) {
-          this.animating = false;
-          if (this.valueWhileAnimating) {
-            var changes = diff.arrays(this.valueWhileAnimating, animatingValue);
-            this.updateChangesAnimated(this.valueWhileAnimating, changes);
-            this.valueWhileAnimating = null;
-          }
-        }
-      }
-      whenDone.count = 0;
-
-      changes.forEach(function(splice) {
-        var addedViews = [];
-        var fragment = document.createDocumentFragment();
-        var index = splice.index;
-        var endIndex = index + splice.addedCount;
-        var removedCount = splice.removed.length;
-
-        for (var i = index; i < endIndex; i++) {
-          var item = value[i];
-          var view = this.createView(i, item);
-          addedViews.push(view);
-          fragment.appendChild(view);
-        }
-
-        var removedViews = this.views.splice.apply(this.views, [ index, removedCount ].concat(addedViews));
-        var previousView = this.views[index - 1];
-        var nextSibling = previousView ? previousView.lastViewNode.nextSibling : this.element.nextSibling;
-        this.element.parentNode.insertBefore(fragment, nextSibling);
-        if (this.view.inDOM) this.attached();
-
-        allAdded = allAdded.concat(addedViews);
-        allRemoved = allRemoved.concat(removedViews);
-      }, this);
-
-
-      allAdded.forEach(function(view) {
-        whenDone.count++;
-        this.animateIn(view, whenDone);
-      }, this);
-
-      allRemoved.forEach(function(view) {
-        whenDone.count++;
-        view.unbind();
-        this.animateOut(view, whenDone);
-      }, this);
-    },
-
-    unbound: function() {
-      this.views.forEach(function(view) {
-        view.unbind();
-        view._repeatItem_ = null;
-      });
-      this.valueWhileAnimating = null;
-      this.animating = false;
-    }
-  };
-};
-
-},{"differences-js":63}],26:[function(require,module,exports){
-/**
- * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
- * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
- * must remain in-DOM or bindings within it must continue to be processed while it is hidden. You should default to
- * using `if`.
- */
-module.exports = function(isHide) {
-  var isShow = !isHide;
-  return {
-    animated: true,
-
-    updated: function(value) {
-      // For performance provide an alternate code path for animation
-      if (this.animate && this.context && !this.firstUpdate) {
-        this.updatedAnimated(value);
-      } else {
-        this.updatedRegular(value);
-      }
-      this.firstUpdate = false;
-    },
-
-    updatedRegular: function(value) {
-      if (value) {
-        this.element.style.display = '';
-      } else {
-        this.element.style.display = 'none';
-      }
-    },
-
-    updatedAnimated: function(value) {
-      this.lastValue = value;
-      if (this.animating) {
-        return;
-      }
-
-      this.animating = true;
-      function onFinish() {
-        // If this.animating is false then the element was unbound during the animation
-        if (this.animating) {
-          this.animating = false;
-          if (this.lastValue !== value) {
-            this.updatedAnimated(this.lastValue);
-          }
-        }
-      }
-
-      // if isShow is truthy and value is truthy
-      if (!!value === !!isShow) {
-        this.element.style.display = '';
-        this.animateIn(this.element, onFinish);
-      } else {
-        this.animateOut(this.element, function() {
-          this.element.style.display = 'none';
-          onFinish.call(this);
-        });
-      }
-    },
-
-    bound: function() {
-      this.firstUpdate = true;
-    },
-
-    unbound: function() {
-      this.element.style.display = '';
-      this.lastValue = null;
-      this.animating = false;
-    }
-  };
-};
-
-},{}],27:[function(require,module,exports){
-var units = {
-  '%': true,
-  'em': true,
-  'px': true,
-  'pt': true
-};
-
-/**
- * A binder that adds styles to an element.
- */
-module.exports = function(specificStyleName, specificUnit) {
-  return {
-    compiled: function() {
-      var styleName = specificStyleName || this.match;
-      var unit;
-
-      if (specificUnit) {
-        unit = specificUnit;
-      } else {
-        var parts = styleName.split(/[^a-z]/i);
-        if (units.hasOwnProperty(parts[parts.length - 1])) {
-          unit = parts.pop();
-          styleName = parts.join('-');
-        }
-      }
-
-      this.unit = unit || '';
-
-      this.styleName = styleName.replace(/-+(\w)/g, function(_, char) {
-        return char.toUpperCase();
-      });
-    },
-
-    updated: function(value) {
-      this.element.style[this.styleName] = (value == null) ? '' : value + this.unit;
-    }
-  };
-};
-
-},{}],28:[function(require,module,exports){
-/**
- * ## text
- * A binder that displays escaped text inside an element. This can be done with binding directly in text nodes but
- * using the attribute binder prevents a flash of unstyled content on the main page.
- *
- * **Example:**
- * ```html
- * <h1 text="{{post.title}}">Untitled</h1>
- * <div html="{{post.body | markdown}}"></div>
- * ```
- * *Result:*
- * ```html
- * <h1>Little Red</h1>
- * <div>
- *   <p>Little Red Riding Hood is a story about a little girl.</p>
- *   <p>
- *     More info can be found on
- *     <a href="http://en.wikipedia.org/wiki/Little_Red_Riding_Hood">Wikipedia</a>
- *   </p>
- * </div>
- * ```
- */
-module.exports = function() {
-  return function(value) {
-    this.element.textContent = (value == null) ? '' : value;
-  };
-};
-
-},{}],29:[function(require,module,exports){
-var inputMethods, defaultInputMethod;
-
-/**
- * A binder that sets the value of an HTML form element. This binder also updates the data as it is changed in
- * the form element, providing two way binding. Can use for "checked" as well.
- */
-module.exports = function(eventsAttrName, fieldAttrName) {
-  return {
-    onlyWhenBound: true,
-    defaultEvents: [ 'change' ],
-
-    compiled: function() {
-      var name = this.element.tagName.toLowerCase();
-      var type = this.element.type;
-      this.methods = inputMethods[type] || inputMethods[name];
-
-      if (!this.methods) {
-        return false;
-      }
-
-      if (eventsAttrName && this.element.hasAttribute(eventsAttrName)) {
-        this.events = this.element.getAttribute(eventsAttrName).split(' ');
-        this.element.removeAttribute(eventsAttrName);
-      } else if (name !== 'option') {
-        this.events = this.defaultEvents;
-      }
-
-      if (fieldAttrName && this.element.hasAttribute(fieldAttrName)) {
-        this.valueField = this.element.getAttribute(fieldAttrName);
-        this.element.removeAttribute(fieldAttrName);
-      }
-
-      if (type === 'option') {
-        this.valueField = this.element.parentNode.valueField;
-      }
-    },
-
-    created: function() {
-      if (!this.events) return; // nothing for <option> here
-      var element = this.element;
-      var observer = this.observer;
-      var input = this.methods;
-      var valueField = this.valueField;
-
-      // The 2-way binding part is setting values on certain events
-      function onChange() {
-        if (input.get.call(element, valueField) !== observer.oldValue && !element.readOnly) {
-          observer.set(input.get.call(element, valueField));
-        }
-      }
-
-      if (element.type === 'text') {
-        element.addEventListener('keydown', function(event) {
-          if (event.keyCode === 13) onChange();
-        });
-      }
-
-      this.events.forEach(function(event) {
-        element.addEventListener(event, onChange);
-      });
-    },
-
-    updated: function(value) {
-      if (this.methods.get.call(this.element, this.valueField) != value) {
-        this.methods.set.call(this.element, value, this.valueField);
-      }
-    }
-  };
-};
-
-
-/**
- * Handle the different form types
- */
-defaultInputMethod = {
-  get: function() { return this.value; },
-  set: function(value) { this.value = (value == null) ? '' : value; }
-};
-
-
-inputMethods = {
-  checkbox: {
-    get: function() { return this.checked; },
-    set: function(value) { this.checked = !!value; }
-  },
-
-  file: {
-    get: function() { return this.files && this.files[0]; },
-    set: function() {}
-  },
-
-  select: {
-    get: function(valueField) {
-      if (valueField) {
-        return this.options[this.selectedIndex].valueObject;
-      } else {
-        return this.value;
-      }
-    },
-    set: function(value, valueField) {
-      if (value && valueField) {
-        this.valueObject = value;
-        this.value = value[valueField];
-      } else {
-        this.value = (value == null) ? '' : value;
-      }
-    }
-  },
-
-  option: {
-    get: function(valueField) {
-      return valueField ? this.valueObject[valueField] : this.value;
-    },
-    set: function(value, valueField) {
-      if (value && valueField) {
-        this.valueObject = value;
-        this.value = value[valueField];
-      } else {
-        this.value = (value == null) ? '' : value;
-      }
-    }
-  },
-
-  input: defaultInputMethod,
-
-  textarea: defaultInputMethod
-};
-
-
-},{}],30:[function(require,module,exports){
-/**
- * Takes the input URL and adds (or replaces) the field in the query.
- * E.g. 'http://example.com?user=default&resource=foo' | addQuery('user', username)
- * Will replace user=default with user={username} where {username} is the value of username.
- */
-module.exports = function(value, queryField, queryValue) {
-  var url = value || location.href;
-  var parts = url.split('?');
-  url = parts[0];
-  var query = parts[1];
-  var addedQuery = '';
-  if (queryValue != null) {
-    addedQuery = queryField + '=' + encodeURIComponent(queryValue);
-  }
-
-  if (query) {
-    var expr = new RegExp('\\b' + queryField + '=[^&]*');
-    if (expr.test(query)) {
-      query = query.replace(expr, addedQuery);
-    } else if (addedQuery) {
-      query += '&' + addedQuery;
-    }
-  } else {
-    query = addedQuery;
-  }
-  if (query) {
-    url += '?' + query;
-  }
-  return url;
-};
-
-},{}],31:[function(require,module,exports){
-var urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
-var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$))/gim;
-/**
- * Adds automatic links to escaped content (be sure to escape user content). Can be used on existing HTML content as it
- * will skip URLs within HTML tags. Passing a value in the second parameter will set the target to that value or
- * `_blank` if the value is `true`.
- */
-module.exports = function(value, target) {
-  var targetString = '';
-  if (typeof target === 'string') {
-    targetString = ' target="' + target + '"';
-  } else if (target) {
-    targetString = ' target="_blank"';
-  }
-
-  return ('' + value).replace(/<[^>]+>|[^<]+/g, function(match) {
-    if (match.charAt(0) === '<') {
-      return match;
-    }
-    var replacedText = match.replace(urlExp, '$1<a href="$2"' + targetString + '>$2</a>');
-    return replacedText.replace(wwwExp, '$1<a href="http://$2"' + targetString + '>$2</a>');
-  });
-};
-
-},{}],32:[function(require,module,exports){
-/**
- * Formats the value into a boolean.
- */
-module.exports = function(value) {
-  return value && value !== '0' && value !== 'false';
-};
-
-},{}],33:[function(require,module,exports){
-var escapeHTML = require('./escape');
-
-/**
- * HTML escapes content adding <br> tags in place of newlines characters.
- */
-module.exports = function(value, setter) {
-  if (setter) {
-    return escapeHTML(value, setter);
-  } else {
-    var lines = (value || '').split(/\r?\n/);
-    return lines.map(escapeHTML).join('<br>\n');
-  }
-};
-
-},{"./escape":36}],34:[function(require,module,exports){
-/**
- * Adds a formatter to format dates and strings simplistically
- */
-module.exports = function(value) {
-  if (!value) {
-    return '';
-  }
-
-  if (!(value instanceof Date)) {
-    value = new Date(value);
-  }
-
-  if (isNaN(value.getTime())) {
-    return '';
-  }
-
-  return value.toLocaleString();
-};
-
-},{}],35:[function(require,module,exports){
-/**
- * Adds a formatter to format dates and strings simplistically
- */
-module.exports = function(value) {
-  if (!value) {
-    return '';
-  }
-
-  if (!(value instanceof Date)) {
-    value = new Date(value);
-  }
-
-  if (isNaN(value.getTime())) {
-    return '';
-  }
-
-  return value.toLocaleDateString();
-};
-
-},{}],36:[function(require,module,exports){
-var div = document.createElement('div');
-
-/**
- * HTML escapes content. For use with other HTML-adding formatters such as autolink.
- */
-module.exports = function (value, setter) {
-  if (setter) {
-    div.innerHTML = value;
-    return div.textContent;
-  } else {
-    div.textContent = value || '';
-    return div.innerHTML;
-  }
-};
-
-},{}],37:[function(require,module,exports){
-/**
- * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
- * functions.
- */
-module.exports = function(value, filterFunc) {
-  if (!Array.isArray(value)) {
-    return [];
-  } else if (!filterFunc) {
-    return value;
-  }
-
-  if (typeof filterFunc === 'function') {
-    value = value.filter(filterFunc, this);
-  } else if (Array.isArray(filterFunc)) {
-    filterFunc.forEach(function(func) {
-      value = value.filter(func, this);
-    });
-  } else if (typeof filterFunc === 'object') {
-    Object.keys(filterFunc).forEach(function(key) {
-      var func = filterFunc[key];
-      if (typeof func === 'function') {
-        value = value.filter(func, this);
-      }
-    });
-  }
-  return value;
-};
-
-},{}],38:[function(require,module,exports){
-/**
- * Formats the value into a float or null.
- */
-module.exports = function(value) {
-  value = parseFloat(value);
-  return isNaN(value) ? null : value;
-};
-
-},{}],39:[function(require,module,exports){
-/**
- * Formats the value something returned by a formatting function passed. Use for custom or one-off formats.
- */
-module.exports = function(value, formatter, isSetter) {
-  return formatter.call(this, value, isSetter);
-};
-
-},{}],40:[function(require,module,exports){
-/**
- * Formats the value into an integer or null.
- */
-module.exports = function(value) {
-  value = parseInt(value);
-  return isNaN(value) ? null : value;
-};
-
-},{}],41:[function(require,module,exports){
-/**
- * Formats the value into JSON.
- */
-module.exports = function(value, isSetter) {
-  if (isSetter) {
-    try {
-      return JSON.parse(value);
-    } catch(err) {
-      return null;
-    }
-  } else {
-    try {
-      return JSON.stringify(value);
-    } catch(err) {
-      return err.toString();
-    }
-  }
-};
-
-},{}],42:[function(require,module,exports){
-/**
- * Returns the keys of an object as an array
- */
-module.exports = function(value) {
-  return value == null ? [] : Object.keys(value);
-};
-
-},{}],43:[function(require,module,exports){
-/**
- * Adds a formatter to limit the length of an array or string
- */
-module.exports = function(value, limit) {
-  if (value && typeof value.slice === 'function') {
-    if (limit < 0) {
-      return value.slice(limit);
-    } else {
-      value.slice(0, limit);
-    }
-  } else {
-    return value;
-  }
-};
-
-},{}],44:[function(require,module,exports){
-/**
- * Adds a formatter to log the value of the expression, useful for debugging
- */
-module.exports = function(value, prefix) {
-  if (prefix == null) prefix = 'Log:';
-  /*eslint-disable no-console */
-  console.log('%c' + prefix, 'color:blue;font-weight:bold', value);
-  /*eslint-enable */
-  return value;
-};
-
-},{}],45:[function(require,module,exports){
-/**
- * Formats the value into lower case.
- */
-module.exports = function(value) {
-  return typeof value === 'string' ? value.toLowerCase() : value;
-};
-
-},{}],46:[function(require,module,exports){
-/**
- * Adds a formatter to map an array or value by the given mapping function
- */
-module.exports = function(value, mapFunc) {
-  if (value == null || typeof mapFunc !== 'function') {
-    return value;
-  }
-  if (Array.isArray(value)) {
-    return value.map(mapFunc, this);
-  } else {
-    return mapFunc.call(this, value);
-  }
-};
-
-},{}],47:[function(require,module,exports){
-var escapeHTML = require('./escape');
-
-/**
- * HTML escapes content adding <p> tags at double newlines and <br> tags in place of single newline characters.
- */
-module.exports = function(value, setter) {
-  if (setter) {
-    return escapeHTML(value, setter);
-  } else {
-    var paragraphs = (value || '').split(/\r?\n\s*\r?\n/);
-    var escaped = paragraphs.map(function(paragraph) {
-      var lines = paragraph.split(/\r?\n/);
-      return lines.map(escapeHTML).join('<br>\n');
-    });
-    return '<p>' + escaped.join('</p>\n\n<p>') + '</p>';
-  }
-};
-
-},{"./escape":36}],48:[function(require,module,exports){
-var escapeHTML = require('./escape');
-
-/**
- * HTML escapes content wrapping lines into paragraphs (in <p> tags).
- */
-module.exports = function(value, setter) {
-  if (setter) {
-    return escapeHTML(value, setter);
-  } else {
-    var lines = (value || '').split(/\r?\n/);
-    var escaped = lines.map(function(line) { return escapeHTML(line) || '<br>'; });
-    return '<p>' + escaped.join('</p>\n<p>') + '</p>';
-  }
-};
-
-},{"./escape":36}],49:[function(require,module,exports){
-/**
- * Adds a formatter to reduce an array or value by the given reduce function
- */
-module.exports = function(value, reduceFunc, initialValue) {
-  if (value == null || typeof mapFunc !== 'function') {
-    return value;
-  }
-  if (Array.isArray(value)) {
-    if (arguments.length === 3) {
-      return value.reduce(reduceFunc, initialValue);
-    } else {
-      return value.reduce(reduceFunc);
-    }
-  } else if (arguments.length === 3) {
-    return reduceFunc(initialValue, value);
-  }
-};
-
-},{}],50:[function(require,module,exports){
-/**
- * Adds a formatter to reverse an array
- */
-module.exports = function(value) {
-  if (Array.isArray(value)) {
-    return value.slice().reverse();
-  } else {
-    return value;
-  }
-};
-
-},{}],51:[function(require,module,exports){
-/**
- * Adds a formatter to reduce an array or value by the given reduce function
- */
-module.exports = function(value, index, endIndex) {
-  if (Array.isArray(value)) {
-    return value.slice(index, endIndex);
-  } else {
-    return value;
-  }
-};
-
-},{}],52:[function(require,module,exports){
-/**
- * Sorts an array given a field name or sort function, and a direction
- */
-module.exports = function(value, sortFunc, dir) {
-  if (!sortFunc || !Array.isArray(value)) {
-    return value;
-  }
-  dir = (dir === 'desc') ? -1 : 1;
-  if (typeof sortFunc === 'string') {
-    var parts = sortFunc.split(':');
-    var prop = parts[0];
-    var dir2 = parts[1];
-    dir2 = (dir2 === 'desc') ? -1 : 1;
-    dir = dir || dir2;
-    sortFunc = function(a, b) {
-      if (a[prop] > b[prop]) return dir;
-      if (a[prop] < b[prop]) return -dir;
-      return 0;
-    };
-  } else if (dir === -1) {
-    var origFunc = sortFunc;
-    sortFunc = function(a, b) { return -origFunc(a, b); };
-  }
-
-  return value.slice().sort(sortFunc.bind(this));
-};
-
-},{}],53:[function(require,module,exports){
-/**
- * Adds a formatter to format dates and strings simplistically
- */
-module.exports = function(value) {
-  if (!value) {
-    return '';
-  }
-
-  if (!(value instanceof Date)) {
-    value = new Date(value);
-  }
-
-  if (isNaN(value.getTime())) {
-    return '';
-  }
-
-  return value.toLocaleTimeString();
-};
-
-},{}],54:[function(require,module,exports){
-/**
- * Formats the value into upper case.
- */
-module.exports = function(value) {
-  return typeof value === 'string' ? value.toUpperCase() : value;
-};
-
-},{}],55:[function(require,module,exports){
+},{"./src/chip":88}],2:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -2164,7 +120,7 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],56:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 module.exports = EventTarget;
 var Class = require('./class');
 
@@ -2221,567 +177,10 @@ Class.extend(EventTarget, {
   }
 });
 
-},{"./class":55}],57:[function(require,module,exports){
-module.exports = require('./src/chip');
-
-},{"./src/chip":60}],58:[function(require,module,exports){
-module.exports = App;
-var componentBinding = require('fragments-built-ins/binders/component');
-var Component = require('fragments-built-ins/binders/component-definition');
-var Location = require('routes-js').Location;
-var EventTarget = require('chip-utils/event-target');
-var fragments = require('fragments-js');
-var defaultOptions = require('./default-options')
-var defaultMixin = require('./mixins/default');
-var slice = Array.prototype.slice;
-
-// # Chip App
-
-// An App represents an app or module that can have routes, controllers, and templates defined.
-function App(options) {
-  options = Object.assign({}, defaultOptions, options);
-  options.binders = Object.assign({}, defaultOptions.binders, options.binders);
-  options.formatters = Object.assign({}, defaultOptions.formatters, options.formatters);
-  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
-  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
-  options.components = Object.assign({}, defaultOptions.components, options.components);
-
-  EventTarget.call(this);
-  this.fragments = fragments.create(options);
-  this.components = {};
-  this.fragments.app = this;
-  this.location = Location.create(options);
-  this.defaultMixin = defaultMixin(this);
-  this._listening = false;
-  this.useCustomElements = options.useCustomElements;
-
-  this.rootElement = options.rootElement || document.documentElement;
-  this.sync = this.fragments.sync;
-  this.syncNow = this.fragments.syncNow;
-  this.afterSync = this.fragments.afterSync;
-  this.onSync = this.fragments.onSync;
-  this.offSync = this.fragments.offSync;
-  this.observe = this.fragments.observe.bind(this.fragments);
-  this.location.on('change', this.sync);
-
-  this.fragments.setExpressionDelimiters('attribute', '{{', '}}', !options.curliesInAttributes);
-  this.fragments.animateAttribute = options.animateAttribute;
-
-  Object.keys(options.components).forEach(function(name) {
-    this.component(name, options.components[name]);
-  }, this);
-}
-
-EventTarget.extend(App, {
-
-  init: function(root) {
-    if (this.inited) {
-      return;
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', this.init.bind(this, root));
-      return;
-    }
-
-    this.inited = true
-    if (root) {
-      this.rootElement = root;
-    }
-
-    this.fragments.bindElement(this.rootElement, this);
-    this.rootElement.attached();
-    return this;
-  },
-
-
-  // Components
-  // ----------
-
-  // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
-  // then returns a new instance of a defined template. This instance is a document fragment.
-  component: function(name, definition) {
-    if (arguments.length === 1) {
-      return this.components[name];
-    }
-
-    var ComponentClass;
-    if (definition.prototype instanceof Component) {
-      ComponentClass = definition;
-    } else {
-      var definitions = slice.call(arguments, 1);
-      definitions.unshift(this.defaultMixin);
-      ComponentClass = Component.extend.apply(Component, definitions);
-    }
-
-    ComponentClass.prototype.name = name;
-    this.components[name] = ComponentClass;
-    this.fragments.registerElement(name, componentBinding(ComponentClass));
-    return this;
-  },
-
-
-  // Redirects to the provided URL
-  redirect: function(url, replace) {
-    return this.location.redirect(url, replace);
-  },
-
-
-  get listening() {
-    return this._listening;
-  },
-
-  // Listen to URL changes
-  listen: function() {
-    var app = this;
-    this._listening = true;
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', this.listen.bind(this));
-      return this;
-    }
-
-    // Add handler for when the route changes
-    this._locationChangeHandler = function(event) {
-      app.url = event.detail.url;
-      app.path = event.detail.path;
-      app.query = event.detail.query;
-      app.dispatchEvent(new CustomEvent('urlChange', { detail: event.detail }));
-    };
-
-    // Add handler for clicking links
-    this._clickHandler = function(event) {
-      var anchor;
-      if ( !(anchor = event.target.closest('a[href]')) ) {
-        return;
-      }
-
-      if (event.defaultPrevented ||
-        location.protocol !== anchor.protocol ||
-        location.host !== anchor.host.replace(/:80$|:443$/, ''))
-      {
-        // if something else already handled this, we won't
-        // if it is for another protocol or domain, we won't
-        return;
-      }
-
-      var url = anchor.getAttribute('href').replace(/^#/, '');
-
-      if (event.metaKey || event.ctrlKey || anchor.hasAttribute('target')) {
-        return;
-      }
-
-      event.preventDefault();
-      if (anchor.href === location.href + '#') {
-        return;
-      }
-
-      if (!anchor.disabled) {
-        app.redirect(url);
-      }
-    };
-
-    this.location.on('change', this._locationChangeHandler);
-    this.rootElement.addEventListener('click', this._clickHandler);
-    this.url = this.location.url;
-    this.path = this.location.path;
-    this.query = this.location.query;
-    this.dispatchEvent(new CustomEvent('urlChange', { detail: {
-      url: this.url,
-      path: this.path,
-      query: this.query
-    }}));
-  },
-
-  // Stop listening
-  stop: function() {
-    this.location.off('change', this._locationChangeHandler);
-    this.rootElement.removeEventListener('click', this._clickHandler);
-  }
-
-});
-
-if (typeof Object.assign !== 'function') {
-  (function () {
-    Object.assign = function (target) {
-      'use strict';
-      if (target === undefined || target === null) {
-        throw new TypeError('Cannot convert undefined or null to object');
-      }
-
-      var output = Object(target);
-      for (var index = 1; index < arguments.length; index++) {
-        var source = arguments[index];
-        if (source !== undefined && source !== null) {
-          for (var nextKey in source) {
-            if (source.hasOwnProperty(nextKey)) {
-              output[nextKey] = source[nextKey];
-            }
-          }
-        }
-      }
-      return output;
-    };
-  })();
-}
-
-},{"./default-options":61,"./mixins/default":62,"chip-utils/event-target":56,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":70,"routes-js":84}],59:[function(require,module,exports){
-var Route = require('routes-js').Route;
-var IfBinder = require('fragments-built-ins/binders/if');
-
-module.exports = function() {
-  var ifBinder = IfBinder();
-  var attached = ifBinder.attached;
-  var unbound = ifBinder.unbound;
-  var detached = ifBinder.detached;
-
-  ifBinder.compiled = function() {
-    var noRoute;
-    this.app = this.fragments.app;
-    this.routes = [];
-    this.templates = [];
-    this.expression = '';
-
-    // each child with a [path] attribute will display only when its path matches the URL
-    while (this.element.firstChild) {
-      var child = this.element.firstChild;
-      this.element.removeChild(child);
-
-      if (child.nodeType !== Node.ELEMENT_NODE) {
-        continue;
-      }
-
-      if (child.hasAttribute('[path]')) {
-        var path = child.getAttribute('[path]');
-        child.removeAttribute('[path]');
-        this.routes.push(new Route(path));
-        this.templates.push(this.fragments.createTemplate(child));
-      } else if (child.hasAttribute('[noroute]')) {
-        child.removeAttribute('[noroute]');
-        noRoute = this.fragments.createTemplate(child);
-      }
-    }
-
-    if (noRoute) {
-      this.templates.push(noRoute);
-    }
-  };
-
-  ifBinder.add = function(view) {
-    view.bind(this.context);
-    this.element.appendChild(view);
-    this.attached();
-  };
-
-  ifBinder.created = function() {
-    this.onUrlChange = this.onUrlChange.bind(this);
-  };
-
-
-  ifBinder.attached = function() {
-    attached.call(this);
-
-    var node = this.element.parentNode;
-    while (node && !node.matchedRoutePath) {
-      node = node.parentNode;
-    }
-    this.baseURI = node && node.matchedRoutePath || '';
-
-    this.app.on('urlChange', this.onUrlChange);
-    if (this.app.listening) {
-      this.onUrlChange();
-    }
-  };
-
-  ifBinder.detached = function() {
-    detached.call(this);
-    this.currentIndex = undefined;
-    this.app.off('urlChange', this.onUrlChange);
-  };
-
-  ifBinder.unbound = function() {
-    unbound.call(this);
-    delete this.context.params;
-  };
-
-  ifBinder.onUrlChange = function() {
-    if (!this.context) {
-      return;
-    }
-
-    if (this.element.baseURI === null) {
-      // element.baseURI is null if it isn't in the DOM yet
-      // If this is just getting inserted into the DOM wait for this.baseURI to be set
-      setTimeout(function() {
-        if (!this.context) return;
-        this.checkForChange();
-      }.bind(this));
-    } else {
-      this.checkForChange();
-    }
-  };
-
-  ifBinder.checkForChange = function() {
-    var fullUrl = this.app.path;
-    var localUrl = null;
-    var newIndex = this.routes.length;
-    var matched;
-    delete this.context.params;
-
-    if (fullUrl.indexOf(this.baseURI) === 0) {
-      localUrl = fullUrl.replace(this.baseURI, '');
-    }
-
-    if (localUrl !== null) {
-
-      matched = this.routes.some(function(route, index) {
-        if (route.match(localUrl)) {
-          if (route.params.hasOwnProperty('*') && route.params['*']) {
-            var afterLength = route.params['*'].length;
-            this.element.matchedRoutePath = this.baseURI + localUrl.slice(0, -afterLength);
-          } else {
-            this.element.matchedRoutePath = fullUrl;
-          }
-          var params = this.context.params = Object.create(route.params);
-          var query = this.app.query;
-          Object.keys(query).forEach(function(key) {
-            if (!params.hasOwnProperty(key)) {
-              params[key] = query[key];
-            }
-          });
-
-          newIndex = index;
-          return true;
-        }
-      }, this);
-    }
-
-    if (matched || newIndex !== this.currentIndex) {
-      this.element.dispatchEvent(new Event('routed'));
-    }
-
-    if (newIndex !== this.currentIndex) {
-      this.currentIndex = newIndex;
-      this.updated(this.currentIndex);
-    }
-  };
-
-  return ifBinder;
-};
-
-},{"fragments-built-ins/binders/if":18,"routes-js":84}],60:[function(require,module,exports){
-var App = require('./app');
-
-// # Chip
-
-// > Chip.js 2.0.0
-//
-// > (c) 2013 Jacob Wright, TeamSnap
-// Chip may be freely distributed under the MIT license.
-// For all details and documentation:
-// <https://github.com/teamsnap/chip/>
-
-// Contents
-// --------
-// * [chip](chip.html) the namespace, creates apps, and registers bindings and filters
-// * [App](app.html) represents an app that can have routes, controllers, and templates defined
-// * [Controller](controller.html) is used in the binding to attach data and run actions
-// * [Router](router.html) is used for handling URL rounting
-// * [Default binders](binders.html) registers the default binders chip provides
-
-// Create Chip App
-// -------------
-// Creates a new chip app
-module.exports = chip;
-
-function chip(options) {
-  var app = new App(options);
-  app.init();
-  return app;
-}
-
-chip.App = App;
-chip.Class = require('chip-utils/class');
-chip.EventTarget = require('chip-utils/event-target');
-chip.routes = require('routes-js');
-
-},{"./app":58,"chip-utils/class":55,"chip-utils/event-target":56,"routes-js":84}],61:[function(require,module,exports){
-
-module.exports = {
-  curliesInAttributes: false,
-  animateAttribute: '[animate]',
-
-  binders: {
-    '(keydown.*)': require('fragments-built-ins/binders/key-events')(null, 'keydown'),
-    '(keyup.*)': require('fragments-built-ins/binders/key-events')(null, 'keyup'),
-    '(enter)': require('fragments-built-ins/binders/key-events')('enter'),
-    '(esc)': require('fragments-built-ins/binders/key-events')('esc'),
-    '(*)': require('fragments-built-ins/binders/events')(),
-    '{*}': require('fragments-built-ins/binders/properties')(),
-    '{{*}}': require('fragments-built-ins/binders/properties-2-way')(),
-    '*?': require('fragments-built-ins/binders/attribute-names')(),
-    '[content]': require('fragments-built-ins/binders/component-content')(),
-    '[show]': require('fragments-built-ins/binders/show')(false),
-    '[hide]': require('fragments-built-ins/binders/show')(true),
-    '[for]': require('fragments-built-ins/binders/repeat')(),
-    '#*': require('fragments-built-ins/binders/ref')(),
-    '[text]': require('fragments-built-ins/binders/text')(),
-    '[html]': require('fragments-built-ins/binders/html')(),
-    '[src]': require('fragments-built-ins/binders/properties')('src'),
-    '[log]': require('fragments-built-ins/binders/log')(),
-    '[class]': require('fragments-built-ins/binders/class')(),
-    '[.*]': require('fragments-built-ins/binders/classes')(),
-    '[style.*]': require('fragments-built-ins/binders/styles')(),
-    '[autofocus]': require('fragments-built-ins/binders/autofocus')(),
-    '[autoselect]': require('fragments-built-ins/binders/autoselect')(),
-    '[name]': require('fragments-built-ins/binders/radio')('[value]'),
-    '[value]': require('fragments-built-ins/binders/value')(
-      '[value-events]',
-      '[value-field]'
-    ),
-    '[component]': require('fragments-built-ins/binders/component')(function(componentName) {
-      return this.fragments.app.component(componentName);
-    }),
-    '[if]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
-    '[unless]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
-    '[route]': require('./binders/route')()
-  },
-
-  formatters: {
-    addQuery: require('fragments-built-ins/formatters/add-query'),
-    autolink: require('fragments-built-ins/formatters/autolink'),
-    bool: require('fragments-built-ins/formatters/bool'),
-    br: require('fragments-built-ins/formatters/br'),
-    dateTime: require('fragments-built-ins/formatters/date-time'),
-    date: require('fragments-built-ins/formatters/date'),
-    escape: require('fragments-built-ins/formatters/escape'),
-    filter: require('fragments-built-ins/formatters/filter'),
-    float: require('fragments-built-ins/formatters/float'),
-    format: require('fragments-built-ins/formatters/format'),
-    int: require('fragments-built-ins/formatters/int'),
-    json: require('fragments-built-ins/formatters/json'),
-    keys: require('fragments-built-ins/formatters/keys'),
-    limit: require('fragments-built-ins/formatters/limit'),
-    log: require('fragments-built-ins/formatters/log'),
-    lower: require('fragments-built-ins/formatters/lower'),
-    map: require('fragments-built-ins/formatters/map'),
-    newline: require('fragments-built-ins/formatters/newline'),
-    p: require('fragments-built-ins/formatters/p'),
-    reduce: require('fragments-built-ins/formatters/reduce'),
-    reverse: require('fragments-built-ins/formatters/reverse'),
-    slice: require('fragments-built-ins/formatters/slice'),
-    sort: require('fragments-built-ins/formatters/sort'),
-    time: require('fragments-built-ins/formatters/time'),
-    upper: require('fragments-built-ins/formatters/upper')
-  },
-
-  animations: {
-    'fade': require('fragments-built-ins/animations/fade')(),
-    'slide': require('fragments-built-ins/animations/slide')(),
-    'slide-h': require('fragments-built-ins/animations/slide-horizontal')(),
-    'slide-move': require('fragments-built-ins/animations/slide-move')(),
-    'slide-move-h': require('fragments-built-ins/animations/slide-move-horizontal')(),
-    'slide-fade': require('fragments-built-ins/animations/slide-fade')(),
-    'slide-fade-h': require('fragments-built-ins/animations/slide-fade-horizontal')()
-  }
-
-};
-
-},{"./binders/route":59,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/radio":23,"fragments-built-ins/binders/ref":24,"fragments-built-ins/binders/repeat":25,"fragments-built-ins/binders/show":26,"fragments-built-ins/binders/styles":27,"fragments-built-ins/binders/text":28,"fragments-built-ins/binders/value":29,"fragments-built-ins/formatters/add-query":30,"fragments-built-ins/formatters/autolink":31,"fragments-built-ins/formatters/bool":32,"fragments-built-ins/formatters/br":33,"fragments-built-ins/formatters/date":35,"fragments-built-ins/formatters/date-time":34,"fragments-built-ins/formatters/escape":36,"fragments-built-ins/formatters/filter":37,"fragments-built-ins/formatters/float":38,"fragments-built-ins/formatters/format":39,"fragments-built-ins/formatters/int":40,"fragments-built-ins/formatters/json":41,"fragments-built-ins/formatters/keys":42,"fragments-built-ins/formatters/limit":43,"fragments-built-ins/formatters/log":44,"fragments-built-ins/formatters/lower":45,"fragments-built-ins/formatters/map":46,"fragments-built-ins/formatters/newline":47,"fragments-built-ins/formatters/p":48,"fragments-built-ins/formatters/reduce":49,"fragments-built-ins/formatters/reverse":50,"fragments-built-ins/formatters/slice":51,"fragments-built-ins/formatters/sort":52,"fragments-built-ins/formatters/time":53,"fragments-built-ins/formatters/upper":54}],62:[function(require,module,exports){
-
-module.exports = function(app) {
-
-  return {
-
-    app: app,
-    sync: app.sync,
-    syncNow: app.syncNow,
-    afterSync: app.afterSync,
-    onSync: app.onSync,
-    offSync: app.offSync,
-
-    created: function() {
-      Object.defineProperties(this, {
-        _observers: { configurable: true, value: [] },
-        _listeners: { configurable: true, value: [] },
-        _bound: { configurable: true, value: false },
-      });
-    },
-
-
-    bound: function() {
-      this._bound = true;
-      this._observers.forEach(function(observer) {
-        observer.bind(this);
-      }, this);
-
-      this._listeners.forEach(function(item) {
-        item.target.addEventListener(item.eventName, item.listener);
-      });
-    },
-
-
-    unbound: function() {
-      this._bound = false;
-      this._observers.forEach(function(observer) {
-        observer.unbind();
-      });
-
-      this._listeners.forEach(function(item) {
-        item.target.removeEventListener(item.eventName, item.listener);
-      });
-    },
-
-
-    observe: function(expr, callback) {
-      if (typeof callback !== 'function') {
-        throw new TypeError('callback must be a function');
-      }
-
-      var observer = app.observe(expr, callback, this);
-      this._observers.push(observer);
-      if (this._bound) {
-        // If not bound will bind on attachment
-        observer.bind(this);
-      }
-      return observer;
-    },
-
-
-    listen: function(target, eventName, listener, context) {
-      if (typeof target === 'string') {
-        context = listener;
-        listener = eventName;
-        eventName = target;
-        target = this;
-      }
-
-      if (typeof listener !== 'function') {
-        throw new TypeError('listener must be a function');
-      }
-
-      listener = listener.bind(context || this);
-
-      var listenerData = {
-        target: target,
-        eventName: eventName,
-        listener: listener
-      };
-
-      this._listeners.push(listenerData);
-
-      if (this._bound) {
-        // If not bound will add on attachment
-        target.addEventListener(eventName, listener);
-      }
-    },
-  };
-};
-
-},{}],63:[function(require,module,exports){
+},{"./class":2}],4:[function(require,module,exports){
 module.exports = require('./src/diff');
 
-},{"./src/diff":64}],64:[function(require,module,exports){
+},{"./src/diff":5}],5:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -2827,14 +226,11 @@ var diff = exports;
   }
 
   // A splice record for the array changes
-  function Splice(object, index, removed, addedCount) {
-    ChangeRecord.call(this, object, 'splice', String(index));
+  function Splice(index, removed, addedCount) {
     this.index = index;
     this.removed = removed;
     this.addedCount = addedCount;
   }
-
-  Splice.prototype = Object.create(ChangeRecord.prototype);
 
 
   // Creates a clone or copy of an array or object (or simply returns a string/number/boolean which are immutable)
@@ -2930,41 +326,38 @@ var diff = exports;
   //   oldValue: oldValue
   // }
   // ```
-  function diffObjects(value, oldValue) {
-    if ( !(value && oldValue && typeof value === 'object' && typeof oldValue === 'object')) {
-      throw new TypeError('Both values for diff.object must be objects');
-    }
+  function diffObjects(object, oldObject) {
     var changeRecords = [];
-    var prop, propOldValue, propValue;
+    var prop, oldValue, value;
 
     // Goes through the old object (should be a clone) and look for things that are now gone or changed
-    for (prop in oldValue) {
-      propOldValue = oldValue[prop];
-      propValue = value[prop];
+    for (prop in oldObject) {
+      oldValue = oldObject[prop];
+      value = object[prop];
 
       // Allow for the case of obj.prop = undefined (which is a new property, even if it is undefined)
-      if (propValue !== undefined && !diffBasic(propValue, propOldValue)) {
+      if (value !== undefined && !diffBasic(value, oldValue)) {
         continue;
       }
 
       // If the property is gone it was removed
-      if (! (prop in value)) {
-        changeRecords.push(new ChangeRecord(value, 'delete', prop, propOldValue));
-      } else if (diffBasic(propValue, propOldValue)) {
-        changeRecords.push(new ChangeRecord(value, 'update', prop, propOldValue));
+      if (! (prop in object)) {
+        changeRecords.push(new ChangeRecord(object, 'deleted', prop, oldValue));
+      } else if (diffBasic(value, oldValue)) {
+        changeRecords.push(new ChangeRecord(object, 'updated', prop, oldValue));
       }
     }
 
     // Goes through the old object and looks for things that are new
-    for (prop in value) {
-      propValue = value[prop];
-      if (! (prop in oldValue)) {
-        changeRecords.push(new ChangeRecord(value, 'add', prop));
+    for (prop in object) {
+      value = object[prop];
+      if (! (prop in oldObject)) {
+        changeRecords.push(new ChangeRecord(object, 'new', prop));
       }
     }
 
-    if (Array.isArray(value) && value.length !== oldValue.length) {
-      changeRecords.push(new ChangeRecord(value, 'update', 'length', oldValue.length));
+    if (Array.isArray(object) && object.length !== oldObject.length) {
+      changeRecords.push(new ChangeRecord(object, 'updated', 'length', oldObject.length));
     }
 
     return changeRecords;
@@ -2989,10 +382,6 @@ var diff = exports;
   // }
   // ```
   function diffArrays(value, oldValue) {
-    if (!Array.isArray(value) || !Array.isArray(oldValue)) {
-      throw new TypeError('Both values for diff.array must be arrays');
-    }
-
     var currentStart = 0;
     var currentEnd = value.length;
     var oldStart = 0;
@@ -3013,12 +402,12 @@ var diff = exports;
 
     // if nothing was added, only removed from one spot
     if (currentStart === currentEnd) {
-      return [ new Splice(value, currentStart, oldValue.slice(oldStart, oldEnd), 0) ];
+      return [ new Splice(currentStart, oldValue.slice(oldStart, oldEnd), 0) ];
     }
 
     // if nothing was removed, only added to one spot
     if (oldStart === oldEnd) {
-      return [ new Splice(value, currentStart, [], currentEnd - currentStart) ];
+      return [ new Splice(currentStart, [], currentEnd - currentStart) ];
     }
 
     // a mixture of adds and removes
@@ -3042,7 +431,7 @@ var diff = exports;
         oldIndex++;
       } else if (op === EDIT_UPDATE) {
         if (!splice) {
-          splice = new Splice(value, index, [], 0);
+          splice = new Splice(index, [], 0);
         }
 
         splice.addedCount++;
@@ -3052,14 +441,14 @@ var diff = exports;
         oldIndex++;
       } else if (op === EDIT_ADD) {
         if (!splice) {
-          splice = new Splice(value, index, [], 0);
+          splice = new Splice(index, [], 0);
         }
 
         splice.addedCount++;
         index++;
       } else if (op === EDIT_DELETE) {
         if (!splice) {
-          splice = new Splice(value, index, [], 0);
+          splice = new Splice(index, [], 0);
         }
 
         splice.removed.push(oldValue[oldIndex]);
@@ -3187,10 +576,10 @@ var diff = exports;
   }
 })();
 
-},{}],65:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 module.exports = require('./src/expressions');
 
-},{"./src/expressions":66}],66:[function(require,module,exports){
+},{"./src/expressions":7}],7:[function(require,module,exports){
 var slice = Array.prototype.slice;
 var strings = require('./strings');
 var formatterParser = require('./formatters');
@@ -3201,8 +590,8 @@ var cache = {};
 exports.globals = {};
 
 
-exports.parse = function(expr, globals, formatters, extraArgs) {
-  if (!Array.isArray(extraArgs)) extraArgs = [];
+exports.parse = function(expr, globals, formatters) {
+  var extraArgs = slice.call(arguments, 3);
   var cacheKey = expr + '|' + extraArgs.join(',');
   // Returns the cached function for this expression if it exists.
   var func = cache[cacheKey];
@@ -3230,10 +619,8 @@ exports.parse = function(expr, globals, formatters, extraArgs) {
 
 
 exports.parseSetter = function(expr, globals, formatters, extraArgs) {
-  if (!Array.isArray(extraArgs)) extraArgs = [];
+  var extraArgs = slice.call(arguments, 3);
 
-  // Add _value_ as the first extra argument
-  extraArgs.unshift(valueProperty);
   if (expr.charAt(0) === '!') {
     // Allow '!prop' to become 'prop = !value'
     expr = expr.slice(1).replace(/(\s*\||$)/, ' = !_value_$1');
@@ -3241,7 +628,8 @@ exports.parseSetter = function(expr, globals, formatters, extraArgs) {
     expr = expr.replace(/(\s*\||$)/, ' = _value_$1');
   }
 
-  return exports.parse(expr, globals, formatters, extraArgs);
+  // Add _value_ as the first extra argument
+  return exports.parse.apply(exports, [expr, globals, formatters, valueProperty].concat(extraArgs));
 };
 
 
@@ -3289,7 +677,7 @@ function bindArguments(func) {
   }
 }
 
-},{"./formatters":67,"./property-chains":68,"./strings":69}],67:[function(require,module,exports){
+},{"./formatters":8,"./property-chains":9,"./strings":10}],8:[function(require,module,exports){
 
 // finds pipes that are not ORs (i.e. ` | ` not ` || `) for formatters
 var pipeRegex = /\|(\|)?/g;
@@ -3361,7 +749,7 @@ exports.parseFormatters = function(expr) {
   return setter + value;
 };
 
-},{}],68:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var referenceCount = 0;
 var currentReference = 0;
 var currentIndex = 0;
@@ -3690,7 +1078,7 @@ function addReferences(expr) {
   return expr;
 }
 
-},{}],69:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // finds all quoted strings
 var quoteRegex = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -3736,7 +1124,2063 @@ exports.putInStrings = function(expr) {
   return expr;
 };
 
-},{}],70:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
+/**
+ * Fade in and out
+ */
+module.exports = function(options) {
+  if (!options) options = {};
+  if (!options.duration) options.duration = 250;
+  if (!options.easing) options.easing = 'ease-in-out';
+
+  return {
+    options: options,
+    animateIn: function(element, done) {
+      element.animate([
+        { opacity: '0' },
+        { opacity: '1' }
+      ], this.options).onfinish = done;
+    },
+    animateOut: function(element, done) {
+      element.animate([
+        { opacity: '1' },
+        { opacity: '0' }
+      ], this.options).onfinish = done;
+    }
+  };
+};
+
+},{}],12:[function(require,module,exports){
+/**
+ * Slide left and right
+ */
+module.exports = function(options) {
+  if (!options) options = {};
+  if (!options.property) options.property = 'width';
+  return require('./slide-fade')(options);
+};
+
+},{"./slide-fade":13}],13:[function(require,module,exports){
+/**
+ * Slide down and up and fade in and out
+ */
+module.exports = function(options) {
+  if (!options) options = {};
+  if (!options.duration) options.duration = 250;
+  if (!options.easing) options.easing = 'ease-in-out';
+  if (!options.property) options.property = 'height';
+
+  return {
+    options: options,
+
+    animateIn: function(element, done) {
+      var value = element.getComputedCSS(this.options.property);
+      if (!value || value === '0px') {
+        return done();
+      }
+
+      var before = { opacity: '0' };
+      var after = { opacity: '1' };
+
+      before[this.options.property] = '0px';
+      after[this.options.property] = value;
+
+      element.style.overflow = 'hidden';
+      element.animate([
+        before,
+        after
+      ], this.options).onfinish = function() {
+        element.style.overflow = '';
+        done();
+      };
+    },
+
+    animateOut: function(element, done) {
+      var value = element.getComputedCSS(this.options.property);
+      if (!value || value === '0px') {
+        return done();
+      }
+
+      var before = { opacity: '1' };
+      var after = { opacity: '0' };
+      before[this.options.property] = value;
+      after[this.options.property] = '0px';
+
+      element.style.overflow = 'hidden';
+      element.animate([
+        before,
+        after
+      ], this.options).onfinish = function() {
+        element.style.overflow = '';
+        done();
+      };
+    }
+  };
+};
+
+},{}],14:[function(require,module,exports){
+/**
+ * Slide left and right
+ */
+module.exports = function(options) {
+  if (!options) options = {};
+  if (!options.property) options.property = 'width';
+  return require('./slide')(options);
+};
+
+},{"./slide":17}],15:[function(require,module,exports){
+/**
+ * Move items left and right in a list
+ */
+module.exports = function(options) {
+  if (!options) options = {};
+  if (!options.property) options.property = 'width';
+  return require('./slide-move')(options);
+};
+
+},{"./slide-move":16}],16:[function(require,module,exports){
+var slideAnimation = require('./slide');
+var animating = new Map();
+
+/**
+ * Move items up and down in a list
+ */
+module.exports = function(options) {
+  if (!options) options = {};
+  if (!options.duration) options.duration = 250;
+  if (!options.easing) options.easing = 'ease-in-out';
+  if (!options.property) options.property = 'height';
+
+  return {
+    options: options,
+
+    animateIn: function(element, done) {
+      var value = element.getComputedCSS(options.property);
+      if (!value || value === '0px') {
+        return done();
+      }
+
+      var item = element.view && element.view._repeatItem_;
+      if (item) {
+        animating.set(item, element);
+        setTimeout(function() {
+          animating.delete(item);
+        });
+      }
+
+      var before = {};
+      var after = {};
+      before[this.options.property] = '0px';
+      after[this.options.property] = value;
+
+      // Do the slide
+      element.style.overflow = 'hidden';
+      element.animate([
+        before,
+        after
+      ], this.options).onfinish = function() {
+        element.style.overflow = '';
+        done();
+      };
+    },
+
+    animateOut: function(element, done) {
+      var value = element.getComputedCSS(options.property);
+      if (!value || value === '0px') {
+        return done();
+      }
+
+      var item = element.view && element.view._repeatItem_;
+      if (item) {
+        var newElement = animating.get(item);
+        if (newElement && newElement.parentNode === element.parentNode) {
+          // This item is being removed in one place and added into another. Make it look like its moving by making both
+          // elements not visible and having a clone move above the items to the new location.
+          element = this.animateMove(element, newElement);
+        }
+      }
+
+      var before = {};
+      var after = {};
+      before[this.options.property] = value;
+      after[this.options.property] = '0px';
+
+      // Do the slide
+      element.style.overflow = 'hidden';
+      element.animate([
+        before,
+        after
+      ], this.options).onfinish = function() {
+        element.style.overflow = '';
+        done();
+      };
+    },
+
+    animateMove: function(oldElement, newElement) {
+      var placeholderElement;
+      var parent = newElement.parentNode;
+      if (!parent.__slideMoveHandled) {
+        parent.__slideMoveHandled = true;
+        if (window.getComputedStyle(parent).position === 'static') {
+          parent.style.position = 'relative';
+        }
+      }
+
+      var origStyle = oldElement.getAttribute('style');
+      var style = window.getComputedStyle(oldElement);
+      var marginOffsetLeft = -parseInt(style.marginLeft);
+      var marginOffsetTop = -parseInt(style.marginTop);
+      var oldLeft = oldElement.offsetLeft;
+      var oldTop = oldElement.offsetTop;
+
+      placeholderElement = this.fragments.makeElementAnimatable(oldElement.cloneNode(true));
+      placeholderElement.style.width = oldElement.style.width = style.width;
+      placeholderElement.style.height = oldElement.style.height = style.height;
+      placeholderElement.style.opacity = '0';
+
+      oldElement.style.position = 'absolute';
+      oldElement.style.zIndex = 1000;
+      parent.insertBefore(placeholderElement, oldElement);
+      newElement.style.opacity = '0';
+
+      oldElement.animate([
+        { top: oldTop + marginOffsetTop + 'px', left: oldLeft + marginOffsetLeft + 'px' },
+        { top: newElement.offsetTop + marginOffsetTop + 'px', left: newElement.offsetLeft + marginOffsetLeft + 'px' }
+      ], this.options).onfinish = function() {
+        placeholderElement.remove();
+        origStyle ? oldElement.setAttribute('style', origStyle) : oldElement.removeAttribute('style');
+        newElement.style.opacity = '';
+      };
+
+      return placeholderElement;
+    }
+  };
+};
+
+},{"./slide":17}],17:[function(require,module,exports){
+/**
+ * Slide down and up
+ */
+module.exports = function(options) {
+  if (!options) options = {};
+  if (!options.duration) options.duration = 250;
+  if (!options.easing) options.easing = 'ease-in-out';
+  if (!options.property) options.property = 'height';
+
+  return {
+    options: options,
+
+    animateIn: function(element, done) {
+      var value = element.getComputedCSS(this.options.property);
+      if (!value || value === '0px') {
+        return done();
+      }
+
+      var before = {};
+      var after = {};
+      before[this.options.property] = '0px';
+      after[this.options.property] = value;
+
+      element.style.overflow = 'hidden';
+      element.animate([
+        before,
+        after
+      ], this.options).onfinish = function() {
+        element.style.overflow = '';
+        done();
+      };
+    },
+
+    animateOut: function(element, done) {
+      var value = element.getComputedCSS(this.options.property);
+      if (!value || value === '0px') {
+        return done();
+      }
+
+      var before = {};
+      var after = {};
+      before[this.options.property] = value;
+      after[this.options.property] = '0px';
+
+      element.style.overflow = 'hidden';
+      element.animate([
+        before,
+        after
+      ], this.options).onfinish = function() {
+        element.style.overflow = '';
+        done();
+      };
+    }
+  };
+};
+
+},{}],18:[function(require,module,exports){
+/**
+ * A binder that toggles an attribute on or off if the expression is truthy or falsey. Use for attributes without
+ * values such as `selected`, `disabled`, or `readonly`.
+ */
+module.exports = function(specificAttrName) {
+  return function(value) {
+    var attrName = specificAttrName || this.match;
+    if (!value) {
+      this.element.removeAttribute(attrName);
+    } else {
+      this.element.setAttribute(attrName, '');
+    }
+  };
+};
+
+},{}],19:[function(require,module,exports){
+/**
+ * A binder that automatically focuses the input when it is displayed on screen.
+ */
+module.exports = function() {
+  return {
+
+    attached: function() {
+      if (!this.expression || this.observer.get()) {
+        this.element.focus();
+      }
+    }
+
+  };
+};
+
+},{}],20:[function(require,module,exports){
+/**
+ * Automatically selects the contents of an input when it receives focus.
+ */
+module.exports = function() {
+  return {
+
+    created: function() {
+      var focused, mouseEvent;
+
+      this.element.addEventListener('mousedown', function() {
+        // Use matches since document.activeElement doesn't work well with web components (future compat)
+        focused = this.matches(':focus');
+        mouseEvent = true;
+      });
+
+      this.element.addEventListener('focus', function() {
+        if (!mouseEvent) {
+          this.select();
+        }
+      });
+
+      this.element.addEventListener('mouseup', function() {
+        if (!focused) {
+          this.select();
+        }
+        mouseEvent = false;
+      });
+    }
+
+  };
+};
+
+},{}],21:[function(require,module,exports){
+/**
+ * A binder that ensures anything bound to the class attribute won't overrite the classes binder. Should always be bound
+ * to "class".
+ */
+module.exports = function() {
+  return {
+    onlyWhenBound: true,
+
+    updated: function(value) {
+      var classList = this.element.classList;
+      var classes = {};
+
+      if (value) {
+        if (typeof value === 'string') {
+          value.split(/\s+/).forEach(function(className) {
+            if (className) classes[className] = true;
+          });
+        } else if (typeof value === 'object') {
+          Object.keys(value).forEach(function(className) {
+            if (value[className]) classes[className] = true;
+          });
+        }
+      }
+
+      if (this.classes) {
+        Object.keys(this.classes).forEach(function(className) {
+          if (!classes[className]) classList.remove(className);
+        });
+      }
+
+      Object.keys(classes).forEach(function(className) {
+        classList.add(className);
+      });
+
+      this.classes = classes;
+    }
+  };
+};
+
+},{}],22:[function(require,module,exports){
+/**
+ * A binder that adds classes to an element dependent on whether the expression is true or false.
+ */
+module.exports = function() {
+  return function(value) {
+    if (value) {
+      this.element.classList.add(this.match);
+    } else {
+      this.element.classList.remove(this.match);
+    }
+  };
+};
+
+},{}],23:[function(require,module,exports){
+/**
+ * An element binder that gets filled with the contents put inside a component.
+ */
+module.exports = function() {
+  return {
+
+    compiled: function() {
+      if (this.element.childNodes.length) {
+        this.defaultContent = this.fragments.createTemplate(this.element.childNodes);
+      }
+    },
+
+    attached: function() {
+      if (this.content) this.content.attached();
+    },
+
+    detached: function() {
+      if (this.content) this.content.detached();
+    },
+
+    bound: function() {
+      var template = this.context._componentContent || this.defaultContent;
+      if (template) {
+        this.content = template.createView();
+        this.content.bind(this.context);
+        this.element.appendChild(this.content);
+        this.content.attached();
+      }
+    },
+
+    unbound: function() {
+      if (this.content) {
+        this.content.dispose();
+        this.content = null;
+      }
+    }
+  };
+};
+
+},{}],24:[function(require,module,exports){
+module.exports = Component;
+var Class = require('chip-utils/class');
+var lifecycle = [ 'created', 'bound', 'attached', 'unbound', 'detached' ];
+
+
+function Component(element, contentTemplate) {
+  this.element = element;
+
+  if (this.template) {
+    this._view = this.template.createView();
+    if (contentTemplate) {
+      this.element._componentContent = contentTemplate;
+    }
+  } else if (contentTemplate) {
+    this._view = contentTemplate.createView();
+  }
+
+  if (this._view) {
+    this.element.appendChild(this._view);
+  }
+
+  this.created();
+}
+
+Component.onExtend = function(Class, mixins) {
+  Class.prototype.mixins = Class.prototype.mixins.concat(mixins);
+
+  // They will get called via mixins, don't let them override the original methods. To truely override you can define
+  // them after using Class.extend on a component.
+  lifecycle.forEach(function(method) {
+    delete Class.prototype[method];
+  });
+};
+
+Class.extend(Component, {
+  mixins: [],
+
+  get view() {
+    return this._view;
+  },
+
+  created: function() {
+    callOnMixins(this, this.mixins, 'created', arguments);
+  },
+
+  bound: function() {
+    callOnMixins(this, this.mixins, 'bound', arguments);
+    this._view.bind(this);
+  },
+
+  attached: function() {
+    callOnMixins(this, this.mixins, 'attached', arguments);
+    this._view.attached();
+  },
+
+  unbound: function() {
+    callOnMixins(this, this.mixins, 'unbound', arguments);
+    this._view.unbind();
+  },
+
+  detached: function() {
+    callOnMixins(this, this.mixins, 'detached', arguments);
+    this._view.detached();
+  }
+
+});
+
+
+// Calls the method by name on any mixins that have it defined
+function callOnMixins(context, mixins, name, args) {
+  mixins.forEach(function(mixin) {
+    if (typeof mixin[name] === 'function') mixin[name].apply(context, args);
+  });
+}
+
+},{"chip-utils/class":2}],25:[function(require,module,exports){
+var Component = require('./component-definition');
+var slice = Array.prototype.slice;
+
+/**
+ * An element binder that binds the template on the definition to fill the contents of the element that matches. Can be
+ * used as an attribute binder as well.
+ */
+module.exports = function(ComponentClass) {
+  var componentLoader;
+
+  if (typeof ComponentClass !== 'function') {
+    throw new TypeError('Invalid component, requires a subclass of Component or a function which will return such.');
+  }
+
+  if (!(ComponentClass.prototype instanceof Component)) {
+    componentLoader = ComponentClass;
+    ComponentClass = undefined;
+  }
+
+  return {
+
+    compiled: function() {
+      if (this.element.getAttribute('[unwrap]') !== null) {
+        var parent = this.element.parentNode;
+        var placeholder = document.createTextNode('');
+        parent.insertBefore(placeholder, this.element);
+        parent.removeChild(this.element);
+        this.element = placeholder;
+        this.unwrapped = true;
+      } else {
+        this.unwrapped = false;
+      }
+
+      this.ComponentClass = ComponentClass;
+
+      this.compileTemplate();
+
+      var empty = !this.element.childNodes.length ||
+                  (this.element.childNodes.length === 1 &&
+                   this.element.firstChild.nodeType === Node.TEXT_NODE &&
+                   !this.element.firstChild.textContent.trim()
+                  );
+      if (!empty) {
+        // Use the contents of this component to be inserted within it
+        this.contentTemplate = this.fragments.createTemplate(this.element.childNodes);
+      }
+    },
+
+    created: function() {
+      this.make();
+    },
+
+    updated: function(ComponentClass) {
+      this.unbound();
+      this.detached();
+      this.unmake();
+
+      if (typeof ComponentClass === 'string' && componentLoader) {
+        ComponentClass = componentLoader.call(this, ComponentClass);
+      }
+
+      this.ComponentClass = ComponentClass;
+
+      this.make();
+      this.bound();
+      this.attached();
+    },
+
+    bound: function() {
+      // Set for the component-content binder to use
+      this.element._parentContext = this.context;
+      if (this.component) {
+        this.component.bound();
+      }
+    },
+
+    unbound: function() {
+      if (this.component) {
+        this.component.unbound();
+      }
+    },
+
+    attached: function() {
+      if (this.component) {
+        this.component.attached();
+      }
+    },
+
+    detached: function() {
+      if (this.component) {
+        this.component.detached();
+      }
+    },
+
+    compileTemplate: function() {
+      if (!this.ComponentClass) {
+        return;
+      }
+
+      var proto = this.ComponentClass.prototype;
+      if (proto.template && !proto.template.compiled && !proto._compiling) {
+        proto._compiling = true;
+        proto.template = this.fragments.createTemplate(proto.template);
+        delete proto._compiling;
+      }
+    },
+
+    make: function() {
+      if (!this.ComponentClass) {
+        return;
+      }
+
+      this.compileTemplate();
+
+      this.component = new this.ComponentClass(this.element, this.contentTemplate);
+      this.element.component = this.component;
+      this.element.dispatchEvent(new Event('componentized'));
+
+      var properties = this.element._properties;
+      if (properties) {
+        Object.keys(properties).forEach(function(key) {
+          this.component[key] = properties[key];
+        }, this);
+      }
+    },
+
+    unmake: function() {
+      if (!this.ComponentClass) {
+        return;
+      }
+
+      if (this.component) {
+        this.component.view.dispose();
+        this.component.element = null;
+        this.element.component = null;
+        this.component = null;
+      }
+    }
+
+  };
+};
+
+},{"./component-definition":24}],26:[function(require,module,exports){
+/**
+ * A binder for adding event listeners. When the event is triggered the expression will be executed. The properties
+ * `event` (the event object) and `element` (the element the binder is on) will be available to the expression.
+ */
+module.exports = function(specificEventName) {
+  return {
+    created: function() {
+      var eventName = specificEventName || this.match;
+      var _this = this;
+
+      this.element.addEventListener(eventName, function(event) {
+        if (_this.shouldSkip(event)) {
+          return;
+        }
+
+        // Set the event on the context so it may be used in the expression when the event is triggered.
+        var priorEvent = Object.getOwnPropertyDescriptor(_this.context, 'event');
+        var priorElement = Object.getOwnPropertyDescriptor(_this.context, 'element');
+        _this.setEvent(event, priorEvent, priorElement);
+
+        // Let an event binder make the function call with its own arguments
+        _this.observer.get();
+
+        // Reset the context to its prior state
+        _this.clearEvent();
+      });
+    },
+
+    shouldSkip: function(event) {
+      return !this.context || event.currentTarget.hasAttribute('disabled');
+    },
+
+    unbound: function() {
+      this.clearEvent();
+    },
+
+    setEvent: function(event, priorEventDescriptor, priorElementDescriptor) {
+      if (!this.context) {
+        return;
+      }
+      this.event = event;
+      this.priorEventDescriptor = priorEventDescriptor;
+      this.priorElementDescriptor = priorElementDescriptor;
+      this.lastContext = this.context;
+
+      // DEPRECATE
+      this.context.event = event;
+      this.context.element = this.element;
+      // END DEPRECATE
+
+      this.context.$event = event;
+      this.context.$element = this.element;
+    },
+
+    clearEvent: function() {
+      if (!this.event) {
+        return;
+      }
+      var context = this.lastContext;
+
+      if (this.priorEventDescriptor) {
+        Object.defineProperty(context, 'event', this.priorEventDescriptor);
+        this.priorEventDescriptor = null;
+      } else {
+        delete context.event;
+      }
+
+      if (this.priorElementDescriptor) {
+        Object.defineProperty(context, 'element', this.priorElementDescriptor);
+        this.priorElementDescriptor = null;
+      } else {
+        delete context.element;
+      }
+
+      delete context.$event;
+      delete context.$element;
+      this.event = null;
+      this.lastContext = null;
+    }
+  };
+};
+
+},{}],27:[function(require,module,exports){
+/**
+ * A binder that displays unescaped HTML inside an element. Be sure it's trusted! This should be used with formatters
+ * which create HTML from something safe.
+ */
+module.exports = function() {
+  return function(value) {
+    this.element.innerHTML = (value == null ? '' : value);
+  };
+};
+
+},{}],28:[function(require,module,exports){
+/**
+ * if, unless, else-if, else-unless, else
+ * A binder init function that creates a binder that shows or hides the element if the value is truthy or falsey.
+ * Actually removes the element from the DOM when hidden, replacing it with a non-visible placeholder and not needlessly
+ * executing bindings inside. Pass in the configuration values for the corresponding partner attributes for unless and
+ * else, etc.
+ */
+module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnlessAttrName) {
+  return {
+    animated: true,
+    priority: 150,
+
+    compiled: function() {
+      var element = this.element;
+      var expressions = [ wrapIfExp(this.expression, this.name === unlessAttrName) ];
+      var placeholder = document.createTextNode('');
+      var node = element.nextElementSibling;
+      this.element = placeholder;
+      element.parentNode.replaceChild(placeholder, element);
+
+      // Stores a template for all the elements that can go into this spot
+      this.templates = [ this.fragments.createTemplate(element) ];
+
+      // Pull out any other elements that are chained with this one
+      while (node) {
+        var next = node.nextElementSibling;
+        var expression;
+        if (node.hasAttribute(elseIfAttrName)) {
+          expression = this.fragments.codifyExpression('attribute', node.getAttribute(elseIfAttrName));
+          expressions.push(wrapIfExp(expression, false));
+          node.removeAttribute(elseIfAttrName);
+        } else if (node.hasAttribute(elseUnlessAttrName)) {
+          expression = this.fragments.codifyExpression('attribute', node.getAttribute(elseUnlessAttrName));
+          expressions.push(wrapIfExp(expression, true));
+          node.removeAttribute(elseUnlessAttrName);
+        } else if (node.hasAttribute(elseAttrName)) {
+          node.removeAttribute(elseAttrName);
+          next = null;
+        } else {
+          break;
+        }
+
+        node.remove();
+        this.templates.push(this.fragments.createTemplate(node));
+        node = next;
+      }
+
+      // An expression that will return an index. Something like this `expr ? 0 : expr2 ? 1 : expr3 ? 2 : 3`. This will
+      // be used to know which section to show in the if/else-if/else grouping.
+      this.expression = expressions.map(function(expr, index) {
+        return expr + ' ? ' + index + ' : ';
+      }).join('') + expressions.length;
+    },
+
+    updated: function(index) {
+      // For performance provide an alternate code path for animation
+      if (this.animate && this.context && !this.firstUpdate) {
+        this.updatedAnimated(index);
+      } else {
+        this.updatedRegular(index);
+      }
+      this.firstUpdate = false;
+    },
+
+    attached: function() {
+      if (this.showing) {
+        this.showing.attached();
+      }
+    },
+
+    detached: function() {
+      if (this.showing) {
+        this.showing.detached();
+      }
+    },
+
+    add: function(view) {
+      view.bind(this.context);
+      this.element.parentNode.insertBefore(view, this.element.nextSibling);
+      view.attached();
+    },
+
+    // Doesn't do much, but allows sub-classes to alter the functionality.
+    remove: function(view) {
+      view.dispose();
+    },
+
+    updatedRegular: function(index) {
+      if (this.showing) {
+        this.remove(this.showing);
+        this.showing = null;
+      }
+      var template = this.templates[index];
+      if (template) {
+        this.showing = template.createView();
+        this.add(this.showing);
+      }
+    },
+
+    updatedAnimated: function(index) {
+      this.lastValue = index;
+      if (this.animating) {
+        // Obsoleted, will change after animation is finished.
+        this.showing.unbind();
+        return;
+      }
+
+      if (this.showing) {
+        this.animating = true;
+        this.showing.unbind();
+        this.animateOut(this.showing, function() {
+          if (this.animating) {
+            this.animating = false;
+
+            if (this.showing) {
+              // Make sure this wasn't unbound while we were animating (e.g. by a parent `if` that doesn't animate)
+              this.remove(this.showing);
+              this.showing = null;
+            }
+
+            if (this.context) {
+              // finish by animating the new element in (if any), unless no longer bound
+              this.updatedAnimated(this.lastValue);
+            }
+          }
+        });
+        return;
+      }
+
+      var template = this.templates[index];
+      if (template) {
+        this.showing = template.createView();
+        this.add(this.showing);
+        this.animating = true;
+        this.animateIn(this.showing, function() {
+          if (this.animating) {
+            this.animating = false;
+            // if the value changed while this was animating run it again
+            if (this.lastValue !== index) {
+              this.updatedAnimated(this.lastValue);
+            }
+          }
+        });
+      }
+    },
+
+    bound: function() {
+      this.firstUpdate = true;
+    },
+
+    unbound: function() {
+      if (this.showing) {
+        this.showing.unbind();
+      }
+      this.lastValue = null;
+      this.animating = false;
+    }
+  };
+};
+
+function wrapIfExp(expr, isUnless) {
+  if (isUnless) {
+    return '!(' + expr + ')';
+  } else {
+    return expr;
+  }
+}
+
+},{}],29:[function(require,module,exports){
+var keys = {
+  backspace: 8,
+  tab: 9,
+  enter: 13,
+  return: 13,
+  esc: 27,
+  escape: 27,
+  space: 32,
+  left: 37,
+  up: 38,
+  right: 39,
+  down: 40,
+  del: 46,
+  delete: 46
+};
+
+/**
+ * Adds a binder which is triggered when a keyboard event's `keyCode` property matches for the above list of keys. If
+ * more robust shortcuts are required use the shortcut binder.
+ */
+module.exports = function(specificKeyName, specificEventName) {
+  var eventBinder = require('./events')(specificEventName);
+
+  return {
+    compiled: function() {
+      // Split on non-char (e.g. keydown::enter or keyup.esc to handle various styles)
+      var parts = (specificKeyName || this.match).split(/[^a-z]+/);
+      if (this.element.hasOwnProperty('on' + parts[0])) {
+        this.match = parts.shift();
+      } else {
+        this.match = 'keydown';
+      }
+
+      this.ctrlKey = parts[0] === 'ctrl';
+
+      if (this.ctrlKey) {
+        this.keyCode = keys[parts[1]];
+      } else {
+        this.keyCode = keys[parts[0]];
+      }
+    },
+
+    shouldSkip: function(event) {
+      if (this.keyCode) {
+        return eventBinder.shouldSkip.call(this, event) ||
+          this.ctrlKey !== (event.ctrlKey || event.metaKey) ||
+          this.keyCode !== event.keyCode;
+      } else {
+        return eventBinder.shouldSkip.call(this, event);
+      }
+    },
+
+    created: eventBinder.created,
+    unbound: eventBinder.unbound,
+    setEvent: eventBinder.setEvent,
+    clearEvent: eventBinder.clearEvent
+  };
+};
+
+},{"./events":26}],30:[function(require,module,exports){
+/**
+ * A binder that prints out the value of the expression to the console.
+ */
+module.exports = function() {
+  return {
+    priority: 60,
+    created: function() {
+      if (this.observer) {
+        this.observer.getChangeRecords = true;
+      }
+    },
+
+    updated: function(value) {
+      /*eslint-disable no-console */
+      console.log('%cDebug: %c' + this.expression, 'color:blue;font-weight:bold', 'color:#DF8138', '=', value);
+      /*eslint-enable */
+    }
+  };
+};
+
+},{}],31:[function(require,module,exports){
+/**
+ * A binder that sets the property of an element to the value of the expression in a 2-way binding.
+ */
+module.exports = function(specificPropertyName) {
+  return {
+    priority: 10,
+
+    created: function() {
+      this.twoWayObserver = this.observe(specificPropertyName || this.camelCase, this.sendUpdate, this);
+      this.element.addEventListener('componentized', function() {
+        this.twoWayObserver.bind(this.element.component);
+      }.bind(this));
+    },
+
+    unbound: function() {
+      this.twoWayObserver.unbind();
+    },
+
+    sendUpdate: function(value) {
+      if (!this.skipSend) {
+        var properties = this.element._properties || (this.element._properties = {});
+        properties[specificPropertyName || this.camelCase] = value;
+        this.observer.set(value);
+        this.skipSend = true;
+        this.fragments.afterSync(function() {
+          this.skipSend = false;
+        }.bind(this));
+      }
+    },
+
+    updated: function(value) {
+      if (!this.skipSend && value !== undefined) {
+        var properties = this.element._properties || (this.element._properties = {});
+        properties[specificPropertyName || this.camelCase] = value;
+        if (this.element.component) {
+          this.element.component[specificPropertyName || this.camelCase] = value;
+        }
+        this.skipSend = true;
+        this.fragments.afterSync(function() {
+          this.skipSend = false;
+        }.bind(this));
+      }
+    }
+  };
+};
+
+},{}],32:[function(require,module,exports){
+/**
+ * A binder that sets the property of an element to the value of the expression.
+ */
+module.exports = function(specificPropertyName) {
+  return {
+    priority: 10,
+
+    updated: function(value) {
+      var properties = this.element._properties || (this.element._properties = {});
+      properties[specificPropertyName || this.camelCase] = value;
+      if (this.element.component) {
+        this.element.component[specificPropertyName || this.camelCase] = value;
+      }
+    }
+  };
+};
+
+},{}],33:[function(require,module,exports){
+/**
+ * A binder for radio buttons specifically
+ */
+module.exports = function(valueName) {
+  return {
+    onlyWhenBound: true,
+    priority: 10,
+
+    compiled: function() {
+      var valueExpr;
+      var element = this.element;
+
+      if (valueName && valueName !== 'value' && element.hasAttribute(valueName)) {
+        valueExpr = this.fragments.codifyExpression('attribute', element.getAttribute(valueName), true);
+        element.removeAttribute(valueName);
+      } else if (element.hasAttribute('value')) {
+        valueExpr = this.fragments.codifyExpression('attribute', element.getAttribute('value'), false);
+      } else {
+        return false;
+      }
+
+      element.setAttribute('name', this.expression);
+      this.valueObserver = this.observe(valueExpr);
+    },
+
+    created: function() {
+      this.element.addEventListener('change', function(event) {
+        if (this.element.checked) {
+          this.observer.set(this.valueObserver.get());
+        }
+      }.bind(this));
+    },
+
+    bound: function() {
+      this.valueObserver.bind(this.context);
+    },
+
+    unbound: function() {
+      this.valueObserver.unbind();
+    },
+
+    updated: function(value) {
+      this.element.checked = (value == this.valueObserver.get());
+    }
+  };
+};
+
+
+},{}],34:[function(require,module,exports){
+/**
+ * A binder that sets a reference to the element when it is bound.
+ */
+module.exports = function () {
+  return {
+    bound: function() {
+      this.context[this.camelCase || this.expression] = this.element;
+    },
+
+    unbound: function() {
+      this.context[this.camelCase || this.expression] = null;
+    }
+  };
+};
+
+},{}],35:[function(require,module,exports){
+var diff = require('differences-js');
+
+/**
+ * A binder that duplicate an element for each item in an array. The expression may be of the format `epxr` or
+ * `itemName in expr` where `itemName` is the name each item inside the array will be referenced by within bindings
+ * inside the element.
+ */
+module.exports = function(compareByAttribute) {
+  return {
+    animated: true,
+    priority: 100,
+
+    compiled: function() {
+      if (this.element.hasAttribute(compareByAttribute)) {
+        this.compareBy = this.element.getAttribute(compareByAttribute);
+        this.element.removeAttribute(compareByAttribute);
+      }
+      var parent = this.element.parentNode;
+      var placeholder = document.createTextNode('');
+      parent.insertBefore(placeholder, this.element);
+      this.template = this.fragments.createTemplate(this.element);
+      this.element = placeholder;
+
+
+      var parts = this.expression.split(/\s+in\s+|\s+of\s+/);
+      this.expression = parts.pop();
+      var key = parts.pop();
+      if (key) {
+        parts = key.split(/\s*,\s*/);
+        this.valueName = parts.pop();
+        this.keyName = parts.pop();
+      }
+    },
+
+    created: function() {
+      this.views = [];
+      this.observer.getChangeRecords = true;
+      this.observer.compareBy = this.compareBy;
+      this.observer.compareByName = this.valueName;
+      this.observer.compareByIndex = this.keyName;
+    },
+
+    attached: function() {
+      this.views.forEach(function(view) {
+        view.attached();
+      });
+    },
+
+    detached: function() {
+      this.views.forEach(function(view) {
+        view.detached();
+      });
+    },
+
+    removeView: function(view) {
+      view.dispose();
+      view._repeatItem_ = null;
+    },
+
+    updated: function(value, oldValue, changes) {
+      if (!changes || !this.context) {
+        this.populate(value);
+      } else {
+        if (this.animate) {
+          this.updateChangesAnimated(value, changes);
+        } else {
+          this.updateChanges(value, changes);
+        }
+
+        // Keep the items updated as the array changes
+        if (changes && this.valueName) {
+          this.views.forEach(function(view, i) {
+            if (this.keyName) view.context[this.keyName] = key;
+            view.context[this.valueName] = value[i];
+          }, this);
+        }
+      }
+    },
+
+    // Method for creating and setting up new views for our list
+    createView: function(key, value) {
+      var view = this.template.createView();
+      var context = value;
+      if (this.valueName) {
+        context = Object.create(this.context);
+        if (this.keyName) context[this.keyName] = key;
+        context[this.valueName] = value;
+        context._origContext_ = this.context.hasOwnProperty('_origContext_')
+          ? this.context._origContext_
+          : this.context;
+      }
+      view.bind(context);
+      view._repeatItem_ = value;
+      return view;
+    },
+
+    populate: function(value) {
+      if (this.animating) {
+        this.valueWhileAnimating = value;
+        return;
+      }
+
+      if (this.views.length) {
+        this.views.forEach(this.removeView);
+        this.views.length = 0;
+      }
+
+      if (Array.isArray(value) && value.length) {
+        var frag = document.createDocumentFragment();
+
+        value.forEach(function(item, index) {
+          var view = this.createView(index, item);
+          this.views.push(view);
+          frag.appendChild(view);
+        }, this);
+
+        this.element.parentNode.insertBefore(frag, this.element.nextSibling);
+        if (this.view.inDOM) this.attached();
+      }
+    },
+
+    /**
+     * This un-animated version removes all removed views first so they can be returned to the pool and then adds new
+     * views back in. This is the most optimal method when not animating.
+     */
+    updateChanges: function(value, changes) {
+      // Remove everything first, then add again, allowing for element reuse from the pool
+      var addedCount = 0;
+
+      changes.forEach(function(splice) {
+        if (splice.removed.length) {
+          var removed = this.views.splice(splice.index - addedCount, splice.removed.length);
+          removed.forEach(this.removeView);
+        }
+        addedCount += splice.addedCount;
+      }, this);
+
+      // Add the new/moved views
+      changes.forEach(function(splice) {
+        if (!splice.addedCount) return;
+        var addedViews = [];
+        var fragment = document.createDocumentFragment();
+        var index = splice.index;
+        var endIndex = index + splice.addedCount;
+
+        for (var i = index; i < endIndex; i++) {
+          var item = value[i];
+          var view = this.createView(i, item);
+          addedViews.push(view);
+          fragment.appendChild(view);
+        }
+        this.views.splice.apply(this.views, [ index, 0 ].concat(addedViews));
+        var previousView = this.views[index - 1];
+        var nextSibling = previousView ? previousView.lastViewNode.nextSibling : this.element.nextSibling;
+        this.element.parentNode.insertBefore(fragment, nextSibling);
+        if (this.view.inDOM) this.attached();
+      }, this);
+    },
+
+    /**
+     * This animated version must animate removed nodes out while added nodes are animating in making it less optimal
+     * (but cool looking). It also handles "move" animations for nodes which are moving place within the list.
+     */
+    updateChangesAnimated: function(value, changes) {
+      if (this.animating) {
+        this.valueWhileAnimating = value;
+        return;
+      }
+      var animatingValue = value.slice();
+      var allAdded = [];
+      var allRemoved = [];
+      this.animating = true;
+
+      // Run updates which occured while this was animating.
+      function whenDone() {
+        // The last animation finished will run this
+        if (--whenDone.count !== 0) return;
+
+        allRemoved.forEach(this.removeView);
+
+        if (this.animating) {
+          this.animating = false;
+          if (this.valueWhileAnimating) {
+            var changes = diff.arrays(this.valueWhileAnimating, animatingValue);
+            this.updateChangesAnimated(this.valueWhileAnimating, changes);
+            this.valueWhileAnimating = null;
+          }
+        }
+      }
+      whenDone.count = 0;
+
+      changes.forEach(function(splice) {
+        var addedViews = [];
+        var fragment = document.createDocumentFragment();
+        var index = splice.index;
+        var endIndex = index + splice.addedCount;
+        var removedCount = splice.removed.length;
+
+        for (var i = index; i < endIndex; i++) {
+          var item = value[i];
+          var view = this.createView(i, item);
+          addedViews.push(view);
+          fragment.appendChild(view);
+        }
+
+        var removedViews = this.views.splice.apply(this.views, [ index, removedCount ].concat(addedViews));
+        var previousView = this.views[index - 1];
+        var nextSibling = previousView ? previousView.lastViewNode.nextSibling : this.element.nextSibling;
+        this.element.parentNode.insertBefore(fragment, nextSibling);
+        if (this.view.inDOM) this.attached();
+
+        allAdded = allAdded.concat(addedViews);
+        allRemoved = allRemoved.concat(removedViews);
+      }, this);
+
+
+      allAdded.forEach(function(view) {
+        whenDone.count++;
+        this.animateIn(view, whenDone);
+      }, this);
+
+      allRemoved.forEach(function(view) {
+        whenDone.count++;
+        view.unbind();
+        this.animateOut(view, whenDone);
+      }, this);
+    },
+
+    unbound: function() {
+      this.views.forEach(function(view) {
+        view.unbind();
+        view._repeatItem_ = null;
+      });
+      this.valueWhileAnimating = null;
+      this.animating = false;
+    }
+  };
+};
+
+},{"differences-js":4}],36:[function(require,module,exports){
+/**
+ * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
+ * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
+ * must remain in-DOM or bindings within it must continue to be processed while it is hidden. You should default to
+ * using `if`.
+ */
+module.exports = function(isHide) {
+  var isShow = !isHide;
+  return {
+    animated: true,
+
+    updated: function(value) {
+      // For performance provide an alternate code path for animation
+      if (this.animate && this.context && !this.firstUpdate) {
+        this.updatedAnimated(value);
+      } else {
+        this.updatedRegular(value);
+      }
+      this.firstUpdate = false;
+    },
+
+    updatedRegular: function(value) {
+      if (value) {
+        this.element.style.display = '';
+      } else {
+        this.element.style.display = 'none';
+      }
+    },
+
+    updatedAnimated: function(value) {
+      this.lastValue = value;
+      if (this.animating) {
+        return;
+      }
+
+      this.animating = true;
+      function onFinish() {
+        // If this.animating is false then the element was unbound during the animation
+        if (this.animating) {
+          this.animating = false;
+          if (this.lastValue !== value) {
+            this.updatedAnimated(this.lastValue);
+          }
+        }
+      }
+
+      // if isShow is truthy and value is truthy
+      if (!!value === !!isShow) {
+        this.element.style.display = '';
+        this.animateIn(this.element, onFinish);
+      } else {
+        this.animateOut(this.element, function() {
+          this.element.style.display = 'none';
+          onFinish.call(this);
+        });
+      }
+    },
+
+    bound: function() {
+      this.firstUpdate = true;
+    },
+
+    unbound: function() {
+      this.element.style.display = '';
+      this.lastValue = null;
+      this.animating = false;
+    }
+  };
+};
+
+},{}],37:[function(require,module,exports){
+var units = {
+  '%': true,
+  'em': true,
+  'px': true,
+  'pt': true
+};
+
+/**
+ * A binder that adds styles to an element.
+ */
+module.exports = function(specificStyleName, specificUnit) {
+  return {
+    compiled: function() {
+      var styleName = specificStyleName || this.match;
+      var unit;
+
+      if (specificUnit) {
+        unit = specificUnit;
+      } else {
+        var parts = styleName.split(/[^a-z]/i);
+        if (units.hasOwnProperty(parts[parts.length - 1])) {
+          unit = parts.pop();
+          styleName = parts.join('-');
+        }
+      }
+
+      this.unit = unit || '';
+
+      this.styleName = styleName.replace(/-+(\w)/g, function(_, char) {
+        return char.toUpperCase();
+      });
+    },
+
+    updated: function(value) {
+      this.element.style[this.styleName] = (value == null) ? '' : value + this.unit;
+    }
+  };
+};
+
+},{}],38:[function(require,module,exports){
+/**
+ * ## text
+ * A binder that displays escaped text inside an element. This can be done with binding directly in text nodes but
+ * using the attribute binder prevents a flash of unstyled content on the main page.
+ *
+ * **Example:**
+ * ```html
+ * <h1 text="{{post.title}}">Untitled</h1>
+ * <div html="{{post.body | markdown}}"></div>
+ * ```
+ * *Result:*
+ * ```html
+ * <h1>Little Red</h1>
+ * <div>
+ *   <p>Little Red Riding Hood is a story about a little girl.</p>
+ *   <p>
+ *     More info can be found on
+ *     <a href="http://en.wikipedia.org/wiki/Little_Red_Riding_Hood">Wikipedia</a>
+ *   </p>
+ * </div>
+ * ```
+ */
+module.exports = function() {
+  return function(value) {
+    this.element.textContent = (value == null) ? '' : value;
+  };
+};
+
+},{}],39:[function(require,module,exports){
+var inputMethods, defaultInputMethod;
+
+/**
+ * A binder that sets the value of an HTML form element. This binder also updates the data as it is changed in
+ * the form element, providing two way binding. Can use for "checked" as well.
+ */
+module.exports = function(eventsAttrName, fieldAttrName) {
+  return {
+    onlyWhenBound: true,
+    defaultEvents: [ 'change' ],
+
+    compiled: function() {
+      var name = this.element.tagName.toLowerCase();
+      var type = this.element.type;
+      this.methods = inputMethods[type] || inputMethods[name];
+
+      if (!this.methods) {
+        return false;
+      }
+
+      if (eventsAttrName && this.element.hasAttribute(eventsAttrName)) {
+        this.events = this.element.getAttribute(eventsAttrName).split(' ');
+        this.element.removeAttribute(eventsAttrName);
+      } else if (name !== 'option') {
+        this.events = this.defaultEvents;
+      }
+
+      if (fieldAttrName && this.element.hasAttribute(fieldAttrName)) {
+        this.valueField = this.element.getAttribute(fieldAttrName);
+        this.element.removeAttribute(fieldAttrName);
+      }
+
+      if (type === 'option') {
+        this.valueField = this.element.parentNode.valueField;
+      }
+    },
+
+    created: function() {
+      if (!this.events) return; // nothing for <option> here
+      var element = this.element;
+      var observer = this.observer;
+      var input = this.methods;
+      var valueField = this.valueField;
+
+      // The 2-way binding part is setting values on certain events
+      function onChange() {
+        if (input.get.call(element, valueField) !== observer.oldValue && !element.readOnly) {
+          observer.set(input.get.call(element, valueField));
+        }
+      }
+
+      if (element.type === 'text') {
+        element.addEventListener('keydown', function(event) {
+          if (event.keyCode === 13) onChange();
+        });
+      }
+
+      this.events.forEach(function(event) {
+        element.addEventListener(event, onChange);
+      });
+    },
+
+    updated: function(value) {
+      if (this.methods.get.call(this.element, this.valueField) != value) {
+        this.methods.set.call(this.element, value, this.valueField);
+      }
+    }
+  };
+};
+
+
+/**
+ * Handle the different form types
+ */
+defaultInputMethod = {
+  get: function() { return this.value; },
+  set: function(value) { this.value = (value == null) ? '' : value; }
+};
+
+
+inputMethods = {
+  checkbox: {
+    get: function() { return this.checked; },
+    set: function(value) { this.checked = !!value; }
+  },
+
+  file: {
+    get: function() { return this.files && this.files[0]; },
+    set: function() {}
+  },
+
+  select: {
+    get: function(valueField) {
+      if (valueField) {
+        return this.options[this.selectedIndex].valueObject;
+      } else {
+        return this.value;
+      }
+    },
+    set: function(value, valueField) {
+      if (value && valueField) {
+        this.valueObject = value;
+        this.value = value[valueField];
+      } else {
+        this.value = (value == null) ? '' : value;
+      }
+    }
+  },
+
+  option: {
+    get: function(valueField) {
+      return valueField ? this.valueObject[valueField] : this.value;
+    },
+    set: function(value, valueField) {
+      if (value && valueField) {
+        this.valueObject = value;
+        this.value = value[valueField];
+      } else {
+        this.value = (value == null) ? '' : value;
+      }
+    }
+  },
+
+  input: defaultInputMethod,
+
+  textarea: defaultInputMethod
+};
+
+
+},{}],40:[function(require,module,exports){
+/**
+ * Takes the input URL and adds (or replaces) the field in the query.
+ * E.g. 'http://example.com?user=default&resource=foo' | addQuery('user', username)
+ * Will replace user=default with user={username} where {username} is the value of username.
+ */
+module.exports = function(value, queryField, queryValue) {
+  var url = value || location.href;
+  var parts = url.split('?');
+  url = parts[0];
+  var query = parts[1];
+  var addedQuery = '';
+  if (queryValue != null) {
+    addedQuery = queryField + '=' + encodeURIComponent(queryValue);
+  }
+
+  if (query) {
+    var expr = new RegExp('\\b' + queryField + '=[^&]*');
+    if (expr.test(query)) {
+      query = query.replace(expr, addedQuery);
+    } else if (addedQuery) {
+      query += '&' + addedQuery;
+    }
+  } else {
+    query = addedQuery;
+  }
+  if (query) {
+    url += '?' + query;
+  }
+  return url;
+};
+
+},{}],41:[function(require,module,exports){
+var urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
+var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$))/gim;
+/**
+ * Adds automatic links to escaped content (be sure to escape user content). Can be used on existing HTML content as it
+ * will skip URLs within HTML tags. Passing a value in the second parameter will set the target to that value or
+ * `_blank` if the value is `true`.
+ */
+module.exports = function(value, target) {
+  var targetString = '';
+  if (typeof target === 'string') {
+    targetString = ' target="' + target + '"';
+  } else if (target) {
+    targetString = ' target="_blank"';
+  }
+
+  return ('' + value).replace(/<[^>]+>|[^<]+/g, function(match) {
+    if (match.charAt(0) === '<') {
+      return match;
+    }
+    var replacedText = match.replace(urlExp, '$1<a href="$2"' + targetString + '>$2</a>');
+    return replacedText.replace(wwwExp, '$1<a href="http://$2"' + targetString + '>$2</a>');
+  });
+};
+
+},{}],42:[function(require,module,exports){
+/**
+ * Formats the value into a boolean.
+ */
+module.exports = function(value) {
+  return value && value !== '0' && value !== 'false';
+};
+
+},{}],43:[function(require,module,exports){
+var escapeHTML = require('./escape');
+
+/**
+ * HTML escapes content adding <br> tags in place of newlines characters.
+ */
+module.exports = function(value, setter) {
+  if (setter) {
+    return escapeHTML(value, setter);
+  } else {
+    var lines = (value || '').split(/\r?\n/);
+    return lines.map(escapeHTML).join('<br>\n');
+  }
+};
+
+},{"./escape":46}],44:[function(require,module,exports){
+/**
+ * Adds a formatter to format dates and strings simplistically
+ */
+module.exports = function(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (!(value instanceof Date)) {
+    value = new Date(value);
+  }
+
+  if (isNaN(value.getTime())) {
+    return '';
+  }
+
+  return value.toLocaleString();
+};
+
+},{}],45:[function(require,module,exports){
+/**
+ * Adds a formatter to format dates and strings simplistically
+ */
+module.exports = function(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (!(value instanceof Date)) {
+    value = new Date(value);
+  }
+
+  if (isNaN(value.getTime())) {
+    return '';
+  }
+
+  return value.toLocaleDateString();
+};
+
+},{}],46:[function(require,module,exports){
+var div = document.createElement('div');
+
+/**
+ * HTML escapes content. For use with other HTML-adding formatters such as autolink.
+ */
+module.exports = function (value, setter) {
+  if (setter) {
+    div.innerHTML = value;
+    return div.textContent;
+  } else {
+    div.textContent = value || '';
+    return div.innerHTML;
+  }
+};
+
+},{}],47:[function(require,module,exports){
+/**
+ * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
+ * functions.
+ */
+module.exports = function(value, filterFunc) {
+  if (!Array.isArray(value)) {
+    return [];
+  } else if (!filterFunc) {
+    return value;
+  }
+
+  if (typeof filterFunc === 'function') {
+    value = value.filter(filterFunc, this);
+  } else if (Array.isArray(filterFunc)) {
+    filterFunc.forEach(function(func) {
+      value = value.filter(func, this);
+    });
+  } else if (typeof filterFunc === 'object') {
+    Object.keys(filterFunc).forEach(function(key) {
+      var func = filterFunc[key];
+      if (typeof func === 'function') {
+        value = value.filter(func, this);
+      }
+    });
+  }
+  return value;
+};
+
+},{}],48:[function(require,module,exports){
+/**
+ * Formats the value into a float or null.
+ */
+module.exports = function(value) {
+  value = parseFloat(value);
+  return isNaN(value) ? null : value;
+};
+
+},{}],49:[function(require,module,exports){
+/**
+ * Formats the value something returned by a formatting function passed. Use for custom or one-off formats.
+ */
+module.exports = function(value, formatter, isSetter) {
+  return formatter.call(this, value, isSetter);
+};
+
+},{}],50:[function(require,module,exports){
+/**
+ * Formats the value into an integer or null.
+ */
+module.exports = function(value) {
+  value = parseInt(value);
+  return isNaN(value) ? null : value;
+};
+
+},{}],51:[function(require,module,exports){
+/**
+ * Formats the value into JSON.
+ */
+module.exports = function(value, isSetter) {
+  if (isSetter) {
+    try {
+      return JSON.parse(value);
+    } catch(err) {
+      return null;
+    }
+  } else {
+    try {
+      return JSON.stringify(value);
+    } catch(err) {
+      return err.toString();
+    }
+  }
+};
+
+},{}],52:[function(require,module,exports){
+/**
+ * Returns the keys of an object as an array
+ */
+module.exports = function(value) {
+  return value == null ? [] : Object.keys(value);
+};
+
+},{}],53:[function(require,module,exports){
+/**
+ * Adds a formatter to limit the length of an array or string
+ */
+module.exports = function(value, limit) {
+  if (value && typeof value.slice === 'function') {
+    if (limit < 0) {
+      return value.slice(limit);
+    } else {
+      value.slice(0, limit);
+    }
+  } else {
+    return value;
+  }
+};
+
+},{}],54:[function(require,module,exports){
+/**
+ * Adds a formatter to log the value of the expression, useful for debugging
+ */
+module.exports = function(value, prefix) {
+  if (prefix == null) prefix = 'Log:';
+  /*eslint-disable no-console */
+  console.log('%c' + prefix, 'color:blue;font-weight:bold', value);
+  /*eslint-enable */
+  return value;
+};
+
+},{}],55:[function(require,module,exports){
+/**
+ * Formats the value into lower case.
+ */
+module.exports = function(value) {
+  return typeof value === 'string' ? value.toLowerCase() : value;
+};
+
+},{}],56:[function(require,module,exports){
+/**
+ * Adds a formatter to map an array or value by the given mapping function
+ */
+module.exports = function(value, mapFunc) {
+  if (value == null || typeof mapFunc !== 'function') {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map(mapFunc, this);
+  } else {
+    return mapFunc.call(this, value);
+  }
+};
+
+},{}],57:[function(require,module,exports){
+var escapeHTML = require('./escape');
+
+/**
+ * HTML escapes content adding <p> tags at double newlines and <br> tags in place of single newline characters.
+ */
+module.exports = function(value, setter) {
+  if (setter) {
+    return escapeHTML(value, setter);
+  } else {
+    var paragraphs = (value || '').split(/\r?\n\s*\r?\n/);
+    var escaped = paragraphs.map(function(paragraph) {
+      var lines = paragraph.split(/\r?\n/);
+      return lines.map(escapeHTML).join('<br>\n');
+    });
+    return '<p>' + escaped.join('</p>\n\n<p>') + '</p>';
+  }
+};
+
+},{"./escape":46}],58:[function(require,module,exports){
+var escapeHTML = require('./escape');
+
+/**
+ * HTML escapes content wrapping lines into paragraphs (in <p> tags).
+ */
+module.exports = function(value, setter) {
+  if (setter) {
+    return escapeHTML(value, setter);
+  } else {
+    var lines = (value || '').split(/\r?\n/);
+    var escaped = lines.map(function(line) { return escapeHTML(line) || '<br>'; });
+    return '<p>' + escaped.join('</p>\n<p>') + '</p>';
+  }
+};
+
+},{"./escape":46}],59:[function(require,module,exports){
+/**
+ * Adds a formatter to reduce an array or value by the given reduce function
+ */
+module.exports = function(value, reduceFunc, initialValue) {
+  if (value == null || typeof mapFunc !== 'function') {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    if (arguments.length === 3) {
+      return value.reduce(reduceFunc, initialValue);
+    } else {
+      return value.reduce(reduceFunc);
+    }
+  } else if (arguments.length === 3) {
+    return reduceFunc(initialValue, value);
+  }
+};
+
+},{}],60:[function(require,module,exports){
+/**
+ * Adds a formatter to reverse an array
+ */
+module.exports = function(value) {
+  if (Array.isArray(value)) {
+    return value.slice().reverse();
+  } else {
+    return value;
+  }
+};
+
+},{}],61:[function(require,module,exports){
+/**
+ * Adds a formatter to reduce an array or value by the given reduce function
+ */
+module.exports = function(value, index, endIndex) {
+  if (Array.isArray(value)) {
+    return value.slice(index, endIndex);
+  } else {
+    return value;
+  }
+};
+
+},{}],62:[function(require,module,exports){
+/**
+ * Sorts an array given a field name or sort function, and a direction
+ */
+module.exports = function(value, sortFunc, dir) {
+  if (!sortFunc || !Array.isArray(value)) {
+    return value;
+  }
+  dir = (dir === 'desc') ? -1 : 1;
+  if (typeof sortFunc === 'string') {
+    var parts = sortFunc.split(':');
+    var prop = parts[0];
+    var dir2 = parts[1];
+    dir2 = (dir2 === 'desc') ? -1 : 1;
+    dir = dir || dir2;
+    sortFunc = function(a, b) {
+      if (a[prop] > b[prop]) return dir;
+      if (a[prop] < b[prop]) return -dir;
+      return 0;
+    };
+  } else if (dir === -1) {
+    var origFunc = sortFunc;
+    sortFunc = function(a, b) { return -origFunc(a, b); };
+  }
+
+  return value.slice().sort(sortFunc.bind(this));
+};
+
+},{}],63:[function(require,module,exports){
+/**
+ * Adds a formatter to format dates and strings simplistically
+ */
+module.exports = function(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (!(value instanceof Date)) {
+    value = new Date(value);
+  }
+
+  if (isNaN(value.getTime())) {
+    return '';
+  }
+
+  return value.toLocaleTimeString();
+};
+
+},{}],64:[function(require,module,exports){
+/**
+ * Formats the value into upper case.
+ */
+module.exports = function(value) {
+  return typeof value === 'string' ? value.toUpperCase() : value;
+};
+
+},{}],65:[function(require,module,exports){
 var Fragments = require('./src/fragments');
 var Observations = require('observations-js');
 
@@ -3756,7 +3200,7 @@ function create(options) {
 // Create an instance of fragments with the default observer
 exports.create = create;
 
-},{"./src/fragments":74,"observations-js":80}],71:[function(require,module,exports){
+},{"./src/fragments":69,"observations-js":75}],66:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -4004,7 +3448,7 @@ function onAnimationEnd(node, duration, callback) {
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":72,"./util/animation":76}],72:[function(require,module,exports){
+},{"./binding":67,"./util/animation":71}],67:[function(require,module,exports){
 module.exports = Binding;
 var Class = require('chip-utils/class');
 
@@ -4174,7 +3618,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"chip-utils/class":55}],73:[function(require,module,exports){
+},{"chip-utils/class":2}],68:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4342,7 +3786,7 @@ function notEmpty(value) {
   return Boolean(value);
 }
 
-},{}],74:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -5006,7 +4450,7 @@ function processOption(obj, fragments, methodName) {
     });
   }
 }
-},{"./animatedBinding":71,"./binding":72,"./compile":73,"./template":75,"./util/animation":76,"./util/polyfills":77,"./util/toFragment":78,"./view":79,"chip-utils/class":55}],75:[function(require,module,exports){
+},{"./animatedBinding":66,"./binding":67,"./compile":68,"./template":70,"./util/animation":71,"./util/polyfills":72,"./util/toFragment":73,"./view":74,"chip-utils/class":2}],70:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5046,7 +4490,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":79,"chip-utils/class":55}],76:[function(require,module,exports){
+},{"./view":74,"chip-utils/class":2}],71:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5137,7 +4581,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],77:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 
 
 
@@ -5164,7 +4608,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],78:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5287,7 +4731,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],79:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5420,7 +4864,7 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":55}],80:[function(require,module,exports){
+},{"chip-utils/class":2}],75:[function(require,module,exports){
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
@@ -5428,9 +4872,7 @@ exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observations":82,"./src/observer":83}],81:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"dup":55}],82:[function(require,module,exports){
+},{"./src/observations":76,"./src/observer":77}],76:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -5598,7 +5040,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./observer":83,"chip-utils/class":81}],83:[function(require,module,exports){
+},{"./observer":77,"chip-utils/class":2}],77:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -5703,8 +5145,34 @@ Class.extend(Observer, {
     if (this.skip || !this.callback) {
       this.skip = false;
     } else {
-      // If an array has changed calculate the splices and call the callback. This
-      var changed = diff.values(value, this.oldValue);
+      var change;
+      var useCompareBy = this.getChangeRecords &&
+                         this.compareBy &&
+                         Array.isArray(value) &&
+                         Array.isArray(this.oldValue);
+
+      if (useCompareBy) {
+        var expr = this.compareBy;
+        var name = this.compareByName;
+        var index = this.compareByIndex || '__index__';
+        var ctx = this.context;
+        var globals = this.observations.globals;
+        var formatters = this.observations.formatters;
+        var oldValue = this.oldValue;
+        if (!name) {
+          name = '__item__';
+          // Turn "id" into "__item__.id"
+          expr = name + '.' + expr;
+        }
+
+        var getCompareValue = expressions.parse(expr, globals, formatters, name, index);
+        changed = diff.values(value.map(getCompareValue, ctx), oldValue.map(getCompareValue, ctx));
+      } else {
+        changed = diff.values(value, this.oldValue);
+      }
+
+
+      // If an array has changed calculate the splices and call the callback.
       if (!changed && !this.forceUpdateNextSync) return;
       this.forceUpdateNextSync = false;
       if (Array.isArray(changed)) {
@@ -5725,7 +5193,13 @@ Class.extend(Observer, {
   }
 });
 
-},{"chip-utils/class":81,"differences-js":63,"expressions-js":65}],84:[function(require,module,exports){
+function mapToProperty(property) {
+  return function(item) {
+    return item && item[property];
+  }
+}
+
+},{"chip-utils/class":2,"differences-js":4,"expressions-js":6}],78:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -5736,7 +5210,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":87,"./src/location":88,"./src/push-location":89,"./src/route":90,"./src/router":91}],85:[function(require,module,exports){
+},{"./src/hash-location":81,"./src/location":82,"./src/push-location":83,"./src/route":84,"./src/router":85}],79:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -5847,9 +5321,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],86:[function(require,module,exports){
-arguments[4][56][0].apply(exports,arguments)
-},{"./class":85,"dup":56}],87:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"./class":79,"dup":3}],81:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -5876,7 +5350,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":88}],88:[function(require,module,exports){
+},{"./location":82}],82:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -5988,7 +5462,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":87,"./push-location":89,"chip-utils/event-target":86}],89:[function(require,module,exports){
+},{"./hash-location":81,"./push-location":83,"chip-utils/event-target":80}],83:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -6028,7 +5502,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":88}],90:[function(require,module,exports){
+},{"./location":82}],84:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -6113,7 +5587,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":85}],91:[function(require,module,exports){
+},{"chip-utils/class":79}],85:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -6274,6 +5748,560 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":88,"./route":90,"chip-utils/event-target":86}]},{},[57])(57)
+},{"./location":82,"./route":84,"chip-utils/event-target":80}],86:[function(require,module,exports){
+module.exports = App;
+var componentBinding = require('fragments-built-ins/binders/component');
+var Component = require('fragments-built-ins/binders/component-definition');
+var Location = require('routes-js').Location;
+var EventTarget = require('chip-utils/event-target');
+var fragments = require('fragments-js');
+var defaultOptions = require('./default-options')
+var defaultMixin = require('./mixins/default');
+var slice = Array.prototype.slice;
+
+// # Chip App
+
+// An App represents an app or module that can have routes, controllers, and templates defined.
+function App(options) {
+  options = Object.assign({}, defaultOptions, options);
+  options.binders = Object.assign({}, defaultOptions.binders, options.binders);
+  options.formatters = Object.assign({}, defaultOptions.formatters, options.formatters);
+  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
+  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
+  options.components = Object.assign({}, defaultOptions.components, options.components);
+
+  EventTarget.call(this);
+  this.fragments = fragments.create(options);
+  this.components = {};
+  this.fragments.app = this;
+  this.location = Location.create(options);
+  this.defaultMixin = defaultMixin(this);
+  this._listening = false;
+  this.useCustomElements = options.useCustomElements;
+
+  this.rootElement = options.rootElement || document.documentElement;
+  this.sync = this.fragments.sync;
+  this.syncNow = this.fragments.syncNow;
+  this.afterSync = this.fragments.afterSync;
+  this.onSync = this.fragments.onSync;
+  this.offSync = this.fragments.offSync;
+  this.observe = this.fragments.observe.bind(this.fragments);
+  this.location.on('change', this.sync);
+
+  this.fragments.setExpressionDelimiters('attribute', '{{', '}}', !options.curliesInAttributes);
+  this.fragments.animateAttribute = options.animateAttribute;
+
+  Object.keys(options.components).forEach(function(name) {
+    this.component(name, options.components[name]);
+  }, this);
+}
+
+EventTarget.extend(App, {
+
+  init: function(root) {
+    if (this.inited) {
+      return;
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', this.init.bind(this, root));
+      return;
+    }
+
+    this.inited = true
+    if (root) {
+      this.rootElement = root;
+    }
+
+    this.fragments.bindElement(this.rootElement, this);
+    this.rootElement.attached();
+    return this;
+  },
+
+
+  // Components
+  // ----------
+
+  // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
+  // then returns a new instance of a defined template. This instance is a document fragment.
+  component: function(name, definition) {
+    if (arguments.length === 1) {
+      return this.components[name];
+    }
+
+    var ComponentClass;
+    if (definition.prototype instanceof Component) {
+      ComponentClass = definition;
+    } else {
+      var definitions = slice.call(arguments, 1);
+      definitions.unshift(this.defaultMixin);
+      ComponentClass = Component.extend.apply(Component, definitions);
+    }
+
+    ComponentClass.prototype.name = name;
+    this.components[name] = ComponentClass;
+    this.fragments.registerElement(name, componentBinding(ComponentClass));
+    return this;
+  },
+
+
+  // Redirects to the provided URL
+  redirect: function(url, replace) {
+    return this.location.redirect(url, replace);
+  },
+
+
+  get listening() {
+    return this._listening;
+  },
+
+  // Listen to URL changes
+  listen: function() {
+    var app = this;
+    this._listening = true;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', this.listen.bind(this));
+      return this;
+    }
+
+    // Add handler for when the route changes
+    this._locationChangeHandler = function(event) {
+      app.url = event.detail.url;
+      app.path = event.detail.path;
+      app.query = event.detail.query;
+      app.dispatchEvent(new CustomEvent('urlChange', { detail: event.detail }));
+    };
+
+    // Add handler for clicking links
+    this._clickHandler = function(event) {
+      var anchor;
+      if ( !(anchor = event.target.closest('a[href]')) ) {
+        return;
+      }
+
+      if (event.defaultPrevented ||
+        location.protocol !== anchor.protocol ||
+        location.host !== anchor.host.replace(/:80$|:443$/, ''))
+      {
+        // if something else already handled this, we won't
+        // if it is for another protocol or domain, we won't
+        return;
+      }
+
+      var url = anchor.getAttribute('href').replace(/^#/, '');
+
+      if (event.metaKey || event.ctrlKey || anchor.hasAttribute('target')) {
+        return;
+      }
+
+      event.preventDefault();
+      if (anchor.href === location.href + '#') {
+        return;
+      }
+
+      if (!anchor.disabled) {
+        app.redirect(url);
+      }
+    };
+
+    this.location.on('change', this._locationChangeHandler);
+    this.rootElement.addEventListener('click', this._clickHandler);
+    this.url = this.location.url;
+    this.path = this.location.path;
+    this.query = this.location.query;
+    this.dispatchEvent(new CustomEvent('urlChange', { detail: {
+      url: this.url,
+      path: this.path,
+      query: this.query
+    }}));
+  },
+
+  // Stop listening
+  stop: function() {
+    this.location.off('change', this._locationChangeHandler);
+    this.rootElement.removeEventListener('click', this._clickHandler);
+  }
+
+});
+
+if (typeof Object.assign !== 'function') {
+  (function () {
+    Object.assign = function (target) {
+      'use strict';
+      if (target === undefined || target === null) {
+        throw new TypeError('Cannot convert undefined or null to object');
+      }
+
+      var output = Object(target);
+      for (var index = 1; index < arguments.length; index++) {
+        var source = arguments[index];
+        if (source !== undefined && source !== null) {
+          for (var nextKey in source) {
+            if (source.hasOwnProperty(nextKey)) {
+              output[nextKey] = source[nextKey];
+            }
+          }
+        }
+      }
+      return output;
+    };
+  })();
+}
+
+},{"./default-options":89,"./mixins/default":90,"chip-utils/event-target":3,"fragments-built-ins/binders/component":25,"fragments-built-ins/binders/component-definition":24,"fragments-js":65,"routes-js":78}],87:[function(require,module,exports){
+var Route = require('routes-js').Route;
+var IfBinder = require('fragments-built-ins/binders/if');
+
+module.exports = function() {
+  var ifBinder = IfBinder();
+  var attached = ifBinder.attached;
+  var unbound = ifBinder.unbound;
+  var detached = ifBinder.detached;
+
+  ifBinder.compiled = function() {
+    var noRoute;
+    this.app = this.fragments.app;
+    this.routes = [];
+    this.templates = [];
+    this.expression = '';
+
+    // each child with a [path] attribute will display only when its path matches the URL
+    while (this.element.firstChild) {
+      var child = this.element.firstChild;
+      this.element.removeChild(child);
+
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        continue;
+      }
+
+      if (child.hasAttribute('[path]')) {
+        var path = child.getAttribute('[path]');
+        child.removeAttribute('[path]');
+        this.routes.push(new Route(path));
+        this.templates.push(this.fragments.createTemplate(child));
+      } else if (child.hasAttribute('[noroute]')) {
+        child.removeAttribute('[noroute]');
+        noRoute = this.fragments.createTemplate(child);
+      }
+    }
+
+    if (noRoute) {
+      this.templates.push(noRoute);
+    }
+  };
+
+  ifBinder.add = function(view) {
+    view.bind(this.context);
+    this.element.appendChild(view);
+    this.attached();
+  };
+
+  ifBinder.created = function() {
+    this.onUrlChange = this.onUrlChange.bind(this);
+  };
+
+
+  ifBinder.attached = function() {
+    attached.call(this);
+
+    var node = this.element.parentNode;
+    while (node && !node.matchedRoutePath) {
+      node = node.parentNode;
+    }
+    this.baseURI = node && node.matchedRoutePath || '';
+
+    this.app.on('urlChange', this.onUrlChange);
+    if (this.app.listening) {
+      this.onUrlChange();
+    }
+  };
+
+  ifBinder.detached = function() {
+    detached.call(this);
+    this.currentIndex = undefined;
+    this.app.off('urlChange', this.onUrlChange);
+  };
+
+  ifBinder.unbound = function() {
+    unbound.call(this);
+    delete this.context.params;
+  };
+
+  ifBinder.onUrlChange = function() {
+    if (!this.context) {
+      return;
+    }
+
+    if (this.element.baseURI === null) {
+      // element.baseURI is null if it isn't in the DOM yet
+      // If this is just getting inserted into the DOM wait for this.baseURI to be set
+      setTimeout(function() {
+        if (!this.context) return;
+        this.checkForChange();
+      }.bind(this));
+    } else {
+      this.checkForChange();
+    }
+  };
+
+  ifBinder.checkForChange = function() {
+    var fullUrl = this.app.path;
+    var localUrl = null;
+    var newIndex = this.routes.length;
+    var matched;
+    delete this.context.params;
+
+    if (fullUrl.indexOf(this.baseURI) === 0) {
+      localUrl = fullUrl.replace(this.baseURI, '');
+    }
+
+    if (localUrl !== null) {
+
+      matched = this.routes.some(function(route, index) {
+        if (route.match(localUrl)) {
+          if (route.params.hasOwnProperty('*') && route.params['*']) {
+            var afterLength = route.params['*'].length;
+            this.element.matchedRoutePath = this.baseURI + localUrl.slice(0, -afterLength);
+          } else {
+            this.element.matchedRoutePath = fullUrl;
+          }
+          var params = this.context.params = Object.create(route.params);
+          var query = this.app.query;
+          Object.keys(query).forEach(function(key) {
+            if (!params.hasOwnProperty(key)) {
+              params[key] = query[key];
+            }
+          });
+
+          newIndex = index;
+          return true;
+        }
+      }, this);
+    }
+
+    if (matched || newIndex !== this.currentIndex) {
+      this.element.dispatchEvent(new Event('routed'));
+    }
+
+    if (newIndex !== this.currentIndex) {
+      this.currentIndex = newIndex;
+      this.updated(this.currentIndex);
+    }
+  };
+
+  return ifBinder;
+};
+
+},{"fragments-built-ins/binders/if":28,"routes-js":78}],88:[function(require,module,exports){
+var App = require('./app');
+
+// # Chip
+
+// > Chip.js 2.0.0
+//
+// > (c) 2013 Jacob Wright, TeamSnap
+// Chip may be freely distributed under the MIT license.
+// For all details and documentation:
+// <https://github.com/teamsnap/chip/>
+
+// Contents
+// --------
+// * [chip](chip.html) the namespace, creates apps, and registers bindings and filters
+// * [App](app.html) represents an app that can have routes, controllers, and templates defined
+// * [Controller](controller.html) is used in the binding to attach data and run actions
+// * [Router](router.html) is used for handling URL rounting
+// * [Default binders](binders.html) registers the default binders chip provides
+
+// Create Chip App
+// -------------
+// Creates a new chip app
+module.exports = chip;
+
+function chip(options) {
+  var app = new App(options);
+  app.init();
+  return app;
+}
+
+chip.App = App;
+chip.Class = require('chip-utils/class');
+chip.EventTarget = require('chip-utils/event-target');
+chip.routes = require('routes-js');
+
+},{"./app":86,"chip-utils/class":2,"chip-utils/event-target":3,"routes-js":78}],89:[function(require,module,exports){
+
+module.exports = {
+  curliesInAttributes: false,
+  animateAttribute: '[animate]',
+
+  binders: {
+    '(keydown.*)': require('fragments-built-ins/binders/key-events')(null, 'keydown'),
+    '(keyup.*)': require('fragments-built-ins/binders/key-events')(null, 'keyup'),
+    '(enter)': require('fragments-built-ins/binders/key-events')('enter'),
+    '(esc)': require('fragments-built-ins/binders/key-events')('esc'),
+    '(*)': require('fragments-built-ins/binders/events')(),
+    '{*}': require('fragments-built-ins/binders/properties')(),
+    '{{*}}': require('fragments-built-ins/binders/properties-2-way')(),
+    '*?': require('fragments-built-ins/binders/attribute-names')(),
+    '[content]': require('fragments-built-ins/binders/component-content')(),
+    '[show]': require('fragments-built-ins/binders/show')(false),
+    '[hide]': require('fragments-built-ins/binders/show')(true),
+    '[for]': require('fragments-built-ins/binders/repeat')('[by]'),
+    '#*': require('fragments-built-ins/binders/ref')(),
+    '[text]': require('fragments-built-ins/binders/text')(),
+    '[html]': require('fragments-built-ins/binders/html')(),
+    '[src]': require('fragments-built-ins/binders/properties')('src'),
+    '[log]': require('fragments-built-ins/binders/log')(),
+    '[class]': require('fragments-built-ins/binders/class')(),
+    '[.*]': require('fragments-built-ins/binders/classes')(),
+    '[style.*]': require('fragments-built-ins/binders/styles')(),
+    '[autofocus]': require('fragments-built-ins/binders/autofocus')(),
+    '[autoselect]': require('fragments-built-ins/binders/autoselect')(),
+    '[name]': require('fragments-built-ins/binders/radio')('[value]'),
+    '[value]': require('fragments-built-ins/binders/value')(
+      '[value-events]',
+      '[value-field]'
+    ),
+    '[component]': require('fragments-built-ins/binders/component')(function(componentName) {
+      return this.fragments.app.component(componentName);
+    }),
+    '[if]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
+    '[unless]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
+    '[route]': require('./binders/route')()
+  },
+
+  formatters: {
+    addQuery: require('fragments-built-ins/formatters/add-query'),
+    autolink: require('fragments-built-ins/formatters/autolink'),
+    bool: require('fragments-built-ins/formatters/bool'),
+    br: require('fragments-built-ins/formatters/br'),
+    dateTime: require('fragments-built-ins/formatters/date-time'),
+    date: require('fragments-built-ins/formatters/date'),
+    escape: require('fragments-built-ins/formatters/escape'),
+    filter: require('fragments-built-ins/formatters/filter'),
+    float: require('fragments-built-ins/formatters/float'),
+    format: require('fragments-built-ins/formatters/format'),
+    int: require('fragments-built-ins/formatters/int'),
+    json: require('fragments-built-ins/formatters/json'),
+    keys: require('fragments-built-ins/formatters/keys'),
+    limit: require('fragments-built-ins/formatters/limit'),
+    log: require('fragments-built-ins/formatters/log'),
+    lower: require('fragments-built-ins/formatters/lower'),
+    map: require('fragments-built-ins/formatters/map'),
+    newline: require('fragments-built-ins/formatters/newline'),
+    p: require('fragments-built-ins/formatters/p'),
+    reduce: require('fragments-built-ins/formatters/reduce'),
+    reverse: require('fragments-built-ins/formatters/reverse'),
+    slice: require('fragments-built-ins/formatters/slice'),
+    sort: require('fragments-built-ins/formatters/sort'),
+    time: require('fragments-built-ins/formatters/time'),
+    upper: require('fragments-built-ins/formatters/upper')
+  },
+
+  animations: {
+    'fade': require('fragments-built-ins/animations/fade')(),
+    'slide': require('fragments-built-ins/animations/slide')(),
+    'slide-h': require('fragments-built-ins/animations/slide-horizontal')(),
+    'slide-move': require('fragments-built-ins/animations/slide-move')(),
+    'slide-move-h': require('fragments-built-ins/animations/slide-move-horizontal')(),
+    'slide-fade': require('fragments-built-ins/animations/slide-fade')(),
+    'slide-fade-h': require('fragments-built-ins/animations/slide-fade-horizontal')()
+  }
+
+};
+
+},{"./binders/route":87,"fragments-built-ins/animations/fade":11,"fragments-built-ins/animations/slide":17,"fragments-built-ins/animations/slide-fade":13,"fragments-built-ins/animations/slide-fade-horizontal":12,"fragments-built-ins/animations/slide-horizontal":14,"fragments-built-ins/animations/slide-move":16,"fragments-built-ins/animations/slide-move-horizontal":15,"fragments-built-ins/binders/attribute-names":18,"fragments-built-ins/binders/autofocus":19,"fragments-built-ins/binders/autoselect":20,"fragments-built-ins/binders/class":21,"fragments-built-ins/binders/classes":22,"fragments-built-ins/binders/component":25,"fragments-built-ins/binders/component-content":23,"fragments-built-ins/binders/events":26,"fragments-built-ins/binders/html":27,"fragments-built-ins/binders/if":28,"fragments-built-ins/binders/key-events":29,"fragments-built-ins/binders/log":30,"fragments-built-ins/binders/properties":32,"fragments-built-ins/binders/properties-2-way":31,"fragments-built-ins/binders/radio":33,"fragments-built-ins/binders/ref":34,"fragments-built-ins/binders/repeat":35,"fragments-built-ins/binders/show":36,"fragments-built-ins/binders/styles":37,"fragments-built-ins/binders/text":38,"fragments-built-ins/binders/value":39,"fragments-built-ins/formatters/add-query":40,"fragments-built-ins/formatters/autolink":41,"fragments-built-ins/formatters/bool":42,"fragments-built-ins/formatters/br":43,"fragments-built-ins/formatters/date":45,"fragments-built-ins/formatters/date-time":44,"fragments-built-ins/formatters/escape":46,"fragments-built-ins/formatters/filter":47,"fragments-built-ins/formatters/float":48,"fragments-built-ins/formatters/format":49,"fragments-built-ins/formatters/int":50,"fragments-built-ins/formatters/json":51,"fragments-built-ins/formatters/keys":52,"fragments-built-ins/formatters/limit":53,"fragments-built-ins/formatters/log":54,"fragments-built-ins/formatters/lower":55,"fragments-built-ins/formatters/map":56,"fragments-built-ins/formatters/newline":57,"fragments-built-ins/formatters/p":58,"fragments-built-ins/formatters/reduce":59,"fragments-built-ins/formatters/reverse":60,"fragments-built-ins/formatters/slice":61,"fragments-built-ins/formatters/sort":62,"fragments-built-ins/formatters/time":63,"fragments-built-ins/formatters/upper":64}],90:[function(require,module,exports){
+
+module.exports = function(app) {
+
+  return {
+
+    app: app,
+    sync: app.sync,
+    syncNow: app.syncNow,
+    afterSync: app.afterSync,
+    onSync: app.onSync,
+    offSync: app.offSync,
+
+    created: function() {
+      Object.defineProperties(this, {
+        _observers: { configurable: true, value: [] },
+        _listeners: { configurable: true, value: [] },
+        _bound: { configurable: true, value: false },
+      });
+    },
+
+
+    bound: function() {
+      this._bound = true;
+      this._observers.forEach(function(observer) {
+        observer.bind(this);
+      }, this);
+
+      this._listeners.forEach(function(item) {
+        item.target.addEventListener(item.eventName, item.listener);
+      });
+    },
+
+
+    unbound: function() {
+      this._bound = false;
+      this._observers.forEach(function(observer) {
+        observer.unbind();
+      });
+
+      this._listeners.forEach(function(item) {
+        item.target.removeEventListener(item.eventName, item.listener);
+      });
+    },
+
+
+    observe: function(expr, callback) {
+      if (typeof callback !== 'function') {
+        throw new TypeError('callback must be a function');
+      }
+
+      var observer = app.observe(expr, callback, this);
+      this._observers.push(observer);
+      if (this._bound) {
+        // If not bound will bind on attachment
+        observer.bind(this);
+      }
+      return observer;
+    },
+
+
+    listen: function(target, eventName, listener, context) {
+      if (typeof target === 'string') {
+        context = listener;
+        listener = eventName;
+        eventName = target;
+        target = this;
+      }
+
+      if (typeof listener !== 'function') {
+        throw new TypeError('listener must be a function');
+      }
+
+      listener = listener.bind(context || this);
+
+      var listenerData = {
+        target: target,
+        eventName: eventName,
+        listener: listener
+      };
+
+      this._listeners.push(listenerData);
+
+      if (this._bound) {
+        // If not bound will add on attachment
+        target.addEventListener(eventName, listener);
+      }
+    },
+  };
+};
+
+},{}]},{},[1])(1)
 });
 //# sourceMappingURL=chip.js.map

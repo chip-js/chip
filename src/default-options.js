@@ -15,7 +15,7 @@ module.exports = {
     '[content]': require('fragments-built-ins/binders/component-content')(),
     '[show]': require('fragments-built-ins/binders/show')(false),
     '[hide]': require('fragments-built-ins/binders/show')(true),
-    '[for]': require('fragments-built-ins/binders/repeat')(),
+    '[for]': require('fragments-built-ins/binders/repeat')('[by]'),
     '#*': require('fragments-built-ins/binders/ref')(),
     '[text]': require('fragments-built-ins/binders/text')(),
     '[html]': require('fragments-built-ins/binders/html')(),

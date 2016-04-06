@@ -359,7 +359,7 @@ if it is for another protocol or domain, we won’t</p>
 <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> <span class="hljs-built_in">Object</span>.assign !== <span class="hljs-string">'function'</span>) {
   (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
     <span class="hljs-built_in">Object</span>.assign = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">target</span>) </span>{
-<span class="hljs-pi">      'use strict'</span>;
+<span class="hljs-meta">      'use strict'</span>;
       <span class="hljs-keyword">if</span> (target === <span class="hljs-literal">undefined</span> || target === <span class="hljs-literal">null</span>) {
         <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">'Cannot convert undefined or null to object'</span>);
       }
