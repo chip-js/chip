@@ -94,6 +94,36 @@ EventTarget.extend(App, {
   },
 
 
+  // Register an attribute binder with this application.
+  binder: function(name, binder) {
+    if (arguments.length === 1) {
+      return this.fragments.getAttributeBinder(name);
+    } else {
+      return this.fragments.registerAttribute(name, binder);
+    }
+  },
+
+
+  // Register a formatter with this application
+  formatter: function(name, formatter) {
+    if (arguments.length === 1) {
+      return this.fragments.getFormatter(name);
+    } else {
+      return this.fragments.registerFormatter(name, formatter);
+    }
+  },
+
+
+  // Register an animation with this application
+  animation: function(name, animation) {
+    if (arguments.length === 1) {
+      return this.fragments.getAnimation(name);
+    } else {
+      return this.fragments.registerAnimation(name, animation);
+    }
+  },
+
+
   // Redirects to the provided URL
   redirect: function(url, replace) {
     return this.location.redirect(url, replace);
