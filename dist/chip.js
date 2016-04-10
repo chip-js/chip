@@ -1,7 +1,7 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.chip = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = require('./src/chip');
 
-},{"./src/chip":88}],2:[function(require,module,exports){
+},{"./src/chip":80}],2:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -5200,6 +5200,605 @@ function mapToProperty(property) {
 }
 
 },{"chip-utils/class":2,"differences-js":4,"expressions-js":6}],78:[function(require,module,exports){
+module.exports = App;
+var componentBinding = require('fragments-built-ins/binders/component');
+var Component = require('fragments-built-ins/binders/component-definition');
+var Location = require('routes-js').Location;
+var EventTarget = require('chip-utils/event-target');
+var fragments = require('fragments-js');
+var defaultOptions = require('./default-options')
+var defaultMixin = require('./mixins/default');
+var slice = Array.prototype.slice;
+
+// # Chip App
+
+// An App represents an app or module that can have routes, controllers, and templates defined.
+function App(options) {
+  options = Object.assign({}, defaultOptions, options);
+  options.binders = Object.assign({}, defaultOptions.binders, options.binders);
+  options.formatters = Object.assign({}, defaultOptions.formatters, options.formatters);
+  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
+  options.components = Object.assign({}, defaultOptions.components, options.components);
+
+  EventTarget.call(this);
+  this.fragments = fragments.create(options);
+  this.components = {};
+  this.fragments.app = this;
+  this.location = Location.create(options);
+  this.defaultMixin = defaultMixin(this);
+  this._listening = false;
+  this.useCustomElements = options.useCustomElements;
+
+  this.rootElement = options.rootElement || document.documentElement;
+  this.sync = this.fragments.sync;
+  this.syncNow = this.fragments.syncNow;
+  this.afterSync = this.fragments.afterSync;
+  this.onSync = this.fragments.onSync;
+  this.offSync = this.fragments.offSync;
+  this.observations = this.fragments.observations;
+  this.computed = this.observations.computed;
+  this.observe = this.fragments.observe.bind(this.fragments);
+  this.location.on('change', this.sync);
+
+  this.fragments.setExpressionDelimiters('attribute', '{{', '}}', !options.curliesInAttributes);
+  this.fragments.animateAttribute = options.animateAttribute;
+
+  Object.keys(options.components).forEach(function(name) {
+    this.component(name, options.components[name]);
+  }, this);
+}
+
+EventTarget.extend(App, {
+
+  init: function(root) {
+    if (this.inited) {
+      return;
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', this.init.bind(this, root));
+      return;
+    }
+
+    this.inited = true
+    if (root) {
+      this.rootElement = root;
+    }
+
+    this.fragments.bindElement(this.rootElement, this);
+    this.rootElement.attached();
+    return this;
+  },
+
+
+  // Components
+  // ----------
+
+  // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
+  // then returns a new instance of a defined template. This instance is a document fragment.
+  component: function(name, definition) {
+    if (arguments.length === 1) {
+      return this.components[name];
+    }
+
+    var ComponentClass;
+    if (definition.prototype instanceof Component) {
+      ComponentClass = definition;
+    } else {
+      var definitions = slice.call(arguments, 1);
+      definitions.unshift(this.defaultMixin);
+      ComponentClass = Component.extend.apply(Component, definitions);
+    }
+
+    ComponentClass.prototype.name = name;
+    this.components[name] = ComponentClass;
+    this.fragments.registerElement(name, componentBinding(ComponentClass));
+    return this;
+  },
+
+
+  // Register an attribute binder with this application.
+  binder: function(name, binder) {
+    if (arguments.length === 1) {
+      return this.fragments.getAttributeBinder(name);
+    } else {
+      return this.fragments.registerAttribute(name, binder);
+    }
+  },
+
+
+  // Register a formatter with this application
+  formatter: function(name, formatter) {
+    if (arguments.length === 1) {
+      return this.fragments.getFormatter(name);
+    } else {
+      return this.fragments.registerFormatter(name, formatter);
+    }
+  },
+
+
+  // Register an animation with this application
+  animation: function(name, animation) {
+    if (arguments.length === 1) {
+      return this.fragments.getAnimation(name);
+    } else {
+      return this.fragments.registerAnimation(name, animation);
+    }
+  },
+
+
+  // Redirects to the provided URL
+  redirect: function(url, replace) {
+    return this.location.redirect(url, replace);
+  },
+
+
+  get listening() {
+    return this._listening;
+  },
+
+  // Listen to URL changes
+  listen: function() {
+    var app = this;
+    this._listening = true;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', this.listen.bind(this));
+      return this;
+    }
+
+    // Add handler for when the route changes
+    this._locationChangeHandler = function(event) {
+      app.url = event.detail.url;
+      app.path = event.detail.path;
+      app.query = event.detail.query;
+      app.dispatchEvent(new CustomEvent('urlChange', { detail: event.detail }));
+    };
+
+    // Add handler for clicking links
+    this._clickHandler = function(event) {
+      var anchor;
+      if ( !(anchor = event.target.closest('a[href]')) ) {
+        return;
+      }
+
+      if (event.defaultPrevented ||
+        location.protocol !== anchor.protocol ||
+        location.host !== anchor.host.replace(/:80$|:443$/, ''))
+      {
+        // if something else already handled this, we won't
+        // if it is for another protocol or domain, we won't
+        return;
+      }
+
+      var url = anchor.getAttribute('href').replace(/^#/, '');
+
+      if (event.metaKey || event.ctrlKey || anchor.hasAttribute('target')) {
+        return;
+      }
+
+      event.preventDefault();
+      if (anchor.href === location.href + '#') {
+        return;
+      }
+
+      if (!anchor.disabled) {
+        app.redirect(url);
+      }
+    };
+
+    this.location.on('change', this._locationChangeHandler);
+    this.rootElement.addEventListener('click', this._clickHandler);
+    this.url = this.location.url;
+    this.path = this.location.path;
+    this.query = this.location.query;
+    this.dispatchEvent(new CustomEvent('urlChange', { detail: {
+      url: this.url,
+      path: this.path,
+      query: this.query
+    }}));
+  },
+
+  // Stop listening
+  stop: function() {
+    this.location.off('change', this._locationChangeHandler);
+    this.rootElement.removeEventListener('click', this._clickHandler);
+  }
+
+});
+
+if (typeof Object.assign !== 'function') {
+  (function () {
+    Object.assign = function (target) {
+      'use strict';
+      if (target === undefined || target === null) {
+        throw new TypeError('Cannot convert undefined or null to object');
+      }
+
+      var output = Object(target);
+      for (var index = 1; index < arguments.length; index++) {
+        var source = arguments[index];
+        if (source !== undefined && source !== null) {
+          for (var nextKey in source) {
+            if (source.hasOwnProperty(nextKey)) {
+              output[nextKey] = source[nextKey];
+            }
+          }
+        }
+      }
+      return output;
+    };
+  })();
+}
+
+},{"./default-options":81,"./mixins/default":82,"chip-utils/event-target":3,"fragments-built-ins/binders/component":25,"fragments-built-ins/binders/component-definition":24,"fragments-js":65,"routes-js":83}],79:[function(require,module,exports){
+var Route = require('routes-js').Route;
+var IfBinder = require('fragments-built-ins/binders/if');
+
+module.exports = function() {
+  var ifBinder = IfBinder();
+  var attached = ifBinder.attached;
+  var unbound = ifBinder.unbound;
+  var detached = ifBinder.detached;
+
+  ifBinder.compiled = function() {
+    var noRoute;
+    this.app = this.fragments.app;
+    this.routes = [];
+    this.templates = [];
+    this.expression = '';
+
+    // each child with a [path] attribute will display only when its path matches the URL
+    while (this.element.firstChild) {
+      var child = this.element.firstChild;
+      this.element.removeChild(child);
+
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        continue;
+      }
+
+      if (child.hasAttribute('[path]')) {
+        var path = child.getAttribute('[path]');
+        child.removeAttribute('[path]');
+        this.routes.push(new Route(path));
+        this.templates.push(this.fragments.createTemplate(child));
+      } else if (child.hasAttribute('[noroute]')) {
+        child.removeAttribute('[noroute]');
+        noRoute = this.fragments.createTemplate(child);
+      }
+    }
+
+    if (noRoute) {
+      this.templates.push(noRoute);
+    }
+  };
+
+  ifBinder.add = function(view) {
+    view.bind(this.context);
+    this.element.appendChild(view);
+    this.attached();
+  };
+
+  ifBinder.created = function() {
+    this.onUrlChange = this.onUrlChange.bind(this);
+  };
+
+
+  ifBinder.attached = function() {
+    attached.call(this);
+
+    var node = this.element.parentNode;
+    while (node && !node.matchedRoutePath) {
+      node = node.parentNode;
+    }
+    this.baseURI = node && node.matchedRoutePath || '';
+
+    this.app.on('urlChange', this.onUrlChange);
+    if (this.app.listening) {
+      this.onUrlChange();
+    }
+  };
+
+  ifBinder.detached = function() {
+    detached.call(this);
+    this.currentIndex = undefined;
+    this.app.off('urlChange', this.onUrlChange);
+  };
+
+  ifBinder.unbound = function() {
+    unbound.call(this);
+    delete this.context.params;
+  };
+
+  ifBinder.onUrlChange = function() {
+    if (!this.context) {
+      return;
+    }
+
+    if (this.element.baseURI === null) {
+      // element.baseURI is null if it isn't in the DOM yet
+      // If this is just getting inserted into the DOM wait for this.baseURI to be set
+      setTimeout(function() {
+        if (!this.context) return;
+        this.checkForChange();
+      }.bind(this));
+    } else {
+      this.checkForChange();
+    }
+  };
+
+  ifBinder.checkForChange = function() {
+    var fullUrl = this.app.path;
+    var localUrl = null;
+    var newIndex = this.routes.length;
+    var matched;
+    delete this.context.params;
+
+    if (fullUrl.indexOf(this.baseURI) === 0) {
+      localUrl = fullUrl.replace(this.baseURI, '');
+    }
+
+    if (localUrl !== null) {
+
+      matched = this.routes.some(function(route, index) {
+        if (route.match(localUrl)) {
+          if (route.params.hasOwnProperty('*') && route.params['*']) {
+            var afterLength = route.params['*'].length;
+            this.element.matchedRoutePath = this.baseURI + localUrl.slice(0, -afterLength);
+          } else {
+            this.element.matchedRoutePath = fullUrl;
+          }
+          var params = this.context.params = Object.create(route.params);
+          var query = this.app.query;
+          Object.keys(query).forEach(function(key) {
+            if (!params.hasOwnProperty(key)) {
+              params[key] = query[key];
+            }
+          });
+
+          newIndex = index;
+          return true;
+        }
+      }, this);
+    }
+
+    if (matched || newIndex !== this.currentIndex) {
+      this.element.dispatchEvent(new Event('routed'));
+    }
+
+    if (newIndex !== this.currentIndex) {
+      this.currentIndex = newIndex;
+      this.updated(this.currentIndex);
+    }
+  };
+
+  return ifBinder;
+};
+
+},{"fragments-built-ins/binders/if":28,"routes-js":83}],80:[function(require,module,exports){
+var App = require('./app');
+
+// # Chip
+
+// > Chip.js 2.0.0
+//
+// > (c) 2013 Jacob Wright, TeamSnap
+// Chip may be freely distributed under the MIT license.
+// For all details and documentation:
+// <https://github.com/teamsnap/chip/>
+
+// Contents
+// --------
+// * [chip](chip.html) the namespace, creates apps, and registers bindings and filters
+// * [App](app.html) represents an app that can have routes, controllers, and templates defined
+// * [Controller](controller.html) is used in the binding to attach data and run actions
+// * [Router](router.html) is used for handling URL rounting
+// * [Default binders](binders.html) registers the default binders chip provides
+
+// Create Chip App
+// -------------
+// Creates a new chip app
+module.exports = chip;
+
+function chip(options) {
+  var app = new App(options);
+  app.init();
+  return app;
+}
+
+chip.App = App;
+chip.Class = require('chip-utils/class');
+chip.EventTarget = require('chip-utils/event-target');
+chip.routes = require('routes-js');
+
+},{"./app":78,"chip-utils/class":2,"chip-utils/event-target":3,"routes-js":83}],81:[function(require,module,exports){
+
+module.exports = {
+  curliesInAttributes: false,
+  animateAttribute: '[animate]',
+
+  binders: {
+    '(keydown.*)': require('fragments-built-ins/binders/key-events')(null, 'keydown'),
+    '(keyup.*)': require('fragments-built-ins/binders/key-events')(null, 'keyup'),
+    '(enter)': require('fragments-built-ins/binders/key-events')('enter'),
+    '(esc)': require('fragments-built-ins/binders/key-events')('esc'),
+    '(*)': require('fragments-built-ins/binders/events')(),
+    '{*}': require('fragments-built-ins/binders/properties')(),
+    '{{*}}': require('fragments-built-ins/binders/properties-2-way')(),
+    '*?': require('fragments-built-ins/binders/attribute-names')(),
+    '[content]': require('fragments-built-ins/binders/component-content')(),
+    '[show]': require('fragments-built-ins/binders/show')(false),
+    '[hide]': require('fragments-built-ins/binders/show')(true),
+    '[for]': require('fragments-built-ins/binders/repeat')('[by]'),
+    '#*': require('fragments-built-ins/binders/ref')(),
+    '[text]': require('fragments-built-ins/binders/text')(),
+    '[html]': require('fragments-built-ins/binders/html')(),
+    '[src]': require('fragments-built-ins/binders/properties')('src'),
+    '[log]': require('fragments-built-ins/binders/log')(),
+    '[class]': require('fragments-built-ins/binders/class')(),
+    '[.*]': require('fragments-built-ins/binders/classes')(),
+    '[style.*]': require('fragments-built-ins/binders/styles')(),
+    '[autofocus]': require('fragments-built-ins/binders/autofocus')(),
+    '[autoselect]': require('fragments-built-ins/binders/autoselect')(),
+    '[name]': require('fragments-built-ins/binders/radio')('[value]'),
+    '[value]': require('fragments-built-ins/binders/value')(
+      '[value-events]',
+      '[value-field]'
+    ),
+    '[component]': require('fragments-built-ins/binders/component')(function(componentName) {
+      return this.fragments.app.component(componentName);
+    }),
+    '[if]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
+    '[unless]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
+    '[route]': require('./binders/route')()
+  },
+
+  formatters: {
+    addQuery: require('fragments-built-ins/formatters/add-query'),
+    autolink: require('fragments-built-ins/formatters/autolink'),
+    bool: require('fragments-built-ins/formatters/bool'),
+    br: require('fragments-built-ins/formatters/br'),
+    dateTime: require('fragments-built-ins/formatters/date-time'),
+    date: require('fragments-built-ins/formatters/date'),
+    escape: require('fragments-built-ins/formatters/escape'),
+    filter: require('fragments-built-ins/formatters/filter'),
+    float: require('fragments-built-ins/formatters/float'),
+    format: require('fragments-built-ins/formatters/format'),
+    int: require('fragments-built-ins/formatters/int'),
+    json: require('fragments-built-ins/formatters/json'),
+    keys: require('fragments-built-ins/formatters/keys'),
+    limit: require('fragments-built-ins/formatters/limit'),
+    log: require('fragments-built-ins/formatters/log'),
+    lower: require('fragments-built-ins/formatters/lower'),
+    map: require('fragments-built-ins/formatters/map'),
+    newline: require('fragments-built-ins/formatters/newline'),
+    p: require('fragments-built-ins/formatters/p'),
+    reduce: require('fragments-built-ins/formatters/reduce'),
+    reverse: require('fragments-built-ins/formatters/reverse'),
+    slice: require('fragments-built-ins/formatters/slice'),
+    sort: require('fragments-built-ins/formatters/sort'),
+    time: require('fragments-built-ins/formatters/time'),
+    upper: require('fragments-built-ins/formatters/upper')
+  },
+
+  animations: {
+    'fade': require('fragments-built-ins/animations/fade')(),
+    'slide': require('fragments-built-ins/animations/slide')(),
+    'slide-h': require('fragments-built-ins/animations/slide-horizontal')(),
+    'slide-move': require('fragments-built-ins/animations/slide-move')(),
+    'slide-move-h': require('fragments-built-ins/animations/slide-move-horizontal')(),
+    'slide-fade': require('fragments-built-ins/animations/slide-fade')(),
+    'slide-fade-h': require('fragments-built-ins/animations/slide-fade-horizontal')()
+  }
+
+};
+
+},{"./binders/route":79,"fragments-built-ins/animations/fade":11,"fragments-built-ins/animations/slide":17,"fragments-built-ins/animations/slide-fade":13,"fragments-built-ins/animations/slide-fade-horizontal":12,"fragments-built-ins/animations/slide-horizontal":14,"fragments-built-ins/animations/slide-move":16,"fragments-built-ins/animations/slide-move-horizontal":15,"fragments-built-ins/binders/attribute-names":18,"fragments-built-ins/binders/autofocus":19,"fragments-built-ins/binders/autoselect":20,"fragments-built-ins/binders/class":21,"fragments-built-ins/binders/classes":22,"fragments-built-ins/binders/component":25,"fragments-built-ins/binders/component-content":23,"fragments-built-ins/binders/events":26,"fragments-built-ins/binders/html":27,"fragments-built-ins/binders/if":28,"fragments-built-ins/binders/key-events":29,"fragments-built-ins/binders/log":30,"fragments-built-ins/binders/properties":32,"fragments-built-ins/binders/properties-2-way":31,"fragments-built-ins/binders/radio":33,"fragments-built-ins/binders/ref":34,"fragments-built-ins/binders/repeat":35,"fragments-built-ins/binders/show":36,"fragments-built-ins/binders/styles":37,"fragments-built-ins/binders/text":38,"fragments-built-ins/binders/value":39,"fragments-built-ins/formatters/add-query":40,"fragments-built-ins/formatters/autolink":41,"fragments-built-ins/formatters/bool":42,"fragments-built-ins/formatters/br":43,"fragments-built-ins/formatters/date":45,"fragments-built-ins/formatters/date-time":44,"fragments-built-ins/formatters/escape":46,"fragments-built-ins/formatters/filter":47,"fragments-built-ins/formatters/float":48,"fragments-built-ins/formatters/format":49,"fragments-built-ins/formatters/int":50,"fragments-built-ins/formatters/json":51,"fragments-built-ins/formatters/keys":52,"fragments-built-ins/formatters/limit":53,"fragments-built-ins/formatters/log":54,"fragments-built-ins/formatters/lower":55,"fragments-built-ins/formatters/map":56,"fragments-built-ins/formatters/newline":57,"fragments-built-ins/formatters/p":58,"fragments-built-ins/formatters/reduce":59,"fragments-built-ins/formatters/reverse":60,"fragments-built-ins/formatters/slice":61,"fragments-built-ins/formatters/sort":62,"fragments-built-ins/formatters/time":63,"fragments-built-ins/formatters/upper":64}],82:[function(require,module,exports){
+
+module.exports = function(app) {
+
+  return {
+
+    app: app,
+    sync: app.sync,
+    syncNow: app.syncNow,
+    afterSync: app.afterSync,
+    onSync: app.onSync,
+    offSync: app.offSync,
+
+    created: function() {
+      Object.defineProperties(this, {
+        _observers: { configurable: true, value: [] },
+        _listeners: { configurable: true, value: [] },
+        _bound: { configurable: true, value: false },
+      });
+
+      if (this.computed) {
+        app.computed.extend(this, this.computed, false);
+      }
+    },
+
+
+    bound: function() {
+      this._bound = true;
+
+      if (this.computedObservers) {
+        this.computedObservers.enable();
+      }
+
+      this._observers.forEach(function(observer) {
+        observer.bind(this);
+      }, this);
+
+      this._listeners.forEach(function(item) {
+        item.target.addEventListener(item.eventName, item.listener);
+      });
+    },
+
+
+    unbound: function() {
+      this._bound = false;
+
+      if (this.computedObservers) {
+        this.computedObservers.disable();
+      }
+
+      this._observers.forEach(function(observer) {
+        observer.unbind();
+      });
+
+      this._listeners.forEach(function(item) {
+        item.target.removeEventListener(item.eventName, item.listener);
+      });
+    },
+
+
+    observe: function(expr, callback) {
+      if (typeof callback !== 'function') {
+        throw new TypeError('callback must be a function');
+      }
+
+      var observer = app.observe(expr, callback, this);
+      this._observers.push(observer);
+      if (this._bound) {
+        // If not bound will bind on attachment
+        observer.bind(this);
+      }
+      return observer;
+    },
+
+
+    listen: function(target, eventName, listener, context) {
+      if (typeof target === 'string') {
+        context = listener;
+        listener = eventName;
+        eventName = target;
+        target = this;
+      }
+
+      if (typeof listener !== 'function') {
+        throw new TypeError('listener must be a function');
+      }
+
+      listener = listener.bind(context || this);
+
+      var listenerData = {
+        target: target,
+        eventName: eventName,
+        listener: listener
+      };
+
+      this._listeners.push(listenerData);
+
+      if (this._bound) {
+        // If not bound will add on attachment
+        target.addEventListener(eventName, listener);
+      }
+    },
+  };
+};
+
+},{}],83:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -5210,7 +5809,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":81,"./src/location":82,"./src/push-location":83,"./src/route":84,"./src/router":85}],79:[function(require,module,exports){
+},{"./src/hash-location":86,"./src/location":87,"./src/push-location":88,"./src/route":89,"./src/router":90}],84:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -5321,9 +5920,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],80:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"./class":79,"dup":3}],81:[function(require,module,exports){
+},{"./class":84,"dup":3}],86:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -5335,6 +5934,18 @@ function HashLocation() {
 
 Location.extend(HashLocation, {
   historyEventName: 'hashchange',
+
+  redirect: function(value, replace) {
+    if (replace && window.history && window.history.replaceState) {
+      if (value.charAt(0) !== '/' || value.split('//').length > 1) {
+        value = this.getRelativeUrl(value);
+      }
+      history.replaceState({}, '', '#' + value);
+      this._changeTo(value);
+    } else {
+      this.url = value;
+    }
+  },
 
   get url() {
     return location.hash.replace(/^#\/?/, '/') || '/';
@@ -5350,7 +5961,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":82}],82:[function(require,module,exports){
+},{"./location":87}],87:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -5462,7 +6073,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":81,"./push-location":83,"chip-utils/event-target":80}],83:[function(require,module,exports){
+},{"./hash-location":86,"./push-location":88,"chip-utils/event-target":85}],88:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -5502,7 +6113,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":82}],84:[function(require,module,exports){
+},{"./location":87}],89:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -5587,7 +6198,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":79}],85:[function(require,module,exports){
+},{"chip-utils/class":84}],90:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -5748,560 +6359,6 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":82,"./route":84,"chip-utils/event-target":80}],86:[function(require,module,exports){
-module.exports = App;
-var componentBinding = require('fragments-built-ins/binders/component');
-var Component = require('fragments-built-ins/binders/component-definition');
-var Location = require('routes-js').Location;
-var EventTarget = require('chip-utils/event-target');
-var fragments = require('fragments-js');
-var defaultOptions = require('./default-options')
-var defaultMixin = require('./mixins/default');
-var slice = Array.prototype.slice;
-
-// # Chip App
-
-// An App represents an app or module that can have routes, controllers, and templates defined.
-function App(options) {
-  options = Object.assign({}, defaultOptions, options);
-  options.binders = Object.assign({}, defaultOptions.binders, options.binders);
-  options.formatters = Object.assign({}, defaultOptions.formatters, options.formatters);
-  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
-  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
-  options.components = Object.assign({}, defaultOptions.components, options.components);
-
-  EventTarget.call(this);
-  this.fragments = fragments.create(options);
-  this.components = {};
-  this.fragments.app = this;
-  this.location = Location.create(options);
-  this.defaultMixin = defaultMixin(this);
-  this._listening = false;
-  this.useCustomElements = options.useCustomElements;
-
-  this.rootElement = options.rootElement || document.documentElement;
-  this.sync = this.fragments.sync;
-  this.syncNow = this.fragments.syncNow;
-  this.afterSync = this.fragments.afterSync;
-  this.onSync = this.fragments.onSync;
-  this.offSync = this.fragments.offSync;
-  this.observe = this.fragments.observe.bind(this.fragments);
-  this.location.on('change', this.sync);
-
-  this.fragments.setExpressionDelimiters('attribute', '{{', '}}', !options.curliesInAttributes);
-  this.fragments.animateAttribute = options.animateAttribute;
-
-  Object.keys(options.components).forEach(function(name) {
-    this.component(name, options.components[name]);
-  }, this);
-}
-
-EventTarget.extend(App, {
-
-  init: function(root) {
-    if (this.inited) {
-      return;
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', this.init.bind(this, root));
-      return;
-    }
-
-    this.inited = true
-    if (root) {
-      this.rootElement = root;
-    }
-
-    this.fragments.bindElement(this.rootElement, this);
-    this.rootElement.attached();
-    return this;
-  },
-
-
-  // Components
-  // ----------
-
-  // Registers a new component by name with the given definition. provided `content` string. If no `content` is given
-  // then returns a new instance of a defined template. This instance is a document fragment.
-  component: function(name, definition) {
-    if (arguments.length === 1) {
-      return this.components[name];
-    }
-
-    var ComponentClass;
-    if (definition.prototype instanceof Component) {
-      ComponentClass = definition;
-    } else {
-      var definitions = slice.call(arguments, 1);
-      definitions.unshift(this.defaultMixin);
-      ComponentClass = Component.extend.apply(Component, definitions);
-    }
-
-    ComponentClass.prototype.name = name;
-    this.components[name] = ComponentClass;
-    this.fragments.registerElement(name, componentBinding(ComponentClass));
-    return this;
-  },
-
-
-  // Redirects to the provided URL
-  redirect: function(url, replace) {
-    return this.location.redirect(url, replace);
-  },
-
-
-  get listening() {
-    return this._listening;
-  },
-
-  // Listen to URL changes
-  listen: function() {
-    var app = this;
-    this._listening = true;
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', this.listen.bind(this));
-      return this;
-    }
-
-    // Add handler for when the route changes
-    this._locationChangeHandler = function(event) {
-      app.url = event.detail.url;
-      app.path = event.detail.path;
-      app.query = event.detail.query;
-      app.dispatchEvent(new CustomEvent('urlChange', { detail: event.detail }));
-    };
-
-    // Add handler for clicking links
-    this._clickHandler = function(event) {
-      var anchor;
-      if ( !(anchor = event.target.closest('a[href]')) ) {
-        return;
-      }
-
-      if (event.defaultPrevented ||
-        location.protocol !== anchor.protocol ||
-        location.host !== anchor.host.replace(/:80$|:443$/, ''))
-      {
-        // if something else already handled this, we won't
-        // if it is for another protocol or domain, we won't
-        return;
-      }
-
-      var url = anchor.getAttribute('href').replace(/^#/, '');
-
-      if (event.metaKey || event.ctrlKey || anchor.hasAttribute('target')) {
-        return;
-      }
-
-      event.preventDefault();
-      if (anchor.href === location.href + '#') {
-        return;
-      }
-
-      if (!anchor.disabled) {
-        app.redirect(url);
-      }
-    };
-
-    this.location.on('change', this._locationChangeHandler);
-    this.rootElement.addEventListener('click', this._clickHandler);
-    this.url = this.location.url;
-    this.path = this.location.path;
-    this.query = this.location.query;
-    this.dispatchEvent(new CustomEvent('urlChange', { detail: {
-      url: this.url,
-      path: this.path,
-      query: this.query
-    }}));
-  },
-
-  // Stop listening
-  stop: function() {
-    this.location.off('change', this._locationChangeHandler);
-    this.rootElement.removeEventListener('click', this._clickHandler);
-  }
-
-});
-
-if (typeof Object.assign !== 'function') {
-  (function () {
-    Object.assign = function (target) {
-      'use strict';
-      if (target === undefined || target === null) {
-        throw new TypeError('Cannot convert undefined or null to object');
-      }
-
-      var output = Object(target);
-      for (var index = 1; index < arguments.length; index++) {
-        var source = arguments[index];
-        if (source !== undefined && source !== null) {
-          for (var nextKey in source) {
-            if (source.hasOwnProperty(nextKey)) {
-              output[nextKey] = source[nextKey];
-            }
-          }
-        }
-      }
-      return output;
-    };
-  })();
-}
-
-},{"./default-options":89,"./mixins/default":90,"chip-utils/event-target":3,"fragments-built-ins/binders/component":25,"fragments-built-ins/binders/component-definition":24,"fragments-js":65,"routes-js":78}],87:[function(require,module,exports){
-var Route = require('routes-js').Route;
-var IfBinder = require('fragments-built-ins/binders/if');
-
-module.exports = function() {
-  var ifBinder = IfBinder();
-  var attached = ifBinder.attached;
-  var unbound = ifBinder.unbound;
-  var detached = ifBinder.detached;
-
-  ifBinder.compiled = function() {
-    var noRoute;
-    this.app = this.fragments.app;
-    this.routes = [];
-    this.templates = [];
-    this.expression = '';
-
-    // each child with a [path] attribute will display only when its path matches the URL
-    while (this.element.firstChild) {
-      var child = this.element.firstChild;
-      this.element.removeChild(child);
-
-      if (child.nodeType !== Node.ELEMENT_NODE) {
-        continue;
-      }
-
-      if (child.hasAttribute('[path]')) {
-        var path = child.getAttribute('[path]');
-        child.removeAttribute('[path]');
-        this.routes.push(new Route(path));
-        this.templates.push(this.fragments.createTemplate(child));
-      } else if (child.hasAttribute('[noroute]')) {
-        child.removeAttribute('[noroute]');
-        noRoute = this.fragments.createTemplate(child);
-      }
-    }
-
-    if (noRoute) {
-      this.templates.push(noRoute);
-    }
-  };
-
-  ifBinder.add = function(view) {
-    view.bind(this.context);
-    this.element.appendChild(view);
-    this.attached();
-  };
-
-  ifBinder.created = function() {
-    this.onUrlChange = this.onUrlChange.bind(this);
-  };
-
-
-  ifBinder.attached = function() {
-    attached.call(this);
-
-    var node = this.element.parentNode;
-    while (node && !node.matchedRoutePath) {
-      node = node.parentNode;
-    }
-    this.baseURI = node && node.matchedRoutePath || '';
-
-    this.app.on('urlChange', this.onUrlChange);
-    if (this.app.listening) {
-      this.onUrlChange();
-    }
-  };
-
-  ifBinder.detached = function() {
-    detached.call(this);
-    this.currentIndex = undefined;
-    this.app.off('urlChange', this.onUrlChange);
-  };
-
-  ifBinder.unbound = function() {
-    unbound.call(this);
-    delete this.context.params;
-  };
-
-  ifBinder.onUrlChange = function() {
-    if (!this.context) {
-      return;
-    }
-
-    if (this.element.baseURI === null) {
-      // element.baseURI is null if it isn't in the DOM yet
-      // If this is just getting inserted into the DOM wait for this.baseURI to be set
-      setTimeout(function() {
-        if (!this.context) return;
-        this.checkForChange();
-      }.bind(this));
-    } else {
-      this.checkForChange();
-    }
-  };
-
-  ifBinder.checkForChange = function() {
-    var fullUrl = this.app.path;
-    var localUrl = null;
-    var newIndex = this.routes.length;
-    var matched;
-    delete this.context.params;
-
-    if (fullUrl.indexOf(this.baseURI) === 0) {
-      localUrl = fullUrl.replace(this.baseURI, '');
-    }
-
-    if (localUrl !== null) {
-
-      matched = this.routes.some(function(route, index) {
-        if (route.match(localUrl)) {
-          if (route.params.hasOwnProperty('*') && route.params['*']) {
-            var afterLength = route.params['*'].length;
-            this.element.matchedRoutePath = this.baseURI + localUrl.slice(0, -afterLength);
-          } else {
-            this.element.matchedRoutePath = fullUrl;
-          }
-          var params = this.context.params = Object.create(route.params);
-          var query = this.app.query;
-          Object.keys(query).forEach(function(key) {
-            if (!params.hasOwnProperty(key)) {
-              params[key] = query[key];
-            }
-          });
-
-          newIndex = index;
-          return true;
-        }
-      }, this);
-    }
-
-    if (matched || newIndex !== this.currentIndex) {
-      this.element.dispatchEvent(new Event('routed'));
-    }
-
-    if (newIndex !== this.currentIndex) {
-      this.currentIndex = newIndex;
-      this.updated(this.currentIndex);
-    }
-  };
-
-  return ifBinder;
-};
-
-},{"fragments-built-ins/binders/if":28,"routes-js":78}],88:[function(require,module,exports){
-var App = require('./app');
-
-// # Chip
-
-// > Chip.js 2.0.0
-//
-// > (c) 2013 Jacob Wright, TeamSnap
-// Chip may be freely distributed under the MIT license.
-// For all details and documentation:
-// <https://github.com/teamsnap/chip/>
-
-// Contents
-// --------
-// * [chip](chip.html) the namespace, creates apps, and registers bindings and filters
-// * [App](app.html) represents an app that can have routes, controllers, and templates defined
-// * [Controller](controller.html) is used in the binding to attach data and run actions
-// * [Router](router.html) is used for handling URL rounting
-// * [Default binders](binders.html) registers the default binders chip provides
-
-// Create Chip App
-// -------------
-// Creates a new chip app
-module.exports = chip;
-
-function chip(options) {
-  var app = new App(options);
-  app.init();
-  return app;
-}
-
-chip.App = App;
-chip.Class = require('chip-utils/class');
-chip.EventTarget = require('chip-utils/event-target');
-chip.routes = require('routes-js');
-
-},{"./app":86,"chip-utils/class":2,"chip-utils/event-target":3,"routes-js":78}],89:[function(require,module,exports){
-
-module.exports = {
-  curliesInAttributes: false,
-  animateAttribute: '[animate]',
-
-  binders: {
-    '(keydown.*)': require('fragments-built-ins/binders/key-events')(null, 'keydown'),
-    '(keyup.*)': require('fragments-built-ins/binders/key-events')(null, 'keyup'),
-    '(enter)': require('fragments-built-ins/binders/key-events')('enter'),
-    '(esc)': require('fragments-built-ins/binders/key-events')('esc'),
-    '(*)': require('fragments-built-ins/binders/events')(),
-    '{*}': require('fragments-built-ins/binders/properties')(),
-    '{{*}}': require('fragments-built-ins/binders/properties-2-way')(),
-    '*?': require('fragments-built-ins/binders/attribute-names')(),
-    '[content]': require('fragments-built-ins/binders/component-content')(),
-    '[show]': require('fragments-built-ins/binders/show')(false),
-    '[hide]': require('fragments-built-ins/binders/show')(true),
-    '[for]': require('fragments-built-ins/binders/repeat')('[by]'),
-    '#*': require('fragments-built-ins/binders/ref')(),
-    '[text]': require('fragments-built-ins/binders/text')(),
-    '[html]': require('fragments-built-ins/binders/html')(),
-    '[src]': require('fragments-built-ins/binders/properties')('src'),
-    '[log]': require('fragments-built-ins/binders/log')(),
-    '[class]': require('fragments-built-ins/binders/class')(),
-    '[.*]': require('fragments-built-ins/binders/classes')(),
-    '[style.*]': require('fragments-built-ins/binders/styles')(),
-    '[autofocus]': require('fragments-built-ins/binders/autofocus')(),
-    '[autoselect]': require('fragments-built-ins/binders/autoselect')(),
-    '[name]': require('fragments-built-ins/binders/radio')('[value]'),
-    '[value]': require('fragments-built-ins/binders/value')(
-      '[value-events]',
-      '[value-field]'
-    ),
-    '[component]': require('fragments-built-ins/binders/component')(function(componentName) {
-      return this.fragments.app.component(componentName);
-    }),
-    '[if]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
-    '[unless]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
-    '[route]': require('./binders/route')()
-  },
-
-  formatters: {
-    addQuery: require('fragments-built-ins/formatters/add-query'),
-    autolink: require('fragments-built-ins/formatters/autolink'),
-    bool: require('fragments-built-ins/formatters/bool'),
-    br: require('fragments-built-ins/formatters/br'),
-    dateTime: require('fragments-built-ins/formatters/date-time'),
-    date: require('fragments-built-ins/formatters/date'),
-    escape: require('fragments-built-ins/formatters/escape'),
-    filter: require('fragments-built-ins/formatters/filter'),
-    float: require('fragments-built-ins/formatters/float'),
-    format: require('fragments-built-ins/formatters/format'),
-    int: require('fragments-built-ins/formatters/int'),
-    json: require('fragments-built-ins/formatters/json'),
-    keys: require('fragments-built-ins/formatters/keys'),
-    limit: require('fragments-built-ins/formatters/limit'),
-    log: require('fragments-built-ins/formatters/log'),
-    lower: require('fragments-built-ins/formatters/lower'),
-    map: require('fragments-built-ins/formatters/map'),
-    newline: require('fragments-built-ins/formatters/newline'),
-    p: require('fragments-built-ins/formatters/p'),
-    reduce: require('fragments-built-ins/formatters/reduce'),
-    reverse: require('fragments-built-ins/formatters/reverse'),
-    slice: require('fragments-built-ins/formatters/slice'),
-    sort: require('fragments-built-ins/formatters/sort'),
-    time: require('fragments-built-ins/formatters/time'),
-    upper: require('fragments-built-ins/formatters/upper')
-  },
-
-  animations: {
-    'fade': require('fragments-built-ins/animations/fade')(),
-    'slide': require('fragments-built-ins/animations/slide')(),
-    'slide-h': require('fragments-built-ins/animations/slide-horizontal')(),
-    'slide-move': require('fragments-built-ins/animations/slide-move')(),
-    'slide-move-h': require('fragments-built-ins/animations/slide-move-horizontal')(),
-    'slide-fade': require('fragments-built-ins/animations/slide-fade')(),
-    'slide-fade-h': require('fragments-built-ins/animations/slide-fade-horizontal')()
-  }
-
-};
-
-},{"./binders/route":87,"fragments-built-ins/animations/fade":11,"fragments-built-ins/animations/slide":17,"fragments-built-ins/animations/slide-fade":13,"fragments-built-ins/animations/slide-fade-horizontal":12,"fragments-built-ins/animations/slide-horizontal":14,"fragments-built-ins/animations/slide-move":16,"fragments-built-ins/animations/slide-move-horizontal":15,"fragments-built-ins/binders/attribute-names":18,"fragments-built-ins/binders/autofocus":19,"fragments-built-ins/binders/autoselect":20,"fragments-built-ins/binders/class":21,"fragments-built-ins/binders/classes":22,"fragments-built-ins/binders/component":25,"fragments-built-ins/binders/component-content":23,"fragments-built-ins/binders/events":26,"fragments-built-ins/binders/html":27,"fragments-built-ins/binders/if":28,"fragments-built-ins/binders/key-events":29,"fragments-built-ins/binders/log":30,"fragments-built-ins/binders/properties":32,"fragments-built-ins/binders/properties-2-way":31,"fragments-built-ins/binders/radio":33,"fragments-built-ins/binders/ref":34,"fragments-built-ins/binders/repeat":35,"fragments-built-ins/binders/show":36,"fragments-built-ins/binders/styles":37,"fragments-built-ins/binders/text":38,"fragments-built-ins/binders/value":39,"fragments-built-ins/formatters/add-query":40,"fragments-built-ins/formatters/autolink":41,"fragments-built-ins/formatters/bool":42,"fragments-built-ins/formatters/br":43,"fragments-built-ins/formatters/date":45,"fragments-built-ins/formatters/date-time":44,"fragments-built-ins/formatters/escape":46,"fragments-built-ins/formatters/filter":47,"fragments-built-ins/formatters/float":48,"fragments-built-ins/formatters/format":49,"fragments-built-ins/formatters/int":50,"fragments-built-ins/formatters/json":51,"fragments-built-ins/formatters/keys":52,"fragments-built-ins/formatters/limit":53,"fragments-built-ins/formatters/log":54,"fragments-built-ins/formatters/lower":55,"fragments-built-ins/formatters/map":56,"fragments-built-ins/formatters/newline":57,"fragments-built-ins/formatters/p":58,"fragments-built-ins/formatters/reduce":59,"fragments-built-ins/formatters/reverse":60,"fragments-built-ins/formatters/slice":61,"fragments-built-ins/formatters/sort":62,"fragments-built-ins/formatters/time":63,"fragments-built-ins/formatters/upper":64}],90:[function(require,module,exports){
-
-module.exports = function(app) {
-
-  return {
-
-    app: app,
-    sync: app.sync,
-    syncNow: app.syncNow,
-    afterSync: app.afterSync,
-    onSync: app.onSync,
-    offSync: app.offSync,
-
-    created: function() {
-      Object.defineProperties(this, {
-        _observers: { configurable: true, value: [] },
-        _listeners: { configurable: true, value: [] },
-        _bound: { configurable: true, value: false },
-      });
-    },
-
-
-    bound: function() {
-      this._bound = true;
-      this._observers.forEach(function(observer) {
-        observer.bind(this);
-      }, this);
-
-      this._listeners.forEach(function(item) {
-        item.target.addEventListener(item.eventName, item.listener);
-      });
-    },
-
-
-    unbound: function() {
-      this._bound = false;
-      this._observers.forEach(function(observer) {
-        observer.unbind();
-      });
-
-      this._listeners.forEach(function(item) {
-        item.target.removeEventListener(item.eventName, item.listener);
-      });
-    },
-
-
-    observe: function(expr, callback) {
-      if (typeof callback !== 'function') {
-        throw new TypeError('callback must be a function');
-      }
-
-      var observer = app.observe(expr, callback, this);
-      this._observers.push(observer);
-      if (this._bound) {
-        // If not bound will bind on attachment
-        observer.bind(this);
-      }
-      return observer;
-    },
-
-
-    listen: function(target, eventName, listener, context) {
-      if (typeof target === 'string') {
-        context = listener;
-        listener = eventName;
-        eventName = target;
-        target = this;
-      }
-
-      if (typeof listener !== 'function') {
-        throw new TypeError('listener must be a function');
-      }
-
-      listener = listener.bind(context || this);
-
-      var listenerData = {
-        target: target,
-        eventName: eventName,
-        listener: listener
-      };
-
-      this._listeners.push(listenerData);
-
-      if (this._bound) {
-        // If not bound will add on attachment
-        target.addEventListener(eventName, listener);
-      }
-    },
-  };
-};
-
-},{}]},{},[1])(1)
+},{"./location":87,"./route":89,"chip-utils/event-target":85}]},{},[1])(1)
 });
 //# sourceMappingURL=chip.js.map

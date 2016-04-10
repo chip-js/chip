@@ -16,11 +16,20 @@ module.exports = function(app) {
         _listeners: { configurable: true, value: [] },
         _bound: { configurable: true, value: false },
       });
+
+      if (this.computed) {
+        app.computed.extend(this, this.computed, false);
+      }
     },
 
 
     bound: function() {
       this._bound = true;
+
+      if (this.computedObservers) {
+        this.computedObservers.enable();
+      }
+
       this._observers.forEach(function(observer) {
         observer.bind(this);
       }, this);
@@ -33,6 +42,11 @@ module.exports = function(app) {
 
     unbound: function() {
       this._bound = false;
+
+      if (this.computedObservers) {
+        this.computedObservers.disable();
+      }
+
       this._observers.forEach(function(observer) {
         observer.unbind();
       });

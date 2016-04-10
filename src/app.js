@@ -16,7 +16,6 @@ function App(options) {
   options.binders = Object.assign({}, defaultOptions.binders, options.binders);
   options.formatters = Object.assign({}, defaultOptions.formatters, options.formatters);
   options.animations = Object.assign({}, defaultOptions.animations, options.animations);
-  options.animations = Object.assign({}, defaultOptions.animations, options.animations);
   options.components = Object.assign({}, defaultOptions.components, options.components);
 
   EventTarget.call(this);
@@ -34,6 +33,8 @@ function App(options) {
   this.afterSync = this.fragments.afterSync;
   this.onSync = this.fragments.onSync;
   this.offSync = this.fragments.offSync;
+  this.observations = this.fragments.observations;
+  this.computed = this.observations.computed;
   this.observe = this.fragments.observe.bind(this.fragments);
   this.location.on('change', this.sync);
 
