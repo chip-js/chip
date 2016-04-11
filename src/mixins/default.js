@@ -99,5 +99,13 @@ module.exports = function(app) {
         target.addEventListener(eventName, listener);
       }
     },
+
+    get: function(expression) {
+      return app.observations.get(this, expression);
+    },
+
+    set: function(expression, value) {
+      return app.observations.set(this, expression, value);
+    }
   };
 };
