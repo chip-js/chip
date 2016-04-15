@@ -453,7 +453,7 @@ var Class = require('chip-utils/class');
 var lifecycle = [ 'created', 'bound', 'attached', 'unbound', 'detached' ];
 
 
-function Component(element, contentTemplate) {
+function Component(element, contentTemplate, unwrap) {
   this.element = element;
 
   if (this.template) {
@@ -466,7 +466,11 @@ function Component(element, contentTemplate) {
   }
 
   if (this._view) {
-    this.element.appendChild(this._view);
+    if (unwrap) {
+      this.element.parentNode.insertBefore(this._view, this.element.nextSibling);
+    } else {
+      this.element.appendChild(this._view);
+    }
   }
 
   this.created();
@@ -648,7 +652,7 @@ module.exports = function(ComponentClass) {
 
       this.compileTemplate();
 
-      this.component = new this.ComponentClass(this.element, this.contentTemplate);
+      this.component = new this.ComponentClass(this.element, this.contentTemplate, this.unwrapped);
       this.element.component = this.component;
       this.element.dispatchEvent(new Event('componentized'));
 
