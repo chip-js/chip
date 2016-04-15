@@ -1783,7 +1783,7 @@ module.exports = function (value, setter) {
  * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
  * functions.
  */
-module.exports = function(value, filterFunc, value) {
+module.exports = function(value, filterFunc, testValue) {
   if (!Array.isArray(value)) {
     return [];
   } else if (!filterFunc) {
@@ -1793,7 +1793,7 @@ module.exports = function(value, filterFunc, value) {
   if (typeof filterFunc === 'string' && arguments.length > 2) {
     var key = filterFunc;
     filterFunc = function(item) {
-      return item && item[key] === value;
+      return item && item[key] === testValue;
     };
   }
 
@@ -2748,9 +2748,11 @@ module.exports = function(app) {
         _bound: { configurable: true, value: false },
       });
 
-      if (this.computed) {
-        app.computed.extend(this, this.computed, false);
-      }
+      this.mixins.forEach(function(mixin) {
+        if (mixin.computed) {
+          app.computed.extend(this, mixin.computed, false);
+        }
+      }, this);
     },
 
 
@@ -5499,8 +5501,6 @@ exports.create = function() {
 };
 
 },{"./src/observations":88,"./src/observer":89}],82:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"dup":55}],83:[function(require,module,exports){
 module.exports = AsyncProperty;
 var ComputedProperty = require('./computed-property');
 var expressions = require('expressions-js');
@@ -5521,15 +5521,12 @@ function AsyncProperty(whenExpression, asyncExpression) {
     this.whenExpression = whenExpression;
     this.runAsyncMethod = expressions.parse(asyncExpression);
   }
-  this.observer = null;
 }
 
 
 ComputedProperty.extend(AsyncProperty, {
 
-  addTo: function(computedObject, propertyName) {
-    var observations = this.observations;
-
+  addTo: function(observations, computedObject, propertyName) {
     return observations.createObserver(this.whenExpression, function(value) {
       if (value) {
         var promise = this.runAsyncMethod.call(computedObject);
@@ -5549,7 +5546,7 @@ ComputedProperty.extend(AsyncProperty, {
   }
 });
 
-},{"./computed-property":84,"expressions-js":66}],84:[function(require,module,exports){
+},{"./computed-property":83,"expressions-js":66}],83:[function(require,module,exports){
 module.exports = ComputedProperty;
 var Class = require('chip-utils/class');
 
@@ -5573,10 +5570,48 @@ Class.extend(ComputedProperty, {
    */
   addTo: function(computedObject, propertyName) {
     throw new Error('Abstract function is not implemented');
+  },
+
+  watch: function(observations, expression, obj, property) {
+    if (typeof expression === 'string') {
+      // This is a computed expression
+      return observations.createObserver(expression, function(value) {
+        if (value === undefined) {
+          delete obj[property];
+        } else {
+          obj[property] = value;
+        }
+      });
+    } else if (expression.isComputedProperty) {
+      // Add ComputedProperty's observer to the observers and bind if enabled
+      return expression.addTo(observations, obj, property);
+    }
   }
 });
 
-},{"chip-utils/class":82}],85:[function(require,module,exports){
+},{"chip-utils/class":55}],84:[function(require,module,exports){
+module.exports = ExprProperty;
+var ComputedProperty = require('./computed-property');
+
+/**
+ * Assigns the result of the `thenExpression` to the object's property when the `ifExpression` is true.
+ * @param {String} ifExpression The conditional expression use to determine when to call the `thenExpression`
+ * @param {String|ComputedProperty} thenExpression The expression which will be executed when `if` is truthy and the
+ *                                                 result set on the object. May also nest computed properties.
+ */
+function ExprProperty(expression) {
+  this.expression = expression;
+}
+
+
+ComputedProperty.extend(ExprProperty, {
+
+  addTo: function(observations, computedObject, propertyName) {
+    return this.watch(observations, this.expression, computedObject, propertyName);
+  }
+});
+
+},{"./computed-property":83}],85:[function(require,module,exports){
 module.exports = IfProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5589,33 +5624,26 @@ var ComputedProperty = require('./computed-property');
 function IfProperty(ifExpression, thenExpression) {
   this.ifExpression = ifExpression;
   this.thenExpression = thenExpression;
-  this.observer = null;
 }
 
 
 ComputedProperty.extend(IfProperty, {
 
-  addTo: function(computedObject, propertyName) {
-    if (this.thenExpression.isComputedProperty) {
-      this.observer = this.thenExpression.addTo(computedObject, propertyName);
-    } else {
-      this.observer = this.observations.createObserver(this.thenExpression, function(value) {
-        computedObject[propertyName] = value;
-      });
-    }
+  addTo: function(observations, computedObject, propertyName) {
+    var observer = this.watch(observations, this.thenExpression, computedObject, propertyName);
 
-    return this.observations.createObserver(this.ifExpression, function(value) {
-      if (value && !this.observer.context) {
-        this.observer.bind(computedObject);
-      } else if (!value && this.observer.context) {
-        this.observer.unbind();
-        this.observer.sync();
+    return observations.createObserver(this.ifExpression, function(value) {
+      if (value && !observer.context) {
+        observer.bind(computedObject);
+      } else if (!value && observer.context) {
+        observer.unbind();
+        observer.sync();
       }
-    }, this);
+    });
   }
 });
 
-},{"./computed-property":84}],86:[function(require,module,exports){
+},{"./computed-property":83}],86:[function(require,module,exports){
 module.exports = MapProperty;
 var ComputedProperty = require('./computed-property');
 var expressions = require('expressions-js');
@@ -5640,16 +5668,16 @@ function MapProperty(sourceExpression, keyExpression, resultExpression) {
 
 ComputedProperty.extend(MapProperty, {
 
-  addTo: function(computedObject, propertyName) {
+  addTo: function(observations, computedObject, propertyName) {
     var map = {};
     var observers = {};
     computedObject[propertyName] = map;
-    var add = this.addItem.bind(this, computedObject, map, observers);
+    var add = this.addItem.bind(this, observations, computedObject, map, observers);
     var remove = this.removeItem.bind(this, computedObject, map, observers);
-    return this.observations.observeMembers(this.sourceExpression, add, remove, this);
+    return observations.observeMembers(this.sourceExpression, add, remove, this);
   },
 
-  addItem: function(computedObject, map, observers, item) {
+  addItem: function(observations, computedObject, map, observers, item) {
     var key = item && this.getKey.call(item);
     if (!key) {
       return;
@@ -5660,18 +5688,8 @@ ComputedProperty.extend(MapProperty, {
     }
 
     if (this.resultExpression) {
-      var observer;
-      if (this.resultExpression.isComputedProperty) {
-        observer = this.resultExpression.addTo(map, key);
-      } else if (typeof this.resultExpression === 'string') {
-        observer = this.observations.createObserver(this.resultExpression, function(value) {
-          if (value === undefined) {
-            delete map[key];
-          } else {
-            map[key] = value;
-          }
-        }, this);
-      } else {
+      var observer = this.watch(observations, this.resultExpression, map, key);
+      if (!observer) {
         throw new TypeError('Invalid resultExpression for computed.map');
       }
 
@@ -5687,7 +5705,7 @@ ComputedProperty.extend(MapProperty, {
   removeItem: function(computedObject, map, observers, item) {
     var key = item && this.getKey.call(item);
     if (key) {
-      removeObserver(observers, key);
+      this.removeObserver(observers, key);
       delete map[key];
     }
   },
@@ -5701,8 +5719,9 @@ ComputedProperty.extend(MapProperty, {
   }
 });
 
-},{"./computed-property":84,"expressions-js":66}],87:[function(require,module,exports){
+},{"./computed-property":83,"expressions-js":66}],87:[function(require,module,exports){
 var ComputedProperty = require('./computed-properties/computed-property');
+var ExprProperty = require('./computed-properties/expr');
 var MapProperty = require('./computed-properties/map');
 var IfProperty = require('./computed-properties/if');
 var AsyncProperty = require('./computed-properties/async');
@@ -5748,8 +5767,7 @@ exports.create = function(observations) {
         });
       } else if (expression.isComputedProperty) {
         // Add ComputedProperty's observer to the observers and bind if enabled
-        expression.observations = observations;
-        observer = expression.addTo(obj, property);
+        observer = expression.addTo(observations, obj, property);
       } else {
         obj[property] = expression;
       }
@@ -5767,6 +5785,16 @@ exports.create = function(observations) {
 
 
   /**
+   * Assigns the result of the expression to the computed object's property.
+   * @param {String} expression The string expression
+   * @return {ComputedProperty}
+   */
+  computed.expr = function(expression) {
+    return new ExprProperty(expression);
+  };
+
+
+  /**
    * Creates an object hash with the key being the value of the `key` property of each item in `sourceExpression` and the
    * value being the result of `expression`. `key` is optional, defaulting to "id" when not provided. `sourceExpression`
    * can resolve to an array or an object hash.
@@ -5774,7 +5802,7 @@ exports.create = function(observations) {
    * @param {String} keyName [Optional] The name of the property to key against as values are added to the map. Defaults
    *                         to "id"
    * @param {String} expression The expression evaluated against the array/object member whose value is added to the map.
-   * @return {Object} The object map of key=>value
+   * @return {ComputedProperty}
    */
   computed.map = function(sourceExpression, keyName, resultExpression) {
     return new MapProperty(sourceExpression, keyName, resultExpression);
@@ -5786,6 +5814,7 @@ exports.create = function(observations) {
    * @param {String} ifExpression The conditional expression use to determine when to call the `thenExpression`
    * @param {String} thenExpression The expression which will be executed when `if` is truthy and the result set on the
    * object.
+   * @return {ComputedProperty}
    */
   computed.if = function(ifExpression, thenExpression) {
     return new IfProperty(ifExpression, thenExpression);
@@ -5799,6 +5828,7 @@ exports.create = function(observations) {
    * @param {String} whenExpression The conditional expression use to determine when to call the `asyncExpression`
    * @param {String} asyncExpression The expression which will be executed when the `when` value changes and the result of
    * the returned promise is set on the object.
+   * @return {ComputedProperty}
    */
   computed.async = function(whenExpression, asyncExpression) {
     return new AsyncProperty(whenExpression, asyncExpression);
@@ -5849,7 +5879,7 @@ function ensureObservers(obj, options) {
   return obj;
 }
 
-},{"./computed-properties/async":83,"./computed-properties/computed-property":84,"./computed-properties/if":85,"./computed-properties/map":86}],88:[function(require,module,exports){
+},{"./computed-properties/async":82,"./computed-properties/computed-property":83,"./computed-properties/expr":84,"./computed-properties/if":85,"./computed-properties/map":86}],88:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -6089,7 +6119,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./computed":87,"./observer":89,"chip-utils/class":82,"expressions-js":66}],89:[function(require,module,exports){
+},{"./computed":87,"./observer":89,"chip-utils/class":55,"expressions-js":66}],89:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -6248,7 +6278,7 @@ function mapToProperty(property) {
   }
 }
 
-},{"chip-utils/class":82,"differences-js":64,"expressions-js":66}],90:[function(require,module,exports){
+},{"chip-utils/class":55,"differences-js":64,"expressions-js":66}],90:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');

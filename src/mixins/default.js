@@ -17,9 +17,11 @@ module.exports = function(app) {
         _bound: { configurable: true, value: false },
       });
 
-      if (this.computed) {
-        app.computed.extend(this, this.computed, false);
-      }
+      this.mixins.forEach(function(mixin) {
+        if (mixin.computed) {
+          app.computed.extend(this, mixin.computed, false);
+        }
+      }, this);
     },
 
 

@@ -1,6 +1,6 @@
 {
   "name": "chip-js",
-  "version": "2.1.10",
+  "version": "2.1.11",
   "scripts": {
     "test": "karma start --singleRun=true",
     "tdd": "karma start",
