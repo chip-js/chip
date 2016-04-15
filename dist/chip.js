@@ -497,22 +497,30 @@ Class.extend(Component, {
 
   bound: function() {
     callOnMixins(this, this.mixins, 'bound', arguments);
-    this._view.bind(this);
+    if (this._view) {
+      this._view.bind(this.template ? this : this.element._parentContext);
+    }
   },
 
   attached: function() {
     callOnMixins(this, this.mixins, 'attached', arguments);
-    this._view.attached();
+    if (this._view) {
+      this._view.attached();
+    }
   },
 
   unbound: function() {
     callOnMixins(this, this.mixins, 'unbound', arguments);
-    this._view.unbind();
+    if (this._view) {
+      this._view.unbind();
+    }
   },
 
   detached: function() {
     callOnMixins(this, this.mixins, 'detached', arguments);
-    this._view.detached();
+    if (this._view) {
+      this._view.detached();
+    }
   }
 
 });
