@@ -586,10 +586,6 @@ module.exports = function(ComponentClass) {
       }
     },
 
-    created: function() {
-      this.make();
-    },
-
     updated: function(ComponentClass) {
       this.unbound();
       this.detached();
@@ -609,6 +605,12 @@ module.exports = function(ComponentClass) {
     bound: function() {
       // Set for the component-content binder to use
       this.element._parentContext = this.context;
+
+      if (!this.component) {
+        // If not already a component, make it
+        this.make();
+      }
+
       if (this.component) {
         this.component.bound();
       }
@@ -617,6 +619,10 @@ module.exports = function(ComponentClass) {
     unbound: function() {
       if (this.component) {
         this.component.unbound();
+      }
+      if (!this.view._attached) {
+        // If removed and unbound, unmake it
+        this.unmake();
       }
     },
 
@@ -629,6 +635,10 @@ module.exports = function(ComponentClass) {
     detached: function() {
       if (this.component) {
         this.component.detached();
+      }
+      if (!this.context) {
+        // If removed and unbound, unmake it
+        this.unmake();
       }
     },
 
@@ -665,16 +675,14 @@ module.exports = function(ComponentClass) {
     },
 
     unmake: function() {
-      if (!this.ComponentClass) {
+      if (!this.component) {
         return;
       }
 
-      if (this.component) {
-        this.component.view.dispose();
-        this.component.element = null;
-        this.element.component = null;
-        this.component = null;
-      }
+      this.component.view.dispose();
+      this.component.element = null;
+      this.element.component = null;
+      this.component = null;
     }
 
   };
@@ -1080,6 +1088,11 @@ module.exports = function(specificPropertyName) {
     priority: 10,
 
     updated: function(value) {
+      if (!this.context) {
+        // Don't unset properties on components getting ready to be disposed of
+        return;
+      }
+
       var properties = this.element._properties || (this.element._properties = {});
       properties[specificPropertyName || this.camelCase] = value;
       if (this.element.component) {
@@ -4192,6 +4205,7 @@ Class.extend(Binding, {
       // This will clear it out, nullifying any data stored
       this.observer.sync();
     }
+    this.disposed();
   },
 
   sync: function() {
@@ -4221,6 +4235,9 @@ Class.extend(Binding, {
 
   // The function to run when the binding is removed from the DOM
   detached: function() {},
+
+  // The function to run when the binding is disposed
+  disposed: function() {},
 
   // Helper methods
 
