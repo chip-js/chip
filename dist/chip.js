@@ -620,7 +620,7 @@ module.exports = function(ComponentClass) {
       if (this.component) {
         this.component.unbound();
       }
-      if (!this.view._attached) {
+      if (this.view && !this.view._attached) {
         // If removed and unbound, unmake it
         this.unmake();
       }
@@ -679,7 +679,9 @@ module.exports = function(ComponentClass) {
         return;
       }
 
-      this.component.view.dispose();
+      if (this.component.view) {
+        this.component.view.dispose();
+      }
       this.component.element = null;
       this.element.component = null;
       this.component = null;
