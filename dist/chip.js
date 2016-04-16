@@ -459,7 +459,7 @@ function Component(element, contentTemplate, unwrap) {
   if (this.template) {
     this._view = this.template.createView();
     if (contentTemplate) {
-      this.element._componentContent = contentTemplate;
+      this._componentContent = contentTemplate;
     }
   } else if (contentTemplate) {
     this._view = contentTemplate.createView();
@@ -4699,6 +4699,10 @@ Class.extend(Fragments, {
 
     if (name === '__default__' && !definition.hasOwnProperty('priority')) {
       definition.priority = -100;
+    }
+
+    if (binders[name]) {
+      this.unregisterBinder(type, name);
     }
 
     // Create a subclass of Binding (or another binder) with the definition
