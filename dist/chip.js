@@ -2776,8 +2776,19 @@ module.exports = function(app) {
       });
 
       this.mixins.forEach(function(mixin) {
+
         if (mixin.computed) {
           app.computed.extend(this, mixin.computed, false);
+        }
+
+        if (mixin.listeners) {
+          Object.keys(mixin.listeners).forEach(function(eventName) {
+            var listener = mixin.listeners[eventName];
+            if (typeof listener === 'string') {
+              listener = mixin[listener];
+            }
+            this.listen(this, eventName, listener, this);
+          }, this);
         }
       }, this);
     },
