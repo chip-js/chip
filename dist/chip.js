@@ -2787,7 +2787,7 @@ module.exports = function(app) {
             if (typeof listener === 'string') {
               listener = mixin[listener];
             }
-            this.listen(this, eventName, listener, this);
+            this.listen(this.element, eventName, listener, this);
           }, this);
         }
       }, this);
@@ -2848,7 +2848,7 @@ module.exports = function(app) {
         context = listener;
         listener = eventName;
         eventName = target;
-        target = this;
+        target = this.element;
       }
 
       if (typeof listener !== 'function') {
