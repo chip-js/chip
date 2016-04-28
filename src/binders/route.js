@@ -6,6 +6,7 @@ module.exports = function() {
   var attached = ifBinder.attached;
   var unbound = ifBinder.unbound;
   var detached = ifBinder.detached;
+  ifBinder.priority = 10,
 
   ifBinder.compiled = function() {
     var noRoute;

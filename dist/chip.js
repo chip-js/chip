@@ -170,7 +170,7 @@ module.exports = function(options) {
         if (newElement && newElement.parentNode === element.parentNode) {
           // This item is being removed in one place and added into another. Make it look like its moving by making both
           // elements not visible and having a clone move above the items to the new location.
-          element = this.animateMove(element, newElement);
+          this.animateMove(element, newElement);
         }
       }
 
@@ -191,7 +191,7 @@ module.exports = function(options) {
     },
 
     animateMove: function(oldElement, newElement) {
-      var placeholderElement;
+      var moveElement, options = this.options;
       var parent = newElement.parentNode;
       if (!parent.__slideMoveHandled) {
         parent.__slideMoveHandled = true;
@@ -206,27 +206,39 @@ module.exports = function(options) {
       var marginOffsetTop = -parseInt(style.marginTop);
       var oldLeft = oldElement.offsetLeft;
       var oldTop = oldElement.offsetTop;
+      moveElement = this.fragments.makeElementAnimatable(oldElement.cloneNode(true));
+      var savePositionElem = document.createTextNode('');
+      parent.replaceChild(savePositionElem, oldElement);
 
-      placeholderElement = this.fragments.makeElementAnimatable(oldElement.cloneNode(true));
-      placeholderElement.style.width = oldElement.style.width = style.width;
-      placeholderElement.style.height = oldElement.style.height = style.height;
-      placeholderElement.style.opacity = '0';
+      // Ensure all the moves have been processed
+      Promise.resolve().then(function() {
+        var newLeft = newElement.offsetLeft;
+        var newTop = newElement.offsetTop;
 
-      oldElement.style.position = 'absolute';
-      oldElement.style.zIndex = 1000;
-      parent.insertBefore(placeholderElement, oldElement);
-      newElement.style.opacity = '0';
+        // Again, ensure all the new positions have been set before adding things back in
+        Promise.resolve().then(function() {
+          parent.replaceChild(oldElement, savePositionElem);
+          oldElement.style.opacity = '0';
+          newElement.style.opacity = '0';
 
-      oldElement.animate([
-        { top: oldTop + marginOffsetTop + 'px', left: oldLeft + marginOffsetLeft + 'px' },
-        { top: newElement.offsetTop + marginOffsetTop + 'px', left: newElement.offsetLeft + marginOffsetLeft + 'px' }
-      ], this.options).onfinish = function() {
-        placeholderElement.remove();
-        origStyle ? oldElement.setAttribute('style', origStyle) : oldElement.removeAttribute('style');
-        newElement.style.opacity = '';
-      };
+          moveElement.style.width = style.width;
+          moveElement.style.height = style.height;
+          moveElement.style.position = 'absolute';
+          moveElement.classList.remove('animate-out');
+          moveElement.classList.add('animate-move');
+          // Put at the end so it appears on top as it moves (when other elements have position: relative)
+          parent.appendChild(moveElement);
 
-      return placeholderElement;
+          moveElement.animate([
+            { top: oldTop + marginOffsetTop + 'px', left: oldLeft + marginOffsetLeft + 'px' },
+            { top: newTop + marginOffsetTop + 'px', left: newLeft + marginOffsetLeft + 'px' }
+          ], options).onfinish = function() {
+            moveElement.remove();
+            oldElement.style.opacity = '';
+            newElement.style.opacity = '';
+          };
+        });
+      });
     }
   };
 };
@@ -588,7 +600,9 @@ module.exports = function(ComponentClass) {
 
     updated: function(ComponentClass) {
       this.unbound();
-      this.detached();
+      if (this.view && this.view._attached) {
+        this.detached();
+      }
       this.unmake();
 
       if (typeof ComponentClass === 'string' && componentLoader) {
@@ -599,7 +613,9 @@ module.exports = function(ComponentClass) {
 
       this.make();
       this.bound();
-      this.attached();
+      if (this.view && this.view._attached) {
+        this.attached();
+      }
     },
 
     bound: function() {
@@ -1227,15 +1243,18 @@ module.exports = function(compareByAttribute) {
           this.updateChangesAnimated(value, changes);
         } else {
           this.updateChanges(value, changes);
+          this.updateViewContexts(value);
         }
+      }
+    },
 
-        // Keep the items updated as the array changes
-        if (changes && this.valueName) {
-          this.views.forEach(function(view, i) {
-            if (this.keyName) view.context[this.keyName] = key;
-            view.context[this.valueName] = value[i];
-          }, this);
-        }
+    updateViewContexts: function(value) {
+      // Keep the items updated as the array changes
+      if (this.valueName) {
+        this.views.forEach(function(view, i) {
+          if (this.keyName) view.context[this.keyName] = key;
+          view.context[this.valueName] = value[i];
+        }, this);
       }
     },
 
@@ -1331,12 +1350,13 @@ module.exports = function(compareByAttribute) {
       var animatingValue = value.slice();
       var allAdded = [];
       var allRemoved = [];
+      var doneCount = 0;
       this.animating = true;
 
       // Run updates which occured while this was animating.
-      function whenDone() {
+      var whenDone = function() {
         // The last animation finished will run this
-        if (--whenDone.count !== 0) return;
+        if (--doneCount !== 0) return;
 
         allRemoved.forEach(this.removeView);
 
@@ -1344,12 +1364,14 @@ module.exports = function(compareByAttribute) {
           this.animating = false;
           if (this.valueWhileAnimating) {
             var changes = diff.arrays(this.valueWhileAnimating, animatingValue);
-            this.updateChangesAnimated(this.valueWhileAnimating, changes);
-            this.valueWhileAnimating = null;
+            if (changes.length) {
+              var value = this.valueWhileAnimating;
+              this.valueWhileAnimating = null;
+              this.updateChangesAnimated(value, changes);
+            }
           }
         }
-      }
-      whenDone.count = 0;
+      };
 
       changes.forEach(function(splice) {
         var addedViews = [];
@@ -1377,15 +1399,17 @@ module.exports = function(compareByAttribute) {
 
 
       allAdded.forEach(function(view) {
-        whenDone.count++;
+        doneCount++;
         this.animateIn(view, whenDone);
       }, this);
 
       allRemoved.forEach(function(view) {
-        whenDone.count++;
+        doneCount++;
         view.unbind();
         this.animateOut(view, whenDone);
       }, this);
+
+      this.updateViewContexts(value);
     },
 
     unbound: function() {
@@ -2502,6 +2526,7 @@ module.exports = function() {
   var attached = ifBinder.attached;
   var unbound = ifBinder.unbound;
   var detached = ifBinder.detached;
+  ifBinder.priority = 10,
 
   ifBinder.compiled = function() {
     var noRoute;
@@ -5200,12 +5225,15 @@ function getComputedCSS(styleName) {
  * only supports duration, delay, and easing. Returns an object with a property onfinish.
  */
 function animateElement(css, options) {
-  if (!Array.isArray(css) || css.length !== 2) {
-    throw new TypeError('animate polyfill requires an array for css with an initial and final state');
-  }
+  var playback = { onfinish: null };
 
-  if (!options || !options.hasOwnProperty('duration')) {
-    throw new TypeError('animate polyfill requires options with a duration');
+  if (!Array.isArray(css) || css.length !== 2 || !options || !options.hasOwnProperty('duration')) {
+    Promise.resolve().then(function() {
+      if (playback.onfinish) {
+        playback.onfinish();
+      }
+    });
+    return playback;
   }
 
   var element = this;
@@ -5215,7 +5243,6 @@ function animateElement(css, options) {
   var initialCss = css[0];
   var finalCss = css[1];
   var allCss = {};
-  var playback = { onfinish: null };
 
   Object.keys(initialCss).forEach(function(key) {
     allCss[key] = true;
@@ -5584,6 +5611,8 @@ ComputedProperty.extend(AsyncProperty, {
             computedObject[propertyName] = undefined;
             observations.sync();
           });
+        } else {
+          computedObject[propertyName] = promise;
         }
       } else {
         computedObject[propertyName] = undefined;
@@ -5705,10 +5734,11 @@ var expressions = require('expressions-js');
  *                                  added to the map. If not provided, the member will be added.
  * @return {Object} The object map of key=>value
  */
-function MapProperty(sourceExpression, keyExpression, resultExpression) {
+function MapProperty(sourceExpression, keyExpression, resultExpression, removeExpression) {
   this.sourceExpression = sourceExpression;
   this.getKey = expressions.parse(keyExpression);
   this.resultExpression = resultExpression;
+  this.removeExpression = removeExpression;
 }
 
 
@@ -5719,7 +5749,7 @@ ComputedProperty.extend(MapProperty, {
     var observers = {};
     computedObject[propertyName] = map;
     var add = this.addItem.bind(this, observations, computedObject, map, observers);
-    var remove = this.removeItem.bind(this, computedObject, map, observers);
+    var remove = this.removeItem.bind(this, observations, computedObject, map, observers);
     return observations.observeMembers(this.sourceExpression, add, remove, this);
   },
 
@@ -5748,10 +5778,13 @@ ComputedProperty.extend(MapProperty, {
     }
   },
 
-  removeItem: function(computedObject, map, observers, item) {
+  removeItem: function(observations, computedObject, map, observers, item) {
     var key = item && this.getKey.call(item);
     if (key) {
       this.removeObserver(observers, key);
+      if (this.removeExpression) {
+        observations.get(computedObject, this.removeExpression);
+      }
       delete map[key];
     }
   },
@@ -5850,8 +5883,8 @@ exports.create = function(observations) {
    * @param {String} expression The expression evaluated against the array/object member whose value is added to the map.
    * @return {ComputedProperty}
    */
-  computed.map = function(sourceExpression, keyName, resultExpression) {
-    return new MapProperty(sourceExpression, keyName, resultExpression);
+  computed.map = function(sourceExpression, keyName, resultExpression, removeExpression) {
+    return new MapProperty(sourceExpression, keyName, resultExpression, removeExpression);
   };
 
 
