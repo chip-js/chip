@@ -1252,7 +1252,7 @@ module.exports = function(compareByAttribute) {
       // Keep the items updated as the array changes
       if (this.valueName) {
         this.views.forEach(function(view, i) {
-          if (this.keyName) view.context[this.keyName] = key;
+          if (this.keyName) view.context[this.keyName] = i;
           view.context[this.valueName] = value[i];
         }, this);
       }
