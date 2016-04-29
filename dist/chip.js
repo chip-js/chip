@@ -549,7 +549,7 @@ function callOnMixins(context, mixins, name, args) {
   });
 }
 
-},{"chip-utils/class":55}],15:[function(require,module,exports){
+},{"chip-utils/class":58}],15:[function(require,module,exports){
 var Component = require('./component-definition');
 var slice = Array.prototype.slice;
 
@@ -1423,7 +1423,7 @@ module.exports = function(compareByAttribute) {
   };
 };
 
-},{"differences-js":64}],26:[function(require,module,exports){
+},{"differences-js":67}],26:[function(require,module,exports){
 /**
  * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
  * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
@@ -1726,6 +1726,18 @@ module.exports = function(value, queryField, queryValue) {
 };
 
 },{}],31:[function(require,module,exports){
+/**
+ * Returns the item from an array at the given index
+ */
+module.exports = function(value, index) {
+  if (Array.isArray(value)) {
+    return value[index];
+  } else {
+    return value;
+  }
+};
+
+},{}],32:[function(require,module,exports){
 var urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
 var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$))/gim;
 /**
@@ -1750,7 +1762,7 @@ module.exports = function(value, target) {
   });
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /**
  * Formats the value into a boolean.
  */
@@ -1758,7 +1770,7 @@ module.exports = function(value) {
   return value && value !== '0' && value !== 'false';
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1773,7 +1785,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":36}],34:[function(require,module,exports){
+},{"./escape":37}],35:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1793,7 +1805,7 @@ module.exports = function(value) {
   return value.toLocaleString();
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1813,7 +1825,7 @@ module.exports = function(value) {
   return value.toLocaleDateString();
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var div = document.createElement('div');
 
 /**
@@ -1829,7 +1841,7 @@ module.exports = function (value, setter) {
   }
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
  * functions.
@@ -1865,7 +1877,19 @@ module.exports = function(value, filterFunc, testValue) {
   return value;
 };
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
+/**
+ * Returns the first item from an array
+ */
+module.exports = function(value) {
+  if (Array.isArray(value)) {
+    return value[0];
+  } else {
+    return value;
+  }
+};
+
+},{}],40:[function(require,module,exports){
 /**
  * Formats the value into a float or null.
  */
@@ -1874,7 +1898,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Formats the value something returned by a formatting function passed. Use for custom or one-off formats.
  */
@@ -1882,7 +1906,7 @@ module.exports = function(value, formatter, isSetter) {
   return formatter.call(this, value, isSetter);
 };
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Formats the value into an integer or null.
  */
@@ -1891,7 +1915,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Formats the value into JSON.
  */
@@ -1911,7 +1935,7 @@ module.exports = function(value, isSetter) {
   }
 };
 
-},{}],42:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 /**
  * Returns the keys of an object as an array
  */
@@ -1919,7 +1943,19 @@ module.exports = function(value) {
   return value == null ? [] : Object.keys(value);
 };
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
+/**
+ * Returns the last item from an array
+ */
+module.exports = function(value) {
+  if (Array.isArray(value)) {
+    return value[value.length - 1];
+  } else {
+    return value;
+  }
+};
+
+},{}],46:[function(require,module,exports){
 /**
  * Adds a formatter to limit the length of an array or string
  */
@@ -1935,7 +1971,7 @@ module.exports = function(value, limit) {
   }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /**
  * Adds a formatter to log the value of the expression, useful for debugging
  */
@@ -1947,7 +1983,7 @@ module.exports = function(value, prefix) {
   return value;
 };
 
-},{}],45:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /**
  * Formats the value into lower case.
  */
@@ -1955,7 +1991,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toLowerCase() : value;
 };
 
-},{}],46:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /**
  * Adds a formatter to map an array or value by the given mapping function
  */
@@ -1970,7 +2006,7 @@ module.exports = function(value, mapFunc) {
   }
 };
 
-},{}],47:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -1989,7 +2025,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":36}],48:[function(require,module,exports){
+},{"./escape":37}],51:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -2005,7 +2041,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":36}],49:[function(require,module,exports){
+},{"./escape":37}],52:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -2024,7 +2060,7 @@ module.exports = function(value, reduceFunc, initialValue) {
   }
 };
 
-},{}],50:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /**
  * Adds a formatter to reverse an array
  */
@@ -2036,7 +2072,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],51:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -2048,7 +2084,7 @@ module.exports = function(value, index, endIndex) {
   }
 };
 
-},{}],52:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 /**
  * Sorts an array given a field name or sort function, and a direction
  */
@@ -2076,7 +2112,7 @@ module.exports = function(value, sortFunc, dir) {
   return value.slice().sort(sortFunc.bind(this));
 };
 
-},{}],53:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -2096,7 +2132,7 @@ module.exports = function(value) {
   return value.toLocaleTimeString();
 };
 
-},{}],54:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 /**
  * Formats the value into upper case.
  */
@@ -2104,7 +2140,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toUpperCase() : value;
 };
 
-},{}],55:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -2223,12 +2259,12 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],56:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = require('./src/chip');
 
-},{"./src/chip":61}],57:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"dup":55}],58:[function(require,module,exports){
+},{"./src/chip":64}],60:[function(require,module,exports){
+arguments[4][58][0].apply(exports,arguments)
+},{"dup":58}],61:[function(require,module,exports){
 module.exports = EventTarget;
 var Class = require('./class');
 
@@ -2285,7 +2321,7 @@ Class.extend(EventTarget, {
   }
 });
 
-},{"./class":57}],59:[function(require,module,exports){
+},{"./class":60}],62:[function(require,module,exports){
 module.exports = App;
 var componentBinding = require('fragments-built-ins/binders/component');
 var Component = require('fragments-built-ins/binders/component-definition');
@@ -2517,7 +2553,7 @@ if (typeof Object.assign !== 'function') {
   })();
 }
 
-},{"./default-options":62,"./mixins/default":63,"chip-utils/event-target":58,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":71,"routes-js":90}],60:[function(require,module,exports){
+},{"./default-options":65,"./mixins/default":66,"chip-utils/event-target":61,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":74,"routes-js":93}],63:[function(require,module,exports){
 var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
@@ -2662,7 +2698,7 @@ module.exports = function() {
   return ifBinder;
 };
 
-},{"fragments-built-ins/binders/if":18,"routes-js":90}],61:[function(require,module,exports){
+},{"fragments-built-ins/binders/if":18,"routes-js":93}],64:[function(require,module,exports){
 var App = require('./app');
 
 // # Chip
@@ -2698,7 +2734,7 @@ chip.Class = require('chip-utils/class');
 chip.EventTarget = require('chip-utils/event-target');
 chip.routes = require('routes-js');
 
-},{"./app":59,"chip-utils/class":57,"chip-utils/event-target":58,"routes-js":90}],62:[function(require,module,exports){
+},{"./app":62,"chip-utils/class":60,"chip-utils/event-target":61,"routes-js":93}],65:[function(require,module,exports){
 
 module.exports = {
   curliesInAttributes: false,
@@ -2742,6 +2778,7 @@ module.exports = {
 
   formatters: {
     addQuery: require('fragments-built-ins/formatters/add-query'),
+    at: require('fragments-built-ins/formatters/at'),
     autolink: require('fragments-built-ins/formatters/autolink'),
     bool: require('fragments-built-ins/formatters/bool'),
     br: require('fragments-built-ins/formatters/br'),
@@ -2749,11 +2786,13 @@ module.exports = {
     date: require('fragments-built-ins/formatters/date'),
     escape: require('fragments-built-ins/formatters/escape'),
     filter: require('fragments-built-ins/formatters/filter'),
+    first: require('fragments-built-ins/formatters/first'),
     float: require('fragments-built-ins/formatters/float'),
     format: require('fragments-built-ins/formatters/format'),
     int: require('fragments-built-ins/formatters/int'),
     json: require('fragments-built-ins/formatters/json'),
     keys: require('fragments-built-ins/formatters/keys'),
+    last: require('fragments-built-ins/formatters/last'),
     limit: require('fragments-built-ins/formatters/limit'),
     log: require('fragments-built-ins/formatters/log'),
     lower: require('fragments-built-ins/formatters/lower'),
@@ -2780,7 +2819,7 @@ module.exports = {
 
 };
 
-},{"./binders/route":60,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/radio":23,"fragments-built-ins/binders/ref":24,"fragments-built-ins/binders/repeat":25,"fragments-built-ins/binders/show":26,"fragments-built-ins/binders/styles":27,"fragments-built-ins/binders/text":28,"fragments-built-ins/binders/value":29,"fragments-built-ins/formatters/add-query":30,"fragments-built-ins/formatters/autolink":31,"fragments-built-ins/formatters/bool":32,"fragments-built-ins/formatters/br":33,"fragments-built-ins/formatters/date":35,"fragments-built-ins/formatters/date-time":34,"fragments-built-ins/formatters/escape":36,"fragments-built-ins/formatters/filter":37,"fragments-built-ins/formatters/float":38,"fragments-built-ins/formatters/format":39,"fragments-built-ins/formatters/int":40,"fragments-built-ins/formatters/json":41,"fragments-built-ins/formatters/keys":42,"fragments-built-ins/formatters/limit":43,"fragments-built-ins/formatters/log":44,"fragments-built-ins/formatters/lower":45,"fragments-built-ins/formatters/map":46,"fragments-built-ins/formatters/newline":47,"fragments-built-ins/formatters/p":48,"fragments-built-ins/formatters/reduce":49,"fragments-built-ins/formatters/reverse":50,"fragments-built-ins/formatters/slice":51,"fragments-built-ins/formatters/sort":52,"fragments-built-ins/formatters/time":53,"fragments-built-ins/formatters/upper":54}],63:[function(require,module,exports){
+},{"./binders/route":63,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/radio":23,"fragments-built-ins/binders/ref":24,"fragments-built-ins/binders/repeat":25,"fragments-built-ins/binders/show":26,"fragments-built-ins/binders/styles":27,"fragments-built-ins/binders/text":28,"fragments-built-ins/binders/value":29,"fragments-built-ins/formatters/add-query":30,"fragments-built-ins/formatters/at":31,"fragments-built-ins/formatters/autolink":32,"fragments-built-ins/formatters/bool":33,"fragments-built-ins/formatters/br":34,"fragments-built-ins/formatters/date":36,"fragments-built-ins/formatters/date-time":35,"fragments-built-ins/formatters/escape":37,"fragments-built-ins/formatters/filter":38,"fragments-built-ins/formatters/first":39,"fragments-built-ins/formatters/float":40,"fragments-built-ins/formatters/format":41,"fragments-built-ins/formatters/int":42,"fragments-built-ins/formatters/json":43,"fragments-built-ins/formatters/keys":44,"fragments-built-ins/formatters/last":45,"fragments-built-ins/formatters/limit":46,"fragments-built-ins/formatters/log":47,"fragments-built-ins/formatters/lower":48,"fragments-built-ins/formatters/map":49,"fragments-built-ins/formatters/newline":50,"fragments-built-ins/formatters/p":51,"fragments-built-ins/formatters/reduce":52,"fragments-built-ins/formatters/reverse":53,"fragments-built-ins/formatters/slice":54,"fragments-built-ins/formatters/sort":55,"fragments-built-ins/formatters/time":56,"fragments-built-ins/formatters/upper":57}],66:[function(require,module,exports){
 
 module.exports = function(app) {
 
@@ -2906,10 +2945,10 @@ module.exports = function(app) {
   };
 };
 
-},{}],64:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module.exports = require('./src/diff');
 
-},{"./src/diff":65}],65:[function(require,module,exports){
+},{"./src/diff":68}],68:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -3315,10 +3354,10 @@ var diff = exports;
   }
 })();
 
-},{}],66:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = require('./src/expressions');
 
-},{"./src/expressions":67}],67:[function(require,module,exports){
+},{"./src/expressions":70}],70:[function(require,module,exports){
 var slice = Array.prototype.slice;
 var strings = require('./strings');
 var formatterParser = require('./formatters');
@@ -3416,7 +3455,7 @@ function bindArguments(func) {
   }
 }
 
-},{"./formatters":68,"./property-chains":69,"./strings":70}],68:[function(require,module,exports){
+},{"./formatters":71,"./property-chains":72,"./strings":73}],71:[function(require,module,exports){
 
 // finds pipes that are not ORs (i.e. ` | ` not ` || `) for formatters
 var pipeRegex = /\|(\|)?/g;
@@ -3488,7 +3527,7 @@ exports.parseFormatters = function(expr) {
   return setter + value;
 };
 
-},{}],69:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 var referenceCount = 0;
 var currentReference = 0;
 var currentIndex = 0;
@@ -3817,7 +3856,7 @@ function addReferences(expr) {
   return expr;
 }
 
-},{}],70:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 // finds all quoted strings
 var quoteRegex = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -3863,7 +3902,7 @@ exports.putInStrings = function(expr) {
   return expr;
 };
 
-},{}],71:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 var Fragments = require('./src/fragments');
 var Observations = require('observations-js');
 
@@ -3883,7 +3922,7 @@ function create(options) {
 // Create an instance of fragments with the default observer
 exports.create = create;
 
-},{"./src/fragments":75,"observations-js":81}],72:[function(require,module,exports){
+},{"./src/fragments":78,"observations-js":84}],75:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -4131,7 +4170,7 @@ function onAnimationEnd(node, duration, callback) {
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":73,"./util/animation":77}],73:[function(require,module,exports){
+},{"./binding":76,"./util/animation":80}],76:[function(require,module,exports){
 module.exports = Binding;
 var Class = require('chip-utils/class');
 
@@ -4314,7 +4353,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"chip-utils/class":55}],74:[function(require,module,exports){
+},{"chip-utils/class":58}],77:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4482,7 +4521,7 @@ function notEmpty(value) {
   return Boolean(value);
 }
 
-},{}],75:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -5149,7 +5188,7 @@ function processOption(obj, fragments, methodName) {
     });
   }
 }
-},{"./animatedBinding":72,"./binding":73,"./compile":74,"./template":76,"./util/animation":77,"./util/polyfills":78,"./util/toFragment":79,"./view":80,"chip-utils/class":55}],76:[function(require,module,exports){
+},{"./animatedBinding":75,"./binding":76,"./compile":77,"./template":79,"./util/animation":80,"./util/polyfills":81,"./util/toFragment":82,"./view":83,"chip-utils/class":58}],79:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5189,7 +5228,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":80,"chip-utils/class":55}],77:[function(require,module,exports){
+},{"./view":83,"chip-utils/class":58}],80:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5282,7 +5321,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],78:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 
 
 
@@ -5309,7 +5348,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],79:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5432,7 +5471,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],80:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5565,7 +5604,7 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":55}],81:[function(require,module,exports){
+},{"chip-utils/class":58}],84:[function(require,module,exports){
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
@@ -5573,7 +5612,7 @@ exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observations":88,"./src/observer":89}],82:[function(require,module,exports){
+},{"./src/observations":91,"./src/observer":92}],85:[function(require,module,exports){
 module.exports = AsyncProperty;
 var ComputedProperty = require('./computed-property');
 var expressions = require('expressions-js');
@@ -5621,7 +5660,7 @@ ComputedProperty.extend(AsyncProperty, {
   }
 });
 
-},{"./computed-property":83,"expressions-js":66}],83:[function(require,module,exports){
+},{"./computed-property":86,"expressions-js":69}],86:[function(require,module,exports){
 module.exports = ComputedProperty;
 var Class = require('chip-utils/class');
 
@@ -5664,7 +5703,7 @@ Class.extend(ComputedProperty, {
   }
 });
 
-},{"chip-utils/class":55}],84:[function(require,module,exports){
+},{"chip-utils/class":58}],87:[function(require,module,exports){
 module.exports = ExprProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5686,7 +5725,7 @@ ComputedProperty.extend(ExprProperty, {
   }
 });
 
-},{"./computed-property":83}],85:[function(require,module,exports){
+},{"./computed-property":86}],88:[function(require,module,exports){
 module.exports = IfProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5718,7 +5757,7 @@ ComputedProperty.extend(IfProperty, {
   }
 });
 
-},{"./computed-property":83}],86:[function(require,module,exports){
+},{"./computed-property":86}],89:[function(require,module,exports){
 module.exports = MapProperty;
 var ComputedProperty = require('./computed-property');
 var expressions = require('expressions-js');
@@ -5798,7 +5837,7 @@ ComputedProperty.extend(MapProperty, {
   }
 });
 
-},{"./computed-property":83,"expressions-js":66}],87:[function(require,module,exports){
+},{"./computed-property":86,"expressions-js":69}],90:[function(require,module,exports){
 var ComputedProperty = require('./computed-properties/computed-property');
 var ExprProperty = require('./computed-properties/expr');
 var MapProperty = require('./computed-properties/map');
@@ -5958,7 +5997,7 @@ function ensureObservers(obj, options) {
   return obj;
 }
 
-},{"./computed-properties/async":82,"./computed-properties/computed-property":83,"./computed-properties/expr":84,"./computed-properties/if":85,"./computed-properties/map":86}],88:[function(require,module,exports){
+},{"./computed-properties/async":85,"./computed-properties/computed-property":86,"./computed-properties/expr":87,"./computed-properties/if":88,"./computed-properties/map":89}],91:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -6198,7 +6237,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./computed":87,"./observer":89,"chip-utils/class":55,"expressions-js":66}],89:[function(require,module,exports){
+},{"./computed":90,"./observer":92,"chip-utils/class":58,"expressions-js":69}],92:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -6357,7 +6396,7 @@ function mapToProperty(property) {
   }
 }
 
-},{"chip-utils/class":55,"differences-js":64,"expressions-js":66}],90:[function(require,module,exports){
+},{"chip-utils/class":58,"differences-js":67,"expressions-js":69}],93:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -6368,7 +6407,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":93,"./src/location":94,"./src/push-location":95,"./src/route":96,"./src/router":97}],91:[function(require,module,exports){
+},{"./src/hash-location":96,"./src/location":97,"./src/push-location":98,"./src/route":99,"./src/router":100}],94:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -6479,9 +6518,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],92:[function(require,module,exports){
-arguments[4][58][0].apply(exports,arguments)
-},{"./class":91,"dup":58}],93:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
+arguments[4][61][0].apply(exports,arguments)
+},{"./class":94,"dup":61}],96:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -6520,7 +6559,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":94}],94:[function(require,module,exports){
+},{"./location":97}],97:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -6632,7 +6671,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":93,"./push-location":95,"chip-utils/event-target":92}],95:[function(require,module,exports){
+},{"./hash-location":96,"./push-location":98,"chip-utils/event-target":95}],98:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -6672,7 +6711,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":94}],96:[function(require,module,exports){
+},{"./location":97}],99:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -6757,7 +6796,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":91}],97:[function(require,module,exports){
+},{"chip-utils/class":94}],100:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -6918,6 +6957,6 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":94,"./route":96,"chip-utils/event-target":92}]},{},[56])(56)
+},{"./location":97,"./route":99,"chip-utils/event-target":95}]},{},[59])(59)
 });
 //# sourceMappingURL=chip.js.map

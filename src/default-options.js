@@ -41,6 +41,7 @@ module.exports = {
 
   formatters: {
     addQuery: require('fragments-built-ins/formatters/add-query'),
+    at: require('fragments-built-ins/formatters/at'),
     autolink: require('fragments-built-ins/formatters/autolink'),
     bool: require('fragments-built-ins/formatters/bool'),
     br: require('fragments-built-ins/formatters/br'),
@@ -48,11 +49,13 @@ module.exports = {
     date: require('fragments-built-ins/formatters/date'),
     escape: require('fragments-built-ins/formatters/escape'),
     filter: require('fragments-built-ins/formatters/filter'),
+    first: require('fragments-built-ins/formatters/first'),
     float: require('fragments-built-ins/formatters/float'),
     format: require('fragments-built-ins/formatters/format'),
     int: require('fragments-built-ins/formatters/int'),
     json: require('fragments-built-ins/formatters/json'),
     keys: require('fragments-built-ins/formatters/keys'),
+    last: require('fragments-built-ins/formatters/last'),
     limit: require('fragments-built-ins/formatters/limit'),
     log: require('fragments-built-ins/formatters/log'),
     lower: require('fragments-built-ins/formatters/lower'),
