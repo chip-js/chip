@@ -598,6 +598,10 @@ module.exports = function(ComponentClass) {
       }
     },
 
+    created: function() {
+      this.element.component = null;
+    },
+
     updated: function(ComponentClass) {
       this.unbound();
       if (this.view && this.view._attached) {
@@ -1059,7 +1063,8 @@ module.exports = function(specificPropertyName) {
     priority: 10,
 
     created: function() {
-      this.twoWayObserver = this.observe(specificPropertyName || this.camelCase, this.sendUpdate, this);
+      this.propertyName = this.propertyName;
+      this.twoWayObserver = this.observe(this.propertyName, this.sendUpdate, this);
       this.element.addEventListener('componentized', function() {
         this.twoWayObserver.bind(this.element.component);
       }.bind(this));
@@ -1072,7 +1077,7 @@ module.exports = function(specificPropertyName) {
     sendUpdate: function(value) {
       if (!this.skipSend) {
         var properties = this.element._properties || (this.element._properties = {});
-        properties[specificPropertyName || this.camelCase] = value;
+        properties[this.propertyName] = value;
         this.observer.set(value);
         this.skipSend = true;
         this.fragments.afterSync(function() {
@@ -1084,9 +1089,9 @@ module.exports = function(specificPropertyName) {
     updated: function(value) {
       if (!this.skipSend && value !== undefined) {
         var properties = this.element._properties || (this.element._properties = {});
-        properties[specificPropertyName || this.camelCase] = value;
+        properties[this.propertyName] = value;
         if (this.element.component) {
-          this.element.component[specificPropertyName || this.camelCase] = value;
+          this.element.component[this.propertyName] = value;
         }
         this.skipSend = true;
         this.fragments.afterSync(function() {
@@ -1105,17 +1110,27 @@ module.exports = function(specificPropertyName) {
   return {
     priority: 10,
 
-    updated: function(value) {
-      if (!this.context) {
-        // Don't unset properties on components getting ready to be disposed of
-        return;
-      }
+    created: function() {
+      this.propertyName = specificPropertyName || this.camelCase;
+    },
 
-      var properties = this.element._properties || (this.element._properties = {});
-      properties[specificPropertyName || this.camelCase] = value;
-      if (this.element.component) {
-        this.element.component[specificPropertyName || this.camelCase] = value;
+    updated: function(value) {
+
+      if (this.element.hasOwnProperty('component')) {
+        var properties = this.element._properties || (this.element._properties = {});
+        properties[this.propertyName] = value;
+
+        if (this.context && this.element.component) {
+          // Don't unset properties on components getting ready to be disposed of
+          this.element.component[this.propertyName] = value;
+        }
+      } else if (this.context) {
+        this.context[this.propertyName] = value;
       }
+    },
+
+    unbound: function() {
+      this.context[this.propertyName] = undefined;
     }
   };
 };
