@@ -93,7 +93,7 @@
     ),
     <span class="hljs-string">'[component]'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component'</span>)(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">componentName</span>) </span>{
       <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fragments.app.component(componentName);
-    }),
+    }, <span class="hljs-string">'[unwrap]'</span>),
     <span class="hljs-string">'[if]'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/if'</span>)(<span class="hljs-string">'[else-if]'</span>, <span class="hljs-string">'[else]'</span>, <span class="hljs-string">'[unless]'</span>, <span class="hljs-string">'[unless-if]'</span>),
     <span class="hljs-string">'[unless]'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/if'</span>)(<span class="hljs-string">'[else-if]'</span>, <span class="hljs-string">'[else]'</span>, <span class="hljs-string">'[unless]'</span>, <span class="hljs-string">'[unless-if]'</span>),
     <span class="hljs-string">'[route]'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'./binders/route'</span>)()

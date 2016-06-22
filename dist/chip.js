@@ -557,7 +557,7 @@ var slice = Array.prototype.slice;
  * An element binder that binds the template on the definition to fill the contents of the element that matches. Can be
  * used as an attribute binder as well.
  */
-module.exports = function(ComponentClass) {
+module.exports = function(ComponentClass, unwrapAttribute) {
   var componentLoader;
 
   if (typeof ComponentClass !== 'function') {
@@ -572,7 +572,7 @@ module.exports = function(ComponentClass) {
   return {
 
     compiled: function() {
-      if (this.element.getAttribute('[unwrap]') !== null) {
+      if (unwrapAttribute && this.element.getAttribute(unwrapAttribute) !== null) {
         var parent = this.element.parentNode;
         var placeholder = document.createTextNode('');
         parent.insertBefore(placeholder, this.element);
@@ -842,11 +842,11 @@ module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnle
         var next = node.nextElementSibling;
         var expression;
         if (node.hasAttribute(elseIfAttrName)) {
-          expression = this.fragments.codifyExpression('attribute', node.getAttribute(elseIfAttrName));
+          expression = this.fragments.codifyExpression('attribute', node.getAttribute(elseIfAttrName), true);
           expressions.push(wrapIfExp(expression, false));
           node.removeAttribute(elseIfAttrName);
         } else if (node.hasAttribute(elseUnlessAttrName)) {
-          expression = this.fragments.codifyExpression('attribute', node.getAttribute(elseUnlessAttrName));
+          expression = this.fragments.codifyExpression('attribute', node.getAttribute(elseUnlessAttrName), true);
           expressions.push(wrapIfExp(expression, true));
           node.removeAttribute(elseUnlessAttrName);
         } else if (node.hasAttribute(elseAttrName)) {
@@ -1136,10 +1136,6 @@ module.exports = function(specificPropertyName) {
       } else if (this.context) {
         this.context[this.propertyName] = value;
       }
-    },
-
-    unbound: function() {
-      this.context[this.propertyName] = undefined;
     }
   };
 };
@@ -1214,7 +1210,7 @@ module.exports = function(compareByAttribute) {
 
     compiled: function() {
       if (this.element.hasAttribute(compareByAttribute)) {
-        this.compareBy = this.fragments.codifyExpression('attribute', this.element.getAttribute(compareByAttribute));
+        this.compareBy = this.fragments.codifyExpression('attribute', this.element.getAttribute(compareByAttribute), true);
         this.element.removeAttribute(compareByAttribute);
       }
       var parent = this.element.parentNode;
@@ -1276,8 +1272,10 @@ module.exports = function(compareByAttribute) {
       // Keep the items updated as the array changes
       if (this.valueName) {
         this.views.forEach(function(view, i) {
-          if (this.keyName) view.context[this.keyName] = i;
-          view.context[this.valueName] = value[i];
+          if (view.context) {
+            if (this.keyName) view.context[this.keyName] = i;
+            view.context[this.valueName] = value[i];
+          }
         }, this);
       }
     },
@@ -1795,21 +1793,19 @@ module.exports = function(value) {
 };
 
 },{}],34:[function(require,module,exports){
-var escapeHTML = require('./escape');
-
 /**
- * HTML escapes content adding <br> tags in place of newlines characters.
+ * Adds <br> tags in place of newlines characters.
  */
 module.exports = function(value, setter) {
   if (setter) {
-    return escapeHTML(value, setter);
+    return value.replace(/<br>\r?\n?/g, '\n');
   } else {
     var lines = (value || '').split(/\r?\n/);
-    return lines.map(escapeHTML).join('<br>\n');
+    return lines.join('<br>\n');
   }
 };
 
-},{"./escape":37}],35:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -2050,27 +2046,26 @@ module.exports = function(value, setter) {
 };
 
 },{"./escape":37}],51:[function(require,module,exports){
-var escapeHTML = require('./escape');
-
 /**
- * HTML escapes content wrapping lines into paragraphs (in <p> tags).
+ * Wraps lines into paragraphs (in <p> tags).
  */
 module.exports = function(value, setter) {
   if (setter) {
-    return escapeHTML(value, setter);
+    return value.replace(/<p>\n?<\/p>/g, '\n').replace(/<p>|<\/p>/g, '');
   } else {
-    var lines = (value || '').split(/\r?\n/);
-    var escaped = lines.map(function(line) { return escapeHTML(line) || '<br>'; });
-    return '<p>' + escaped.join('</p>\n<p>') + '</p>';
+    var lines = (value || '').split(/\r?\n/)
+                // empty paragraphs will collapse if they don't have any content, insert a br
+                .map(function(line) { return line || '<br>'; });
+    return '<p>' + lines.join('</p>\n<p>') + '</p>';
   }
 };
 
-},{"./escape":37}],52:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
 module.exports = function(value, reduceFunc, initialValue) {
-  if (value == null || typeof mapFunc !== 'function') {
+  if (value == null || typeof reduceFunc !== 'function') {
     return value;
   }
   if (Array.isArray(value)) {
@@ -2582,13 +2577,13 @@ var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
 module.exports = function() {
-  var ifBinder = IfBinder();
-  var attached = ifBinder.attached;
-  var unbound = ifBinder.unbound;
-  var detached = ifBinder.detached;
-  ifBinder.priority = 10,
+  var routeBinder = IfBinder();
+  var attached = routeBinder.attached;
+  var unbound = routeBinder.unbound;
+  var detached = routeBinder.detached;
+  routeBinder.priority = 10,
 
-  ifBinder.compiled = function() {
+  routeBinder.compiled = function() {
     var noRoute;
     this.app = this.fragments.app;
     this.routes = [];
@@ -2620,18 +2615,18 @@ module.exports = function() {
     }
   };
 
-  ifBinder.add = function(view) {
+  routeBinder.add = function(view) {
     view.bind(this.context);
     this.element.appendChild(view);
     this.attached();
   };
 
-  ifBinder.created = function() {
+  routeBinder.created = function() {
     this.onUrlChange = this.onUrlChange.bind(this);
   };
 
 
-  ifBinder.attached = function() {
+  routeBinder.attached = function() {
     attached.call(this);
 
     var node = this.element.parentNode;
@@ -2646,18 +2641,18 @@ module.exports = function() {
     }
   };
 
-  ifBinder.detached = function() {
+  routeBinder.detached = function() {
     detached.call(this);
     this.currentIndex = undefined;
     this.app.off('urlChange', this.onUrlChange);
   };
 
-  ifBinder.unbound = function() {
+  routeBinder.unbound = function() {
     unbound.call(this);
     delete this.context.params;
   };
 
-  ifBinder.onUrlChange = function() {
+  routeBinder.onUrlChange = function() {
     if (!this.context) {
       return;
     }
@@ -2674,7 +2669,7 @@ module.exports = function() {
     }
   };
 
-  ifBinder.checkForChange = function() {
+  routeBinder.checkForChange = function() {
     var fullUrl = this.app.path;
     var localUrl = null;
     var newIndex = this.routes.length;
@@ -2719,7 +2714,7 @@ module.exports = function() {
     }
   };
 
-  return ifBinder;
+  return routeBinder;
 };
 
 },{"fragments-built-ins/binders/if":18,"routes-js":93}],64:[function(require,module,exports){
@@ -2794,7 +2789,7 @@ module.exports = {
     ),
     '[component]': require('fragments-built-ins/binders/component')(function(componentName) {
       return this.fragments.app.component(componentName);
-    }),
+    }, '[unwrap]'),
     '[if]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
     '[unless]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
     '[route]': require('./binders/route')()
@@ -3393,6 +3388,9 @@ exports.globals = {};
 
 
 exports.parse = function(expr, globals, formatters) {
+  if (typeof expr !== 'string') {
+    throw new TypeError('Invalid expr, must be type String');
+  }
   var extraArgs = slice.call(arguments, 3);
   var cacheKey = expr + '|' + extraArgs.join(',');
   // Returns the cached function for this expression if it exists.
@@ -4554,7 +4552,7 @@ var animation = require('./util/animation');
 var Template = require('./template');
 var View = require('./view');
 var Binding = require('./binding');
-var AnimatedBinding = require('./animatedBinding');
+var AnimatedBinding = require('./animated-binding');
 var compile = require('./compile');
 var hasWildcardExpr = /(^|[^\\])\*/;
 var escapedWildcardExpr = /(^|[^\\])\\\*/;
@@ -5212,7 +5210,7 @@ function processOption(obj, fragments, methodName) {
     });
   }
 }
-},{"./animatedBinding":75,"./binding":76,"./compile":77,"./template":79,"./util/animation":80,"./util/polyfills":81,"./util/toFragment":82,"./view":83,"chip-utils/class":58}],79:[function(require,module,exports){
+},{"./animated-binding":75,"./binding":76,"./compile":77,"./template":79,"./util/animation":80,"./util/polyfills":81,"./util/toFragment":82,"./view":83,"chip-utils/class":58}],79:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5529,7 +5527,11 @@ function View(template) {
 Class.extend(View, {
 
   get inDOM() {
-    return document.documentElement.contains(this.firstViewNode);
+    var parent = this.firstViewNode;
+    while (parent && parent !== document) {
+      parent = parent.parentNode || parent.host;
+    }
+    return parent === document;
   },
 
   /**
@@ -6053,8 +6055,19 @@ function Observations() {
 
 Class.extend(Observations, {
 
-  // Creates a new observer attached to this observations object. When the observer is bound to a context it will be added
-  // to this `observations` and synced when this `observations.sync` is called.
+  /**
+   * Observes any changes to the result of the expression on the context object and calls the callback.
+   */
+  observe: function(context, expression, callback, callbackContext) {
+    var observer = this.createObserver(expression, callback, callbackContext);
+    observer.bind(context);
+    return observer;
+  },
+
+  /**
+   * Creates a new observer attached to this observations object. When the observer is bound to a context it will be
+   * added to this `observations` and synced when this `observations.sync` is called.
+   */
   createObserver: function(expression, callback, callbackContext) {
     return new Observer(this, expression, callback, callbackContext);
   },
@@ -6287,6 +6300,7 @@ function Observer(observations, expression, callback, callbackContext) {
   this.expression = expression;
   this.callback = callback;
   this.callbackContext = callbackContext;
+  this.getChangeRecords = false;
   this.skip = false;
   this.forceUpdateNextSync = false;
   this.context = null;
@@ -6388,8 +6402,10 @@ Class.extend(Observer, {
 
         var getCompareValue = expressions.parse(compareExpression, globals, formatters, name, index);
         changed = diff.values(value.map(getCompareValue, ctx), oldValue.map(getCompareValue, ctx));
-      } else {
+      } else if (this.getChangeRecords) {
         changed = diff.values(value, this.oldValue);
+      } else {
+        changed = diff.basic(value, this.oldValue);
       }
 
 

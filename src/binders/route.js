@@ -2,13 +2,13 @@ var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
 module.exports = function() {
-  var ifBinder = IfBinder();
-  var attached = ifBinder.attached;
-  var unbound = ifBinder.unbound;
-  var detached = ifBinder.detached;
-  ifBinder.priority = 10,
+  var routeBinder = IfBinder();
+  var attached = routeBinder.attached;
+  var unbound = routeBinder.unbound;
+  var detached = routeBinder.detached;
+  routeBinder.priority = 10,
 
-  ifBinder.compiled = function() {
+  routeBinder.compiled = function() {
     var noRoute;
     this.app = this.fragments.app;
     this.routes = [];
@@ -40,18 +40,18 @@ module.exports = function() {
     }
   };
 
-  ifBinder.add = function(view) {
+  routeBinder.add = function(view) {
     view.bind(this.context);
     this.element.appendChild(view);
     this.attached();
   };
 
-  ifBinder.created = function() {
+  routeBinder.created = function() {
     this.onUrlChange = this.onUrlChange.bind(this);
   };
 
 
-  ifBinder.attached = function() {
+  routeBinder.attached = function() {
     attached.call(this);
 
     var node = this.element.parentNode;
@@ -66,18 +66,18 @@ module.exports = function() {
     }
   };
 
-  ifBinder.detached = function() {
+  routeBinder.detached = function() {
     detached.call(this);
     this.currentIndex = undefined;
     this.app.off('urlChange', this.onUrlChange);
   };
 
-  ifBinder.unbound = function() {
+  routeBinder.unbound = function() {
     unbound.call(this);
     delete this.context.params;
   };
 
-  ifBinder.onUrlChange = function() {
+  routeBinder.onUrlChange = function() {
     if (!this.context) {
       return;
     }
@@ -94,7 +94,7 @@ module.exports = function() {
     }
   };
 
-  ifBinder.checkForChange = function() {
+  routeBinder.checkForChange = function() {
     var fullUrl = this.app.path;
     var localUrl = null;
     var newIndex = this.routes.length;
@@ -139,5 +139,5 @@ module.exports = function() {
     }
   };
 
-  return ifBinder;
+  return routeBinder;
 };

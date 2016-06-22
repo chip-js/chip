@@ -33,7 +33,7 @@ module.exports = {
     ),
     '[component]': require('fragments-built-ins/binders/component')(function(componentName) {
       return this.fragments.app.component(componentName);
-    }),
+    }, '[unwrap]'),
     '[if]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
     '[unless]': require('fragments-built-ins/binders/if')('[else-if]', '[else]', '[unless]', '[unless-if]'),
     '[route]': require('./binders/route')()
