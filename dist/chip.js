@@ -549,7 +549,7 @@ function callOnMixins(context, mixins, name, args) {
   });
 }
 
-},{"chip-utils/class":58}],15:[function(require,module,exports){
+},{"chip-utils/class":57}],15:[function(require,module,exports){
 var Component = require('./component-definition');
 var slice = Array.prototype.slice;
 
@@ -1065,54 +1065,6 @@ module.exports = function() {
 
 },{}],21:[function(require,module,exports){
 /**
- * A binder that sets the property of an element to the value of the expression in a 2-way binding.
- */
-module.exports = function(specificPropertyName) {
-  return {
-    priority: 10,
-
-    created: function() {
-      this.propertyName = this.propertyName;
-      this.twoWayObserver = this.observe(this.propertyName, this.sendUpdate, this);
-      this.element.addEventListener('componentized', function() {
-        this.twoWayObserver.bind(this.element.component);
-      }.bind(this));
-    },
-
-    unbound: function() {
-      this.twoWayObserver.unbind();
-    },
-
-    sendUpdate: function(value) {
-      if (!this.skipSend) {
-        var properties = this.element._properties || (this.element._properties = {});
-        properties[this.propertyName] = value;
-        this.observer.set(value);
-        this.skipSend = true;
-        this.fragments.afterSync(function() {
-          this.skipSend = false;
-        }.bind(this));
-      }
-    },
-
-    updated: function(value) {
-      if (!this.skipSend && value !== undefined) {
-        var properties = this.element._properties || (this.element._properties = {});
-        properties[this.propertyName] = value;
-        if (this.element.component) {
-          this.element.component[this.propertyName] = value;
-        }
-        this.skipSend = true;
-        this.fragments.afterSync(function() {
-          this.skipSend = false;
-        }.bind(this));
-      }
-    }
-  };
-};
-
-},{}],22:[function(require,module,exports){
-/**
  * A binder that sets the property of an element to the value of the expression.
  */
 module.exports = function(specificPropertyName) {
@@ -1140,7 +1092,7 @@ module.exports = function(specificPropertyName) {
   };
 };
 
-},{}],23:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * A binder for radio buttons specifically
  */
@@ -1179,7 +1131,7 @@ module.exports = function(valueName) {
 };
 
 
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * A binder that sets a reference to the element when it is bound.
  */
@@ -1195,7 +1147,7 @@ module.exports = function () {
   };
 };
 
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var diff = require('differences-js');
 
 /**
@@ -1445,7 +1397,7 @@ module.exports = function(compareByAttribute) {
   };
 };
 
-},{"differences-js":67}],26:[function(require,module,exports){
+},{"differences-js":66}],25:[function(require,module,exports){
 /**
  * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
  * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
@@ -1516,7 +1468,7 @@ module.exports = function(isHide) {
   };
 };
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var units = {
   '%': true,
   'em': true,
@@ -1556,7 +1508,7 @@ module.exports = function(specificStyleName, specificUnit) {
   };
 };
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * ## text
  * A binder that displays escaped text inside an element. This can be done with binding directly in text nodes but
@@ -1585,7 +1537,7 @@ module.exports = function() {
   };
 };
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var inputMethods, defaultInputMethod;
 
 /**
@@ -1715,7 +1667,7 @@ inputMethods = {
 };
 
 
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /**
  * Takes the input URL and adds (or replaces) the field in the query.
  * E.g. 'http://example.com?user=default&resource=foo' | addQuery('user', username)
@@ -1747,7 +1699,7 @@ module.exports = function(value, queryField, queryValue) {
   return url;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /**
  * Returns the item from an array at the given index
  */
@@ -1759,7 +1711,7 @@ module.exports = function(value, index) {
   }
 };
 
-},{}],32:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
 var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$))/gim;
 /**
@@ -1784,7 +1736,7 @@ module.exports = function(value, target) {
   });
 };
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /**
  * Formats the value into a boolean.
  */
@@ -1792,7 +1744,7 @@ module.exports = function(value) {
   return value && value !== '0' && value !== 'false';
 };
 
-},{}],34:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /**
  * Adds <br> tags in place of newlines characters.
  */
@@ -1805,7 +1757,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1825,7 +1777,7 @@ module.exports = function(value) {
   return value.toLocaleString();
 };
 
-},{}],36:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -1845,7 +1797,7 @@ module.exports = function(value) {
   return value.toLocaleDateString();
 };
 
-},{}],37:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var div = document.createElement('div');
 
 /**
@@ -1861,7 +1813,7 @@ module.exports = function (value, setter) {
   }
 };
 
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
  * functions.
@@ -1897,7 +1849,7 @@ module.exports = function(value, filterFunc, testValue) {
   return value;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * Returns the first item from an array
  */
@@ -1909,7 +1861,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /**
  * Formats the value into a float or null.
  */
@@ -1918,7 +1870,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],41:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /**
  * Formats the value something returned by a formatting function passed. Use for custom or one-off formats.
  */
@@ -1926,7 +1878,7 @@ module.exports = function(value, formatter, isSetter) {
   return formatter.call(this, value, isSetter);
 };
 
-},{}],42:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Formats the value into an integer or null.
  */
@@ -1935,7 +1887,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],43:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Formats the value into JSON.
  */
@@ -1955,7 +1907,7 @@ module.exports = function(value, isSetter) {
   }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Returns the keys of an object as an array
  */
@@ -1963,7 +1915,7 @@ module.exports = function(value) {
   return value == null ? [] : Object.keys(value);
 };
 
-},{}],45:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 /**
  * Returns the last item from an array
  */
@@ -1975,7 +1927,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],46:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /**
  * Adds a formatter to limit the length of an array or string
  */
@@ -1991,7 +1943,7 @@ module.exports = function(value, limit) {
   }
 };
 
-},{}],47:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /**
  * Adds a formatter to log the value of the expression, useful for debugging
  */
@@ -2003,7 +1955,7 @@ module.exports = function(value, prefix) {
   return value;
 };
 
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /**
  * Formats the value into lower case.
  */
@@ -2011,7 +1963,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toLowerCase() : value;
 };
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /**
  * Adds a formatter to map an array or value by the given mapping function
  */
@@ -2026,7 +1978,7 @@ module.exports = function(value, mapFunc) {
   }
 };
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -2045,7 +1997,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":37}],51:[function(require,module,exports){
+},{"./escape":36}],50:[function(require,module,exports){
 /**
  * Wraps lines into paragraphs (in <p> tags).
  */
@@ -2060,7 +2012,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -2079,7 +2031,7 @@ module.exports = function(value, reduceFunc, initialValue) {
   }
 };
 
-},{}],53:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /**
  * Adds a formatter to reverse an array
  */
@@ -2091,7 +2043,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],54:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -2103,7 +2055,7 @@ module.exports = function(value, index, endIndex) {
   }
 };
 
-},{}],55:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /**
  * Sorts an array given a field name or sort function, and a direction
  */
@@ -2131,7 +2083,7 @@ module.exports = function(value, sortFunc, dir) {
   return value.slice().sort(sortFunc.bind(this));
 };
 
-},{}],56:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -2151,7 +2103,7 @@ module.exports = function(value) {
   return value.toLocaleTimeString();
 };
 
-},{}],57:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 /**
  * Formats the value into upper case.
  */
@@ -2159,7 +2111,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toUpperCase() : value;
 };
 
-},{}],58:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -2278,12 +2230,12 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],59:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 module.exports = require('./src/chip');
 
-},{"./src/chip":64}],60:[function(require,module,exports){
-arguments[4][58][0].apply(exports,arguments)
-},{"dup":58}],61:[function(require,module,exports){
+},{"./src/chip":63}],59:[function(require,module,exports){
+arguments[4][57][0].apply(exports,arguments)
+},{"dup":57}],60:[function(require,module,exports){
 module.exports = EventTarget;
 var Class = require('./class');
 
@@ -2340,7 +2292,7 @@ Class.extend(EventTarget, {
   }
 });
 
-},{"./class":60}],62:[function(require,module,exports){
+},{"./class":59}],61:[function(require,module,exports){
 module.exports = App;
 var componentBinding = require('fragments-built-ins/binders/component');
 var Component = require('fragments-built-ins/binders/component-definition');
@@ -2572,7 +2524,7 @@ if (typeof Object.assign !== 'function') {
   })();
 }
 
-},{"./default-options":65,"./mixins/default":66,"chip-utils/event-target":61,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":74,"routes-js":93}],63:[function(require,module,exports){
+},{"./default-options":64,"./mixins/default":65,"chip-utils/event-target":60,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":73,"routes-js":92}],62:[function(require,module,exports){
 var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
@@ -2717,7 +2669,7 @@ module.exports = function() {
   return routeBinder;
 };
 
-},{"fragments-built-ins/binders/if":18,"routes-js":93}],64:[function(require,module,exports){
+},{"fragments-built-ins/binders/if":18,"routes-js":92}],63:[function(require,module,exports){
 var App = require('./app');
 
 // # Chip
@@ -2753,7 +2705,7 @@ chip.Class = require('chip-utils/class');
 chip.EventTarget = require('chip-utils/event-target');
 chip.routes = require('routes-js');
 
-},{"./app":62,"chip-utils/class":60,"chip-utils/event-target":61,"routes-js":93}],65:[function(require,module,exports){
+},{"./app":61,"chip-utils/class":59,"chip-utils/event-target":60,"routes-js":92}],64:[function(require,module,exports){
 
 module.exports = {
   curliesInAttributes: false,
@@ -2766,7 +2718,6 @@ module.exports = {
     '(esc)': require('fragments-built-ins/binders/key-events')('esc'),
     '(*)': require('fragments-built-ins/binders/events')(),
     '{*}': require('fragments-built-ins/binders/properties')(),
-    '{{*}}': require('fragments-built-ins/binders/properties-2-way')(),
     '*?': require('fragments-built-ins/binders/attribute-names')(),
     '[content]': require('fragments-built-ins/binders/component-content')(),
     '[show]': require('fragments-built-ins/binders/show')(false),
@@ -2838,7 +2789,7 @@ module.exports = {
 
 };
 
-},{"./binders/route":63,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/properties-2-way":21,"fragments-built-ins/binders/radio":23,"fragments-built-ins/binders/ref":24,"fragments-built-ins/binders/repeat":25,"fragments-built-ins/binders/show":26,"fragments-built-ins/binders/styles":27,"fragments-built-ins/binders/text":28,"fragments-built-ins/binders/value":29,"fragments-built-ins/formatters/add-query":30,"fragments-built-ins/formatters/at":31,"fragments-built-ins/formatters/autolink":32,"fragments-built-ins/formatters/bool":33,"fragments-built-ins/formatters/br":34,"fragments-built-ins/formatters/date":36,"fragments-built-ins/formatters/date-time":35,"fragments-built-ins/formatters/escape":37,"fragments-built-ins/formatters/filter":38,"fragments-built-ins/formatters/first":39,"fragments-built-ins/formatters/float":40,"fragments-built-ins/formatters/format":41,"fragments-built-ins/formatters/int":42,"fragments-built-ins/formatters/json":43,"fragments-built-ins/formatters/keys":44,"fragments-built-ins/formatters/last":45,"fragments-built-ins/formatters/limit":46,"fragments-built-ins/formatters/log":47,"fragments-built-ins/formatters/lower":48,"fragments-built-ins/formatters/map":49,"fragments-built-ins/formatters/newline":50,"fragments-built-ins/formatters/p":51,"fragments-built-ins/formatters/reduce":52,"fragments-built-ins/formatters/reverse":53,"fragments-built-ins/formatters/slice":54,"fragments-built-ins/formatters/sort":55,"fragments-built-ins/formatters/time":56,"fragments-built-ins/formatters/upper":57}],66:[function(require,module,exports){
+},{"./binders/route":62,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":21,"fragments-built-ins/binders/radio":22,"fragments-built-ins/binders/ref":23,"fragments-built-ins/binders/repeat":24,"fragments-built-ins/binders/show":25,"fragments-built-ins/binders/styles":26,"fragments-built-ins/binders/text":27,"fragments-built-ins/binders/value":28,"fragments-built-ins/formatters/add-query":29,"fragments-built-ins/formatters/at":30,"fragments-built-ins/formatters/autolink":31,"fragments-built-ins/formatters/bool":32,"fragments-built-ins/formatters/br":33,"fragments-built-ins/formatters/date":35,"fragments-built-ins/formatters/date-time":34,"fragments-built-ins/formatters/escape":36,"fragments-built-ins/formatters/filter":37,"fragments-built-ins/formatters/first":38,"fragments-built-ins/formatters/float":39,"fragments-built-ins/formatters/format":40,"fragments-built-ins/formatters/int":41,"fragments-built-ins/formatters/json":42,"fragments-built-ins/formatters/keys":43,"fragments-built-ins/formatters/last":44,"fragments-built-ins/formatters/limit":45,"fragments-built-ins/formatters/log":46,"fragments-built-ins/formatters/lower":47,"fragments-built-ins/formatters/map":48,"fragments-built-ins/formatters/newline":49,"fragments-built-ins/formatters/p":50,"fragments-built-ins/formatters/reduce":51,"fragments-built-ins/formatters/reverse":52,"fragments-built-ins/formatters/slice":53,"fragments-built-ins/formatters/sort":54,"fragments-built-ins/formatters/time":55,"fragments-built-ins/formatters/upper":56}],65:[function(require,module,exports){
 
 module.exports = function(app) {
 
@@ -2964,10 +2915,10 @@ module.exports = function(app) {
   };
 };
 
-},{}],67:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 module.exports = require('./src/diff');
 
-},{"./src/diff":68}],68:[function(require,module,exports){
+},{"./src/diff":67}],67:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -3373,10 +3324,10 @@ var diff = exports;
   }
 })();
 
-},{}],69:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module.exports = require('./src/expressions');
 
-},{"./src/expressions":70}],70:[function(require,module,exports){
+},{"./src/expressions":69}],69:[function(require,module,exports){
 var slice = Array.prototype.slice;
 var strings = require('./strings');
 var formatterParser = require('./formatters');
@@ -3477,7 +3428,7 @@ function bindArguments(func) {
   }
 }
 
-},{"./formatters":71,"./property-chains":72,"./strings":73}],71:[function(require,module,exports){
+},{"./formatters":70,"./property-chains":71,"./strings":72}],70:[function(require,module,exports){
 
 // finds pipes that are not ORs (i.e. ` | ` not ` || `) for formatters
 var pipeRegex = /\|(\|)?/g;
@@ -3549,7 +3500,7 @@ exports.parseFormatters = function(expr) {
   return setter + value;
 };
 
-},{}],72:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var referenceCount = 0;
 var currentReference = 0;
 var currentIndex = 0;
@@ -3878,7 +3829,7 @@ function addReferences(expr) {
   return expr;
 }
 
-},{}],73:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 // finds all quoted strings
 var quoteRegex = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -3924,7 +3875,7 @@ exports.putInStrings = function(expr) {
   return expr;
 };
 
-},{}],74:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 var Fragments = require('./src/fragments');
 var Observations = require('observations-js');
 
@@ -3944,7 +3895,7 @@ function create(options) {
 // Create an instance of fragments with the default observer
 exports.create = create;
 
-},{"./src/fragments":78,"observations-js":84}],75:[function(require,module,exports){
+},{"./src/fragments":77,"observations-js":83}],74:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -4192,7 +4143,7 @@ function onAnimationEnd(node, duration, callback) {
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":76,"./util/animation":80}],76:[function(require,module,exports){
+},{"./binding":75,"./util/animation":79}],75:[function(require,module,exports){
 module.exports = Binding;
 var Class = require('chip-utils/class');
 
@@ -4239,6 +4190,10 @@ Class.extend(Binding, {
    * Initialize a cloned binding. This happens after a compiled binding on a template is cloned for a view.
    */
   init: function() {
+    Object.defineProperties(this, {
+      _observers: { configurable: true, value: [] },
+      _listeners: { configurable: true, value: [] }
+    });
     if (this.expression) {
       // An observer to observe value changes to the expression within a context
       this.observer = this.observe(this.expression, this.updated);
@@ -4277,6 +4232,15 @@ Class.extend(Binding, {
 
     this.context = context;
     if (this.observer) this.observer.context = context;
+
+    this._observers.forEach(function(observer) {
+      observer.bind(this);
+    }, this);
+
+    this._listeners.forEach(function(item) {
+      item.target.addEventListener(item.eventName, item.listener);
+    });
+
     this.bound();
 
     if (this.observer && this.updated !== Binding.prototype.updated) {
@@ -4347,7 +4311,45 @@ Class.extend(Binding, {
   },
 
   observe: function(expression, callback, callbackContext) {
-    return this.observations.createObserver(expression, callback, callbackContext || this);
+    if (typeof callback !== 'function') {
+      throw new TypeError('callback must be a function');
+    }
+
+    var observer = this.observations.createObserver(expression, callback, callbackContext || this);
+    this._observers.push(observer);
+    if (this.context) {
+      // If not bound will bind on attachment
+      observer.bind(this.context);
+    }
+    return observer;
+  },
+
+  listen: function(target, eventName, listener, context) {
+    if (typeof target === 'string') {
+      context = listener;
+      listener = eventName;
+      eventName = target;
+      target = this.element;
+    }
+
+    if (typeof listener !== 'function') {
+      throw new TypeError('listener must be a function');
+    }
+
+    listener = listener.bind(context || this);
+
+    var listenerData = {
+      target: target,
+      eventName: eventName,
+      listener: listener
+    };
+
+    this._listeners.push(listenerData);
+
+    if (this.context) {
+      // If not bound will add on attachment
+      target.addEventListener(eventName, listener);
+    }
   },
 
   get: function(expression) {
@@ -4375,7 +4377,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"chip-utils/class":58}],77:[function(require,module,exports){
+},{"chip-utils/class":57}],76:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4543,7 +4545,7 @@ function notEmpty(value) {
   return Boolean(value);
 }
 
-},{}],78:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -5210,7 +5212,7 @@ function processOption(obj, fragments, methodName) {
     });
   }
 }
-},{"./animated-binding":75,"./binding":76,"./compile":77,"./template":79,"./util/animation":80,"./util/polyfills":81,"./util/toFragment":82,"./view":83,"chip-utils/class":58}],79:[function(require,module,exports){
+},{"./animated-binding":74,"./binding":75,"./compile":76,"./template":78,"./util/animation":79,"./util/polyfills":80,"./util/toFragment":81,"./view":82,"chip-utils/class":57}],78:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5250,7 +5252,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":83,"chip-utils/class":58}],80:[function(require,module,exports){
+},{"./view":82,"chip-utils/class":57}],79:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5343,7 +5345,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],81:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 
 
 
@@ -5370,7 +5372,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],82:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5493,7 +5495,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],83:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5630,7 +5632,7 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":58}],84:[function(require,module,exports){
+},{"chip-utils/class":57}],83:[function(require,module,exports){
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
@@ -5638,7 +5640,7 @@ exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observations":91,"./src/observer":92}],85:[function(require,module,exports){
+},{"./src/observations":90,"./src/observer":91}],84:[function(require,module,exports){
 module.exports = AsyncProperty;
 var ComputedProperty = require('./computed-property');
 var expressions = require('expressions-js');
@@ -5686,7 +5688,7 @@ ComputedProperty.extend(AsyncProperty, {
   }
 });
 
-},{"./computed-property":86,"expressions-js":69}],86:[function(require,module,exports){
+},{"./computed-property":85,"expressions-js":68}],85:[function(require,module,exports){
 module.exports = ComputedProperty;
 var Class = require('chip-utils/class');
 
@@ -5729,7 +5731,7 @@ Class.extend(ComputedProperty, {
   }
 });
 
-},{"chip-utils/class":58}],87:[function(require,module,exports){
+},{"chip-utils/class":57}],86:[function(require,module,exports){
 module.exports = ExprProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5751,7 +5753,7 @@ ComputedProperty.extend(ExprProperty, {
   }
 });
 
-},{"./computed-property":86}],88:[function(require,module,exports){
+},{"./computed-property":85}],87:[function(require,module,exports){
 module.exports = IfProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5783,7 +5785,7 @@ ComputedProperty.extend(IfProperty, {
   }
 });
 
-},{"./computed-property":86}],89:[function(require,module,exports){
+},{"./computed-property":85}],88:[function(require,module,exports){
 module.exports = MapProperty;
 var ComputedProperty = require('./computed-property');
 var expressions = require('expressions-js');
@@ -5863,7 +5865,7 @@ ComputedProperty.extend(MapProperty, {
   }
 });
 
-},{"./computed-property":86,"expressions-js":69}],90:[function(require,module,exports){
+},{"./computed-property":85,"expressions-js":68}],89:[function(require,module,exports){
 var ComputedProperty = require('./computed-properties/computed-property');
 var ExprProperty = require('./computed-properties/expr');
 var MapProperty = require('./computed-properties/map');
@@ -6023,7 +6025,7 @@ function ensureObservers(obj, options) {
   return obj;
 }
 
-},{"./computed-properties/async":85,"./computed-properties/computed-property":86,"./computed-properties/expr":87,"./computed-properties/if":88,"./computed-properties/map":89}],91:[function(require,module,exports){
+},{"./computed-properties/async":84,"./computed-properties/computed-property":85,"./computed-properties/expr":86,"./computed-properties/if":87,"./computed-properties/map":88}],90:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -6274,7 +6276,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./computed":90,"./observer":92,"chip-utils/class":58,"expressions-js":69}],92:[function(require,module,exports){
+},{"./computed":89,"./observer":91,"chip-utils/class":57,"expressions-js":68}],91:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -6436,7 +6438,7 @@ function mapToProperty(property) {
   }
 }
 
-},{"chip-utils/class":58,"differences-js":67,"expressions-js":69}],93:[function(require,module,exports){
+},{"chip-utils/class":57,"differences-js":66,"expressions-js":68}],92:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -6447,7 +6449,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":96,"./src/location":97,"./src/push-location":98,"./src/route":99,"./src/router":100}],94:[function(require,module,exports){
+},{"./src/hash-location":95,"./src/location":96,"./src/push-location":97,"./src/route":98,"./src/router":99}],93:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -6558,9 +6560,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],95:[function(require,module,exports){
-arguments[4][61][0].apply(exports,arguments)
-},{"./class":94,"dup":61}],96:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
+arguments[4][60][0].apply(exports,arguments)
+},{"./class":93,"dup":60}],95:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -6599,7 +6601,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":97}],97:[function(require,module,exports){
+},{"./location":96}],96:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -6711,7 +6713,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":96,"./push-location":98,"chip-utils/event-target":95}],98:[function(require,module,exports){
+},{"./hash-location":95,"./push-location":97,"chip-utils/event-target":94}],97:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -6751,7 +6753,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":97}],99:[function(require,module,exports){
+},{"./location":96}],98:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -6836,7 +6838,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":94}],100:[function(require,module,exports){
+},{"chip-utils/class":93}],99:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -6997,6 +6999,6 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":97,"./route":99,"chip-utils/event-target":95}]},{},[59])(59)
+},{"./location":96,"./route":98,"chip-utils/event-target":94}]},{},[58])(58)
 });
 //# sourceMappingURL=chip.js.map

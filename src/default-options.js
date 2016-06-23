@@ -10,7 +10,6 @@ module.exports = {
     '(esc)': require('fragments-built-ins/binders/key-events')('esc'),
     '(*)': require('fragments-built-ins/binders/events')(),
     '{*}': require('fragments-built-ins/binders/properties')(),
-    '{{*}}': require('fragments-built-ins/binders/properties-2-way')(),
     '*?': require('fragments-built-ins/binders/attribute-names')(),
     '[content]': require('fragments-built-ins/binders/component-content')(),
     '[show]': require('fragments-built-ins/binders/show')(false),
