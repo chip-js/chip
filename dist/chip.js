@@ -4196,7 +4196,7 @@ Class.extend(Binding, {
     });
     if (this.expression) {
       // An observer to observe value changes to the expression within a context
-      this.observer = this.observe(this.expression, this.updated);
+      this.observer = this.observations.createObserver(this.expression, this.updated, this);
     }
     this.created();
   },
@@ -4232,20 +4232,19 @@ Class.extend(Binding, {
 
     this.context = context;
     if (this.observer) this.observer.context = context;
-
-    this._observers.forEach(function(observer) {
-      observer.bind(this);
-    }, this);
-
-    this._listeners.forEach(function(item) {
-      item.target.addEventListener(item.eventName, item.listener);
-    });
-
     this.bound();
 
     if (this.observer && this.updated !== Binding.prototype.updated) {
       this.observer.bind(context);
     }
+
+    this._observers.forEach(function(observer) {
+      observer.bind(context);
+    });
+
+    this._listeners.forEach(function(item) {
+      item.target.addEventListener(item.eventName, item.listener);
+    });
   },
 
 
@@ -4256,6 +4255,15 @@ Class.extend(Binding, {
     }
 
     if (this.observer) this.observer.unbind();
+
+    this._observers.forEach(function(observer) {
+      observer.unbind();
+    });
+
+    this._listeners.forEach(function(item) {
+      item.target.removeEventListener(item.eventName, item.listener);
+    });
+
     this.unbound();
     this.context = null;
   },
@@ -4268,6 +4276,9 @@ Class.extend(Binding, {
       // This will clear it out, nullifying any data stored
       this.observer.sync();
     }
+    this._observers.forEach(function(observer) {
+      observer.sync();
+    });
     this.disposed();
   },
 
