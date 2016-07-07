@@ -3666,7 +3666,7 @@ function parseChain(prefix, propChain, postfix, paren, expr) {
   var links = splitLinks(propChain);
   var newChain = '';
 
-  if (links.length === 1 && !continuation && !paren) {
+  if (links.length === 1 && !continuation && !parens[paren]) {
     link = links[0];
     newChain = addThisOrGlobal(link);
   } else {
@@ -3743,12 +3743,15 @@ function parseFunction(link, index, expr) {
   }
 
   var calledLink = link + '(~~insideParens~~)';
-  if (expr.charAt(propertyRegex.lastIndex) === '.') {
-    calledLink = parsePart(calledLink, index)
-  }
 
   link = 'typeof ' + link + ' !== \'function\' ? void 0 : ' + calledLink;
   var insideParens = call.slice(1, -1);
+
+  if (expr.charAt(propertyRegex.lastIndex) === '.') {
+    currentReference = ++referenceCount;
+    var ref = '_ref' + currentReference;
+    link = '(' + ref + ' = (' + link + ')) == null ? void 0 : ';
+  }
 
   var ref = currentReference;
   link = link.replace('~~insideParens~~', parsePropertyChains(insideParens));
@@ -4434,6 +4437,10 @@ function getBindingsForNode(fragments, node, view) {
       expr = fragments.codifyExpression('text', node.nodeValue);
       node.nodeValue = '';
       Binder = fragments.findBinder('text', expr);
+      if (Binder.expression) {
+        // the expression is the wildcard inside a text binder
+        expr = expr.match(Binder.expression)[1];
+      }
       binding = new Binder({ node: node, view: view, expression: expr, fragments: fragments });
       if (binding.compiled() !== false) {
         bindings.push(binding);
@@ -4588,13 +4595,26 @@ function Fragments(options) {
 
   this.binders = {
     element: { _wildcards: [] },
-    attribute: { _wildcards: [], _expr: /{{\s*(.*?)\s*}}/g, _delimitersOnlyInDefault: false },
-    text: { _wildcards: [], _expr: /{{\s*(.*?)\s*}}/g }
+    attribute: { _wildcards: [], _expr: /{{\s*(.*?)\s*}}(?!})/g, _delimitersOnlyInDefault: false },
+    text: { _wildcards: [], _expr: /{{\s*(.*?)\s*}}(?!})/g }
   };
 
   // Text binder for text nodes with expressions in them
   this.registerText('__default__', function(value) {
     this.element.textContent = (value != null) ? value : '';
+  });
+
+  // Text binder for text nodes with expressions in them to be converted to HTML
+  this.registerText('{*}', function(value) {
+    if (this.view) {
+      this.view.remove();
+      this.view = null;
+    }
+
+    if (typeof value === 'string' && value) {
+      this.view = View.makeInstanceOf(toFragment(value));
+      this.element.parentNode.insertBefore(this.view, this.element.nextSibling);
+    }
   });
 
   // Catchall attribute binder for regular attributes with expressions in them
@@ -5654,7 +5674,6 @@ exports.create = function() {
 },{"./src/observations":90,"./src/observer":91}],84:[function(require,module,exports){
 module.exports = AsyncProperty;
 var ComputedProperty = require('./computed-property');
-var expressions = require('expressions-js');
 
 /**
  * Calls the async expression and assigns the results to the object's property when the `whenExpression` changes value
@@ -5666,18 +5685,22 @@ var expressions = require('expressions-js');
  */
 function AsyncProperty(whenExpression, asyncExpression) {
   if (!asyncExpression) {
-    this.whenExpression = 'true';
-    this.runAsyncMethod = expressions.parse(whenExpression);
-  } else {
-    this.whenExpression = whenExpression;
-    this.runAsyncMethod = expressions.parse(asyncExpression);
+    asyncExpression = whenExpression;
+    whenExpression = 'true';
   }
+
+  this.whenExpression = whenExpression;
+  this.asyncExpression = asyncExpression;
 }
 
 
 ComputedProperty.extend(AsyncProperty, {
 
   addTo: function(observations, computedObject, propertyName) {
+    if (!this.runAsyncMethod) {
+      this.runAsyncMethod = observations.getExpression(this.asyncExpression);
+    }
+
     return observations.createObserver(this.whenExpression, function(value) {
       if (value) {
         var promise = this.runAsyncMethod.call(computedObject);
@@ -5699,7 +5722,7 @@ ComputedProperty.extend(AsyncProperty, {
   }
 });
 
-},{"./computed-property":85,"expressions-js":68}],85:[function(require,module,exports){
+},{"./computed-property":85}],85:[function(require,module,exports){
 module.exports = ComputedProperty;
 var Class = require('chip-utils/class');
 
@@ -5799,7 +5822,6 @@ ComputedProperty.extend(IfProperty, {
 },{"./computed-property":85}],88:[function(require,module,exports){
 module.exports = MapProperty;
 var ComputedProperty = require('./computed-property');
-var expressions = require('expressions-js');
 
 /**
  * Creates an object hash with the key being the value of the `key` property of each item in `sourceExpression` and the
@@ -5807,14 +5829,13 @@ var expressions = require('expressions-js');
  * can resolve to an array or an object hash.
  * @param {Array|Object} sourceExpression An array or object whose members will be added to the map.
  * @param {String} keyExpression The name of the property to key against as values are added to the map.
- *                               Defaults to "id"
  * @param {String} resultExpression [Optional] The expression evaluated against the array/object member whose value is
  *                                  added to the map. If not provided, the member will be added.
  * @return {Object} The object map of key=>value
  */
 function MapProperty(sourceExpression, keyExpression, resultExpression, removeExpression) {
   this.sourceExpression = sourceExpression;
-  this.getKey = expressions.parse(keyExpression);
+  this.keyExpression = keyExpression;
   this.resultExpression = resultExpression;
   this.removeExpression = removeExpression;
 }
@@ -5832,13 +5853,17 @@ ComputedProperty.extend(MapProperty, {
   },
 
   addItem: function(observations, computedObject, map, observers, item) {
+    if (!this.getKey) {
+      this.getKey = observations.getExpression(this.keyExpression);
+    }
+
     var key = item && this.getKey.call(item);
     if (!key) {
       return;
     }
 
     if (key in observers) {
-      removeObserver(observers, key);
+      this.removeObserver(observers, key);
     }
 
     if (this.resultExpression) {
@@ -5876,7 +5901,7 @@ ComputedProperty.extend(MapProperty, {
   }
 });
 
-},{"./computed-property":85,"expressions-js":68}],89:[function(require,module,exports){
+},{"./computed-property":85}],89:[function(require,module,exports){
 var ComputedProperty = require('./computed-properties/computed-property');
 var ExprProperty = require('./computed-properties/expr');
 var MapProperty = require('./computed-properties/map');
@@ -5922,7 +5947,7 @@ exports.create = function(observations) {
         observer = observations.createObserver(expression, function(value) {
           obj[property] = value;
         });
-      } else if (expression.isComputedProperty) {
+      } else if (expression && expression.isComputedProperty) {
         // Add ComputedProperty's observer to the observers and bind if enabled
         observer = expression.addTo(observations, obj, property);
       } else {
@@ -6132,13 +6157,35 @@ Class.extend(Observations, {
 
 
   /**
+   * Parses an expression into a function using the globals and formatters objects associated with this instance of
+   * observations.
+   * @param {String} expression The expression string to parse into a function
+   * @param {Object} options Additional options to pass to the parser.
+   *                        `{ isSetter: true }` will make this expression a setter that accepts a value.
+   *                        `{ extraArgs: [ 'argName' ]` will make extra arguments to pass in to the function.
+   * @return {Function} A function that may be called to execute the expression (call it against a context using=
+   * `func.call(context)` in order to get the data from the context correct)
+   */
+  getExpression: function(expression, options) {
+    if (options && options.isSetter) {
+      return expressions.parseSetter(expression, this.globals, this.formatters, options.extraArgs);
+    } else if (options && options.extraArgs) {
+      var allArgs = [expression, this.globals, this.formatters].concat(options.extraArgs);
+      return expressions.parse.apply(expressions, allArgs);
+    } else {
+      return expressions.parse(expression, this.globals, this.formatters);
+    }
+  },
+
+
+  /**
    * Gets the value of an expression from the given context object
    * @param {Object} context The context object the expression will be evaluated against
    * @param {String} expression The expression to evaluate
    * @return {mixed} The result of the expression against the context
    */
   get: function(context, expression) {
-    return expressions.parse(expression).call(context);
+    return this.getExpression(expression).call(context);
   },
 
 
@@ -6150,7 +6197,7 @@ Class.extend(Observations, {
    * @return {mixed} The result of the expression against the context
    */
   set: function(source, expression, value) {
-    return expressions.parseSetter(expression).call(source, value);
+    return this.getExpression(expression, { isSetter: true }).call(source, value);
   },
 
 
