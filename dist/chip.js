@@ -549,7 +549,7 @@ function callOnMixins(context, mixins, name, args) {
   });
 }
 
-},{"chip-utils/class":57}],15:[function(require,module,exports){
+},{"chip-utils/class":58}],15:[function(require,module,exports){
 var Component = require('./component-definition');
 var slice = Array.prototype.slice;
 
@@ -1397,7 +1397,7 @@ module.exports = function(compareByAttribute) {
   };
 };
 
-},{"differences-js":66}],25:[function(require,module,exports){
+},{"differences-js":67}],25:[function(require,module,exports){
 /**
  * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
  * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
@@ -2112,6 +2112,17 @@ module.exports = function(value) {
 };
 
 },{}],57:[function(require,module,exports){
+/**
+ * Returns the values of an object (or an array) as an array
+ */
+module.exports = function(value) {
+  if (Array.isArray(value)) return value;
+  return value == null ? [] : Object.keys(value).map(function(key) {
+    return value[key];
+  });
+};
+
+},{}],58:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -2230,12 +2241,12 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = require('./src/chip');
 
-},{"./src/chip":63}],59:[function(require,module,exports){
-arguments[4][57][0].apply(exports,arguments)
-},{"dup":57}],60:[function(require,module,exports){
+},{"./src/chip":64}],60:[function(require,module,exports){
+arguments[4][58][0].apply(exports,arguments)
+},{"dup":58}],61:[function(require,module,exports){
 module.exports = EventTarget;
 var Class = require('./class');
 
@@ -2292,7 +2303,7 @@ Class.extend(EventTarget, {
   }
 });
 
-},{"./class":59}],61:[function(require,module,exports){
+},{"./class":60}],62:[function(require,module,exports){
 module.exports = App;
 var componentBinding = require('fragments-built-ins/binders/component');
 var Component = require('fragments-built-ins/binders/component-definition');
@@ -2524,7 +2535,7 @@ if (typeof Object.assign !== 'function') {
   })();
 }
 
-},{"./default-options":64,"./mixins/default":65,"chip-utils/event-target":60,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":73,"routes-js":92}],62:[function(require,module,exports){
+},{"./default-options":65,"./mixins/default":66,"chip-utils/event-target":61,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":74,"routes-js":93}],63:[function(require,module,exports){
 var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
@@ -2669,7 +2680,7 @@ module.exports = function() {
   return routeBinder;
 };
 
-},{"fragments-built-ins/binders/if":18,"routes-js":92}],63:[function(require,module,exports){
+},{"fragments-built-ins/binders/if":18,"routes-js":93}],64:[function(require,module,exports){
 var App = require('./app');
 
 // # Chip
@@ -2705,7 +2716,7 @@ chip.Class = require('chip-utils/class');
 chip.EventTarget = require('chip-utils/event-target');
 chip.routes = require('routes-js');
 
-},{"./app":61,"chip-utils/class":59,"chip-utils/event-target":60,"routes-js":92}],64:[function(require,module,exports){
+},{"./app":62,"chip-utils/class":60,"chip-utils/event-target":61,"routes-js":93}],65:[function(require,module,exports){
 
 module.exports = {
   curliesInAttributes: false,
@@ -2774,7 +2785,8 @@ module.exports = {
     slice: require('fragments-built-ins/formatters/slice'),
     sort: require('fragments-built-ins/formatters/sort'),
     time: require('fragments-built-ins/formatters/time'),
-    upper: require('fragments-built-ins/formatters/upper')
+    upper: require('fragments-built-ins/formatters/upper'),
+    values: require('fragments-built-ins/formatters/values')
   },
 
   animations: {
@@ -2789,7 +2801,7 @@ module.exports = {
 
 };
 
-},{"./binders/route":62,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":21,"fragments-built-ins/binders/radio":22,"fragments-built-ins/binders/ref":23,"fragments-built-ins/binders/repeat":24,"fragments-built-ins/binders/show":25,"fragments-built-ins/binders/styles":26,"fragments-built-ins/binders/text":27,"fragments-built-ins/binders/value":28,"fragments-built-ins/formatters/add-query":29,"fragments-built-ins/formatters/at":30,"fragments-built-ins/formatters/autolink":31,"fragments-built-ins/formatters/bool":32,"fragments-built-ins/formatters/br":33,"fragments-built-ins/formatters/date":35,"fragments-built-ins/formatters/date-time":34,"fragments-built-ins/formatters/escape":36,"fragments-built-ins/formatters/filter":37,"fragments-built-ins/formatters/first":38,"fragments-built-ins/formatters/float":39,"fragments-built-ins/formatters/format":40,"fragments-built-ins/formatters/int":41,"fragments-built-ins/formatters/json":42,"fragments-built-ins/formatters/keys":43,"fragments-built-ins/formatters/last":44,"fragments-built-ins/formatters/limit":45,"fragments-built-ins/formatters/log":46,"fragments-built-ins/formatters/lower":47,"fragments-built-ins/formatters/map":48,"fragments-built-ins/formatters/newline":49,"fragments-built-ins/formatters/p":50,"fragments-built-ins/formatters/reduce":51,"fragments-built-ins/formatters/reverse":52,"fragments-built-ins/formatters/slice":53,"fragments-built-ins/formatters/sort":54,"fragments-built-ins/formatters/time":55,"fragments-built-ins/formatters/upper":56}],65:[function(require,module,exports){
+},{"./binders/route":63,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":21,"fragments-built-ins/binders/radio":22,"fragments-built-ins/binders/ref":23,"fragments-built-ins/binders/repeat":24,"fragments-built-ins/binders/show":25,"fragments-built-ins/binders/styles":26,"fragments-built-ins/binders/text":27,"fragments-built-ins/binders/value":28,"fragments-built-ins/formatters/add-query":29,"fragments-built-ins/formatters/at":30,"fragments-built-ins/formatters/autolink":31,"fragments-built-ins/formatters/bool":32,"fragments-built-ins/formatters/br":33,"fragments-built-ins/formatters/date":35,"fragments-built-ins/formatters/date-time":34,"fragments-built-ins/formatters/escape":36,"fragments-built-ins/formatters/filter":37,"fragments-built-ins/formatters/first":38,"fragments-built-ins/formatters/float":39,"fragments-built-ins/formatters/format":40,"fragments-built-ins/formatters/int":41,"fragments-built-ins/formatters/json":42,"fragments-built-ins/formatters/keys":43,"fragments-built-ins/formatters/last":44,"fragments-built-ins/formatters/limit":45,"fragments-built-ins/formatters/log":46,"fragments-built-ins/formatters/lower":47,"fragments-built-ins/formatters/map":48,"fragments-built-ins/formatters/newline":49,"fragments-built-ins/formatters/p":50,"fragments-built-ins/formatters/reduce":51,"fragments-built-ins/formatters/reverse":52,"fragments-built-ins/formatters/slice":53,"fragments-built-ins/formatters/sort":54,"fragments-built-ins/formatters/time":55,"fragments-built-ins/formatters/upper":56,"fragments-built-ins/formatters/values":57}],66:[function(require,module,exports){
 
 module.exports = function(app) {
 
@@ -2915,10 +2927,10 @@ module.exports = function(app) {
   };
 };
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module.exports = require('./src/diff');
 
-},{"./src/diff":67}],67:[function(require,module,exports){
+},{"./src/diff":68}],68:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -3324,10 +3336,10 @@ var diff = exports;
   }
 })();
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = require('./src/expressions');
 
-},{"./src/expressions":69}],69:[function(require,module,exports){
+},{"./src/expressions":70}],70:[function(require,module,exports){
 var slice = Array.prototype.slice;
 var strings = require('./strings');
 var formatterParser = require('./formatters');
@@ -3428,7 +3440,7 @@ function bindArguments(func) {
   }
 }
 
-},{"./formatters":70,"./property-chains":71,"./strings":72}],70:[function(require,module,exports){
+},{"./formatters":71,"./property-chains":72,"./strings":73}],71:[function(require,module,exports){
 
 // finds pipes that are not ORs (i.e. ` | ` not ` || `) for formatters
 var pipeRegex = /\|(\|)?/g;
@@ -3500,7 +3512,7 @@ exports.parseFormatters = function(expr) {
   return setter + value;
 };
 
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 var referenceCount = 0;
 var currentReference = 0;
 var currentIndex = 0;
@@ -3832,7 +3844,7 @@ function addReferences(expr) {
   return expr;
 }
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 // finds all quoted strings
 var quoteRegex = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -3878,7 +3890,7 @@ exports.putInStrings = function(expr) {
   return expr;
 };
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 var Fragments = require('./src/fragments');
 var Observations = require('observations-js');
 
@@ -3898,7 +3910,7 @@ function create(options) {
 // Create an instance of fragments with the default observer
 exports.create = create;
 
-},{"./src/fragments":77,"observations-js":83}],74:[function(require,module,exports){
+},{"./src/fragments":78,"observations-js":84}],75:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -4146,7 +4158,7 @@ function onAnimationEnd(node, duration, callback) {
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":75,"./util/animation":79}],75:[function(require,module,exports){
+},{"./binding":76,"./util/animation":80}],76:[function(require,module,exports){
 module.exports = Binding;
 var Class = require('chip-utils/class');
 
@@ -4391,7 +4403,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"chip-utils/class":57}],76:[function(require,module,exports){
+},{"chip-utils/class":58}],77:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4563,7 +4575,7 @@ function notEmpty(value) {
   return Boolean(value);
 }
 
-},{}],77:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -5243,7 +5255,7 @@ function processOption(obj, fragments, methodName) {
     });
   }
 }
-},{"./animated-binding":74,"./binding":75,"./compile":76,"./template":78,"./util/animation":79,"./util/polyfills":80,"./util/toFragment":81,"./view":82,"chip-utils/class":57}],78:[function(require,module,exports){
+},{"./animated-binding":75,"./binding":76,"./compile":77,"./template":79,"./util/animation":80,"./util/polyfills":81,"./util/toFragment":82,"./view":83,"chip-utils/class":58}],79:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5283,7 +5295,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":82,"chip-utils/class":57}],79:[function(require,module,exports){
+},{"./view":83,"chip-utils/class":58}],80:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5376,7 +5388,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],80:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 
 
 
@@ -5403,7 +5415,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5526,7 +5538,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5663,7 +5675,7 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":57}],83:[function(require,module,exports){
+},{"chip-utils/class":58}],84:[function(require,module,exports){
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
@@ -5671,7 +5683,7 @@ exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observations":90,"./src/observer":91}],84:[function(require,module,exports){
+},{"./src/observations":91,"./src/observer":92}],85:[function(require,module,exports){
 module.exports = AsyncProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5722,7 +5734,7 @@ ComputedProperty.extend(AsyncProperty, {
   }
 });
 
-},{"./computed-property":85}],85:[function(require,module,exports){
+},{"./computed-property":86}],86:[function(require,module,exports){
 module.exports = ComputedProperty;
 var Class = require('chip-utils/class');
 
@@ -5765,7 +5777,7 @@ Class.extend(ComputedProperty, {
   }
 });
 
-},{"chip-utils/class":57}],86:[function(require,module,exports){
+},{"chip-utils/class":58}],87:[function(require,module,exports){
 module.exports = ExprProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5787,7 +5799,7 @@ ComputedProperty.extend(ExprProperty, {
   }
 });
 
-},{"./computed-property":85}],87:[function(require,module,exports){
+},{"./computed-property":86}],88:[function(require,module,exports){
 module.exports = IfProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5819,7 +5831,7 @@ ComputedProperty.extend(IfProperty, {
   }
 });
 
-},{"./computed-property":85}],88:[function(require,module,exports){
+},{"./computed-property":86}],89:[function(require,module,exports){
 module.exports = MapProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5901,7 +5913,7 @@ ComputedProperty.extend(MapProperty, {
   }
 });
 
-},{"./computed-property":85}],89:[function(require,module,exports){
+},{"./computed-property":86}],90:[function(require,module,exports){
 var ComputedProperty = require('./computed-properties/computed-property');
 var ExprProperty = require('./computed-properties/expr');
 var MapProperty = require('./computed-properties/map');
@@ -6061,7 +6073,7 @@ function ensureObservers(obj, options) {
   return obj;
 }
 
-},{"./computed-properties/async":84,"./computed-properties/computed-property":85,"./computed-properties/expr":86,"./computed-properties/if":87,"./computed-properties/map":88}],90:[function(require,module,exports){
+},{"./computed-properties/async":85,"./computed-properties/computed-property":86,"./computed-properties/expr":87,"./computed-properties/if":88,"./computed-properties/map":89}],91:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -6334,7 +6346,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./computed":89,"./observer":91,"chip-utils/class":57,"expressions-js":68}],91:[function(require,module,exports){
+},{"./computed":90,"./observer":92,"chip-utils/class":58,"expressions-js":69}],92:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -6496,7 +6508,7 @@ function mapToProperty(property) {
   }
 }
 
-},{"chip-utils/class":57,"differences-js":66,"expressions-js":68}],92:[function(require,module,exports){
+},{"chip-utils/class":58,"differences-js":67,"expressions-js":69}],93:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -6507,7 +6519,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":95,"./src/location":96,"./src/push-location":97,"./src/route":98,"./src/router":99}],93:[function(require,module,exports){
+},{"./src/hash-location":96,"./src/location":97,"./src/push-location":98,"./src/route":99,"./src/router":100}],94:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -6618,9 +6630,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],94:[function(require,module,exports){
-arguments[4][60][0].apply(exports,arguments)
-},{"./class":93,"dup":60}],95:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
+arguments[4][61][0].apply(exports,arguments)
+},{"./class":94,"dup":61}],96:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -6659,7 +6671,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":96}],96:[function(require,module,exports){
+},{"./location":97}],97:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -6771,7 +6783,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":95,"./push-location":97,"chip-utils/event-target":94}],97:[function(require,module,exports){
+},{"./hash-location":96,"./push-location":98,"chip-utils/event-target":95}],98:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -6811,7 +6823,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":96}],98:[function(require,module,exports){
+},{"./location":97}],99:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -6896,7 +6908,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":93}],99:[function(require,module,exports){
+},{"chip-utils/class":94}],100:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -7057,6 +7069,6 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":96,"./route":98,"chip-utils/event-target":94}]},{},[58])(58)
+},{"./location":97,"./route":99,"chip-utils/event-target":95}]},{},[59])(59)
 });
 //# sourceMappingURL=chip.js.map

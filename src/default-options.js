@@ -66,7 +66,8 @@ module.exports = {
     slice: require('fragments-built-ins/formatters/slice'),
     sort: require('fragments-built-ins/formatters/sort'),
     time: require('fragments-built-ins/formatters/time'),
-    upper: require('fragments-built-ins/formatters/upper')
+    upper: require('fragments-built-ins/formatters/upper'),
+    values: require('fragments-built-ins/formatters/values')
   },
 
   animations: {
