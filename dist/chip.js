@@ -444,13 +444,19 @@ module.exports = function() {
       var template = this.context._componentContent || this.defaultContent;
       if (template) {
         this.content = template.createView();
-        this.content.bind(this.context);
+        this.content.bind(this.context.element._parentContext);
         this.element.appendChild(this.content);
         this.content.attached();
       }
     },
 
     unbound: function() {
+      if (this.content) {
+        this.content.unbind();
+      }
+    },
+
+    disposed: function() {
       if (this.content) {
         this.content.dispose();
         this.content = null;
@@ -461,11 +467,34 @@ module.exports = function() {
 
 },{}],14:[function(require,module,exports){
 module.exports = Component;
-var Class = require('chip-utils/class');
+var ObservableHash = require('observations-js').ObservableHash;
 var lifecycle = [ 'created', 'bound', 'attached', 'unbound', 'detached' ];
 
 
-function Component(element, contentTemplate, unwrap) {
+function Component(observations, element, contentTemplate, unwrap) {
+  ObservableHash.call(this, observations);
+  this.observersEnabled = false;
+
+  Object.defineProperties(this, {
+    _listeners: { configurable: true, value: [] }
+  });
+
+  this.mixins.forEach(function(mixin) {
+    if (mixin.computed) {
+      this.addComputed(this.computed);
+    }
+
+    if (mixin.listeners) {
+      Object.keys(mixin.listeners).forEach(function(eventName) {
+        var listener = mixin.listeners[eventName];
+        if (typeof listener === 'string') {
+          listener = mixin[listener];
+        }
+        this.listen(this.element, eventName, listener, this);
+      }, this);
+    }
+  }, this);
+
   this.element = element;
 
   if (this.template) {
@@ -500,7 +529,7 @@ Component.onExtend = function(Class, mixins) {
   });
 };
 
-Class.extend(Component, {
+ObservableHash.extend(Component, {
   mixins: [],
 
   get view() {
@@ -512,6 +541,7 @@ Class.extend(Component, {
   },
 
   bound: function() {
+    this.observersEnabled = true;
     callOnMixins(this, this.mixins, 'bound', arguments);
     if (this._view) {
       this._view.bind(this.template ? this : this.element._parentContext);
@@ -523,13 +553,23 @@ Class.extend(Component, {
     if (this._view) {
       this._view.attached();
     }
+
+    this._listeners.forEach(function(item) {
+      item.targetRef = addListener(this, item.target, item.eventName, item.listener);
+    }, this);
   },
 
   unbound: function() {
+    this._listeners.forEach(function(item) {
+      removeListener(item.targetRef, item.eventName, item.listener);
+      delete item.targetRef;
+    }, this);
+
     callOnMixins(this, this.mixins, 'unbound', arguments);
     if (this._view) {
       this._view.unbind();
     }
+    this.observersEnabled = false;
   },
 
   detached: function() {
@@ -537,9 +577,58 @@ Class.extend(Component, {
     if (this._view) {
       this._view.detached();
     }
-  }
+  },
+
+
+  listen: function(target, eventName, listener, context) {
+    if (typeof target === 'string') {
+      context = listener;
+      listener = eventName;
+      eventName = target;
+      target = this.element;
+    }
+
+    if (typeof listener !== 'function') {
+      throw new TypeError('listener must be a function');
+    }
+
+    listener = listener.bind(context || this);
+
+    var listenerData = {
+      target: target,
+      eventName: eventName,
+      listener: listener,
+      targetRef: null
+    };
+
+    this._listeners.push(listenerData);
+
+    if (this._bound) {
+      // If not bound will add on attachment
+      listenerData.targetRef = addListener(this, target, eventName, listener);
+    }
+  },
 
 });
+
+
+function getTarget(component, target) {
+  if (typeof target === 'string') {
+    target = component[target] || component.element.querySelector(target);
+  }
+  return target;
+}
+
+function addListener(component, target, eventName, listener) {
+  if ((target = getTarget(component, target))) {
+    target.addEventListener(eventName, listener);
+    return target;
+  }
+}
+
+function removeListener(target, eventName, listener) {
+  target.removeEventListener(eventName, listener);
+}
 
 
 // Calls the method by name on any mixins that have it defined
@@ -549,7 +638,7 @@ function callOnMixins(context, mixins, name, args) {
   });
 }
 
-},{"chip-utils/class":58}],15:[function(require,module,exports){
+},{"observations-js":84}],15:[function(require,module,exports){
 var Component = require('./component-definition');
 var slice = Array.prototype.slice;
 
@@ -640,10 +729,13 @@ module.exports = function(ComponentClass, unwrapAttribute) {
       if (this.component) {
         this.component.unbound();
       }
+
       if (this.view && !this.view._attached) {
         // If removed and unbound, unmake it
         this.unmake();
       }
+
+      delete this.element._parentContext;
     },
 
     attached: function() {
@@ -682,8 +774,27 @@ module.exports = function(ComponentClass, unwrapAttribute) {
 
       this.compileTemplate();
 
-      this.component = new this.ComponentClass(this.element, this.contentTemplate, this.unwrapped);
+      var observations = this.fragments.observations;
+      this.component = new this.ComponentClass(observations, this.element, this.contentTemplate, this.unwrapped);
       this.element.component = this.component;
+
+      // Expose public properties onto the element
+      if (Array.isArray(this.component.public)) {
+        var descriptors = {};
+        this.component.public.forEach(function(name) {
+          if (typeof this[name] === 'function') {
+            descriptors[name] = { configurable: true, value: this[name].bind(this) };
+          } else {
+            descriptors[name] = {
+              configurable: true,
+              get: function() { return this.component[name] },
+              set: function(value) { this.component[name] = value }
+            };
+          }
+        }, this.component);
+        Object.defineProperties(this.element, descriptors);
+      }
+
       this.element.dispatchEvent(new Event('componentized'));
 
       var properties = this.element._properties;
@@ -702,6 +813,14 @@ module.exports = function(ComponentClass, unwrapAttribute) {
       if (this.component.view) {
         this.component.view.dispose();
       }
+
+      // Remove exposed public properties
+      if (Array.isArray(this.component.public)) {
+        this.component.public.forEach(function(name) {
+          delete this[name];
+        }, this.element);
+      }
+
       this.component.element = null;
       this.element.component = null;
       this.component = null;
@@ -739,6 +858,10 @@ module.exports = function(specificEventName) {
         var priorEvent = Object.getOwnPropertyDescriptor(_this.context, 'event');
         var priorElement = Object.getOwnPropertyDescriptor(_this.context, 'element');
         _this.setEvent(event, priorEvent, priorElement);
+
+        // queue up a sync to run afer this event is handled (we assume most events will alter the state of the
+        // application, otherwise there is no need to listen for them)
+        _this.fragments.sync();
 
         // Let an event binder make the function call with its own arguments
         _this.observer.get();
@@ -1449,9 +1572,14 @@ module.exports = function(isHide) {
         this.element.style.display = '';
         this.animateIn(this.element, onFinish);
       } else {
+        this.hiding = true;
         this.animateOut(this.element, function() {
-          this.element.style.display = 'none';
-          onFinish.call(this);
+          var cancel = this.cancelHide;
+          this.cancelHide = this.hiding = false;
+          if (!cancel) {
+            this.element.style.display = 'none';
+            onFinish.call(this);
+          }
         });
       }
     },
@@ -1461,6 +1589,9 @@ module.exports = function(isHide) {
     },
 
     unbound: function() {
+      if (this.hiding === true) {
+        this.cancelHide = true;
+      }
       this.element.style.display = '';
       this.lastValue = null;
       this.animating = false;
@@ -2071,6 +2202,9 @@ module.exports = function(value, sortFunc, dir) {
     dir2 = (dir2 === 'desc') ? -1 : 1;
     dir = dir || dir2;
     sortFunc = function(a, b) {
+      if (a && !b) return dir;
+      if (!a && b) return -dir;
+      if (!a && !b) return 0;
       if (a[prop] > b[prop]) return dir;
       if (a[prop] < b[prop]) return -dir;
       return 0;
@@ -2535,7 +2669,7 @@ if (typeof Object.assign !== 'function') {
   })();
 }
 
-},{"./default-options":65,"./mixins/default":66,"chip-utils/event-target":61,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":74,"routes-js":93}],63:[function(require,module,exports){
+},{"./default-options":65,"./mixins/default":66,"chip-utils/event-target":61,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":74,"routes-js":94}],63:[function(require,module,exports){
 var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
@@ -2680,7 +2814,7 @@ module.exports = function() {
   return routeBinder;
 };
 
-},{"fragments-built-ins/binders/if":18,"routes-js":93}],64:[function(require,module,exports){
+},{"fragments-built-ins/binders/if":18,"routes-js":94}],64:[function(require,module,exports){
 var App = require('./app');
 
 // # Chip
@@ -2716,7 +2850,7 @@ chip.Class = require('chip-utils/class');
 chip.EventTarget = require('chip-utils/event-target');
 chip.routes = require('routes-js');
 
-},{"./app":62,"chip-utils/class":60,"chip-utils/event-target":61,"routes-js":93}],65:[function(require,module,exports){
+},{"./app":62,"chip-utils/class":60,"chip-utils/event-target":61,"routes-js":94}],65:[function(require,module,exports){
 
 module.exports = {
   curliesInAttributes: false,
@@ -2814,116 +2948,10 @@ module.exports = function(app) {
     onSync: app.onSync,
     offSync: app.offSync,
 
-    created: function() {
-      Object.defineProperties(this, {
-        _observers: { configurable: true, value: [] },
-        _listeners: { configurable: true, value: [] },
-        _bound: { configurable: true, value: false },
-      });
-
-      this.mixins.forEach(function(mixin) {
-
-        if (mixin.computed) {
-          app.computed.extend(this, mixin.computed, false);
-        }
-
-        if (mixin.listeners) {
-          Object.keys(mixin.listeners).forEach(function(eventName) {
-            var listener = mixin.listeners[eventName];
-            if (typeof listener === 'string') {
-              listener = mixin[listener];
-            }
-            this.listen(this.element, eventName, listener, this);
-          }, this);
-        }
-      }, this);
-    },
-
-
-    bound: function() {
-      this._bound = true;
-
-      if (this.computedObservers) {
-        this.computedObservers.enable();
-      }
-
-      this._observers.forEach(function(observer) {
-        observer.bind(this);
-      }, this);
-
-      this._listeners.forEach(function(item) {
-        item.target.addEventListener(item.eventName, item.listener);
-      });
-    },
-
-
-    unbound: function() {
-      this._bound = false;
-
-      if (this.computedObservers) {
-        this.computedObservers.disable();
-      }
-
-      this._observers.forEach(function(observer) {
-        observer.unbind();
-      });
-
-      this._listeners.forEach(function(item) {
-        item.target.removeEventListener(item.eventName, item.listener);
-      });
-    },
-
-
-    observe: function(expr, callback) {
-      if (typeof callback !== 'function') {
-        throw new TypeError('callback must be a function');
-      }
-
-      var observer = app.observe(expr, callback, this);
-      this._observers.push(observer);
-      if (this._bound) {
-        // If not bound will bind on attachment
-        observer.bind(this);
-      }
-      return observer;
-    },
-
-
-    listen: function(target, eventName, listener, context) {
-      if (typeof target === 'string') {
-        context = listener;
-        listener = eventName;
-        eventName = target;
-        target = this.element;
-      }
-
-      if (typeof listener !== 'function') {
-        throw new TypeError('listener must be a function');
-      }
-
-      listener = listener.bind(context || this);
-
-      var listenerData = {
-        target: target,
-        eventName: eventName,
-        listener: listener
-      };
-
-      this._listeners.push(listenerData);
-
-      if (this._bound) {
-        // If not bound will add on attachment
-        target.addEventListener(eventName, listener);
-      }
-    },
-
-    get: function(expression) {
-      return app.observations.get(this, expression);
-    },
-
-    set: function(expression, value) {
-      return app.observations.set(this, expression, value);
+    observe: function() {
+      return this.watch.apply(this, arguments);
     }
+
   };
 };
 
@@ -3074,7 +3102,7 @@ var diff = exports;
   // ```javascript
   // {
   //   object: object,
-  //   type: 'deleted|updated|new',
+  //   type: 'delete|update|add',
   //   name: 'propertyName',
   //   oldValue: oldValue
   // }
@@ -3533,6 +3561,13 @@ var defaultGlobals = {
   isNaN: null,
   Array: null,
   typeof: null,
+  encodeURI: null,
+  encodeURIComponent: null,
+  Boolean: null,
+  String: null,
+  Number: null,
+  Infinity: null,
+  NaN: null,
   _globals_: null,
   _formatters_: null,
   _value_: null,
@@ -3899,11 +3934,11 @@ function create(options) {
   var observations = Observations.create();
   options.observations = observations;
   var fragments = new Fragments(options);
-  fragments.sync = observations.sync.bind(observations);
-  fragments.syncNow = observations.syncNow.bind(observations);
-  fragments.afterSync = observations.afterSync.bind(observations);
-  fragments.onSync = observations.onSync.bind(observations);
-  fragments.offSync = observations.offSync.bind(observations);
+  fragments.sync = observations.sync;
+  fragments.syncNow = observations.syncNow;
+  fragments.afterSync = observations.afterSync;
+  fragments.onSync = observations.onSync;
+  fragments.offSync = observations.offSync;
   return fragments;
 }
 
@@ -4098,7 +4133,10 @@ Binding.extend(AnimatedBinding, {
       if (duration) {
         onAnimationEnd(node, duration, whenDone);
       } else {
-        whenDone();
+        // Takes a couple frames to really take hold (at least on chrome)
+        requestAnimationFrame(function() {
+          requestAnimationFrame(whenDone);
+        });
       }
     }
   }
@@ -5679,62 +5717,12 @@ Class.extend(View, {
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
+exports.ObservableHash = require('./src/observable-hash');
 exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observations":91,"./src/observer":92}],85:[function(require,module,exports){
-module.exports = AsyncProperty;
-var ComputedProperty = require('./computed-property');
-
-/**
- * Calls the async expression and assigns the results to the object's property when the `whenExpression` changes value
- * to anything other than a falsey value such as undefined. The return value of the async expression should be a
- * Promise.
- * @param {String} whenExpression The conditional expression use to determine when to call the `asyncExpression`
- * @param {String} asyncExpression The expression which will be executed when the `when` value changes and the result of
- * the returned promise is set on the object.
- */
-function AsyncProperty(whenExpression, asyncExpression) {
-  if (!asyncExpression) {
-    asyncExpression = whenExpression;
-    whenExpression = 'true';
-  }
-
-  this.whenExpression = whenExpression;
-  this.asyncExpression = asyncExpression;
-}
-
-
-ComputedProperty.extend(AsyncProperty, {
-
-  addTo: function(observations, computedObject, propertyName) {
-    if (!this.runAsyncMethod) {
-      this.runAsyncMethod = observations.getExpression(this.asyncExpression);
-    }
-
-    return observations.createObserver(this.whenExpression, function(value) {
-      if (value) {
-        var promise = this.runAsyncMethod.call(computedObject);
-        if (promise && promise.then) {
-          promise.then(function(value) {
-            computedObject[propertyName] = value;
-            observations.sync();
-          }, function(err) {
-            computedObject[propertyName] = undefined;
-            observations.sync();
-          });
-        } else {
-          computedObject[propertyName] = promise;
-        }
-      } else {
-        computedObject[propertyName] = undefined;
-      }
-    }, this);
-  }
-});
-
-},{"./computed-property":86}],86:[function(require,module,exports){
+},{"./src/observable-hash":91,"./src/observations":92,"./src/observer":93}],85:[function(require,module,exports){
 module.exports = ComputedProperty;
 var Class = require('chip-utils/class');
 
@@ -5756,11 +5744,11 @@ Class.extend(ComputedProperty, {
    * @param {String} propertyName The name of the property on the object that will be set
    * @return {Observer} An observer which can be bound to the computed object
    */
-  addTo: function(computedObject, propertyName) {
+  addTo: function(observations, computedObject, propertyName, context) {
     throw new Error('Abstract function is not implemented');
   },
 
-  watch: function(observations, expression, obj, property) {
+  watch: function(observations, expression, obj, property, context) {
     if (typeof expression === 'string') {
       // This is a computed expression
       return observations.createObserver(expression, function(value) {
@@ -5772,12 +5760,12 @@ Class.extend(ComputedProperty, {
       });
     } else if (expression.isComputedProperty) {
       // Add ComputedProperty's observer to the observers and bind if enabled
-      return expression.addTo(observations, obj, property);
+      return expression.addTo(observations, obj, property, context);
     }
   }
 });
 
-},{"chip-utils/class":58}],87:[function(require,module,exports){
+},{"chip-utils/class":58}],86:[function(require,module,exports){
 module.exports = ExprProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5794,12 +5782,12 @@ function ExprProperty(expression) {
 
 ComputedProperty.extend(ExprProperty, {
 
-  addTo: function(observations, computedObject, propertyName) {
-    return this.watch(observations, this.expression, computedObject, propertyName);
+  addTo: function(observations, computedObject, propertyName, context) {
+    return this.watch(observations, this.expression, computedObject, propertyName, context);
   }
 });
 
-},{"./computed-property":86}],88:[function(require,module,exports){
+},{"./computed-property":85}],87:[function(require,module,exports){
 module.exports = IfProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5817,12 +5805,12 @@ function IfProperty(ifExpression, thenExpression) {
 
 ComputedProperty.extend(IfProperty, {
 
-  addTo: function(observations, computedObject, propertyName) {
-    var observer = this.watch(observations, this.thenExpression, computedObject, propertyName);
+  addTo: function(observations, computedObject, propertyName, context) {
+    var observer = this.watch(observations, this.thenExpression, computedObject, propertyName, context);
 
     return observations.createObserver(this.ifExpression, function(value) {
       if (value && !observer.context) {
-        observer.bind(computedObject);
+        observer.bind(context);
       } else if (!value && observer.context) {
         observer.unbind();
         observer.sync();
@@ -5831,7 +5819,7 @@ ComputedProperty.extend(IfProperty, {
   }
 });
 
-},{"./computed-property":86}],89:[function(require,module,exports){
+},{"./computed-property":85}],88:[function(require,module,exports){
 module.exports = MapProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5846,7 +5834,9 @@ var ComputedProperty = require('./computed-property');
  * @return {Object} The object map of key=>value
  */
 function MapProperty(sourceExpression, keyExpression, resultExpression, removeExpression) {
-  this.sourceExpression = sourceExpression;
+  var parts = sourceExpression.split(/\s+in\s+/);
+  this.sourceExpression = parts.pop();
+  this.itemName = parts.pop();
   this.keyExpression = keyExpression;
   this.resultExpression = resultExpression;
   this.removeExpression = removeExpression;
@@ -5855,37 +5845,44 @@ function MapProperty(sourceExpression, keyExpression, resultExpression, removeEx
 
 ComputedProperty.extend(MapProperty, {
 
-  addTo: function(observations, computedObject, propertyName) {
+  addTo: function(observations, computedObject, propertyName, context) {
     var map = {};
     var observers = {};
     computedObject[propertyName] = map;
-    var add = this.addItem.bind(this, observations, computedObject, map, observers);
-    var remove = this.removeItem.bind(this, observations, computedObject, map, observers);
-    return observations.observeMembers(this.sourceExpression, add, remove, this);
+    var add = this.addItem.bind(this, observations, computedObject, map, observers, context);
+    var remove = this.removeItem.bind(this, observations, computedObject, map, observers, context);
+    return observations.createMemberObserver(this.sourceExpression, add, remove, this);
   },
 
-  addItem: function(observations, computedObject, map, observers, item) {
+  addItem: function(observations, computedObject, map, observers, context, item) {
     if (!this.getKey) {
       this.getKey = observations.getExpression(this.keyExpression);
     }
 
-    var key = item && this.getKey.call(item);
+    var proxy;
+    if (this.itemName) {
+      proxy = Object.create(context);
+      proxy[this.itemName] = item;
+    } else {
+      proxy = Object.create(item);
+      proxy.$$ = context;
+    }
+
+    var key = item && this.getKey.call(proxy);
     if (!key) {
       return;
     }
 
-    if (key in observers) {
+    if (observers.hasOwnProperty(key)) {
       this.removeObserver(observers, key);
     }
 
     if (this.resultExpression) {
-      var observer = this.watch(observations, this.resultExpression, map, key);
+      var observer = this.watch(observations, this.resultExpression, map, key, proxy);
       if (!observer) {
         throw new TypeError('Invalid resultExpression for computed.map');
       }
 
-      var proxy = Object.create(item);
-      proxy.$$ = computedObject;
       observer.bind(proxy);
       observers[key] = observer;
     } else {
@@ -5893,12 +5890,12 @@ ComputedProperty.extend(MapProperty, {
     }
   },
 
-  removeItem: function(observations, computedObject, map, observers, item) {
+  removeItem: function(observations, computedObject, map, observers, context, item) {
     var key = item && this.getKey.call(item);
     if (key) {
       this.removeObserver(observers, key);
       if (this.removeExpression) {
-        observations.get(computedObject, this.removeExpression);
+        observations.get(context, this.removeExpression);
       }
       delete map[key];
     }
@@ -5913,12 +5910,63 @@ ComputedProperty.extend(MapProperty, {
   }
 });
 
-},{"./computed-property":86}],90:[function(require,module,exports){
+},{"./computed-property":85}],89:[function(require,module,exports){
+module.exports = WhenProperty;
+var ComputedProperty = require('./computed-property');
+
+/**
+ * Calls the `thenExpression` and assigns the results to the object's property when the `whenExpression` changes value
+ * to anything other than a falsey value such as undefined. The return value of the `thenExpression` may be a Promise.
+ *
+ * @param {String} whenExpression The conditional expression use to determine when to call the `thenExpression`
+ * @param {String} thenExpression The expression which will be executed when the `when` value changes and the result (or
+ * the result of the returned promise) is set on the object.
+ */
+function WhenProperty(whenExpression, thenExpression) {
+  if (!thenExpression) {
+    thenExpression = whenExpression;
+    whenExpression = 'true';
+  }
+
+  this.whenExpression = whenExpression;
+  this.thenExpression = thenExpression;
+}
+
+
+ComputedProperty.extend(WhenProperty, {
+
+  addTo: function(observations, computedObject, propertyName, context) {
+    if (!this.thenMethod) {
+      this.thenMethod = observations.getExpression(this.thenExpression);
+    }
+
+    return observations.createObserver(this.whenExpression, function(value) {
+      if (value) {
+        var result = this.thenMethod.call(context);
+        if (result && result.then) {
+          result.then(function(value) {
+            computedObject[propertyName] = value;
+            observations.sync();
+          }, function(err) {
+            computedObject[propertyName] = undefined;
+            observations.sync();
+          });
+        } else {
+          computedObject[propertyName] = result;
+        }
+      } else {
+        computedObject[propertyName] = undefined;
+      }
+    }, this);
+  }
+});
+
+},{"./computed-property":85}],90:[function(require,module,exports){
 var ComputedProperty = require('./computed-properties/computed-property');
 var ExprProperty = require('./computed-properties/expr');
 var MapProperty = require('./computed-properties/map');
 var IfProperty = require('./computed-properties/if');
-var AsyncProperty = require('./computed-properties/async');
+var WhenProperty = require('./computed-properties/when');
 
 
 exports.create = function(observations) {
@@ -5948,6 +5996,9 @@ exports.create = function(observations) {
    * @return {Object} Returns the object passed in
    */
   computed.extend = function(obj, map, options) {
+    if (!obj || !map) {
+      throw new TypeError('computed.extend expects `obj` and `map` to be objects');
+    }
     ensureObservers(obj, options);
 
     Object.keys(map).forEach(function(property) {
@@ -5961,7 +6012,7 @@ exports.create = function(observations) {
         });
       } else if (expression && expression.isComputedProperty) {
         // Add ComputedProperty's observer to the observers and bind if enabled
-        observer = expression.addTo(observations, obj, property);
+        observer = expression.addTo(observations, obj, property, obj);
       } else {
         obj[property] = expression;
       }
@@ -6016,17 +6067,18 @@ exports.create = function(observations) {
 
 
   /**
-   * Calls the async expression and assigns the results to the object's property when the `whenExpression` changes value
-   * to anything other than a falsey value such as undefined. The return value of the async expression should be a
-   * Promise.
-   * @param {String} whenExpression The conditional expression use to determine when to call the `asyncExpression`
-   * @param {String} asyncExpression The expression which will be executed when the `when` value changes and the result of
-   * the returned promise is set on the object.
+   * Calls the `thenExpression` and assigns the results to the object's property when the `whenExpression` changes value
+   * to anything other than a falsey value such as undefined. The return value of the `thenExpression` may be a Promise.
+   * @param {String} whenExpression The conditional expression use to determine when to call the `thenExpression`
+   * @param {String} thenExpression The expression which will be executed when the `when` value changes and the result
+   * (or the result of the returned promise) is set on the object.
    * @return {ComputedProperty}
    */
-  computed.async = function(whenExpression, asyncExpression) {
-    return new AsyncProperty(whenExpression, asyncExpression);
+  computed.when = function(whenExpression, thenExpression) {
+    return new WhenProperty(whenExpression, thenExpression);
   };
+  // Alias when to async for readability and backwards compatability
+  computed.async = computed.when;
 
 
   // Make the ComputedProperty class available for extension
@@ -6073,18 +6125,239 @@ function ensureObservers(obj, options) {
   return obj;
 }
 
-},{"./computed-properties/async":85,"./computed-properties/computed-property":86,"./computed-properties/expr":87,"./computed-properties/if":88,"./computed-properties/map":89}],91:[function(require,module,exports){
+},{"./computed-properties/computed-property":85,"./computed-properties/expr":86,"./computed-properties/if":87,"./computed-properties/map":88,"./computed-properties/when":89}],91:[function(require,module,exports){
+module.exports = ObservableHash;
+var Class = require('chip-utils/class');
+var deepDelimiter = /(?:\[\]|\{\})\.?/i;
+
+/**
+ * An object for storing data to be accessed by an application. Has methods for easily computing and watching data
+ * changes.
+ * @param {Observations} observations An instance of the Observations class this has is bound to
+ */
+function ObservableHash(observations) {
+  var enabled = true;
+  var _observers = [];
+  _observers.enabled = true;
+
+  Object.defineProperties(this, {
+    _observations: { value: observations },
+    _namespaces: { value: [] },
+    _observers: { value: _observers },
+    computedObservers: { value: _observers } // alias to work with the computed system
+  });
+}
+
+
+Class.extend(ObservableHash, {
+
+  /**
+   * Whether or not this hash is currently enabled and running the observations/computations. When disabled, watchers
+   * and all computed properties will be cleared out with `undefined`. The hash will be ready for garbage collection.
+   * @return {Boolean} If the hash is enabled, default `true`
+   */
+  get observersEnabled() {
+    return this._observers.enabled;
+  },
+  set observersEnabled(value) {
+    if (this.enabled === value) return;
+    this._observers.enabled = value;
+
+    // Bind/unbind the observers for this hash
+    if (value) {
+      this._observers.forEach(function(observer) {
+        observer.bind(this);
+      }, this);
+    } else {
+      this._observers.forEach(function(observer) {
+        observer.unbind();
+        observer.sync();
+      });
+    }
+
+    // Set namespaced hashes to the same value
+    this._namespaces.forEach(function(namespace) {
+      this[namespace].observersEnabled = value;
+    }, this);
+  },
+
+  /**
+   * Get the value of an expression
+   * @param {String} expression The JavaScript expression to evaluate
+   * @return {mixed} The value of the expression
+   */
+  get: function(expression) {
+    return this._observations.get(this, expression);
+  },
+
+  /**
+   * Set the value of an expression
+   * @param {String} expression The JavaScript expression to set
+   * @param {mixed} value The value you'd like to set the expression to
+   */
+  set: function(expression, value) {
+    return this._observations.set(this, expression, value);
+  },
+
+  /**
+   * Add computed properties to this hash. If `name` is provided it will add the computed properties to that namespace
+   * on the hash. Otherwise they will be added directly to the hash.
+   * @param {String} name [OPTIONAL] The namespace to add the computed properties under
+   * @param {Object} map The map of computed properties that will be set on this ObservableHash
+   */
+  addComputed: function(namespace, map) {
+    if (typeof namespace === 'string' && typeof map === 'object') {
+      if (!this[namespace]) {
+        this[namespace] = new ObservableHash(this._observations);
+        this[namespace].observersEnabled = this.observersEnabled;
+        this._namespaces.push(namespace);
+      }
+      this._observations.computed.extend(this[namespace], map);
+      return this[namespace];
+    } else if (namespace && typeof namespace === 'object') {
+      this._observations.computed.extend(this, namespace);
+      return this;
+    } else {
+      throw new TypeError('addComputed must have a map object');
+    }
+  },
+
+  /**
+   * Watch this object for changes in the value of the expression
+   * @param {String} expression The expression to observe
+   * @param {Function} onChange The function which will be called when the expression value changes
+   * @return {Observer} The observer created
+   */
+  watch: function(expression, onChange, callbackContext) {
+    var observer = this._observations.createObserver(expression, onChange, callbackContext || this);
+    this._observers.push(observer);
+    if (this.observersEnabled) observer.bind(this);
+    return observer;
+  },
+
+  /**
+   * Observe an expression and call `onAdd` and `onRemove` whenever a member is added/removed from the array or object.
+   * @param {String} expression The expression to observe
+   * @param {Function} onAdd The function which will be called when a member is added to the source
+   * @param {Function} onRemove The function which will be called when a member is removed from the source
+   * @return {Observer} The observer created
+   */
+  track: function(expression, onAdd, onRemove, callbackContext) {
+    if (deepDelimiter.test(expression)) {
+      return this.trackDeeply(expression, onAdd, onRemove, callbackContext);
+    }
+    var observer = this._observations.createMemberObserver(expression, onAdd, onRemove, callbackContext || this);
+    this._observers.push(observer);
+    if (this.observersEnabled) observer.bind(this);
+    return observer;
+  },
+
+  /**
+   * Works like `track` but allows it to track deeply using `[]` and `{}` in the expression. Example:
+   * ```
+   * data.addComputed({
+   *   widgets: 'getArrayOfWidgets()',
+   *   widgetTags: computed.map('w in widgets', 'w.id', 'w.tags')
+   * });
+   * // know when a tag is added
+   * data.trackDeeply('widgets[].tags[].tagName', function(tagAdded) { console.log('tag added', tagAdded )});
+   * // widgetTags is an object hash of arrays, so we need to use two levels next to each other
+   * data.trackDeeply('widgetTags{}[].tagName', function(tagAdded) { console.log('tag added', tagAdded )});
+   * ```
+   * @param {String} expression The expression to observe with `{}` and `[]` indicating
+   * @param {Function} onAdd The function which will be called when a member is added to the source
+   * @param {Function} onRemove The function which will be called when a member is removed from the source
+   * @return {Observer} The observer created
+   */
+  trackDeeply: function(expression, onAdd, onRemove, callbackContext) {
+    if (!deepDelimiter.test(expression)) {
+      return this.track(expression, onAdd, onRemove, callbackContext);
+    }
+    var observers = new WeakMap();
+    var observations = this._observations;
+    var steps = expression.split(deepDelimiter);
+    var lastIndex = steps.length - 1;
+
+    var removedCallback = function(item) {
+      var observer = observers.get(item);
+      if (observer) {
+        observer.unbind();
+        observer.sync();
+        observers.delete(item);
+      }
+    };
+
+    // Add a unique onAdd callback for each step of the observation
+    var addedCallbacks = steps.slice(1, -1).map(function(expr, index) {
+      // Observe the next set of members
+      return function(item) {
+        if (!item) return;
+        var observer = observations.observeMembers(
+          expr || 'this',
+          addedCallbacks[index + 1],
+          removedCallbacks[index + 1],
+          callbackContext
+        );
+        observers.set(item, observer);
+        observer.bind(item);
+        return observer;
+      };
+    });
+
+    // Removed callbacks are all the same except the last
+    var removedCallbacks = steps.map(function() {
+      return removedCallback;
+    });
+
+    // Add last callback
+    if (steps[lastIndex]) {
+      // Observe the item's property
+      addedCallbacks.push(function(item, key) {
+        if (!item) return;
+        var observer = observations.createObserver(steps[lastIndex], function(value, oldValue) {
+          if (oldValue != null && typeof onRemove === 'function') {
+            onRemove.call(callbackContext, oldValue, key);
+          }
+          if (value != null && typeof onAdd === 'function') {
+            onAdd.call(callbackContext, value, key);
+          }
+        });
+        observers.set(item, observer);
+        observer.bind(item);
+        return observer;
+      });
+    } else {
+      addedCallbacks.push(onAdd);
+      removedCallbacks[lastIndex] = onRemove;
+    }
+
+    var observer = observations.observeMembers(steps[0], addedCallbacks[0], removedCallbacks[0], callbackContext);
+    this._observers.push(observer);
+    if (this.observersEnabled) observer.bind(this);
+    return observer;
+  }
+
+});
+
+},{"chip-utils/class":58}],92:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
 var Observer = require('./observer');
 var computed = require('./computed');
+var ObservableHash = require('./observable-hash');
 var expressions = require('expressions-js');
 var requestAnimationFrame = global.requestAnimationFrame || setTimeout;
 var cancelAnimationFrame = global.cancelAnimationFrame || clearTimeout;
 
 
 function Observations() {
+  // Bind all methods to this instance
+  Object.getOwnPropertyNames(this.constructor.prototype).forEach(function(name) {
+    if (typeof this[name] === 'function') {
+      this[name] = this[name].bind(this);
+    }
+  }, this);
   this.globals = {};
   this.formatters = {};
   this.observers = [];
@@ -6097,68 +6370,130 @@ function Observations() {
   this.maxCycles = 10;
   this.timeout = null;
   this.pendingSync = null;
-  this.syncNow = this.syncNow.bind(this);
   this.computed = computed.create(this);
   this.expressions = expressions;
 }
 
 
 Class.extend(Observations, {
+  ObservableHash: ObservableHash,
+
+  /**
+   * Creates a new ObservableHash with useful methods for managing data using watch, track, and computed.
+   * @param {Object} computedMap [OPTIONAL] An initial computed map for this hash
+   * @return {ObservableHash} An object for putting your data on for accessibility
+   */
+  createHash: function(computedMap) {
+    var hash = new ObservableHash(this);
+    if (computedMap) hash.addComputed(computedMap);
+    return hash;
+  },
 
   /**
    * Observes any changes to the result of the expression on the context object and calls the callback.
+   * @param {Object} context The context to bind the expression against
+   * @param {String} expression The expression to observe
+   * @param {Function} onChange The function which will be called when the expression value changes
+   * @return {Observer} The observer created
    */
-  observe: function(context, expression, callback, callbackContext) {
-    var observer = this.createObserver(expression, callback, callbackContext);
+  watch: function(context, expression, onChange, callbackContext) {
+    var observer = this.createObserver(expression, onChange, callbackContext || context);
     observer.bind(context);
     return observer;
+  },
+
+  // Alias for `watch`, DEPRECATED
+  observe: function(context, expression, onChange, callbackContext) {
+    return this.watch(context, expression, onChange, callbackContext);
+  },
+
+  /**
+   * Observe an expression and call `onAdd` and `onRemove` whenever a member is added/removed from the array or object.
+   * @param {Object} context The context to bind the expression against
+   * @param {String} expression The expression to observe
+   * @param {Function} onAdd The function which will be called when a member is added to the source
+   * @param {Function} onRemove The function which will be called when a member is removed from the source
+   * @return {Observer} The observer created
+   */
+  track: function(context, expression, onAdd, onRemove, callbackContext) {
+    var observer = this.createMemberObserver(expression, onAdd, onRemove, callbackContext);
+    observer.bind(context);
+    return observer;
+  },
+
+  // Alias for `createMemberObserver`, DEPRECATED
+  observeMembers: function(expression, onAdd, onRemove, callbackContext) {
+    return this.createMemberObserver(expression, onAdd, onRemove, callbackContext);
   },
 
   /**
    * Creates a new observer attached to this observations object. When the observer is bound to a context it will be
    * added to this `observations` and synced when this `observations.sync` is called.
+   * @param {String} expression The expression to observe
+   * @param {Function} callback The function which will be called when the expression value changes
+   * @return {Observer} The observer
    */
   createObserver: function(expression, callback, callbackContext) {
     return new Observer(this, expression, callback, callbackContext);
   },
 
   /**
-   * Observe an expression and trigger `onAdd` and `onRemove` whenever a member is added/removed from the array or object.
+   * Observe an expression and call `onAdd` and `onRemove` whenever a member is added/removed from the array or object.
+   * @param {String} expression The expression to observe
    * @param {Function} onAdd The function which will be called when a member is added to the source
    * @param {Function} onRemove The function which will be called when a member is removed from the source
-   * @return {Observer} The observer for observing the source. Bind against a source object.
+   * @return {Observer} The observer
    */
-  observeMembers: function(expression, onAdd, onRemove, callbackContext) {
+  createMemberObserver: function(expression, onAdd, onRemove, callbackContext) {
     if (!onAdd) onAdd = function(){};
     if (!onRemove) onRemove = function(){};
 
     var observer = this.createObserver(expression, function(source, oldValue, changes) {
       if (changes) {
+        // call onRemoved on everything first
         changes.forEach(function(change) {
-          if (change.removed) {
-            change.removed.forEach(onRemove, callbackContext);
-            source.slice(change.index, change.index + change.addedCount).forEach(onAdd, callbackContext);
-          } else if (change.type === 'add') {
-            onAdd.call(callbackContext, source[change.name]);
-          } else if (change.type === 'update') {
-            onRemove.call(callbackContext, change.oldValue);
-            onAdd.call(callbackContext, source[change.name]);
-          } else if (change.type === 'delete') {
-            onRemove.call(callbackContext, change.oldValue);
+          if (change.type === 'splice') {
+            change.removed.forEach(function(item, index) {
+              onRemove(item, index + change.index);
+            }, callbackContext);
+          } else {
+            if (change.oldValue != null) {
+              onRemove.call(callbackContext, change.oldValue, change.name);
+            }
+          }
+        });
+
+        // call onAdded second, allowing for items that changed location to be accurately processed
+        changes.forEach(function(change) {
+          if (change.type === 'splice') {
+            source.slice(change.index, change.index + change.addedCount).forEach(function(item, index) {
+              onAdd(item, index + change.index);
+            }, callbackContext);
+          } else {
+            var value = source[change.name];
+            if (value != null) {
+              onAdd.call(callbackContext, value, change.name);
+            }
           }
         });
       } else if (Array.isArray(source)) {
         source.forEach(onAdd, callbackContext);
       } else if (source && typeof source === 'object') {
         Object.keys(source).forEach(function(key) {
-          onAdd.call(callbackContext, source[key]);
+          var value = source[key];
+          if (value != null) {
+            onAdd.call(callbackContext, value, key);
+          }
         });
       } else if (Array.isArray(oldValue)) {
         oldValue.forEach(onRemove, callbackContext);
       } else if (oldValue && typeof oldValue === 'object') {
         // If undefined (or something that isn't an array/object) remove the observers
         Object.keys(oldValue).forEach(function(key) {
-          onRemove.call(callbackContext, oldValue[key]);
+          var value = oldValue[key];
+          if (value != null) {
+            onRemove.call(callbackContext, value, key);
+          }
         });
       }
     });
@@ -6346,7 +6681,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./computed":90,"./observer":92,"chip-utils/class":58,"expressions-js":69}],92:[function(require,module,exports){
+},{"./computed":90,"./observable-hash":91,"./observer":93,"chip-utils/class":58,"expressions-js":69}],93:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -6508,7 +6843,7 @@ function mapToProperty(property) {
   }
 }
 
-},{"chip-utils/class":58,"differences-js":67,"expressions-js":69}],93:[function(require,module,exports){
+},{"chip-utils/class":58,"differences-js":67,"expressions-js":69}],94:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -6519,7 +6854,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":96,"./src/location":97,"./src/push-location":98,"./src/route":99,"./src/router":100}],94:[function(require,module,exports){
+},{"./src/hash-location":97,"./src/location":98,"./src/push-location":99,"./src/route":100,"./src/router":101}],95:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -6630,9 +6965,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],95:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 arguments[4][61][0].apply(exports,arguments)
-},{"./class":94,"dup":61}],96:[function(require,module,exports){
+},{"./class":95,"dup":61}],97:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -6671,7 +7006,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":97}],97:[function(require,module,exports){
+},{"./location":98}],98:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -6783,7 +7118,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":96,"./push-location":98,"chip-utils/event-target":95}],98:[function(require,module,exports){
+},{"./hash-location":97,"./push-location":99,"chip-utils/event-target":96}],99:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -6823,7 +7158,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":97}],99:[function(require,module,exports){
+},{"./location":98}],100:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -6908,7 +7243,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":94}],100:[function(require,module,exports){
+},{"chip-utils/class":95}],101:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -7069,6 +7404,6 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":97,"./route":99,"chip-utils/event-target":95}]},{},[59])(59)
+},{"./location":98,"./route":100,"chip-utils/event-target":96}]},{},[59])(59)
 });
 //# sourceMappingURL=chip.js.map
