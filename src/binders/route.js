@@ -101,7 +101,7 @@ module.exports = function() {
     var matched;
     delete this.context.params;
 
-    if (fullUrl.indexOf(this.baseURI) === 0) {
+    if (fullUrl && fullUrl.indexOf(this.baseURI) === 0) {
       localUrl = fullUrl.replace(this.baseURI, '');
     }
 

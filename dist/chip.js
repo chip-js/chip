@@ -324,7 +324,7 @@ module.exports = function() {
   return {
 
     attached: function() {
-      if (!this.expression || this.observer.get()) {
+      if (!this.expression || this.get(this.expression)) {
         this.element.focus();
       }
     }
@@ -467,18 +467,17 @@ module.exports = function() {
 
 },{}],14:[function(require,module,exports){
 module.exports = Component;
-var ObservableHash = require('observations-js').ObservableHash;
+var ElementController = require('fragments-js/src/element-controller');
 var lifecycle = [ 'created', 'bound', 'attached', 'unbound', 'detached' ];
 
 
 function Component(observations, element, contentTemplate, unwrap) {
-  ObservableHash.call(this, observations);
+  // Extend ElementController https://github.com/chip-js/fragments-js/blob/master/src/element-controller.js
+  ElementController.call(this, observations);
   this.observersEnabled = false;
+  this.listenersEnabled = false;
 
-  Object.defineProperties(this, {
-    _listeners: { configurable: true, value: [] }
-  });
-
+  // Add computed, listeners, and properties for each mixin that has it
   this.mixins.forEach(function(mixin) {
     if (mixin.computed) {
       this.addComputed(this.computed);
@@ -491,6 +490,44 @@ function Component(observations, element, contentTemplate, unwrap) {
           listener = mixin[listener];
         }
         this.listen(this.element, eventName, listener, this);
+      }, this);
+    }
+
+    // Add properties that get set from attributes
+    if (mixin.properties) {
+      Object.keys(mixin.properties).forEach(function(propName) {
+        var attrName = dashify(propName);
+        var Cast = mixin.properties[propName];
+        var observer;
+
+        // Set the property to the attribute
+        this.watch('element.getAttribute("' + attrName + '")', function(value) {
+          // If it is an Object property (vs String/Boolean/Number), we are watching the expression string
+          if (Cast === Object) {
+            // Clean up the old observer if there was one
+            if (observer) {
+              observer.close();
+            }
+
+            if (value != null) {
+              observer = observations.createObserver(value, function(value) {
+                this[propName] = value;
+              }, this);
+              observer.bind(this.element._parentContext);
+            }
+
+          // Else we are watching the value
+          } else {
+            if (Cast === Boolean) {
+              if (value === '') {
+                value = true;
+              } else if (value === null) {
+                value = false;
+              }
+            }
+            this[propName] = (value === null) ? null : Cast(value);
+          }
+        });
       }, this);
     }
   }, this);
@@ -529,7 +566,7 @@ Component.onExtend = function(Class, mixins) {
   });
 };
 
-ObservableHash.extend(Component, {
+ElementController.extend(Component, {
   mixins: [],
 
   get view() {
@@ -549,22 +586,15 @@ ObservableHash.extend(Component, {
   },
 
   attached: function() {
+    this.listenersEnabled = true;
+
     callOnMixins(this, this.mixins, 'attached', arguments);
     if (this._view) {
       this._view.attached();
     }
-
-    this._listeners.forEach(function(item) {
-      item.targetRef = addListener(this, item.target, item.eventName, item.listener);
-    }, this);
   },
 
   unbound: function() {
-    this._listeners.forEach(function(item) {
-      removeListener(item.targetRef, item.eventName, item.listener);
-      delete item.targetRef;
-    }, this);
-
     callOnMixins(this, this.mixins, 'unbound', arguments);
     if (this._view) {
       this._view.unbind();
@@ -573,62 +603,14 @@ ObservableHash.extend(Component, {
   },
 
   detached: function() {
+    this.listenersEnabled = false;
     callOnMixins(this, this.mixins, 'detached', arguments);
     if (this._view) {
       this._view.detached();
     }
-  },
-
-
-  listen: function(target, eventName, listener, context) {
-    if (typeof target === 'string') {
-      context = listener;
-      listener = eventName;
-      eventName = target;
-      target = this.element;
-    }
-
-    if (typeof listener !== 'function') {
-      throw new TypeError('listener must be a function');
-    }
-
-    listener = listener.bind(context || this);
-
-    var listenerData = {
-      target: target,
-      eventName: eventName,
-      listener: listener,
-      targetRef: null
-    };
-
-    this._listeners.push(listenerData);
-
-    if (this._bound) {
-      // If not bound will add on attachment
-      listenerData.targetRef = addListener(this, target, eventName, listener);
-    }
-  },
+  }
 
 });
-
-
-function getTarget(component, target) {
-  if (typeof target === 'string') {
-    target = component[target] || component.element.querySelector(target);
-  }
-  return target;
-}
-
-function addListener(component, target, eventName, listener) {
-  if ((target = getTarget(component, target))) {
-    target.addEventListener(eventName, listener);
-    return target;
-  }
-}
-
-function removeListener(target, eventName, listener) {
-  target.removeEventListener(eventName, listener);
-}
 
 
 // Calls the method by name on any mixins that have it defined
@@ -638,7 +620,13 @@ function callOnMixins(context, mixins, name, args) {
   });
 }
 
-},{"observations-js":84}],15:[function(require,module,exports){
+function dashify(str) {
+  return str.replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+            .replace(/([a-z\d])([A-Z])/g, '$1-$2')
+            .toLowerCase();
+}
+
+},{"fragments-js/src/element-controller":78}],15:[function(require,module,exports){
 var Component = require('./component-definition');
 var slice = Array.prototype.slice;
 
@@ -839,88 +827,29 @@ var functionCallExp = /(^|[^\.\]a-z$_\$])([a-z$_\$][a-z_\$0-9-]*)\s*\(\s*(\S)/ig
 module.exports = function(specificEventName) {
   return {
     compiled: function() {
+      // Call the function in the scope of the original context when appearing inside a repeat
       this.expression = this.expression.replace(functionCallExp, function(_, before, functionName, closingParen) {
         var after = closingParen === ')' ? closingParen : ', ' + closingParen;
         return before + functionName + '.call(_origContext_ || this' + after;
       });
+      this.listener = this.observations.getExpression(this.expression, { extraArgs: [ '$element', '$event' ]});
     },
 
     created: function() {
       var eventName = specificEventName || this.match;
-      var _this = this;
 
       this.element.addEventListener(eventName, function(event) {
-        if (_this.shouldSkip(event)) {
-          return;
-        }
-
-        // Set the event on the context so it may be used in the expression when the event is triggered.
-        var priorEvent = Object.getOwnPropertyDescriptor(_this.context, 'event');
-        var priorElement = Object.getOwnPropertyDescriptor(_this.context, 'element');
-        _this.setEvent(event, priorEvent, priorElement);
+        if (this.shouldSkip(event)) return;
 
         // queue up a sync to run afer this event is handled (we assume most events will alter the state of the
         // application, otherwise there is no need to listen for them)
-        _this.fragments.sync();
-
-        // Let an event binder make the function call with its own arguments
-        _this.observer.get();
-
-        // Reset the context to its prior state
-        _this.clearEvent();
-      });
+        this.fragments.sync();
+        this.listener.call(this.context, this.element, event);
+      }.bind(this));
     },
 
     shouldSkip: function(event) {
       return !this.context || event.currentTarget.hasAttribute('disabled');
-    },
-
-    unbound: function() {
-      this.clearEvent();
-    },
-
-    setEvent: function(event, priorEventDescriptor, priorElementDescriptor) {
-      if (!this.context) {
-        return;
-      }
-      this.event = event;
-      this.priorEventDescriptor = priorEventDescriptor;
-      this.priorElementDescriptor = priorElementDescriptor;
-      this.lastContext = this.context;
-
-      // DEPRECATE
-      this.context.event = event;
-      this.context.element = this.element;
-      // END DEPRECATE
-
-      this.context.$event = event;
-      this.context.$element = this.element;
-    },
-
-    clearEvent: function() {
-      if (!this.event) {
-        return;
-      }
-      var context = this.lastContext;
-
-      if (this.priorEventDescriptor) {
-        Object.defineProperty(context, 'event', this.priorEventDescriptor);
-        this.priorEventDescriptor = null;
-      } else {
-        delete context.event;
-      }
-
-      if (this.priorElementDescriptor) {
-        Object.defineProperty(context, 'element', this.priorElementDescriptor);
-        this.priorElementDescriptor = null;
-      } else {
-        delete context.element;
-      }
-
-      delete context.$event;
-      delete context.$element;
-      this.event = null;
-      this.lastContext = null;
     }
   };
 };
@@ -1146,6 +1075,8 @@ module.exports = function(specificKeyName, specificEventName) {
       } else {
         this.keyCode = keys[parts[0]];
       }
+
+      eventBinder.compiled.call(this);
     },
 
     shouldSkip: function(event) {
@@ -1158,10 +1089,7 @@ module.exports = function(specificKeyName, specificEventName) {
       }
     },
 
-    created: eventBinder.created,
-    unbound: eventBinder.unbound,
-    setEvent: eventBinder.setEvent,
-    clearEvent: eventBinder.clearEvent
+    created: eventBinder.created
   };
 };
 
@@ -2669,7 +2597,7 @@ if (typeof Object.assign !== 'function') {
   })();
 }
 
-},{"./default-options":65,"./mixins/default":66,"chip-utils/event-target":61,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":74,"routes-js":94}],63:[function(require,module,exports){
+},{"./default-options":65,"./mixins/default":66,"chip-utils/event-target":61,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":74,"routes-js":95}],63:[function(require,module,exports){
 var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
@@ -2773,7 +2701,7 @@ module.exports = function() {
     var matched;
     delete this.context.params;
 
-    if (fullUrl.indexOf(this.baseURI) === 0) {
+    if (fullUrl && fullUrl.indexOf(this.baseURI) === 0) {
       localUrl = fullUrl.replace(this.baseURI, '');
     }
 
@@ -2814,7 +2742,7 @@ module.exports = function() {
   return routeBinder;
 };
 
-},{"fragments-built-ins/binders/if":18,"routes-js":94}],64:[function(require,module,exports){
+},{"fragments-built-ins/binders/if":18,"routes-js":95}],64:[function(require,module,exports){
 var App = require('./app');
 
 // # Chip
@@ -2850,7 +2778,7 @@ chip.Class = require('chip-utils/class');
 chip.EventTarget = require('chip-utils/event-target');
 chip.routes = require('routes-js');
 
-},{"./app":62,"chip-utils/class":60,"chip-utils/event-target":61,"routes-js":94}],65:[function(require,module,exports){
+},{"./app":62,"chip-utils/class":60,"chip-utils/event-target":61,"routes-js":95}],65:[function(require,module,exports){
 
 module.exports = {
   curliesInAttributes: false,
@@ -3603,8 +3531,11 @@ var chainLinksRegex = /\.|\[/g;
 // the property name part of links
 var chainLinkRegex = /\.|\[|\(/;
 
-var andRegex = / and /g;
-var orRegex = / or /g;
+var substitutions = {
+  ' && ': / and /g,
+  ' || ': / or /g,
+  ' === ': / is /g
+};
 
 
 exports.parseExpression = function(expr, _globals) {
@@ -3616,7 +3547,7 @@ exports.parseExpression = function(expr, _globals) {
   continuation = false;
   globals = _globals;
 
-  expr = replaceAndsAndOrs(expr);
+  expr = replaceSubstitutions(expr);
   if (expr.indexOf(' = ') !== -1) {
     var parts = expr.split(' = ');
     var setter = parts[0];
@@ -3862,8 +3793,11 @@ function parsePart(part, index) {
 }
 
 
-function replaceAndsAndOrs(expr) {
-  return expr.replace(andRegex, ' && ').replace(orRegex, ' || ');
+function replaceSubstitutions(expr) {
+  Object.keys(substitutions).forEach(function(replacement) {
+    expr = expr.replace(substitutions[replacement], replacement);
+  });
+  return expr;
 }
 
 
@@ -3945,7 +3879,7 @@ function create(options) {
 // Create an instance of fragments with the default observer
 exports.create = create;
 
-},{"./src/fragments":78,"observations-js":84}],75:[function(require,module,exports){
+},{"./src/fragments":79,"observations-js":85}],75:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -4196,9 +4130,9 @@ function onAnimationEnd(node, duration, callback) {
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":76,"./util/animation":80}],76:[function(require,module,exports){
+},{"./binding":76,"./util/animation":81}],76:[function(require,module,exports){
 module.exports = Binding;
-var Class = require('chip-utils/class');
+var ElementController = require('./element-controller');
 
 /**
  * A binding is a link between an element and some data. Subclasses of Binding called binders define what a binding does
@@ -4228,11 +4162,11 @@ function Binding(properties) {
   this.match = properties.match;
   this.expression = properties.expression;
   this.fragments = properties.fragments;
-  this.observations = this.fragments.observations;
+  this.observations = properties.fragments.observations;
   this.context = null;
 }
 
-Class.extend(Binding, {
+ElementController.extend(Binding, {
   /**
    * Default priority binders may override.
    */
@@ -4243,13 +4177,13 @@ Class.extend(Binding, {
    * Initialize a cloned binding. This happens after a compiled binding on a template is cloned for a view.
    */
   init: function() {
-    Object.defineProperties(this, {
-      _observers: { configurable: true, value: [] },
-      _listeners: { configurable: true, value: [] }
-    });
-    if (this.expression) {
+    ElementController.call(this, this.observations);
+    this.observersEnabled = false;
+    this.listenersEnabled = false;
+
+    if (this.expression && this.updated !== Binding.prototype.updated) {
       // An observer to observe value changes to the expression within a context
-      this.observer = this.observations.createObserver(this.expression, this.updated, this);
+      this.observer = this.watch(this.expression, this.updated, this);
     }
     this.created();
   },
@@ -4283,21 +4217,10 @@ Class.extend(Binding, {
       return;
     }
 
-    this.context = context;
-    if (this.observer) this.observer.context = context;
+    this.context = this._context = context;
     this.bound();
 
-    if (this.observer && this.updated !== Binding.prototype.updated) {
-      this.observer.bind(context);
-    }
-
-    this._observers.forEach(function(observer) {
-      observer.bind(context);
-    });
-
-    this._listeners.forEach(function(item) {
-      item.target.addEventListener(item.eventName, item.listener);
-    });
+    this.observersEnabled = true;
   },
 
 
@@ -4306,32 +4229,25 @@ Class.extend(Binding, {
     if (this.context === null) {
       return;
     }
-
-    if (this.observer) this.observer.unbind();
-
-    this._observers.forEach(function(observer) {
-      observer.unbind();
-    });
-
-    this._listeners.forEach(function(item) {
-      item.target.removeEventListener(item.eventName, item.listener);
-    });
-
+    this.observersStop();
     this.unbound();
-    this.context = null;
+    this.context = this._context = null;
   },
 
+  attach: function() {
+    this.listenersEnabled = true;
+    this.attached();
+  },
+
+  detach: function() {
+    this.listenersEnabled = false;
+    this.detached();
+  },
 
   // Cleans up binding completely
   dispose: function() {
     this.unbind();
-    if (this.observer) {
-      // This will clear it out, nullifying any data stored
-      this.observer.sync();
-    }
-    this._observers.forEach(function(observer) {
-      observer.sync();
-    });
+    this.observersEnabled = false;
     this.disposed();
   },
 
@@ -4375,54 +4291,9 @@ Class.extend(Binding, {
   },
 
   observe: function(expression, callback, callbackContext) {
-    if (typeof callback !== 'function') {
-      throw new TypeError('callback must be a function');
-    }
-
-    var observer = this.observations.createObserver(expression, callback, callbackContext || this);
-    this._observers.push(observer);
-    if (this.context) {
-      // If not bound will bind on attachment
-      observer.bind(this.context);
-    }
-    return observer;
-  },
-
-  listen: function(target, eventName, listener, context) {
-    if (typeof target === 'string') {
-      context = listener;
-      listener = eventName;
-      eventName = target;
-      target = this.element;
-    }
-
-    if (typeof listener !== 'function') {
-      throw new TypeError('listener must be a function');
-    }
-
-    listener = listener.bind(context || this);
-
-    var listenerData = {
-      target: target,
-      eventName: eventName,
-      listener: listener
-    };
-
-    this._listeners.push(listenerData);
-
-    if (this.context) {
-      // If not bound will add on attachment
-      target.addEventListener(eventName, listener);
-    }
-  },
-
-  get: function(expression) {
-    return this.observations.get(this.context, expression);
-  },
-
-  set: function(expression, value) {
-    return this.observations.set(this.context, expression, value);
+    return this.watch(expression, callback, callbackContext);
   }
+
 });
 
 
@@ -4441,7 +4312,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"chip-utils/class":58}],77:[function(require,module,exports){
+},{"./element-controller":78}],77:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4614,6 +4485,116 @@ function notEmpty(value) {
 }
 
 },{}],78:[function(require,module,exports){
+module.exports = ElementController;
+var ObservableHash = require('observations-js').ObservableHash;
+
+
+function ElementController(observations) {
+  ObservableHash.call(this, observations);
+
+  Object.defineProperties(this, {
+    _listeners: { value: [] }
+  });
+  this._listeners.enabled = true;
+}
+
+
+ObservableHash.extend(ElementController, {
+  get listenersEnabled() {
+    return this._listeners.enabled;
+  },
+
+  set listenersEnabled(value) {
+    if (this.enabled === value) return;
+    this._listeners.enabled = value;
+
+    // Bind/unbind the observers for this hash
+    if (value) {
+      this._listeners.forEach(function(item) {
+        item.targetRef = addListener(this, item.target, item.eventName, item.listener);
+      }, this);
+    } else {
+      this._listeners.forEach(function(item) {
+        removeListener(item.targetRef, item.eventName, item.listener);
+        delete item.targetRef;
+      }, this);
+    }
+  },
+
+
+  listen: function(target, eventName, listener, context) {
+    var element = this instanceof Node ? this : this.element;
+    if (typeof eventName === 'function') {
+      context = listener;
+      listener = eventName;
+      eventName = target;
+      target = element;
+    }
+
+    if (!target || typeof listener !== 'function') {
+      throw new TypeError('`listen([target], eventName, listener)` must have a function listener');
+    }
+
+    listener = listener.bind(context || this);
+
+    if (typeof target === 'string') {
+      // Listen on the element and match bubbled events against properties or query strings (like jquery.live)
+      var innerListener = listener;
+      var selector = target;
+      target = element;
+      listener = function(event) {
+        if (this[selector] instanceof Node && this[selector].contains(event.target)) {
+          innerListener(event);
+        } else if (event.target.closest(selector)) {
+          innerListener(event);
+        }
+      }.bind(this);
+    }
+
+    var listenerData = {
+      target: target,
+      eventName: eventName,
+      listener: listener,
+      targetRef: null
+    };
+
+    this._listeners.push(listenerData);
+
+    if (this.listenersEnabled) {
+      // If not bound will add on attachment
+      listenerData.targetRef = addListener(this, target, eventName, listener);
+    }
+  }
+});
+
+
+function getTarget(component, target) {
+  var element = component instanceof Node ? component : component.element;
+  if (typeof target === 'string') {
+    target = component[target] || element.querySelector(target);
+  } else if (target === Document) {
+    target = element.ownerDocument;
+  } else if (target === Window) {
+    target = element.ownerDocument.defaultView;
+  }
+  return target;
+}
+
+function addListener(component, target, eventName, listener) {
+  // If it's been moved to another document change targets to the relavent one
+  if ((target = getTarget(component, target))) {
+    target.addEventListener(eventName, listener);
+    return target;
+  }
+}
+
+function removeListener(target, eventName, listener) {
+  if (target) {
+    target.removeEventListener(eventName, listener);
+  }
+}
+
+},{"observations-js":85}],79:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -5293,7 +5274,7 @@ function processOption(obj, fragments, methodName) {
     });
   }
 }
-},{"./animated-binding":75,"./binding":76,"./compile":77,"./template":79,"./util/animation":80,"./util/polyfills":81,"./util/toFragment":82,"./view":83,"chip-utils/class":58}],79:[function(require,module,exports){
+},{"./animated-binding":75,"./binding":76,"./compile":77,"./template":80,"./util/animation":81,"./util/polyfills":82,"./util/toFragment":83,"./view":84,"chip-utils/class":58}],80:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5333,7 +5314,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":83,"chip-utils/class":58}],80:[function(require,module,exports){
+},{"./view":84,"chip-utils/class":58}],81:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5426,7 +5407,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 
 
 
@@ -5453,7 +5434,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5576,7 +5557,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5611,10 +5592,11 @@ Class.extend(View, {
 
   get inDOM() {
     var parent = this.firstViewNode;
-    while (parent && parent !== document) {
+    var doc = parent.ownerDocument;
+    while (parent && parent !== doc) {
       parent = parent.parentNode || parent.host;
     }
-    return parent === document;
+    return parent === doc;
   },
 
   /**
@@ -5683,7 +5665,7 @@ Class.extend(View, {
     if (!this._attached && this.inDOM) {
       this._attached = true;
       this.bindings.forEach(function(binding) {
-        binding.attached();
+        binding.attach();
       });
     }
   },
@@ -5696,7 +5678,7 @@ Class.extend(View, {
     if (this._attached && !this.inDOM) {
       this._attached = false;
       this.bindings.forEach(function(binding) {
-        binding.detached();
+        binding.detach();
       });
     }
   },
@@ -5713,7 +5695,7 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":58}],84:[function(require,module,exports){
+},{"chip-utils/class":58}],85:[function(require,module,exports){
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
@@ -5722,7 +5704,7 @@ exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observable-hash":91,"./src/observations":92,"./src/observer":93}],85:[function(require,module,exports){
+},{"./src/observable-hash":92,"./src/observations":93,"./src/observer":94}],86:[function(require,module,exports){
 module.exports = ComputedProperty;
 var Class = require('chip-utils/class');
 
@@ -5765,7 +5747,7 @@ Class.extend(ComputedProperty, {
   }
 });
 
-},{"chip-utils/class":58}],86:[function(require,module,exports){
+},{"chip-utils/class":58}],87:[function(require,module,exports){
 module.exports = ExprProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5787,7 +5769,7 @@ ComputedProperty.extend(ExprProperty, {
   }
 });
 
-},{"./computed-property":85}],87:[function(require,module,exports){
+},{"./computed-property":86}],88:[function(require,module,exports){
 module.exports = IfProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5819,7 +5801,7 @@ ComputedProperty.extend(IfProperty, {
   }
 });
 
-},{"./computed-property":85}],88:[function(require,module,exports){
+},{"./computed-property":86}],89:[function(require,module,exports){
 module.exports = MapProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5910,7 +5892,7 @@ ComputedProperty.extend(MapProperty, {
   }
 });
 
-},{"./computed-property":85}],89:[function(require,module,exports){
+},{"./computed-property":86}],90:[function(require,module,exports){
 module.exports = WhenProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5961,7 +5943,7 @@ ComputedProperty.extend(WhenProperty, {
   }
 });
 
-},{"./computed-property":85}],90:[function(require,module,exports){
+},{"./computed-property":86}],91:[function(require,module,exports){
 var ComputedProperty = require('./computed-properties/computed-property');
 var ExprProperty = require('./computed-properties/expr');
 var MapProperty = require('./computed-properties/map');
@@ -6020,7 +6002,7 @@ exports.create = function(observations) {
       if (observer) {
         obj.computedObservers.push(observer);
         if (obj.computedObservers.enabled) {
-          observer.bind(obj);
+          observer.bind(options && options.context || obj);
         }
       }
     });
@@ -6106,7 +6088,7 @@ function ensureObservers(obj, options) {
       if (!this.enabled) {
         this.enabled = true;
         this.forEach(function(observer) {
-          observer.bind(obj);
+          observer.bind(options && options.context || obj);
         });
       }
     };
@@ -6125,7 +6107,7 @@ function ensureObservers(obj, options) {
   return obj;
 }
 
-},{"./computed-properties/computed-property":85,"./computed-properties/expr":86,"./computed-properties/if":87,"./computed-properties/map":88,"./computed-properties/when":89}],91:[function(require,module,exports){
+},{"./computed-properties/computed-property":86,"./computed-properties/expr":87,"./computed-properties/if":88,"./computed-properties/map":89,"./computed-properties/when":90}],92:[function(require,module,exports){
 module.exports = ObservableHash;
 var Class = require('chip-utils/class');
 var deepDelimiter = /(?:\[\]|\{\})\.?/i;
@@ -6141,6 +6123,7 @@ function ObservableHash(observations) {
   _observers.enabled = true;
 
   Object.defineProperties(this, {
+    _context: { writable: true, value: this },
     _observations: { value: observations },
     _namespaces: { value: [] },
     _observers: { value: _observers },
@@ -6160,24 +6143,39 @@ Class.extend(ObservableHash, {
     return this._observers.enabled;
   },
   set observersEnabled(value) {
-    if (this.enabled === value) return;
-    this._observers.enabled = value;
-
     // Bind/unbind the observers for this hash
-    if (value) {
-      this._observers.forEach(function(observer) {
-        observer.bind(this);
-      }, this);
-    } else {
-      this._observers.forEach(function(observer) {
-        observer.unbind();
-        observer.sync();
-      });
-    }
+    value ? this.observersStart() : this.observersStop(true);
+  },
+
+  /**
+   * Starts the observers watching their values
+   */
+  observersStart: function() {
+    this._observers.enabled = true;
+    this._observers.forEach(function(observer) {
+      observer.bind(this._context);
+    }, this);
 
     // Set namespaced hashes to the same value
     this._namespaces.forEach(function(namespace) {
-      this[namespace].observersEnabled = value;
+      this[namespace].observersResume();
+    }, this);
+  },
+
+  /**
+   * Stops the observers watching and responding to changes, optionally clearing out the values
+   * @param {Boolean} clearValues Whether to clear the values out to `undefined` or leave them as-is
+   */
+  observersStop: function(clearValues) {
+    this._observers.enabled = false;
+    this._observers.forEach(function(observer) {
+      observer.unbind();
+      if (clearValues) observer.sync();
+    });
+
+    // Set namespaced hashes to the same value
+    this._namespaces.forEach(function(namespace) {
+      this[namespace].observersPause(clearValues);
     }, this);
   },
 
@@ -6187,7 +6185,7 @@ Class.extend(ObservableHash, {
    * @return {mixed} The value of the expression
    */
   get: function(expression) {
-    return this._observations.get(this, expression);
+    return this._observations.get(this._context, expression);
   },
 
   /**
@@ -6196,7 +6194,7 @@ Class.extend(ObservableHash, {
    * @param {mixed} value The value you'd like to set the expression to
    */
   set: function(expression, value) {
-    return this._observations.set(this, expression, value);
+    return this._observations.set(this._context, expression, value);
   },
 
   /**
@@ -6212,10 +6210,10 @@ Class.extend(ObservableHash, {
         this[namespace].observersEnabled = this.observersEnabled;
         this._namespaces.push(namespace);
       }
-      this._observations.computed.extend(this[namespace], map);
+      this._observations.computed.extend(this[namespace], map, { context: this._context });
       return this[namespace];
     } else if (namespace && typeof namespace === 'object') {
-      this._observations.computed.extend(this, namespace);
+      this._observations.computed.extend(this, namespace, { context: this._context });
       return this;
     } else {
       throw new TypeError('addComputed must have a map object');
@@ -6231,7 +6229,7 @@ Class.extend(ObservableHash, {
   watch: function(expression, onChange, callbackContext) {
     var observer = this._observations.createObserver(expression, onChange, callbackContext || this);
     this._observers.push(observer);
-    if (this.observersEnabled) observer.bind(this);
+    if (this.observersEnabled) observer.bind(this._context);
     return observer;
   },
 
@@ -6248,7 +6246,7 @@ Class.extend(ObservableHash, {
     }
     var observer = this._observations.createMemberObserver(expression, onAdd, onRemove, callbackContext || this);
     this._observers.push(observer);
-    if (this.observersEnabled) observer.bind(this);
+    if (this.observersEnabled) observer.bind(this._context);
     return observer;
   },
 
@@ -6333,13 +6331,13 @@ Class.extend(ObservableHash, {
 
     var observer = observations.observeMembers(steps[0], addedCallbacks[0], removedCallbacks[0], callbackContext);
     this._observers.push(observer);
-    if (this.observersEnabled) observer.bind(this);
+    if (this.observersEnabled) observer.bind(this._context);
     return observer;
   }
 
 });
 
-},{"chip-utils/class":58}],92:[function(require,module,exports){
+},{"chip-utils/class":58}],93:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -6681,7 +6679,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./computed":90,"./observable-hash":91,"./observer":93,"chip-utils/class":58,"expressions-js":69}],93:[function(require,module,exports){
+},{"./computed":91,"./observable-hash":92,"./observer":94,"chip-utils/class":58,"expressions-js":69}],94:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -6843,7 +6841,7 @@ function mapToProperty(property) {
   }
 }
 
-},{"chip-utils/class":58,"differences-js":67,"expressions-js":69}],94:[function(require,module,exports){
+},{"chip-utils/class":58,"differences-js":67,"expressions-js":69}],95:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -6854,7 +6852,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":97,"./src/location":98,"./src/push-location":99,"./src/route":100,"./src/router":101}],95:[function(require,module,exports){
+},{"./src/hash-location":98,"./src/location":99,"./src/push-location":100,"./src/route":101,"./src/router":102}],96:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -6965,9 +6963,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],96:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 arguments[4][61][0].apply(exports,arguments)
-},{"./class":95,"dup":61}],97:[function(require,module,exports){
+},{"./class":96,"dup":61}],98:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -7006,7 +7004,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":98}],98:[function(require,module,exports){
+},{"./location":99}],99:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -7118,7 +7116,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":97,"./push-location":99,"chip-utils/event-target":96}],99:[function(require,module,exports){
+},{"./hash-location":98,"./push-location":100,"chip-utils/event-target":97}],100:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -7158,7 +7156,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":98}],100:[function(require,module,exports){
+},{"./location":99}],101:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -7243,7 +7241,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":95}],101:[function(require,module,exports){
+},{"chip-utils/class":96}],102:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -7404,6 +7402,6 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":98,"./route":100,"chip-utils/event-target":96}]},{},[59])(59)
+},{"./location":99,"./route":101,"chip-utils/event-target":97}]},{},[59])(59)
 });
 //# sourceMappingURL=chip.js.map
