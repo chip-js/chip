@@ -47,6 +47,7 @@ function App(options) {
 }
 
 EventTarget.extend(App, {
+  Component: Component,
 
   init: function(root) {
     if (this.inited) {
