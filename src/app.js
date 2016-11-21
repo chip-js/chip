@@ -194,7 +194,8 @@ EventTarget.extend(App, {
     this.dispatchEvent(new CustomEvent('urlChange', { detail: {
       url: this.url,
       path: this.path,
-      query: this.query
+      query: this.query,
+      replace: false
     }}));
   },
 

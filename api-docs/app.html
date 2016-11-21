@@ -397,7 +397,8 @@ if it is for another protocol or domain, we won’t</p>
     <span class="hljs-keyword">this</span>.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { detail: {
       url: <span class="hljs-keyword">this</span>.url,
       path: <span class="hljs-keyword">this</span>.path,
-      query: <span class="hljs-keyword">this</span>.query
+      query: <span class="hljs-keyword">this</span>.query,
+      replace: <span class="hljs-literal">false</span>
     }}));
   },</pre></div></div>
             

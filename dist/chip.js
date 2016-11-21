@@ -1,4 +1,6 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.chip = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var utils = require('./utils');
+
 /**
  * Fade in and out
  */
@@ -9,22 +11,24 @@ module.exports = function(options) {
 
   return {
     options: options,
+
     animateIn: function(element, done) {
       element.animate([
         { opacity: '0' },
         { opacity: '1' }
-      ], this.options).onfinish = done;
+      ], utils.getTransitionOptions(element, this.options)).onfinish = done;
     },
+
     animateOut: function(element, done) {
       element.animate([
         { opacity: '1' },
         { opacity: '0' }
-      ], this.options).onfinish = done;
+      ], utils.getTransitionOptions(element, this.options)).onfinish = done;
     }
   };
 };
 
-},{}],2:[function(require,module,exports){
+},{"./utils":8}],2:[function(require,module,exports){
 /**
  * Slide left and right
  */
@@ -35,6 +39,8 @@ module.exports = function(options) {
 };
 
 },{"./slide-fade":3}],3:[function(require,module,exports){
+var utils = require('./utils');
+
 /**
  * Slide down and up and fade in and out
  */
@@ -48,43 +54,26 @@ module.exports = function(options) {
     options: options,
 
     animateIn: function(element, done) {
-      var value = element.getComputedCSS(this.options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var before = { opacity: '0' };
-      var after = { opacity: '1' };
-
-      before[this.options.property] = '0px';
-      after[this.options.property] = value;
-
+      var transition = utils.getTransitionIn(element, this.options.property, this.options);
+      if (!transition) return done();
+      transition.states[0].opacity = '0';
+      transition.states[1].opacity = '1';
       element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
+
+      element.animate(transition.states, transition.options).onfinish = function() {
         element.style.overflow = '';
         done();
       };
     },
 
     animateOut: function(element, done) {
-      var value = element.getComputedCSS(this.options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var before = { opacity: '1' };
-      var after = { opacity: '0' };
-      before[this.options.property] = value;
-      after[this.options.property] = '0px';
-
+      var transition = utils.getTransitionOut(element, this.options.property, this.options);
+      if (!transition) return done();
+      transition.states[0].opacity = '1';
+      transition.states[1].opacity = '2';
       element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
+
+      element.animate(transition.states, transition.options).onfinish = function() {
         element.style.overflow = '';
         done();
       };
@@ -92,7 +81,7 @@ module.exports = function(options) {
   };
 };
 
-},{}],4:[function(require,module,exports){
+},{"./utils":8}],4:[function(require,module,exports){
 /**
  * Slide left and right
  */
@@ -113,7 +102,7 @@ module.exports = function(options) {
 };
 
 },{"./slide-move":6}],6:[function(require,module,exports){
-var slideAnimation = require('./slide');
+var utils = require('./utils');
 var animating = new Map();
 
 /**
@@ -129,10 +118,8 @@ module.exports = function(options) {
     options: options,
 
     animateIn: function(element, done) {
-      var value = element.getComputedCSS(options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
+      var transition = utils.getTransitionIn(element, this.options.property, this.options);
+      if (!transition) return done();
 
       var item = element.view && element.view._repeatItem_;
       if (item) {
@@ -142,30 +129,21 @@ module.exports = function(options) {
         });
       }
 
-      var before = {};
-      var after = {};
-      before[this.options.property] = '0px';
-      after[this.options.property] = value;
-
-      // Do the slide
       element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
+
+      element.animate(transition.states, transition.options).onfinish = function() {
         element.style.overflow = '';
         done();
       };
     },
 
-    animateOut: function(element, done) {
-      var value = element.getComputedCSS(options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
+    animateOut: function(element, done, skipMove) {
+      // Get the correct states before calling animateMove
+      var transition = utils.getTransitionOut(element, this.options.property, this.options);
+      if (!transition) return done();
 
       var item = element.view && element.view._repeatItem_;
-      if (item) {
+      if (item && !skipMove) {
         var newElement = animating.get(item);
         if (newElement && newElement.parentNode === element.parentNode) {
           // This item is being removed in one place and added into another. Make it look like its moving by making both
@@ -174,17 +152,9 @@ module.exports = function(options) {
         }
       }
 
-      var before = {};
-      var after = {};
-      before[this.options.property] = value;
-      after[this.options.property] = '0px';
-
-      // Do the slide
       element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
+
+      element.animate(transition.states, transition.options).onfinish = function() {
         element.style.overflow = '';
         done();
       };
@@ -211,7 +181,7 @@ module.exports = function(options) {
       parent.replaceChild(savePositionElem, oldElement);
 
       // Ensure all the moves have been processed
-      Promise.resolve().then(function() {
+      return Promise.resolve().then(function() {
         var newLeft = newElement.offsetLeft;
         var newTop = newElement.offsetTop;
 
@@ -243,7 +213,9 @@ module.exports = function(options) {
   };
 };
 
-},{"./slide":7}],7:[function(require,module,exports){
+},{"./utils":8}],7:[function(require,module,exports){
+var utils = require('./utils');
+
 /**
  * Slide down and up
  */
@@ -257,42 +229,22 @@ module.exports = function(options) {
     options: options,
 
     animateIn: function(element, done) {
-      var value = element.getComputedCSS(this.options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var before = {};
-      var after = {};
-      before[this.options.property] = '0px';
-      after[this.options.property] = value;
-
+      var transition = utils.getTransitionIn(element, this.options.property, this.options);
+      if (!transition) return done();
       element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
+
+      element.animate(transition.states, transition.options).onfinish = function() {
         element.style.overflow = '';
         done();
       };
     },
 
     animateOut: function(element, done) {
-      var value = element.getComputedCSS(this.options.property);
-      if (!value || value === '0px') {
-        return done();
-      }
-
-      var before = {};
-      var after = {};
-      before[this.options.property] = value;
-      after[this.options.property] = '0px';
-
+      var transition = utils.getTransitionOut(element, this.options.property, this.options);
+      if (!transition) return done();
       element.style.overflow = 'hidden';
-      element.animate([
-        before,
-        after
-      ], this.options).onfinish = function() {
+
+      element.animate(transition.states, transition.options).onfinish = function() {
         element.style.overflow = '';
         done();
       };
@@ -300,7 +252,68 @@ module.exports = function(options) {
   };
 };
 
-},{}],8:[function(require,module,exports){
+},{"./utils":8}],8:[function(require,module,exports){
+
+exports.getTransitionIn = function(element, property, defaults) {
+  if (!defaults) {
+    defaults = { duration: 250, easing: 'ease' };
+  }
+  var sides = property === 'height' ? [ 'top', 'bottom' ] : [ 'left', 'right' ];
+  var styles = getComputedStyles(element);
+  if (!styles[property]) {
+    return;
+  }
+
+  var before = {};
+  var after = {};
+  before[property] = '0px';
+  after[property] = styles[property];
+  sides.forEach(function(side) {
+    var Side = side[0].toUpperCase() + side.slice(1);
+    before['padding' + Side] = '0px';
+    before['margin' + Side] = '0px';
+    after['padding' + Side] = styles['padding' + Side];
+    after['margin' + Side] = styles['margin' + Side];
+  });
+
+  return {
+    states: [ before, after ],
+    options: {
+      duration: parseFloat(styles.transitionDuration) * 1000 || defaults.duration,
+      easing: styles.transitionTimingFunction || defaults.easing
+    }
+  };
+};
+
+exports.getTransitionOut = function(element, property, defaults) {
+  var trans = exports.getTransitionIn(element, property, defaults);
+  if (trans) {
+    trans.states.reverse();
+  }
+  return trans;
+};
+
+exports.getTransitionOptions = function(element, defaults) {
+  if (!defaults) {
+    defaults = { duration: 250, easing: 'ease' };
+  }
+
+  var styles = getComputedStyles(element);
+
+  return {
+    duration: parseFloat(styles.transitionDuration) * 1000 || defaults.duration,
+    easing: styles.transitionTimingFunction || defaults.easing
+  };
+};
+
+function getComputedStyles(element) {
+  if (element.ownerDocument.defaultView.opener) {
+    return element.ownerDocument.defaultView.getComputedStyle(element);
+  }
+  return window.getComputedStyle(element);
+}
+
+},{}],9:[function(require,module,exports){
 /**
  * A binder that toggles an attribute on or off if the expression is truthy or falsey. Use for attributes without
  * values such as `selected`, `disabled`, or `readonly`.
@@ -316,7 +329,7 @@ module.exports = function(specificAttrName) {
   };
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /**
  * A binder that automatically focuses the input when it is displayed on screen.
  */
@@ -332,7 +345,7 @@ module.exports = function() {
   };
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /**
  * Automatically selects the contents of an input when it receives focus.
  */
@@ -365,7 +378,7 @@ module.exports = function() {
   };
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /**
  * A binder that ensures anything bound to the class attribute won't overrite the classes binder. Should always be bound
  * to "class".
@@ -405,7 +418,7 @@ module.exports = function() {
   };
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /**
  * A binder that adds classes to an element dependent on whether the expression is true or false.
  */
@@ -419,7 +432,7 @@ module.exports = function() {
   };
 };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /**
  * An element binder that gets filled with the contents put inside a component.
  */
@@ -465,7 +478,7 @@ module.exports = function() {
   };
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports = Component;
 var ElementController = require('fragments-js/src/element-controller');
 var lifecycle = [ 'created', 'bound', 'attached', 'unbound', 'detached' ];
@@ -626,7 +639,7 @@ function dashify(str) {
             .toLowerCase();
 }
 
-},{"fragments-js/src/element-controller":78}],15:[function(require,module,exports){
+},{"fragments-js/src/element-controller":79}],16:[function(require,module,exports){
 var Component = require('./component-definition');
 var slice = Array.prototype.slice;
 
@@ -767,21 +780,7 @@ module.exports = function(ComponentClass, unwrapAttribute) {
       this.element.component = this.component;
 
       // Expose public properties onto the element
-      if (Array.isArray(this.component.public)) {
-        var descriptors = {};
-        this.component.public.forEach(function(name) {
-          if (typeof this[name] === 'function') {
-            descriptors[name] = { configurable: true, value: this[name].bind(this) };
-          } else {
-            descriptors[name] = {
-              configurable: true,
-              get: function() { return this.component[name] },
-              set: function(value) { this.component[name] = value }
-            };
-          }
-        }, this.component);
-        Object.defineProperties(this.element, descriptors);
-      }
+      addPublicProperties(this.component);
 
       this.element.dispatchEvent(new Event('componentized'));
 
@@ -803,11 +802,7 @@ module.exports = function(ComponentClass, unwrapAttribute) {
       }
 
       // Remove exposed public properties
-      if (Array.isArray(this.component.public)) {
-        this.component.public.forEach(function(name) {
-          delete this[name];
-        }, this.element);
-      }
+      removePublicProperties(this.component);
 
       this.component.element = null;
       this.element.component = null;
@@ -817,7 +812,43 @@ module.exports = function(ComponentClass, unwrapAttribute) {
   };
 };
 
-},{"./component-definition":14}],16:[function(require,module,exports){
+
+function addPublicProperties(component) {
+  component.mixins.forEach(function(mixin) {
+    if (!Array.isArray(mixin.public)) {
+      return;
+    }
+
+    var descriptors = {};
+    mixin.public.forEach(function(name) {
+      if (typeof component[name] === 'function') {
+        descriptors[name] = { configurable: true, value: component[name].bind(component) };
+      } else {
+        descriptors[name] = {
+          configurable: true,
+          get: function() { return component[name] },
+          set: function(value) { component[name] = value }
+        };
+      }
+    });
+
+    Object.defineProperties(component.element, descriptors);
+  });
+}
+
+
+function removePublicProperties(component) {
+  component.mixins.forEach(function(mixin) {
+    if (!Array.isArray(mixin.public)) {
+      return;
+    }
+    mixin.public.forEach(function(name) {
+      delete component.element[name];
+    });
+  });
+}
+
+},{"./component-definition":15}],17:[function(require,module,exports){
 var functionCallExp = /(^|[^\.\]a-z$_\$])([a-z$_\$][a-z_\$0-9-]*)\s*\(\s*(\S)/ig;
 
 /**
@@ -854,7 +885,7 @@ module.exports = function(specificEventName) {
   };
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * A binder that displays unescaped HTML inside an element. Be sure it's trusted! This should be used with formatters
  * which create HTML from something safe.
@@ -865,7 +896,7 @@ module.exports = function() {
   };
 };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * if, unless, else-if, else-unless, else
  * A binder init function that creates a binder that shows or hides the element if the value is truthy or falsey.
@@ -1002,11 +1033,13 @@ module.exports = function(elseIfAttrName, elseAttrName, unlessAttrName, elseUnle
         this.animating = true;
         this.animateIn(this.showing, function() {
           if (this.animating) {
-            this.animating = false;
-            // if the value changed while this was animating run it again
-            if (this.lastValue !== index) {
-              this.updatedAnimated(this.lastValue);
-            }
+            setTimeout(function() {
+              this.animating = false;
+              // if the value changed while this was animating run it again
+              if (this.lastValue !== index) {
+                  this.updatedAnimated(this.lastValue);
+              }
+            }.bind(this));
           }
         });
       }
@@ -1034,7 +1067,7 @@ function wrapIfExp(expr, isUnless) {
   }
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var keys = {
   backspace: 8,
   tab: 9,
@@ -1093,7 +1126,7 @@ module.exports = function(specificKeyName, specificEventName) {
   };
 };
 
-},{"./events":16}],20:[function(require,module,exports){
+},{"./events":17}],21:[function(require,module,exports){
 /**
  * A binder that prints out the value of the expression to the console.
  */
@@ -1114,7 +1147,7 @@ module.exports = function() {
   };
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * A binder that sets the property of an element to the value of the expression.
  */
@@ -1143,7 +1176,7 @@ module.exports = function(specificPropertyName) {
   };
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * A binder for radio buttons specifically
  */
@@ -1182,7 +1215,7 @@ module.exports = function(valueName) {
 };
 
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * A binder that sets a reference to the element when it is bound.
  */
@@ -1198,7 +1231,7 @@ module.exports = function () {
   };
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var diff = require('differences-js');
 
 /**
@@ -1448,7 +1481,7 @@ module.exports = function(compareByAttribute) {
   };
 };
 
-},{"differences-js":67}],25:[function(require,module,exports){
+},{"differences-js":68}],26:[function(require,module,exports){
 /**
  * Shows/hides an element conditionally. `if` should be used in most cases as it removes the element completely and is
  * more effecient since bindings within the `if` are not active while it is hidden. Use `show` for when the element
@@ -1527,7 +1560,7 @@ module.exports = function(isHide) {
   };
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var units = {
   '%': true,
   'em': true,
@@ -1567,7 +1600,7 @@ module.exports = function(specificStyleName, specificUnit) {
   };
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /**
  * ## text
  * A binder that displays escaped text inside an element. This can be done with binding directly in text nodes but
@@ -1596,7 +1629,7 @@ module.exports = function() {
   };
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var inputMethods, defaultInputMethod;
 
 /**
@@ -1726,7 +1759,7 @@ inputMethods = {
 };
 
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /**
  * Takes the input URL and adds (or replaces) the field in the query.
  * E.g. 'http://example.com?user=default&resource=foo' | addQuery('user', username)
@@ -1758,7 +1791,7 @@ module.exports = function(value, queryField, queryValue) {
   return url;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /**
  * Returns the item from an array at the given index
  */
@@ -1770,9 +1803,9 @@ module.exports = function(value, index) {
   }
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var urlExp = /(^|\s|\()((?:https?|ftp):\/\/[\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])/gi;
-var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$))/gim;
+var wwwExp = /(^|[^\/])(www\.[\S]+\.\w{2,}(\b|$)([\-A-Z0-9+\u0026@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~(_|])?)/gi;
 /**
  * Adds automatic links to escaped content (be sure to escape user content). Can be used on existing HTML content as it
  * will skip URLs within HTML tags. Passing a value in the second parameter will set the target to that value or
@@ -1795,7 +1828,7 @@ module.exports = function(value, target) {
   });
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /**
  * Formats the value into a boolean.
  */
@@ -1803,7 +1836,7 @@ module.exports = function(value) {
   return value && value !== '0' && value !== 'false';
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /**
  * Adds <br> tags in place of newlines characters.
  */
@@ -1814,26 +1847,6 @@ module.exports = function(value, setter) {
     var lines = (value || '').split(/\r?\n/);
     return lines.join('<br>\n');
   }
-};
-
-},{}],34:[function(require,module,exports){
-/**
- * Adds a formatter to format dates and strings simplistically
- */
-module.exports = function(value) {
-  if (!value) {
-    return '';
-  }
-
-  if (!(value instanceof Date)) {
-    value = new Date(value);
-  }
-
-  if (isNaN(value.getTime())) {
-    return '';
-  }
-
-  return value.toLocaleString();
 };
 
 },{}],35:[function(require,module,exports){
@@ -1853,10 +1866,30 @@ module.exports = function(value) {
     return '';
   }
 
-  return value.toLocaleDateString();
+  return value.toLocaleString();
 };
 
 },{}],36:[function(require,module,exports){
+/**
+ * Adds a formatter to format dates and strings simplistically
+ */
+module.exports = function(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (!(value instanceof Date)) {
+    value = new Date(value);
+  }
+
+  if (isNaN(value.getTime())) {
+    return '';
+  }
+
+  return value.toLocaleDateString();
+};
+
+},{}],37:[function(require,module,exports){
 var div = document.createElement('div');
 
 /**
@@ -1872,7 +1905,7 @@ module.exports = function (value, setter) {
   }
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * Filters an array by the given filter function(s), may provide a function or an array or an object with filtering
  * functions.
@@ -1908,7 +1941,7 @@ module.exports = function(value, filterFunc, testValue) {
   return value;
 };
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /**
  * Returns the first item from an array
  */
@@ -1920,7 +1953,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /**
  * Formats the value into a float or null.
  */
@@ -1929,7 +1962,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Formats the value something returned by a formatting function passed. Use for custom or one-off formats.
  */
@@ -1937,7 +1970,7 @@ module.exports = function(value, formatter, isSetter) {
   return formatter.call(this, value, isSetter);
 };
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Formats the value into an integer or null.
  */
@@ -1946,7 +1979,7 @@ module.exports = function(value) {
   return isNaN(value) ? null : value;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Formats the value into JSON.
  */
@@ -1966,7 +1999,7 @@ module.exports = function(value, isSetter) {
   }
 };
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 /**
  * Returns the keys of an object as an array
  */
@@ -1974,7 +2007,7 @@ module.exports = function(value) {
   return value == null ? [] : Object.keys(value);
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /**
  * Returns the last item from an array
  */
@@ -1986,7 +2019,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /**
  * Adds a formatter to limit the length of an array or string
  */
@@ -2002,7 +2035,7 @@ module.exports = function(value, limit) {
   }
 };
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /**
  * Adds a formatter to log the value of the expression, useful for debugging
  */
@@ -2014,7 +2047,7 @@ module.exports = function(value, prefix) {
   return value;
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /**
  * Formats the value into lower case.
  */
@@ -2022,7 +2055,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toLowerCase() : value;
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /**
  * Adds a formatter to map an array or value by the given mapping function
  */
@@ -2037,7 +2070,7 @@ module.exports = function(value, mapFunc) {
   }
 };
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 var escapeHTML = require('./escape');
 
 /**
@@ -2056,7 +2089,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{"./escape":36}],50:[function(require,module,exports){
+},{"./escape":37}],51:[function(require,module,exports){
 /**
  * Wraps lines into paragraphs (in <p> tags).
  */
@@ -2071,7 +2104,7 @@ module.exports = function(value, setter) {
   }
 };
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -2090,7 +2123,7 @@ module.exports = function(value, reduceFunc, initialValue) {
   }
 };
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /**
  * Adds a formatter to reverse an array
  */
@@ -2102,7 +2135,7 @@ module.exports = function(value) {
   }
 };
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /**
  * Adds a formatter to reduce an array or value by the given reduce function
  */
@@ -2114,7 +2147,7 @@ module.exports = function(value, index, endIndex) {
   }
 };
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 /**
  * Sorts an array given a field name or sort function, and a direction
  */
@@ -2145,7 +2178,7 @@ module.exports = function(value, sortFunc, dir) {
   return value.slice().sort(sortFunc.bind(this));
 };
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 /**
  * Adds a formatter to format dates and strings simplistically
  */
@@ -2165,7 +2198,7 @@ module.exports = function(value) {
   return value.toLocaleTimeString();
 };
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 /**
  * Formats the value into upper case.
  */
@@ -2173,7 +2206,7 @@ module.exports = function(value) {
   return typeof value === 'string' ? value.toUpperCase() : value;
 };
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 /**
  * Returns the values of an object (or an array) as an array
  */
@@ -2184,7 +2217,7 @@ module.exports = function(value) {
   });
 };
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -2303,12 +2336,12 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 module.exports = require('./src/chip');
 
-},{"./src/chip":64}],60:[function(require,module,exports){
-arguments[4][58][0].apply(exports,arguments)
-},{"dup":58}],61:[function(require,module,exports){
+},{"./src/chip":65}],61:[function(require,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"dup":59}],62:[function(require,module,exports){
 module.exports = EventTarget;
 var Class = require('./class');
 
@@ -2365,7 +2398,7 @@ Class.extend(EventTarget, {
   }
 });
 
-},{"./class":60}],62:[function(require,module,exports){
+},{"./class":61}],63:[function(require,module,exports){
 module.exports = App;
 var componentBinding = require('fragments-built-ins/binders/component');
 var Component = require('fragments-built-ins/binders/component-definition');
@@ -2562,7 +2595,8 @@ EventTarget.extend(App, {
     this.dispatchEvent(new CustomEvent('urlChange', { detail: {
       url: this.url,
       path: this.path,
-      query: this.query
+      query: this.query,
+      replace: false
     }}));
   },
 
@@ -2598,7 +2632,7 @@ if (typeof Object.assign !== 'function') {
   })();
 }
 
-},{"./default-options":65,"./mixins/default":66,"chip-utils/event-target":61,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-definition":14,"fragments-js":74,"routes-js":95}],63:[function(require,module,exports){
+},{"./default-options":66,"./mixins/default":67,"chip-utils/event-target":62,"fragments-built-ins/binders/component":16,"fragments-built-ins/binders/component-definition":15,"fragments-js":75,"routes-js":96}],64:[function(require,module,exports){
 var Route = require('routes-js').Route;
 var IfBinder = require('fragments-built-ins/binders/if');
 
@@ -2743,7 +2777,7 @@ module.exports = function() {
   return routeBinder;
 };
 
-},{"fragments-built-ins/binders/if":18,"routes-js":95}],64:[function(require,module,exports){
+},{"fragments-built-ins/binders/if":19,"routes-js":96}],65:[function(require,module,exports){
 var App = require('./app');
 
 // # Chip
@@ -2779,7 +2813,7 @@ chip.Class = require('chip-utils/class');
 chip.EventTarget = require('chip-utils/event-target');
 chip.routes = require('routes-js');
 
-},{"./app":62,"chip-utils/class":60,"chip-utils/event-target":61,"routes-js":95}],65:[function(require,module,exports){
+},{"./app":63,"chip-utils/class":61,"chip-utils/event-target":62,"routes-js":96}],66:[function(require,module,exports){
 
 module.exports = {
   curliesInAttributes: false,
@@ -2864,7 +2898,7 @@ module.exports = {
 
 };
 
-},{"./binders/route":63,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":8,"fragments-built-ins/binders/autofocus":9,"fragments-built-ins/binders/autoselect":10,"fragments-built-ins/binders/class":11,"fragments-built-ins/binders/classes":12,"fragments-built-ins/binders/component":15,"fragments-built-ins/binders/component-content":13,"fragments-built-ins/binders/events":16,"fragments-built-ins/binders/html":17,"fragments-built-ins/binders/if":18,"fragments-built-ins/binders/key-events":19,"fragments-built-ins/binders/log":20,"fragments-built-ins/binders/properties":21,"fragments-built-ins/binders/radio":22,"fragments-built-ins/binders/ref":23,"fragments-built-ins/binders/repeat":24,"fragments-built-ins/binders/show":25,"fragments-built-ins/binders/styles":26,"fragments-built-ins/binders/text":27,"fragments-built-ins/binders/value":28,"fragments-built-ins/formatters/add-query":29,"fragments-built-ins/formatters/at":30,"fragments-built-ins/formatters/autolink":31,"fragments-built-ins/formatters/bool":32,"fragments-built-ins/formatters/br":33,"fragments-built-ins/formatters/date":35,"fragments-built-ins/formatters/date-time":34,"fragments-built-ins/formatters/escape":36,"fragments-built-ins/formatters/filter":37,"fragments-built-ins/formatters/first":38,"fragments-built-ins/formatters/float":39,"fragments-built-ins/formatters/format":40,"fragments-built-ins/formatters/int":41,"fragments-built-ins/formatters/json":42,"fragments-built-ins/formatters/keys":43,"fragments-built-ins/formatters/last":44,"fragments-built-ins/formatters/limit":45,"fragments-built-ins/formatters/log":46,"fragments-built-ins/formatters/lower":47,"fragments-built-ins/formatters/map":48,"fragments-built-ins/formatters/newline":49,"fragments-built-ins/formatters/p":50,"fragments-built-ins/formatters/reduce":51,"fragments-built-ins/formatters/reverse":52,"fragments-built-ins/formatters/slice":53,"fragments-built-ins/formatters/sort":54,"fragments-built-ins/formatters/time":55,"fragments-built-ins/formatters/upper":56,"fragments-built-ins/formatters/values":57}],66:[function(require,module,exports){
+},{"./binders/route":64,"fragments-built-ins/animations/fade":1,"fragments-built-ins/animations/slide":7,"fragments-built-ins/animations/slide-fade":3,"fragments-built-ins/animations/slide-fade-horizontal":2,"fragments-built-ins/animations/slide-horizontal":4,"fragments-built-ins/animations/slide-move":6,"fragments-built-ins/animations/slide-move-horizontal":5,"fragments-built-ins/binders/attribute-names":9,"fragments-built-ins/binders/autofocus":10,"fragments-built-ins/binders/autoselect":11,"fragments-built-ins/binders/class":12,"fragments-built-ins/binders/classes":13,"fragments-built-ins/binders/component":16,"fragments-built-ins/binders/component-content":14,"fragments-built-ins/binders/events":17,"fragments-built-ins/binders/html":18,"fragments-built-ins/binders/if":19,"fragments-built-ins/binders/key-events":20,"fragments-built-ins/binders/log":21,"fragments-built-ins/binders/properties":22,"fragments-built-ins/binders/radio":23,"fragments-built-ins/binders/ref":24,"fragments-built-ins/binders/repeat":25,"fragments-built-ins/binders/show":26,"fragments-built-ins/binders/styles":27,"fragments-built-ins/binders/text":28,"fragments-built-ins/binders/value":29,"fragments-built-ins/formatters/add-query":30,"fragments-built-ins/formatters/at":31,"fragments-built-ins/formatters/autolink":32,"fragments-built-ins/formatters/bool":33,"fragments-built-ins/formatters/br":34,"fragments-built-ins/formatters/date":36,"fragments-built-ins/formatters/date-time":35,"fragments-built-ins/formatters/escape":37,"fragments-built-ins/formatters/filter":38,"fragments-built-ins/formatters/first":39,"fragments-built-ins/formatters/float":40,"fragments-built-ins/formatters/format":41,"fragments-built-ins/formatters/int":42,"fragments-built-ins/formatters/json":43,"fragments-built-ins/formatters/keys":44,"fragments-built-ins/formatters/last":45,"fragments-built-ins/formatters/limit":46,"fragments-built-ins/formatters/log":47,"fragments-built-ins/formatters/lower":48,"fragments-built-ins/formatters/map":49,"fragments-built-ins/formatters/newline":50,"fragments-built-ins/formatters/p":51,"fragments-built-ins/formatters/reduce":52,"fragments-built-ins/formatters/reverse":53,"fragments-built-ins/formatters/slice":54,"fragments-built-ins/formatters/sort":55,"fragments-built-ins/formatters/time":56,"fragments-built-ins/formatters/upper":57,"fragments-built-ins/formatters/values":58}],67:[function(require,module,exports){
 
 module.exports = function(app) {
 
@@ -2884,10 +2918,10 @@ module.exports = function(app) {
   };
 };
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 module.exports = require('./src/diff');
 
-},{"./src/diff":68}],68:[function(require,module,exports){
+},{"./src/diff":69}],69:[function(require,module,exports){
 /*
 Copyright (c) 2015 Jacob Wright <jacwright@gmail.com>
 
@@ -3293,10 +3327,10 @@ var diff = exports;
   }
 })();
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 module.exports = require('./src/expressions');
 
-},{"./src/expressions":70}],70:[function(require,module,exports){
+},{"./src/expressions":71}],71:[function(require,module,exports){
 var slice = Array.prototype.slice;
 var strings = require('./strings');
 var formatterParser = require('./formatters');
@@ -3397,7 +3431,7 @@ function bindArguments(func) {
   }
 }
 
-},{"./formatters":71,"./property-chains":72,"./strings":73}],71:[function(require,module,exports){
+},{"./formatters":72,"./property-chains":73,"./strings":74}],72:[function(require,module,exports){
 
 // finds pipes that are not ORs (i.e. ` | ` not ` || `) for formatters
 var pipeRegex = /\|(\|)?/g;
@@ -3469,7 +3503,7 @@ exports.parseFormatters = function(expr) {
   return setter + value;
 };
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 var referenceCount = 0;
 var currentReference = 0;
 var currentIndex = 0;
@@ -3814,7 +3848,7 @@ function addReferences(expr) {
   return expr;
 }
 
-},{}],73:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 // finds all quoted strings
 var quoteRegex = /(['"\/])(\\\1|[^\1])*?\1/g;
 
@@ -3860,7 +3894,7 @@ exports.putInStrings = function(expr) {
   return expr;
 };
 
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 var Fragments = require('./src/fragments');
 var Observations = require('observations-js');
 
@@ -3880,7 +3914,7 @@ function create(options) {
 // Create an instance of fragments with the default observer
 exports.create = create;
 
-},{"./src/fragments":79,"observations-js":85}],75:[function(require,module,exports){
+},{"./src/fragments":80,"observations-js":86}],76:[function(require,module,exports){
 module.exports = AnimatedBinding;
 var animation = require('./util/animation');
 var Binding = require('./binding');
@@ -4017,7 +4051,7 @@ Binding.extend(AnimatedBinding, {
    * Allow an element to use CSS3 transitions or animations to animate in or out of the page.
    */
   animateNode: function(direction, node, callback) {
-    var animateObject, className, classAnimateName, classWillName,
+    var animateObject, className, classAnimateName, classWillName, whenDone,
         methodAnimateName, methodWillName, methodDidName, dir, _this = this;
 
     if (this.animateObject && typeof this.animateObject === 'object') {
@@ -4035,43 +4069,37 @@ Binding.extend(AnimatedBinding, {
     methodAnimateName = 'animate' + dir;
     methodWillName = 'willAnimate' + dir;
     methodDidName = 'didAnimate' + dir;
+    whenDone = function() {
+      if (animateObject && animateObject[methodDidName]) animateObject[methodDidName](node);
+      node.classList.remove(classAnimateName);
+      if (className) node.classList.remove(className);
+      if (callback) callback.call(_this);
+      node.dispatchEvent(new Event('animateend' + direction));
+    };
 
     if (className) node.classList.add(className);
-    node.classList.add(classWillName);
+
+    node.dispatchEvent(new Event('animatestart' + direction));
 
     if (animateObject) {
       animation.makeElementAnimatable(node);
-      if (animateObject[methodWillName]) {
+      if (typeof animateObject[methodWillName] === 'function') {
         animateObject[methodWillName](node);
       }
-    }
-
-    // trigger reflow
-    node.offsetWidth = node.offsetWidth;
-
-    node.classList.add(classAnimateName);
-    node.classList.remove(classWillName);
-    node.dispatchEvent(new Event('animatestart'));
-
-    var whenDone = function() {
-      if (animateObject && animateObject[methodDidName]) animateObject[methodDidName](node);
-      if (callback) callback.call(_this);
-      node.classList.remove(classAnimateName);
-      if (className) node.classList.remove(className);
-      node.dispatchEvent(new Event('animateend'));
-    };
-
-    if (animateObject && animateObject[methodAnimateName]) {
-      animateObject[methodAnimateName](node, whenDone);
+      if (typeof animateObject[methodAnimateName] === 'function') {
+        node.classList.add(classAnimateName);
+        animateObject[methodAnimateName](node, whenDone);
+      }
     } else {
-      var duration = getDuration.call(this, node, direction);
+      node.classList.add(classWillName);
+      node.offsetWidth = node.offsetWidth;
+      node.classList.remove(classWillName);
+      node.classList.add(classAnimateName);
+      var duration = getDuration.call(_this, node, direction);
       if (duration) {
         onAnimationEnd(node, duration, whenDone);
       } else {
-        // Takes a couple frames to really take hold (at least on chrome)
-        requestAnimationFrame(function() {
-          requestAnimationFrame(whenDone);
-        });
+        requestAnimationFrame(whenDone);
       }
     }
   }
@@ -4111,14 +4139,14 @@ function getDuration(node, direction) {
                            parseFloat(styles[animationDurationName] || 0) +
                            parseFloat(styles[animationDelayName] || 0));
     milliseconds = seconds * 1000 || 0;
-    this.clonedFrom.__animationDuration__ = milliseconds;
+    this.clonedFrom['__animationDuration' + direction] = milliseconds;
   }
   return milliseconds;
 }
 
 
 function onAnimationEnd(node, duration, callback) {
-  var onEnd = function() {
+  var onEnd = function(event) {
     node.removeEventListener(transitionEventName, onEnd);
     node.removeEventListener(animationEventName, onEnd);
     clearTimeout(timeout);
@@ -4126,12 +4154,12 @@ function onAnimationEnd(node, duration, callback) {
   };
 
   // contingency plan
-  var timeout = setTimeout(onEnd, duration + 10);
+  var timeout = setTimeout(onEnd, duration);
 
   node.addEventListener(transitionEventName, onEnd);
   node.addEventListener(animationEventName, onEnd);
 }
-},{"./binding":76,"./util/animation":81}],76:[function(require,module,exports){
+},{"./binding":77,"./util/animation":82}],77:[function(require,module,exports){
 module.exports = Binding;
 var ElementController = require('./element-controller');
 
@@ -4313,7 +4341,7 @@ function initNodePath(node, view) {
   return path;
 }
 
-},{"./element-controller":78}],77:[function(require,module,exports){
+},{"./element-controller":79}],78:[function(require,module,exports){
 var slice = Array.prototype.slice;
 module.exports = compile;
 
@@ -4485,7 +4513,7 @@ function notEmpty(value) {
   return Boolean(value);
 }
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports = ElementController;
 var ObservableHash = require('observations-js').ObservableHash;
 
@@ -4595,7 +4623,7 @@ function removeListener(target, eventName, listener) {
   }
 }
 
-},{"observations-js":85}],79:[function(require,module,exports){
+},{"observations-js":86}],80:[function(require,module,exports){
 module.exports = Fragments;
 require('./util/polyfills');
 var Class = require('chip-utils/class');
@@ -4638,14 +4666,14 @@ function Fragments(options) {
 
   // Text binder for text nodes with expressions in them to be converted to HTML
   this.registerText('{*}', function(value) {
-    if (this.view) {
-      this.view.remove();
-      this.view = null;
+    if (this.content) {
+      this.content.remove();
+      this.content = null;
     }
 
-    if (typeof value === 'string' && value) {
-      this.view = View.makeInstanceOf(toFragment(value));
-      this.element.parentNode.insertBefore(this.view, this.element.nextSibling);
+    if (typeof value === 'string' && value || value instanceof Node) {
+      this.content = View.makeInstanceOf(toFragment(value));
+      this.element.parentNode.insertBefore(this.content, this.element.nextSibling);
     }
   });
 
@@ -5275,7 +5303,7 @@ function processOption(obj, fragments, methodName) {
     });
   }
 }
-},{"./animated-binding":75,"./binding":76,"./compile":77,"./template":80,"./util/animation":81,"./util/polyfills":82,"./util/toFragment":83,"./view":84,"chip-utils/class":58}],80:[function(require,module,exports){
+},{"./animated-binding":76,"./binding":77,"./compile":78,"./template":81,"./util/animation":82,"./util/polyfills":83,"./util/toFragment":84,"./view":85,"chip-utils/class":59}],81:[function(require,module,exports){
 module.exports = Template;
 var View = require('./view');
 var Class = require('chip-utils/class');
@@ -5315,7 +5343,7 @@ Class.extend(Template, {
   }
 });
 
-},{"./view":84,"chip-utils/class":58}],81:[function(require,module,exports){
+},{"./view":85,"chip-utils/class":59}],82:[function(require,module,exports){
 // Helper methods for animation
 exports.makeElementAnimatable = makeElementAnimatable;
 exports.getComputedCSS = getComputedCSS;
@@ -5408,7 +5436,7 @@ function animateElement(css, options) {
   return playback;
 }
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 
 
 
@@ -5435,7 +5463,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 module.exports = toFragment;
 
 // Convert stuff into document fragments. Stuff can be:
@@ -5558,7 +5586,7 @@ if (!document.createElement('template').content instanceof DocumentFragment) {
   })();
 }
 
-},{}],84:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 module.exports = View;
 var Class = require('chip-utils/class');
 
@@ -5571,6 +5599,7 @@ function View(template) {
   this.context = null;
   if (!template) template = this;
   this.template = template;
+  if (!this.template.bindings) this.template.bindings = [];
   this.bindings = this.template.bindings.map(function(binding) {
     return binding.cloneForView(this);
   }, this);
@@ -5691,7 +5720,7 @@ Class.extend(View, {
   }
 });
 
-},{"chip-utils/class":58}],85:[function(require,module,exports){
+},{"chip-utils/class":59}],86:[function(require,module,exports){
 
 exports.Observations = require('./src/observations');
 exports.Observer = require('./src/observer');
@@ -5700,7 +5729,7 @@ exports.create = function() {
   return new exports.Observations();
 };
 
-},{"./src/observable-hash":92,"./src/observations":93,"./src/observer":94}],86:[function(require,module,exports){
+},{"./src/observable-hash":93,"./src/observations":94,"./src/observer":95}],87:[function(require,module,exports){
 module.exports = ComputedProperty;
 var Class = require('chip-utils/class');
 
@@ -5743,7 +5772,7 @@ Class.extend(ComputedProperty, {
   }
 });
 
-},{"chip-utils/class":58}],87:[function(require,module,exports){
+},{"chip-utils/class":59}],88:[function(require,module,exports){
 module.exports = ExprProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5765,7 +5794,7 @@ ComputedProperty.extend(ExprProperty, {
   }
 });
 
-},{"./computed-property":86}],88:[function(require,module,exports){
+},{"./computed-property":87}],89:[function(require,module,exports){
 module.exports = IfProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5797,7 +5826,7 @@ ComputedProperty.extend(IfProperty, {
   }
 });
 
-},{"./computed-property":86}],89:[function(require,module,exports){
+},{"./computed-property":87}],90:[function(require,module,exports){
 module.exports = MapProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5888,7 +5917,7 @@ ComputedProperty.extend(MapProperty, {
   }
 });
 
-},{"./computed-property":86}],90:[function(require,module,exports){
+},{"./computed-property":87}],91:[function(require,module,exports){
 module.exports = WhenProperty;
 var ComputedProperty = require('./computed-property');
 
@@ -5939,7 +5968,7 @@ ComputedProperty.extend(WhenProperty, {
   }
 });
 
-},{"./computed-property":86}],91:[function(require,module,exports){
+},{"./computed-property":87}],92:[function(require,module,exports){
 var ComputedProperty = require('./computed-properties/computed-property');
 var ExprProperty = require('./computed-properties/expr');
 var MapProperty = require('./computed-properties/map');
@@ -6103,7 +6132,7 @@ function ensureObservers(obj, options) {
   return obj;
 }
 
-},{"./computed-properties/computed-property":86,"./computed-properties/expr":87,"./computed-properties/if":88,"./computed-properties/map":89,"./computed-properties/when":90}],92:[function(require,module,exports){
+},{"./computed-properties/computed-property":87,"./computed-properties/expr":88,"./computed-properties/if":89,"./computed-properties/map":90,"./computed-properties/when":91}],93:[function(require,module,exports){
 module.exports = ObservableHash;
 var Class = require('chip-utils/class');
 var deepDelimiter = /(?:\[\]|\{\})\.?/i;
@@ -6267,6 +6296,7 @@ Class.extend(ObservableHash, {
     if (!deepDelimiter.test(expression)) {
       return this.track(expression, onAdd, onRemove, callbackContext);
     }
+    callbackContext = callbackContext || this;
     var observers = new WeakMap();
     var observations = this._observations;
     var steps = expression.split(deepDelimiter);
@@ -6310,10 +6340,10 @@ Class.extend(ObservableHash, {
         if (!item) return;
         var observer = observations.createObserver(steps[lastIndex], function(value, oldValue) {
           if (oldValue != null && typeof onRemove === 'function') {
-            onRemove.call(callbackContext, oldValue, key);
+            onRemove.call(callbackContext, oldValue, key, item);
           }
           if (value != null && typeof onAdd === 'function') {
-            onAdd.call(callbackContext, value, key);
+            onAdd.call(callbackContext, value, key, item);
           }
         });
         observers.set(item, observer);
@@ -6333,7 +6363,7 @@ Class.extend(ObservableHash, {
 
 });
 
-},{"chip-utils/class":58}],93:[function(require,module,exports){
+},{"chip-utils/class":59}],94:[function(require,module,exports){
 (function (global){
 module.exports = Observations;
 var Class = require('chip-utils/class');
@@ -6448,7 +6478,10 @@ Class.extend(Observations, {
         changes.forEach(function(change) {
           if (change.type === 'splice') {
             change.removed.forEach(function(item, index) {
-              onRemove(item, index + change.index);
+              // Only call onRemove if this item was removed completely, not if it just changed location in the array
+              if (source.indexOf(item) === -1) {
+                onRemove(item, index + change.index);
+              }
             }, callbackContext);
           } else {
             if (change.oldValue != null) {
@@ -6461,12 +6494,15 @@ Class.extend(Observations, {
         changes.forEach(function(change) {
           if (change.type === 'splice') {
             source.slice(change.index, change.index + change.addedCount).forEach(function(item, index) {
-              onAdd(item, index + change.index);
+              // Only call onAdd if this item was added, not if it changed location in the array
+              if (oldValue.indexOf(item) === -1) {
+                onAdd(item, index + change.index, source);
+              }
             }, callbackContext);
           } else {
             var value = source[change.name];
             if (value != null) {
-              onAdd.call(callbackContext, value, change.name);
+              onAdd.call(callbackContext, value, change.name, source);
             }
           }
         });
@@ -6476,7 +6512,7 @@ Class.extend(Observations, {
         Object.keys(source).forEach(function(key) {
           var value = source[key];
           if (value != null) {
-            onAdd.call(callbackContext, value, key);
+            onAdd.call(callbackContext, value, key, source);
           }
         });
       } else if (Array.isArray(oldValue)) {
@@ -6486,7 +6522,7 @@ Class.extend(Observations, {
         Object.keys(oldValue).forEach(function(key) {
           var value = oldValue[key];
           if (value != null) {
-            onRemove.call(callbackContext, value, key);
+            onRemove.call(callbackContext, value, key, oldValue);
           }
         });
       }
@@ -6675,7 +6711,7 @@ Class.extend(Observations, {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./computed":91,"./observable-hash":92,"./observer":94,"chip-utils/class":58,"expressions-js":69}],94:[function(require,module,exports){
+},{"./computed":92,"./observable-hash":93,"./observer":95,"chip-utils/class":59,"expressions-js":70}],95:[function(require,module,exports){
 module.exports = Observer;
 var Class = require('chip-utils/class');
 var expressions = require('expressions-js');
@@ -6791,6 +6827,15 @@ Class.extend(Observer, {
     // Don't call the callback if `skipNextSync` was called on the observer
     if (this.skip || !this.callback) {
       this.skip = false;
+
+      if (this.getChangeRecords) {
+        // Store an immutable version of the value, allowing for arrays and objects to change instance but not content and
+        // still refrain from dispatching callbacks (e.g. when using an object in bind-class or when using array formatters
+        // in bind-each)
+        this.oldValue = diff.clone(value);
+      } else {
+        this.oldValue = value;
+      }
     } else {
       var change;
       var useCompareBy = this.getChangeRecords &&
@@ -6820,24 +6865,25 @@ Class.extend(Observer, {
         changed = diff.basic(value, this.oldValue);
       }
 
+      var oldValue = this.oldValue;
+
+      if (this.getChangeRecords) {
+        // Store an immutable version of the value, allowing for arrays and objects to change instance but not content and
+        // still refrain from dispatching callbacks (e.g. when using an object in bind-class or when using array formatters
+        // in bind-each)
+        this.oldValue = diff.clone(value);
+      } else {
+        this.oldValue = value;
+      }
 
       // If an array has changed calculate the splices and call the callback.
       if (!changed && !this.forceUpdateNextSync) return;
       this.forceUpdateNextSync = false;
       if (Array.isArray(changed)) {
-        this.callback.call(this.callbackContext, value, this.oldValue, changed);
+        this.callback.call(this.callbackContext, value, oldValue, changed);
       } else {
-        this.callback.call(this.callbackContext, value, this.oldValue);
+        this.callback.call(this.callbackContext, value, oldValue);
       }
-    }
-
-    if (this.getChangeRecords) {
-      // Store an immutable version of the value, allowing for arrays and objects to change instance but not content and
-      // still refrain from dispatching callbacks (e.g. when using an object in bind-class or when using array formatters
-      // in bind-each)
-      this.oldValue = diff.clone(value);
-    } else {
-      this.oldValue = value;
     }
   }
 });
@@ -6848,7 +6894,7 @@ function mapToProperty(property) {
   }
 }
 
-},{"chip-utils/class":58,"differences-js":67,"expressions-js":69}],95:[function(require,module,exports){
+},{"chip-utils/class":59,"differences-js":68,"expressions-js":70}],96:[function(require,module,exports){
 
 exports.Router = require('./src/router');
 exports.Route = require('./src/route');
@@ -6859,7 +6905,7 @@ exports.create = function(options) {
   return new exports.Router(options);
 };
 
-},{"./src/hash-location":98,"./src/location":99,"./src/push-location":100,"./src/route":101,"./src/router":102}],96:[function(require,module,exports){
+},{"./src/hash-location":99,"./src/location":100,"./src/push-location":101,"./src/route":102,"./src/router":103}],97:[function(require,module,exports){
 var slice = Array.prototype.slice;
 
 /**
@@ -6970,9 +7016,9 @@ function makeInstanceOf(object) {
   return object;
 }
 
-},{}],97:[function(require,module,exports){
-arguments[4][61][0].apply(exports,arguments)
-},{"./class":96,"dup":61}],98:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
+arguments[4][62][0].apply(exports,arguments)
+},{"./class":97,"dup":62}],99:[function(require,module,exports){
 module.exports = HashLocation;
 var Location = require('./location');
 
@@ -6991,7 +7037,7 @@ Location.extend(HashLocation, {
         value = this.getRelativeUrl(value);
       }
       history.replaceState({}, '', '#' + value);
-      this._changeTo(value);
+      this._changeTo(value, replace);
     } else {
       this.url = value;
     }
@@ -7011,7 +7057,7 @@ Location.extend(HashLocation, {
 
 });
 
-},{"./location":99}],99:[function(require,module,exports){
+},{"./location":100}],100:[function(require,module,exports){
 module.exports = Location;
 var EventTarget = require('chip-utils/event-target');
 var doc = document.implementation.createHTMLDocument('');
@@ -7088,12 +7134,13 @@ EventTarget.extend(Location, {
     return parseQuery(this.currentUrl.split('?').slice(1).join('?'));
   },
 
-  _changeTo: function(url) {
+  _changeTo: function(url, replace) {
     this.currentUrl = url;
     this.dispatchEvent(new CustomEvent('change', { detail: {
       url: url,
       path: this.path,
-      query: this.query
+      query: this.query,
+      replace: replace || false
     }}));
   },
 
@@ -7123,7 +7170,7 @@ function parseQuery(search) {
 PushLocation = require('./push-location');
 HashLocation = require('./hash-location');
 
-},{"./hash-location":98,"./push-location":100,"chip-utils/event-target":97}],100:[function(require,module,exports){
+},{"./hash-location":99,"./push-location":101,"chip-utils/event-target":98}],101:[function(require,module,exports){
 module.exports = PushLocation;
 var Location = require('./location');
 var uriParts = document.createElement('a');
@@ -7150,7 +7197,7 @@ Location.extend(PushLocation, {
     if (this.currentUrl !== value) {
       replace ? history.replaceState({}, '', value) : history.pushState({}, '', value);
       // Manually change since no event is dispatched when using pushState/replaceState
-      this._changeTo(value);
+      this._changeTo(value, replace);
     }
   },
 
@@ -7163,7 +7210,7 @@ Location.extend(PushLocation, {
   }
 });
 
-},{"./location":99}],101:[function(require,module,exports){
+},{"./location":100}],102:[function(require,module,exports){
 module.exports = Route;
 var Class = require('chip-utils/class');
 
@@ -7248,7 +7295,7 @@ function parsePath(path, keys) {
   return new RegExp('^' + path + '$', 'i');
 }
 
-},{"chip-utils/class":96}],102:[function(require,module,exports){
+},{"chip-utils/class":97}],103:[function(require,module,exports){
 module.exports = Router;
 var Route = require('./route');
 var EventTarget = require('chip-utils/event-target');
@@ -7409,6 +7456,6 @@ EventTarget.extend(Router, {
 
 });
 
-},{"./location":99,"./route":101,"chip-utils/event-target":97}]},{},[59])(59)
+},{"./location":100,"./route":102,"chip-utils/event-target":98}]},{},[60])(60)
 });
 //# sourceMappingURL=chip.js.map
