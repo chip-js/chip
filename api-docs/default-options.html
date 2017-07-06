@@ -60,10 +60,10 @@
             
             <div class="content"><div class='highlight'><pre>
 <span class="hljs-built_in">module</span>.exports = {
-  curliesInAttributes: <span class="hljs-literal">false</span>,
-  animateAttribute: <span class="hljs-string">'[animate]'</span>,
+  <span class="hljs-attr">curliesInAttributes</span>: <span class="hljs-literal">false</span>,
+  <span class="hljs-attr">animateAttribute</span>: <span class="hljs-string">'[animate]'</span>,
 
-  binders: {
+  <span class="hljs-attr">binders</span>: {
     <span class="hljs-string">'(keydown.*)'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-literal">null</span>, <span class="hljs-string">'keydown'</span>),
     <span class="hljs-string">'(keyup.*)'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-literal">null</span>, <span class="hljs-string">'keyup'</span>),
     <span class="hljs-string">'(enter)'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-string">'enter'</span>),
@@ -98,39 +98,39 @@
     <span class="hljs-string">'[route]'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'./binders/route'</span>)()
   },
 
-  formatters: {
-    addQuery: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/add-query'</span>),
-    at: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/at'</span>),
-    autolink: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/autolink'</span>),
-    bool: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/bool'</span>),
-    br: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/br'</span>),
-    dateTime: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/date-time'</span>),
-    date: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/date'</span>),
-    <span class="hljs-built_in">escape</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/escape'</span>),
-    filter: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/filter'</span>),
-    first: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/first'</span>),
-    float: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/float'</span>),
-    format: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/format'</span>),
-    int: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/int'</span>),
-    json: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/json'</span>),
-    keys: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/keys'</span>),
-    last: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/last'</span>),
-    limit: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/limit'</span>),
-    log: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/log'</span>),
-    lower: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/lower'</span>),
-    map: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/map'</span>),
-    newline: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/newline'</span>),
-    p: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/p'</span>),
-    reduce: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/reduce'</span>),
-    reverse: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/reverse'</span>),
-    slice: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/slice'</span>),
-    sort: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/sort'</span>),
-    time: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/time'</span>),
-    upper: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/upper'</span>),
-    values: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/values'</span>)
+  <span class="hljs-attr">formatters</span>: {
+    <span class="hljs-attr">addQuery</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/add-query'</span>),
+    <span class="hljs-attr">at</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/at'</span>),
+    <span class="hljs-attr">autolink</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/autolink'</span>),
+    <span class="hljs-attr">bool</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/bool'</span>),
+    <span class="hljs-attr">br</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/br'</span>),
+    <span class="hljs-attr">dateTime</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/date-time'</span>),
+    <span class="hljs-attr">date</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/date'</span>),
+    <span class="hljs-attr">escape</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/escape'</span>),
+    <span class="hljs-attr">filter</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/filter'</span>),
+    <span class="hljs-attr">first</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/first'</span>),
+    <span class="hljs-attr">float</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/float'</span>),
+    <span class="hljs-attr">format</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/format'</span>),
+    <span class="hljs-attr">int</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/int'</span>),
+    <span class="hljs-attr">json</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/json'</span>),
+    <span class="hljs-attr">keys</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/keys'</span>),
+    <span class="hljs-attr">last</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/last'</span>),
+    <span class="hljs-attr">limit</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/limit'</span>),
+    <span class="hljs-attr">log</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/log'</span>),
+    <span class="hljs-attr">lower</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/lower'</span>),
+    <span class="hljs-attr">map</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/map'</span>),
+    <span class="hljs-attr">newline</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/newline'</span>),
+    <span class="hljs-attr">p</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/p'</span>),
+    <span class="hljs-attr">reduce</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/reduce'</span>),
+    <span class="hljs-attr">reverse</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/reverse'</span>),
+    <span class="hljs-attr">slice</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/slice'</span>),
+    <span class="hljs-attr">sort</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/sort'</span>),
+    <span class="hljs-attr">time</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/time'</span>),
+    <span class="hljs-attr">upper</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/upper'</span>),
+    <span class="hljs-attr">values</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters/values'</span>)
   },
 
-  animations: {
+  <span class="hljs-attr">animations</span>: {
     <span class="hljs-string">'fade'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/animations/fade'</span>)(),
     <span class="hljs-string">'slide'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/animations/slide'</span>)(),
     <span class="hljs-string">'slide-h'</span>: <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/animations/slide-horizontal'</span>)(),
