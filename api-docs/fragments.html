@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>fragments.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+              
+                
+                <a class="source" href="app.html">
+                  app.js
+                </a>
+              
+                
+                <a class="source" href="chip.html">
+                  chip.js
+                </a>
+              
+                
+                <a class="source" href="fragments.html">
+                  fragments.js
+                </a>
+              
+            </div>
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>fragments.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> createFragments = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-js'</span>).create;
+
+<span class="hljs-built_in">module</span>.exports = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+
+  <span class="hljs-keyword">var</span> fragments = createFragments();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>Configure</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  fragments.setExpressionDelimiters(<span class="hljs-string">'attribute'</span>, <span class="hljs-string">'{{'</span>, <span class="hljs-string">'}}'</span>, <span class="hljs-literal">true</span>);
+  fragments.animateAttribute = <span class="hljs-string">'[animate]'</span>;
+  <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/animations'</span>)(fragments);
+  <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/formatters'</span>)(fragments);
+
+  fragments.registerAttribute(<span class="hljs-string">'(keydown.*)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-literal">null</span>, <span class="hljs-string">'keydown'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(keyup.*)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-literal">null</span>, <span class="hljs-string">'keyup'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(enter)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-string">'enter'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(esc)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/key-events'</span>)(<span class="hljs-string">'esc'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'(*)'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/events'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'{*}'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/properties'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'{{*}}'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/properties-2-way'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'*?'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/attribute-names'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[content]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component-content'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[show]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/show'</span>)(<span class="hljs-literal">false</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[hide]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/show'</span>)(<span class="hljs-literal">true</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[for]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/repeat'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'#*'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/ref'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[text]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/text'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[html]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/html'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[src]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/properties'</span>)(<span class="hljs-string">'src'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[log]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/log'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[class]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/class'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[.*]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/classes'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[style.*]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/styles'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[autofocus]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/autofocus'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[autoselect]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/autoselect'</span>)());
+  fragments.registerAttribute(<span class="hljs-string">'[name]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/radio'</span>)(<span class="hljs-string">'[value]'</span>));
+  fragments.registerAttribute(<span class="hljs-string">'[value]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/value'</span>)(
+    <span class="hljs-string">'[value-events]'</span>,
+    <span class="hljs-string">'[value-field]'</span>
+  ));
+  fragments.registerAttribute(<span class="hljs-string">'[component]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component'</span>)(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">componentName</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fragments.app.component(componentName);
+  }));
+
+  <span class="hljs-keyword">var</span> IfBinding = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/if'</span>)(<span class="hljs-string">'[else-if]'</span>, <span class="hljs-string">'[else]'</span>, <span class="hljs-string">'[unless]'</span>, <span class="hljs-string">'[unless-if]'</span>);
+  fragments.registerAttribute(<span class="hljs-string">'[if]'</span>, IfBinding);
+  fragments.registerAttribute(<span class="hljs-string">'[unless]'</span>, IfBinding);
+
+  fragments.registerAttribute(<span class="hljs-string">'[route]'</span>, <span class="hljs-built_in">require</span>(<span class="hljs-string">'./binders/route'</span>)());
+
+  <span class="hljs-keyword">return</span> fragments;
+};</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

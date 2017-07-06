@@ -26,7 +26,16 @@ jQuery plugins. In this way, Chip not only remains small, but understandable. Th
 can be read and understood in a day or two. The ramp-up time is very short. And your productivity and enjoyment is
 increased because of simpler and smaller APIs that do just as much as the big guys.
 
+## What others are saying
+
+Dan Matthews:
+> Chip 2 is seriously excellent stuff. I'm thoroughly impressed. Feels like it felt when I went from KnockoutJS to
+  Angular 1. Orders of magnitude better than what I was doing before.<br>...<br>
+  The mixins along with the chainability of `attached`, `detached` and `created` is making my source so freaking clean.
+
 ## The pieces
+
+***This is outdated documentation. Please ignore until we update it.***
 
 A Chip application is made up of your model (provided by yourself), controllers, and the HTML. Other than that it only
 provides routing.
@@ -119,7 +128,7 @@ The declaration of this property informs the application that a ToDo has a prior
   controller.saveTodo = function() {
     var description = controller.editDescription.trim();
     var priority = parseInt(controller.priority);
-    
+
     if (description) {
       controller.todo.description = controller.description;
       controller.todo.save();

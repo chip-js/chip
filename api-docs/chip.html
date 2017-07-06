@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Chip</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+              
+                
+                <a class="source" href="app.html">
+                  app.js
+                </a>
+              
+                
+                <a class="source" href="chip.html">
+                  chip.js
+                </a>
+              
+                
+                <a class="source" href="default-options.html">
+                  default-options.js
+                </a>
+              
+            </div>
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> App = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./app'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h1 id="chip">Chip</h1>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <blockquote>
+<p>Chip.js 2.0.0</p>
+<p>(c) 2013 Jacob Wright, TeamSnap
+Chip may be freely distributed under the MIT license.
+For all details and documentation:
+<a href="https://github.com/teamsnap/chip/">https://github.com/teamsnap/chip/</a></p>
+</blockquote>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2 id="contents">Contents</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <ul>
+<li><a href="chip.html">chip</a> the namespace, creates apps, and registers bindings and filters</li>
+<li><a href="app.html">App</a> represents an app that can have routes, controllers, and templates defined</li>
+<li><a href="controller.html">Controller</a> is used in the binding to attach data and run actions</li>
+<li><a href="router.html">Router</a> is used for handling URL rounting</li>
+<li><a href="binders.html">Default binders</a> registers the default binders chip provides</li>
+</ul>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2 id="create-chip-app">Create Chip App</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Creates a new chip app</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = chip;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">chip</span>(<span class="hljs-params">options</span>) </span>{
+  <span class="hljs-keyword">var</span> app = <span class="hljs-keyword">new</span> App(options);
+  app.init();
+  <span class="hljs-keyword">return</span> app;
+}
+
+chip.App = App;
+chip.Class = <span class="hljs-built_in">require</span>(<span class="hljs-string">'chip-utils/class'</span>);
+chip.EventTarget = <span class="hljs-built_in">require</span>(<span class="hljs-string">'chip-utils/event-target'</span>);
+chip.routes = <span class="hljs-built_in">require</span>(<span class="hljs-string">'routes-js'</span>);</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

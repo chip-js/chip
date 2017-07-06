@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Chip App</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+              
+                
+                <a class="source" href="app.html">
+                  app.js
+                </a>
+              
+                
+                <a class="source" href="chip.html">
+                  chip.js
+                </a>
+              
+                
+                <a class="source" href="default-options.html">
+                  default-options.js
+                </a>
+              
+            </div>
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = App;
+<span class="hljs-keyword">var</span> componentBinding = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component'</span>);
+<span class="hljs-keyword">var</span> Component = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-built-ins/binders/component-definition'</span>);
+<span class="hljs-keyword">var</span> Location = <span class="hljs-built_in">require</span>(<span class="hljs-string">'routes-js'</span>).Location;
+<span class="hljs-keyword">var</span> EventTarget = <span class="hljs-built_in">require</span>(<span class="hljs-string">'chip-utils/event-target'</span>);
+<span class="hljs-keyword">var</span> fragments = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fragments-js'</span>);
+<span class="hljs-keyword">var</span> defaultOptions = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./default-options'</span>)
+<span class="hljs-keyword">var</span> defaultMixin = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./mixins/default'</span>);
+<span class="hljs-keyword">var</span> slice = <span class="hljs-built_in">Array</span>.prototype.slice;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h1 id="chip-app">Chip App</h1>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>An App represents an app or module that can have routes, controllers, and templates defined.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">App</span>(<span class="hljs-params">options</span>) </span>{
+  options = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions, options);
+  options.binders = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.binders, options.binders);
+  options.formatters = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.formatters, options.formatters);
+  options.animations = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.animations, options.animations);
+  options.components = <span class="hljs-built_in">Object</span>.assign({}, defaultOptions.components, options.components);
+
+  EventTarget.call(<span class="hljs-keyword">this</span>);
+  <span class="hljs-keyword">this</span>.fragments = fragments.create(options);
+  <span class="hljs-keyword">this</span>.components = {};
+  <span class="hljs-keyword">this</span>.fragments.app = <span class="hljs-keyword">this</span>;
+  <span class="hljs-keyword">this</span>.location = Location.create(options);
+  <span class="hljs-keyword">this</span>.defaultMixin = defaultMixin(<span class="hljs-keyword">this</span>);
+  <span class="hljs-keyword">this</span>._listening = <span class="hljs-literal">false</span>;
+  <span class="hljs-keyword">this</span>.useCustomElements = options.useCustomElements;
+
+  <span class="hljs-keyword">this</span>.rootElement = options.rootElement || <span class="hljs-built_in">document</span>.documentElement;
+  <span class="hljs-keyword">this</span>.sync = <span class="hljs-keyword">this</span>.fragments.sync;
+  <span class="hljs-keyword">this</span>.syncNow = <span class="hljs-keyword">this</span>.fragments.syncNow;
+  <span class="hljs-keyword">this</span>.afterSync = <span class="hljs-keyword">this</span>.fragments.afterSync;
+  <span class="hljs-keyword">this</span>.onSync = <span class="hljs-keyword">this</span>.fragments.onSync;
+  <span class="hljs-keyword">this</span>.offSync = <span class="hljs-keyword">this</span>.fragments.offSync;
+  <span class="hljs-keyword">this</span>.observations = <span class="hljs-keyword">this</span>.fragments.observations;
+  <span class="hljs-keyword">this</span>.computed = <span class="hljs-keyword">this</span>.observations.computed;
+  <span class="hljs-keyword">this</span>.observe = <span class="hljs-keyword">this</span>.fragments.observe.bind(<span class="hljs-keyword">this</span>.fragments);
+  <span class="hljs-keyword">this</span>.location.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>.sync);
+
+  <span class="hljs-keyword">this</span>.fragments.setExpressionDelimiters(<span class="hljs-string">'attribute'</span>, <span class="hljs-string">'{{'</span>, <span class="hljs-string">'}}'</span>, !options.curliesInAttributes);
+  <span class="hljs-keyword">this</span>.fragments.animateAttribute = options.animateAttribute;
+
+  <span class="hljs-built_in">Object</span>.keys(options.components).forEach(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name</span>) </span>{
+    <span class="hljs-keyword">this</span>.component(name, options.components[name]);
+  }, <span class="hljs-keyword">this</span>);
+}
+
+EventTarget.extend(App, {
+  <span class="hljs-attr">Component</span>: Component,
+
+  <span class="hljs-attr">init</span>: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">root</span>) </span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.inited) {
+      <span class="hljs-keyword">return</span>;
+    }
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">'loading'</span>) {
+      <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.init.bind(<span class="hljs-keyword">this</span>, root));
+      <span class="hljs-keyword">return</span>;
+    }
+
+    <span class="hljs-keyword">this</span>.inited = <span class="hljs-literal">true</span>
+    <span class="hljs-keyword">if</span> (root) {
+      <span class="hljs-keyword">this</span>.rootElement = root;
+    }
+
+    <span class="hljs-keyword">this</span>.fragments.bindElement(<span class="hljs-keyword">this</span>.rootElement, <span class="hljs-keyword">this</span>);
+    <span class="hljs-keyword">this</span>.rootElement.attached();
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2 id="components">Components</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Registers a new component by name with the given definition. provided <code>content</code> string. If no <code>content</code> is given
+then returns a new instance of a defined template. This instance is a document fragment.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  component: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, definition</span>) </span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">arguments</span>.length === <span class="hljs-number">1</span>) {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.components[name];
+    }
+
+    <span class="hljs-keyword">var</span> ComponentClass;
+    <span class="hljs-keyword">if</span> (definition.prototype <span class="hljs-keyword">instanceof</span> Component) {
+      ComponentClass = definition;
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">var</span> definitions = slice.call(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>);
+      definitions.unshift(<span class="hljs-keyword">this</span>.defaultMixin);
+      ComponentClass = Component.extend.apply(Component, definitions);
+    }
+
+    ComponentClass.prototype.name = name;
+    <span class="hljs-keyword">this</span>.components[name] = ComponentClass;
+    <span class="hljs-keyword">this</span>.fragments.registerElement(name, componentBinding(ComponentClass));
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Register an attribute binder with this application.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  binder: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, binder</span>) </span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">arguments</span>.length === <span class="hljs-number">1</span>) {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fragments.getAttributeBinder(name);
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fragments.registerAttribute(name, binder);
+    }
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>Register a formatter with this application</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  formatter: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, formatter</span>) </span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">arguments</span>.length === <span class="hljs-number">1</span>) {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fragments.getFormatter(name);
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fragments.registerFormatter(name, formatter);
+    }
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Register an animation with this application</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  animation: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">name, animation</span>) </span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">arguments</span>.length === <span class="hljs-number">1</span>) {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fragments.getAnimation(name);
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.fragments.registerAnimation(name, animation);
+    }
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Redirects to the provided URL</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  redirect: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">url, replace</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.location.redirect(url, replace);
+  },
+
+
+  get listening() {
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._listening;
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>Listen to URL changes</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  listen: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">var</span> app = <span class="hljs-keyword">this</span>;
+    <span class="hljs-keyword">this</span>._listening = <span class="hljs-literal">true</span>;
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">'loading'</span>) {
+      <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, <span class="hljs-keyword">this</span>.listen.bind(<span class="hljs-keyword">this</span>));
+      <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>Add handler for when the route changes</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>._locationChangeHandler = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{
+      app.url = event.detail.url;
+      app.path = event.detail.path;
+      app.query = event.detail.query;
+      app.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { <span class="hljs-attr">detail</span>: event.detail }));
+    };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>Add handler for clicking links</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">this</span>._clickHandler = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{
+      <span class="hljs-keyword">var</span> anchor;
+      <span class="hljs-keyword">if</span> ( !(anchor = event.target.closest(<span class="hljs-string">'a[href]'</span>)) ) {
+        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">if</span> (event.defaultPrevented ||
+        location.protocol !== anchor.protocol ||
+        location.host !== anchor.host.replace(<span class="hljs-regexp">/:80$|:443$/</span>, <span class="hljs-string">''</span>))
+      {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>if something else already handled this, we won’t
+if it is for another protocol or domain, we won’t</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">var</span> url = anchor.getAttribute(<span class="hljs-string">'href'</span>).replace(<span class="hljs-regexp">/^#/</span>, <span class="hljs-string">''</span>);
+
+      <span class="hljs-keyword">if</span> (event.metaKey || event.ctrlKey || anchor.hasAttribute(<span class="hljs-string">'target'</span>)) {
+        <span class="hljs-keyword">return</span>;
+      }
+
+      event.preventDefault();
+      <span class="hljs-keyword">if</span> (anchor.href === location.href + <span class="hljs-string">'#'</span>) {
+        <span class="hljs-keyword">return</span>;
+      }
+
+      <span class="hljs-keyword">if</span> (!anchor.disabled) {
+        app.redirect(url);
+      }
+    };
+
+    <span class="hljs-keyword">this</span>.location.on(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>._locationChangeHandler);
+    <span class="hljs-keyword">this</span>.rootElement.addEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
+    <span class="hljs-keyword">this</span>.url = <span class="hljs-keyword">this</span>.location.url;
+    <span class="hljs-keyword">this</span>.path = <span class="hljs-keyword">this</span>.location.path;
+    <span class="hljs-keyword">this</span>.query = <span class="hljs-keyword">this</span>.location.query;
+    <span class="hljs-keyword">this</span>.dispatchEvent(<span class="hljs-keyword">new</span> CustomEvent(<span class="hljs-string">'urlChange'</span>, { <span class="hljs-attr">detail</span>: {
+      <span class="hljs-attr">url</span>: <span class="hljs-keyword">this</span>.url,
+      <span class="hljs-attr">path</span>: <span class="hljs-keyword">this</span>.path,
+      <span class="hljs-attr">query</span>: <span class="hljs-keyword">this</span>.query,
+      <span class="hljs-attr">replace</span>: <span class="hljs-literal">false</span>
+    }}));
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>Stop listening</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  stop: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">this</span>.location.off(<span class="hljs-string">'change'</span>, <span class="hljs-keyword">this</span>._locationChangeHandler);
+    <span class="hljs-keyword">this</span>.rootElement.removeEventListener(<span class="hljs-string">'click'</span>, <span class="hljs-keyword">this</span>._clickHandler);
+  }
+
+});
+
+<span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> <span class="hljs-built_in">Object</span>.assign !== <span class="hljs-string">'function'</span>) {
+  (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-built_in">Object</span>.assign = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">target</span>) </span>{
+<span class="hljs-meta">      'use strict'</span>;
+      <span class="hljs-keyword">if</span> (target === <span class="hljs-literal">undefined</span> || target === <span class="hljs-literal">null</span>) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">'Cannot convert undefined or null to object'</span>);
+      }
+
+      <span class="hljs-keyword">var</span> output = <span class="hljs-built_in">Object</span>(target);
+      <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> index = <span class="hljs-number">1</span>; index &lt; <span class="hljs-built_in">arguments</span>.length; index++) {
+        <span class="hljs-keyword">var</span> source = <span class="hljs-built_in">arguments</span>[index];
+        <span class="hljs-keyword">if</span> (source !== <span class="hljs-literal">undefined</span> &amp;&amp; source !== <span class="hljs-literal">null</span>) {
+          <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> nextKey <span class="hljs-keyword">in</span> source) {
+            <span class="hljs-keyword">if</span> (source.hasOwnProperty(nextKey)) {
+              output[nextKey] = source[nextKey];
+            }
+          }
+        }
+      }
+      <span class="hljs-keyword">return</span> output;
+    };
+  })();
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

@@ -1,4 +1,4 @@
 /* base.css overrides */
-.toggle {
+#toggle-all, .toggle, .destroy {
 	outline: none;
 }
