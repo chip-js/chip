@@ -2,20 +2,20 @@ Chip
 ====
 
 Chip.js is a lightweight JavaScript framework that provides data binding to HTML like Angular.js and Ember.js. See the
-full [annotated source](https://rawgithub.com/teamsnap/chip/master/docs/src/chip.html).
+full [annotated source](https://rawgithub.com/chip-js/chip/master/docs/src/chip.html).
 
 ## Getting Started
 
-Check out our [Getting Started](https://github.com/teamsnap/chip/wiki) guide.
+Check out our [Getting Started](https://github.com/chip-js/chip/wiki) guide.
 
 ### Examples
 
-There are a couple of [example apps](https://github.com/teamsnap/chip/tree/master/examples) using Chip you can check
+There are a couple of [example apps](https://github.com/chip-js/chip/tree/master/examples) using Chip you can check
 out.
 
 See them in action:
-* [Simple example](https://rawgithub.com/teamsnap/chip/master/examples/simple.html)
-* [Todo example](https://rawgithub.com/teamsnap/chip/master/examples/todo/index.html).
+* [Simple example](https://rawgithub.com/chip-js/chip/master/examples/simple.html)
+* [Todo example](https://rawgithub.com/chip-js/chip/master/examples/todo/index.html).
 
 ## Introduction to Chip
 
@@ -73,9 +73,9 @@ with data provided by your controller, you use HTML attributes prefixed with "bi
 a "binding" from the controller to the HTML. Chip registers "binding handlers" to handle the different types of binding
 you may wish to use. There is a binding handler for displaying text, showing/hiding an element, or repeating an element
 for each item in an array. Chip comes with a bunch of
-[binding handlers](https://rawgithub.com/teamsnap/chip/master/docs/src/bindings.html), but you can create your own
+[binding handlers](https://rawgithub.com/chip-js/chip/master/docs/src/bindings.html), but you can create your own
 easily using jQuery. Take a look at the provided binding handlers and check out the
-[Binding documentation](https://rawgithub.com/teamsnap/chip/master/docs/src/binding.html) to see how easy it is.
+[Binding documentation](https://rawgithub.com/chip-js/chip/master/docs/src/binding.html) to see how easy it is.
 
 ### Routing
 
