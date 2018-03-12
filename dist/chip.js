@@ -1935,7 +1935,7 @@ if (!Date.prototype.toISOString) {
         };
         _this._clickHandler = function(event) {
           var anchor, linkHost, url;
-          if (!(anchor = $(event.target).closest('a[href]').get(0))) {
+          if (!(anchor = $(event.target).closest('a[href]').get(0) || event.originalEvent.ignore)) {
             return;
           }
           if (event.isDefaultPrevented()) {
