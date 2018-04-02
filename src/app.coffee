@@ -290,7 +290,7 @@ class App
 
       @_clickHandler = (event) ->
         return unless (anchor = $(event.target).closest('a[href]').get(0))
-        return if event.originalEvent.ignore
+        return if event.originalEvent?.ignore
         return if event.isDefaultPrevented() # if something else already handled this, we won't
         linkHost = anchor.host.replace(/:80$|:443$/, '')
         url = $(anchor).attr('href').replace(/^#/, '')

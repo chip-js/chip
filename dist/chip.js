@@ -1934,11 +1934,11 @@ if (!Date.prototype.toISOString) {
           return _this.trigger('urlChange', [path]);
         };
         _this._clickHandler = function(event) {
-          var anchor, linkHost, url;
+          var anchor, linkHost, url, _ref;
           if (!(anchor = $(event.target).closest('a[href]').get(0))) {
             return;
           }
-          if (event.originalEvent.ignore) {
+          if ((_ref = event.originalEvent) != null ? _ref.ignore : void 0) {
             return;
           }
           if (event.isDefaultPrevented()) {
