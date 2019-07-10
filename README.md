@@ -1,6 +1,8 @@
 Chip
 ====
 
+[![Join the chat at https://gitter.im/chip-js/chip](https://badges.gitter.im/chip-js/chip.svg)](https://gitter.im/chip-js/chip?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Chip.js is a lightweight JavaScript framework that provides data binding to HTML like Angular.js and Ember.js. See the
 full [annotated source](https://rawgithub.com/chip-js/chip/master/docs/src/chip.html).
 
